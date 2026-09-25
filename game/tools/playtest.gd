@@ -713,7 +713,6 @@ func _check(v: Node, when: String) -> void:
 		var width: float = (beast_box as AABB).size.x
 		var tol_x: float = width * 0.055 + 0.30 + 0.05  # stand_offset_x's own max side swing, +slack
 		var n := route_rungs.size()
-		var cap: int = maxi(route_height, 1)
 		for idx in range((hunters as Array).size()):
 			var h: Dictionary = (hunters as Array)[idx]
 			var foot := int(h.get("foot", 0))
@@ -726,13 +725,17 @@ func _check(v: Node, when: String) -> void:
 				if route_rungs[k] <= foot:
 					i = k
 			if n <= 1 or i >= n - 1:
-				# hunter_side_offset(players, i, height)'s own rule, read off
-				# the view's own _hunters instead of the model's players --
-				# same foothold values, same clamp, same -1/0/+1 result.
-				var side := 0.0
-				for j in range((hunters as Array).size()):
-					if j != idx and mini(int(((hunters as Array)[j] as Dictionary).get("foot", 0)), cap) == mini(foot, cap):
-						side = -1.0 if idx == 0 else 1.0
+				# NOT hunter_side_offset's dynamic shared-foothold nudge --
+				# _stand_on_model's own doc comment (2026-09-25) is explicit
+				# that the top branch calls `_top_hold(route_side)`, the FIXED
+				# per-hunter offset ("two sets of stones, one set for each
+				# character"), never the dynamic `side` the branches below the
+				# top still use. Using the dynamic value here (0.0 whenever a
+				# hunter reaches/passes the sigil alone, which is every real
+				# case) measured the check against a route the game does not
+				# walk -- the 1.7-2.6m misses on a hunter that hops past the
+				# sigil (Leap, Grappling Hook).
+				var side := -1.0 if idx == 0 else 1.0
 				var anchor: Vector3 = v.call("foothold_anchor", climb_points, foot)
 				var x_expected: float = v.call("stand_offset_x", anchor.x, side, width)
 				if absf(home.y - anchor.y) > 0.05 or absf(home.x - x_expected) > tol_x:
@@ -1816,6 +1819,21 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3, to_foot: int) -> void:
 		_check_hop_camera(cam_samples, offscreen_samples)
 		Engine.time_scale = 1.0
 		_note("step %d: hop still mid-flight after %d samples (guard cap) -- gave up watching, not judged" % [_step, flight.size()])
+		# Judging the ARC stops here, but `home` (a multi-leg climb's real
+		# landing point, written by `_advance_climb_home` leg by leg as the
+		# tween runs) does not -- a long Leap/Grappling Hook spanning several
+		# named rungs can still be mid-flight when the 300-sample guard gives
+		# up even at HOP_TIME_SCALE, and every check downstream of this call
+		# (hunter-off-marker, camera-not-over-shoulder, the settled-framing
+		# checks) reads `home`/the camera as of THIS instant. Finishing the
+		# wait here, now back at real speed, is what lets those checks measure
+		# the actual landing instead of wherever the tween happened to be when
+		# the guard fired (found live: two hunter-off-marker misses, both
+		# overshooting Leap/Grappling Hook plays, both landing a consistent
+		# 1.71m short of the real target -- exactly a still-running tween's
+		# stale `home`).
+		if tw.is_valid():
+			await tw.finished
 		return
 	Engine.time_scale = 1.0
 	await _frames(8)   # back at real speed: let the landing recoil (0.06s + 0.16s) settle

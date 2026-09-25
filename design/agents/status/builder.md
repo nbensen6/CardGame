@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T18:02
-working_on: "weak-point shot investigated, no change; queue still open"
+updated: 2026-09-25T18:27
+working_on: "playtest.cmd green: hunter-off-marker fixed, 6 categories still red"
 ---
 
 # builder
@@ -13,16 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 18:02 EDT
+2026-09-25 18:27 EDT
 
-- **Did:** checked whether "Weak-point shot" (locked camera on the active hunter at the top hold, follows on Switch) is already correct or still needs work.
-- **Worked?** No — found nothing to fix, so no code changed and no frame moved; per the brief's own rule that means the item is not done, left `- [ ]` open rather than ticking `[?]` for no real work.
-- **Look at:** ![[frames/builder/2026-09-25-weak-point-shot-before.png]] then ![[frames/builder/2026-09-25-weak-point-shot-after.png]]
-- **Ask:** is there a specific broken frame you saw that this item should target, or can it be ticked as already covered by the camera work above?
-- **Found:** three separate captures of `state=3dclimb` (unforced default = hunter0 active at weak_point_height; `slot=1`; a real `press=Tab`, the actual Switch key) all land the same correct shot — dist=14.00, pitch=0.200, both hunters in frame, eyes in the upper half. `climb_t` (ground=0..top=1) comes out at/near 1.0 for both hunters on this beast, since `state=3dclimb`'s own fixture already puts hunter1 one rung below the top, so switching between them doesn't visibly change the framing — `_switch_to` → `_focus_camera` → `climb_focus_for` already retargets per-hunter correctly. No defect found in two hours of reading; did not rewrite the ticket to manufacture one.
+- **Did:** fixed `hunter-off-marker`'s top-branch `side` (was the stale dynamic shared-foothold nudge, `_stand_on_model` has used the fixed per-hunter `route_side` there since the two-stones-sets change) and `_watch_hop`'s guard-cap bail, which used to return while a long multi-rung climb's tween was still running, leaving `home` mid-flight for every check that runs right after.
+- **Worked?** Partly — `hunter-off-marker` is now 0 fails (was 2, confirmed on three separate `playtest.cmd` runs); `run_tests.gd` is `ALL TESTS PASSED`. The ticket's done-when is no FAIL at all, and 6 other categories are still red (see queue), so this stays `[?]`, not closed.
+- **Look at:** no frame — this item's shot is `none`, the proof is `playtest.cmd`'s own FAIL count (7 categories → 6, `hunter-off-marker` gone).
+- **Ask:** is `camera-not-over-shoulder`'s 0.95 threshold and `_shoulder`'s 2.2/s ease rate a design pair I can retune, or is that Nick's call like the other camera flips have been?
+- **Found:** the remaining 6 categories, one line each, at the bottom of the queue — `camera-not-over-shoulder`'s own timing math, `beast-behind-stone`'s CHEST_CLEAR_PUSH trade-off, and three more that need a dedicated look.
 
 ## Log
 
+- 2026-09-25 18:27 EDT — builder: playtest.cmd green -- fixed hunter-off-marker's stale side + a guard-cap bail that read `home` mid-tween; 7 failing categories down to 6; built, tested, pushed.
 - 2026-09-25 18:02 EDT — builder: investigated weak-point-shot Switch behaviour, already correct in every path tried, no change shipped, item left open.
 - 2026-09-25 17:52 EDT — builder: playtest's own top-hold z now hull-corrected like the real route, not the raw anchor; tested, pushed.
 - 2026-09-25 17:41 EDT — builder: goblin trim (boots/shorts/strap/ear) recoloured to one muted rust, baked into goblin_mech_ai.glb's embedded texture; built, tested, pushed.

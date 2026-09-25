@@ -188,7 +188,7 @@ run failed.
       per-hunter on a swap; no broken frame found to fix, so nothing shipped
       and this stays open. See `status/builder.md` for the frames.
 
-- [ ] **playtest.cmd green.** Answer to the builder's 17:52 ask: split off,
+- [?] **playtest.cmd green.** Answer to the builder's 17:52 ask: split off,
       this item. Every check that is red on today's camera and route is
       either re-derived against the shot as it now is, or deleted with one
       line saying why. Red as of 17:52: camera-not-over-shoulder,
@@ -199,6 +199,32 @@ run failed.
       side, or the landing, whichever is wrong). A red check nobody trusts is
       worse than no check. Done-when: `tools\playtest.cmd` prints no FAIL,
       `run_tests.gd` green. Shot: none.
+      **Builder, 2026-09-25 18:27 EDT:** `hunter-off-marker` is now 0 fails,
+      the only category this run closed. Two real bugs, both in the check
+      itself (game logic already correct, already tested):
+      (1) the top branch (`i >= n-1`, a hunter at or past the sigil) computed
+      `side` with the OLD dynamic shared-foothold rule (0.0 whenever nobody
+      shares the foot, which is nearly always) instead of `route_side`, the
+      FIXED per-hunter offset `_stand_on_model`'s own doc comment says the
+      top branch actually uses (2026-09-25, "two sets of stones, one set for
+      each character") — fixed, distance dropped 2.60m→1.71m on the one case
+      this alone explained.
+      (2) `_watch_hop`'s 300-sample guard cap (at `HOP_TIME_SCALE`, 1/6
+      speed) is too short for a multi-rung Leap/Grappling Hook — the tween
+      was still running when the guard gave up, and the function returned
+      without waiting for it to land, so `home` (and every check downstream
+      of `_watch_hop`, not just this one) read a mid-flight sub-hop point.
+      Now awaits `tw.finished` (at real speed, after the guard bails) before
+      returning. Both remaining hunter-off-marker fails were exactly this:
+      1.71m off, byte-identical on both, matching a still-running tween's
+      stale `home` far better than a geometry bug. `run_tests.gd`:
+      ALL TESTS PASSED.
+      Done-when NOT met: 6 categories still red (`camera-not-over-shoulder`,
+      `hunter-offscreen`, `beast-behind-stone`, `hunter-lost-mid-hop`,
+      `damage-popup-offscreen`, `intent-tag-vs-hunter`) — each is its own
+      investigation, not a quick follow-on to this fix (see the proposed
+      items at the bottom of this file for what was learned about each).
+      Staying `[?]`, not `[x]`.
 
 ## Waiting on Nick
 
@@ -365,6 +391,45 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       the route-vs-anchor mismatch this item targeted. Worth a dedicated
       look with the harness's STONE/HUNTER/RUNGS print at a foothold past
       the top, the same way the "hops land on stones" item measured its bug.
+- [ ] (proposed) `camera-not-over-shoulder` (9 fails on the latest
+      `playtest.cmd`, every one a `_shoulder` value between 0.02 and 0.88,
+      none reaching the check's own 0.95 floor): the check's own doc comment
+      claims `_shoulder`'s ease (`combat_3d.gd` `_aim_camera`, rate 2.2/s)
+      "reaches this in well under a second" and that "every step gives it
+      several real seconds to settle" before `_check` runs. The math says
+      otherwise: `1 - exp(-2.2t) = 0.95` needs t≈1.36s, and the actual
+      post-action wait (`_wait_and_poll(v, 43 or 45)`) is ~0.72-0.75s at
+      normal speed — under half what the ease needs, not "several seconds."
+      Either the check's wait needs to genuinely grow to match its own
+      stated assumption, or `_shoulder`'s ease rate / SHOULDER_ENGAGED_MIN
+      were tuned for a shot Nick approved and only the TEST's timing
+      assumption is stale — didn't touch the gameplay-feel constants this
+      run without asking, same caution every camera flip in this file has
+      needed. Not yet tried: instrumenting one real step to confirm `delta`
+      actually behaves as this arithmetic assumes (headless rendering may be
+      slower than 1/60s/frame, which would change the numbers).
+- [ ] (proposed) `beast-behind-stone` (5 fails, always "stone 7" at
+      15.6-18.3% pixel coverage against a 15% cap): almost certainly the
+      same trade-off the "CHEST_CLEAR_PUSH is zeroed" proposed item below
+      already named — that push existed to keep a rung's stone off the
+      beast's chest (#0658) and was zeroed this session to fix rung 0
+      landing off-screen. Re-tuning it risks reopening the off-screen bug it
+      was zeroed to fix; needs someone to check both frames together, not a
+      number bumped blind.
+- [ ] (proposed) `hunter-offscreen` (4 fails, all early-game non-climb
+      actions — Tongue Snap/Scramble/Tongue Snap again — projecting to
+      y=-217..-868, nowhere near the 0..720 screen), `hunter-lost-mid-hop`
+      (1 fail, hunter off-screen 84% of its own jump), `damage-popup-
+      offscreen` (1 fail) and `intent-tag-vs-hunter` (1 fail): not
+      investigated this run past confirming they survive the
+      `_watch_hop`-tween-completion fix above (counts shifted slightly
+      run-to-run, likely just timing noise from that fix, not new bugs).
+      `hunter-offscreen`'s extreme y values are the most suspicious of the
+      four — worth checking whether the camera is still on its wide
+      establishing shot (not yet locked onto the hunter) at the exact instant
+      this check samples, the same "camera hasn't caught up yet" shape as the
+      hunter-off-marker bug fixed this run, just on the CAMERA side instead
+      of the route side.
 - [ ] (proposed) `goblin_mech_ai_Image_0.png` (and the same pattern would hit
       any other `*_Image_*.png`) is gitignored as "derived, regenerable from
       the tracked `.jpg` beside it" (`8e5a27c`), but the live fight actually
