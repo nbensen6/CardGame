@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: playtester
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
-eta:
+eta: this run
 created: 2026-09-24T22:33
-taken_by:
+taken_by: playtester
 ask:
 waiting: false
 ---
