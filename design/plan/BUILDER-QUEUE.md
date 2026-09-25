@@ -70,6 +70,12 @@ run failed.
       band picks up the head and neck). Clearance at the sigil should come
       out near 0.53, not 13.6. If the camera then clips the mesh, the fix is
       a small fixed pad (1 to 2 units), not a return to the hull query.
+      Clearance alone will not land it: in the 16:11 after frame the camera
+      sits behind the Frog level with the back and looks past the head into
+      sky, so the jackal is not in frame at all. At the sigil the camera
+      must also sit higher than the hunter and pitch DOWN so the head is in
+      the upper half. Pitch is part of this item, not the later weak-point
+      item.
       Done-when is the frame, not the number: at the sigil the hunter is
       fully above the card fan, back to camera, bottom-centre, and the
       jackal's eyes are in the upper half. If that frame does not land this
