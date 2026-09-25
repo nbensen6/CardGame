@@ -2,20 +2,122 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T08:13
-working_on: The 07:51 chest fix moved the rocks and not the feet — Frog on air, path in pieces, every check green; filed to fixer (high) and a feet-on-stone check to playtester.
+updated: 2026-09-25T09:05
+working_on: "The Frog lands on stones again in play (fixer 08:39); the grip shot everyone judged is a post-fall frame — fall pose filed to fixer (high), proofs corrected on #0802/#0803."
 ---
 
 # director
 
-## This run — 2026-09-25 08:08 EDT
+## This run — 2026-09-25 09:05 EDT
+
+- **Did:** the fight is better: the Frog lands on stones again in play; the grip shot everyone judged is a fall.
+- **Worked?** Partly: the fixer's landing fix is real, but its proof frame shows a fallen Frog on air.
+- **Next:** fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on landings.
+- **Need from you:** one word each on #14 and the camera row; the after-Leap frame is now on that row.
+
+## Now
+
+**What a player sees, before I read anyone's note (08:52, on `a90615c`).**
+Resting: the Frog big at bottom-left, the Goblin far right on an empty
+half, the black jackal small at upper-left of centre with "Attack 7" beside
+it, a chain of orange-lidded boxes from the Frog's left up to its chest —
+reconnected since 08:05, though two big boxes at far left still sit apart
+from the chain. Sigil: two thirds sky, Frog a speck on a box bottom-left,
+beast a rock lump behind the cards, Goblin out of frame — unchanged, with
+Nick. Grip: the Frog a body-height above bare ground, shadow far below,
+an empty box beside it, the red "3" over it.
+
+![[frames/director/2026-09-25-0855-director-resting.png]]
+![[frames/director/2026-09-25-0855-director-grip-post-fall-frog-in-air.png]]
+![[frames/director/2026-09-25-0855-director-sigil.png]]
+
+**The top line: the grip shot is a fall.** `state=3dgrip` sets the Frog on
+the first unsafe hold with the timer live, then waits for the timer to
+empty and the Frog to FALL (`GRIP OK: foothold 1 -> 0`) before it saves.
+So every "grip" frame in this repo — the fixer's #0658 and #0802 proofs,
+my own 08:05 "Frog on air" frame, the artist's earlier grip checks — shows
+a Frog after a fall, never a Frog on hold 1. My #0802 Done-when sent the
+fixer to that frame for its proof; the fixer's commit then claimed the
+frame shows "feet on the rock's own top face", which it does not. Two
+agents and I read the same wrong frame the same wrong way. My miss first:
+corrected on #0802 (line struck), on #0803 (build on landings, not the grip
+shot), and filed as its own visible defect — a player who fails a grip sees
+a floating Frog — to the fixer, high.
+
+![[frames/director/2026-09-25-0855-director-grip-post-fall-crop-1to1.png]]
+
+**Did the fight get better for Nick, or did a score go up?** Better, and
+no score moved. Ran `mode=play steps=8` on the fixer's tree: the Frog lands
+ON a drawn stone at foot 2 (Tongue Snap) and foot 6 (Leap) — the first
+time since 07:51 the landings and the rocks agree in a real hop. The
+resting staircase reads as one path again from the Frog's side to the
+chest, chest and forelegs still clear. The fixer's change is the right one
+(the push folded into one function that both the foot and the rock read),
+its tests are real, and its proof frame is the wrong frame. The write-up
+never landed: #0802 is `taken` with an empty Result at 09:05 and the
+fixer's lease is from 08:22 — the run most likely died after the push.
+
+![[frames/director/2026-09-25-0855-director-landing-foot2-frog-on-stone.png]]
+
+**The best frame in the game, and nobody had looked at it.** After the
+Leap to the shoulder the camera gives the beast head-to-paws in the upper
+two thirds, the Frog small on its shoulder, stones between — the nearest
+the game has come to Nick's drawing. Added to the camera row with a
+yes/no, since that is exactly the lens question sitting with him.
+
+![[frames/director/2026-09-25-0855-director-after-leap-closest-to-drawing.png]]
+
+**Against the drawing:** the resting shot is unchanged in the ways that
+matter — beast a third, twenty lidded boxes for four boulders, Frog the
+beast's height. All with Nick (#14, camera row, box-with-a-lid). Nothing
+new drifted; the after-Leap frame drifted towards it.
+
+**Closed since my last run:** #0257 (playtester, `beast-behind-stone` on
+drawn pixels, 08:59 and a denominator fix 09:03) — closed on a pixel test;
+fine. Nothing closed on Nick's judgement. **Stuck:** #0802 — code pushed,
+ticket `taken`, Result empty, owner's run gone; told the fixer to close it
+from the landing frames. #0803 still `open`, untaken; the playtester is
+live and has the correction before it starts.
+
+**A decision that was his, made without him:** none new this run. The
+weak-point/Goblin question (07:58) now has evidence it applies from turn
+one: after the first hop the settled shot has no Goblin at all, and at hop
+start the Goblin is a pair of legs behind the cards. Added to that ask.
+
+![[frames/director/2026-09-25-0855-director-settled-after-first-climb-no-goblin.png]]
+
+**Nick's column:** #14, the camera row, #13, the box-with-a-lid, the
+faceted jackal, the RoR picture, the weak-point shot. No answers since
+yesterday 19:48. Nothing new asked of him this run; two rows strengthened
+with frames.
+
+**Filed:** one new request — fixer (fall pose, high, ahead of #0258 and
+#0405). Notes on four existing tickets (#0802, #0803, camera row, weak-
+point) and the #18 chase. The artist has nothing from me: all three of its
+tickets are Nick's, its idle runs are correct, and there is no visible
+thing in these frames that is not already his taste to settle.
+
+**Not filed, kept:** the settled frame after the first climb has the
+jackal's legs behind a cluster of boxes and one huge lone box at far left —
+the chest-clear was tuned to the resting camera only. Holding it: #14's
+answer rebuilds the stones anyway, and a third stone push in three runs is
+the oscillation this role is meant to stop. Also: nobody has ever seen the
+actual grip moment (timer live) as a saved frame; worth a small harness
+item to the playtester once #0803 lands, not now.
+
+**What is working:** the fixer making the foot and the rock one value by
+construction; the playtester writing a check that fails on the bad tree
+before trusting that it passes on the good one; the head clear of the bar
+in every frame since 01:05. Do not optimise any of that away.
+
+## Old: 2026-09-25 08:08 EDT
 
 - **Did:** the 07:51 chest fix: chest clear, but the Frog now stands on air and the path is in pieces.
 - **Worked?** No; every check stayed green because the rocks moved and the feet did not, which no check reads.
 - **Next:** fixer moves foot and rock together (filed, high); playtester builds a feet-on-stone check (filed, high).
 - **Need from you:** one word each on #14 and the camera row; a new sixth row on the weak-point shot.
 
-## Now
+## Now — superseded 09:05, see above
 
 **The top line, found after my first pass (08:05, on `8328d9f`).** The
 fixer's #0658 landed at 07:51, one minute before my first render. It clears
@@ -139,6 +241,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
+- 2026-09-25 09:05 EDT — fight better: Frog lands on stones again in play (fixer #0802, 08:39); found the `3dgrip` shot is taken after the Frog falls, so every grip proof — mine at 08:05 and the fixer's — judged a fallen Frog; fall pose filed to fixer (high), #0802/#0803 corrected, after-Leap frame added to the camera row for Nick.
 - 2026-09-25 08:08 EDT — the 07:51 chest fix (#0658) cleared the chest by moving rocks and not feet: Frog on air at the first hold, path in four pieces, every check green — filed to fixer (high) and a hunter-on-stone check to playtester (high); before that: frames matched 06:55, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
 
 - 2026-09-25 07:02 EDT — path better, beast worse: #0505 put twenty stones across the gap and two hide the chest; the check fired 7-13 times and the fixer called it the playtester's; filed placement-only fix to the fixer (high), rewrote Nick's #14 ask to the count with options, folded stale #2356 into #14, flagged #0258/#0405 open while the fixer said nothing of mine.

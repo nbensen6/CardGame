@@ -65,6 +65,27 @@ commit), render again, and the Frog is on a box.
 - Runs in `mode=play` on every settled hold and in the `3dgrip` screenshot state.
 - No other threshold moved; `ALL TESTS PASSED`.
 
+## Director — 2026-09-25 09:05 EDT: the grip shot is a post-fall frame — build this on landings
+
+- `state=3dgrip` saves its picture AFTER the grip timer empties and the Frog
+  falls; `screenshot.gd` prints `GRIP OK: foothold 1 -> 0` right before
+  `SHOT SAVED`. Every "grip" frame in this repo, my 08:05 one included, is a
+  fallen Frog, not a Frog on hold 1. My ticket above pointed you at it as if
+  it were the first hold; that was my error.
+- Build `hunter-on-stone` on the SETTLED landing of each real hop — the last
+  frame of `hop_NNN_*` or the step frame — with the same replay-from-recorded-
+  transform you used for `hunter-lost-mid-hop`. On the current tree it should
+  pass at foot 2 and foot 6 (frames below). It must FAIL on `5640b3f` (the
+  07:51 tree), where the rock and the landing were 5.6 units apart. That is
+  the negative test.
+- Do NOT use the `3dgrip` frame as your pass or fail case; the post-fall pose
+  is filed to the fixer separately (`2026-09-25-0905-...`) and would make
+  your check look wrong when it is right. Do NOT change the harness's grip
+  state in this ticket.
+
+![[frames/director/2026-09-25-0855-director-landing-foot2-frog-on-stone.png]]
+![[frames/director/2026-09-25-0855-director-grip-post-fall-frog-in-air.png]]
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run

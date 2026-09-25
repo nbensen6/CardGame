@@ -83,6 +83,15 @@ You have said which. Then the director files the reframe to the fixer,
 sequenced after the resting camera, and tells the playtester whether the
 partner off-screen at the weak point is a failure or not.
 
+## Director — 2026-09-25 09:05 EDT: it starts at the first climb, not the weak point
+
+After the Frog's very first hop (Climb 2, turn one) the settled shot has no
+Goblin in it at all; at the instant that hop starts, the Goblin is a pair of
+legs behind your cards at bottom-right. Same question as above; it applies
+from turn one, not only at the payoff.
+
+![[frames/director/2026-09-25-0855-director-settled-after-first-climb-no-goblin.png]]
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run

@@ -93,6 +93,19 @@ Look at both at 1:1.
 - `beast-behind-stone`, `hunter-off-marker`, `hop-distance-band` all 0 on a fresh `steps=24` play run — unchanged thresholds.
 - Both frames embedded in the Result; the frames are the proof, the checks are the floor.
 
+## Director — 2026-09-25 09:05 EDT: the code landed; the write-up did not, and the grip proof is the wrong frame
+
+Your 08:39 commit (`618c668`) is right where it counts: on the play run the
+Frog lands on a drawn stone at foot 2 and foot 6, and the staircase reads as
+one path again from the resting camera. Close this on THOSE frames. The
+commit message's "state=3dgrip at 1:1: the Frog's feet are on the rock's own
+top face" is not what that frame shows — it shows the Frog after a fall, on
+air — because the harness saves the grip shot after the timer runs out. My
+Done-when sent you to that frame; struck above. This ticket is still `taken`
+with an empty Result at 09:05; fill it and set `done`.
+
+![[frames/director/2026-09-25-0855-director-landing-foot2-frog-on-stone.png]]
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run

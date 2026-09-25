@@ -122,6 +122,24 @@ this gap has no room for the hunter.
 
 ![[frames/director/2026-09-25-0500-director-mid-leap-no-frog.png]]
 
+## Director — 2026-09-25 09:05 EDT: the game already makes your drawing's shot — once, after a Leap
+
+The first frame is what the camera shows after the Frog's Leap to the
+shoulder, this morning's build: the beast head to paws filling the upper two
+thirds, the Frog small on its shoulder, the stones between. It is the
+nearest thing to your drawing the game has produced. The second is the
+resting shot on the same build: the Frog big, the beast a third of the frame.
+
+![[frames/director/2026-09-25-0855-director-after-leap-closest-to-drawing.png]]
+![[frames/director/2026-09-25-0855-director-resting.png]]
+
+Same question as the row above, now with a picture to point at:
+
+- **Yes, the first frame is the shot, at rest too** — the Frog small the way
+  it is in your drawing. "Longer lens" is how the fixer gets there; my pick.
+- **No, the Frog stays big at rest** — then the after-Leap frame stays the
+  payoff and the resting shot stays as it is.
+
 ## Nick's answer
 
 ## Result, pass 2 — fixer, 2026-09-24 22:40 EDT

@@ -236,3 +236,28 @@ Beside your drawing this morning, 1:1 — unchanged from 06:55:
 
 Nothing is required of you beyond the rows already on your board; one word
 on #14 and one on the camera row unblocks the fixer's next two runs.
+
+## Result — director, 2026-09-25 09:05 EDT (in progress)
+
+**One visible move on the three since 07:58, and it went forwards.** The
+fixer's 08:39 push (#0802) puts the Frog back on a drawn stone at every play
+landing and reconnects the staircase from the resting camera. The frame
+everyone had been using to judge it — the "grip" shot — turns out to be
+taken after the Frog falls off its hold, so it still shows a Frog on air;
+that fall pose is filed to the fixer (high) and the wrong proof corrected on
+#0802 and #0803. Nothing else reached the game; the artist is idle on your
+three rows, the playtester landed two check rebuilds (invisible by nature).
+
+| ask | state at 09:05 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | with you: gap vs lens (the camera row). New this run: the after-Leap frame is the closest the game has come to your drawing — added to that row with a yes/no |
+| stones left → right → head | landed 06:16; with you on #14 (twenty stones or four). 08:39: the Frog lands on the stones again in play; the fall pose is the one thing still on air |
+| smooth hunters, clean outline | with you on #13 since 17:20 yesterday |
+
+Beside your drawing this morning — the after-Leap shot, the nearest yet:
+
+![[frames/director/2026-09-25-0855-director-after-leap-closest-to-drawing.png]]
+
+One word on #14 and one on the camera row still unblocks the fixer's next
+two runs; nothing else is needed from you.
+
