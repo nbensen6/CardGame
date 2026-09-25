@@ -1845,6 +1845,19 @@ func _init() -> void:
 	_test_climb_dist_for_is_the_fixed_hunter_dist_once_the_pivot_reaches_the_front()
 	_test_climb_dist_for_adds_exactly_the_uncovered_clearance()
 
+	# climb_focus_for -- the sigil second pass (builder, 2026-09-25, "trust the
+	# hold's anchor z"): the clearance term trusts the hold's own authored
+	# anchor on an exact rung instead of asking the hull (which read the
+	# jackal's head/neck as "the front of the body" and put the sigil's
+	# clearance at ~13 units), padded so the lens doesn't sit on the surface
+	# it just started trusting; and pitch rises with climb_t so the lens ends
+	# up above the hold looking down instead of level with it.
+	_test_climb_focus_for_trusts_the_anchor_on_an_exact_rung()
+	_test_climb_focus_for_pads_the_trusted_anchor_so_the_lens_clears_the_surface()
+	_test_climb_focus_for_falls_back_to_the_hull_between_rungs()
+	_test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all()
+	_test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t()
+
 	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
 	# 2026-09-23, "make the resting camera third person too"). The whole shot is
 	# two claims: the lens trucks off the hunter's spine, and the aim slides past
@@ -29275,6 +29288,72 @@ func _test_climb_dist_for_adds_exactly_the_uncovered_clearance() -> void:
 	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 3.0),
 			Combat3D.ACTIVE_HUNTER_DIST + 5.5),
 		"moving the hold 3 units toward the front cuts the same 3 units off the clearance, not the fixed part")
+
+
+## The sigil's own bug: an exact rung's anchor sits on the head/neck, and the
+## hull's 5x3 neighbourhood search there reads a deep 13.6 the same way it
+## once read the jackal's ear as "the front of the body." climb_focus_for
+## must ignore that hull reading entirely for an exact rung and use the
+## anchor's own authored z (0.53 here) instead.
+func _test_climb_focus_for_trusts_the_anchor_on_an_exact_rung() -> void:
+	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
+	var hull_lie := 13.6  # what _front_of_beast would say if asked
+	var out := Combat3D.climb_focus_for(anchors, 4, hull_lie, 0.53, 1.0)
+	var expected_dist := Combat3D.climb_dist_for(0.53, 0.53) + Combat3D.EXACT_RUNG_CLEARANCE_PAD
+	_expect(is_equal_approx(out.x, expected_dist),
+		"an exact rung's clearance must come from its own anchor z (0.53), not the hull's contaminated 13.6 [got=%.2f want=%.2f]"
+			% [out.x, expected_dist])
+	_expect(not is_equal_approx(out.x, Combat3D.climb_dist_for(hull_lie, 0.53)),
+		"regression guard: must differ from the old hull-driven reading that put the hunter behind the card fan")
+
+
+## Trusting a bare anchor's z would put the lens exactly ON the surface it now
+## trusts (clearance comes out ~0 at the sigil) -- EXACT_RUNG_CLEARANCE_PAD is
+## what keeps that from reading as clipping.
+func _test_climb_focus_for_pads_the_trusted_anchor_so_the_lens_clears_the_surface() -> void:
+	var anchors := {4: Vector3(2.0, 15.0, 0.53)}
+	var out := Combat3D.climb_focus_for(anchors, 4, 99.0, 0.53, 0.0)
+	_expect(is_equal_approx(out.x, Combat3D.ACTIVE_HUNTER_DIST + Combat3D.EXACT_RUNG_CLEARANCE_PAD),
+		"a hold whose anchor z equals the pivot z needs no beast-clearance, only the fixed pad on top of the fixed stand-off [got=%.2f]" % out.x)
+
+
+## A foothold strictly between two anchors has no baked, raycast-true anchor
+## to trust (foothold_anchor lerps across the body's curve for it) -- this is
+## the one case that still needs the hull's guess, unpadded, same as before
+## this change.
+func _test_climb_focus_for_falls_back_to_the_hull_between_rungs() -> void:
+	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
+	var out := Combat3D.climb_focus_for(anchors, 2, 8.0, 1.0, 0.0)
+	_expect(is_equal_approx(out.x, Combat3D.climb_dist_for(8.0, 1.0)),
+		"a foothold between two rungs has no anchor of its own to trust and must keep reading the hull [got=%.2f]" % out.x)
+
+
+## No anchors at all (a beast with no climb markers) must fall back to the
+## hull exactly like stand_needs_hull_clearance already does for an empty
+## table -- and must not crash indexing foothold_anchor's empty, sorted keys.
+func _test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all() -> void:
+	var out := Combat3D.climb_focus_for({}, 4, 7.5, 2.0, 0.0)
+	_expect(is_equal_approx(out.x, Combat3D.climb_dist_for(7.5, 2.0)),
+		"an empty anchor table has nothing to trust and must fall back to the hull reading, not crash [got=%.2f]" % out.x)
+
+
+## Level near the ground (nobody wants the wide establishing shot tipping
+## down into a floor), rising to CLIMB_FOCUS_PITCH_MAX at the top of the
+## route so the lens sits above the hold and looks down instead of past it
+## into open sky (Nick, 2026-09-25: "the jackal is not in frame at all").
+## Clamped past [0, 1] the same way every other climb_t consumer in this file
+## already is -- a stale or not-yet-refreshed climb_t must not throw the
+## pitch outside its own designed range.
+func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:
+	var at_ground := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 0.0)
+	_expect(is_equal_approx(at_ground.y, Combat3D.GROUND_VIEW_PITCH),
+		"climb_t=0 must land on the same level pitch the resting shot uses [got=%.3f]" % at_ground.y)
+	var at_top := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 1.0)
+	_expect(is_equal_approx(at_top.y, Combat3D.CLIMB_FOCUS_PITCH_MAX),
+		"climb_t=1 must reach the full down-tilt so the head clears the sky [got=%.3f]" % at_top.y)
+	var past_one := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 1.7)
+	_expect(is_equal_approx(past_one.y, Combat3D.CLIMB_FOCUS_PITCH_MAX),
+		"a climb_t past 1.0 must clamp, not overshoot CLIMB_FOCUS_PITCH_MAX [got=%.3f]" % past_one.y)
 
 
 ## Reproduces the sigil bug live: a hold near the beast's back/centreline

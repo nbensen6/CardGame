@@ -388,6 +388,25 @@ const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 6.5
 const ACTIVE_HUNTER_DIST := 6.0
 const GROUND_VIEW_EYE := 1.05
 const GROUND_VIEW_PITCH := 0.08
+## The locked climbing camera's own pitch, at the very top of the route
+## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears
+## the sigil so the lens sits ABOVE them and looks down. At the sigil the
+## hunter stands on/in the head-and-neck mass itself (the same hull band
+## _front_of_beast's own doc comment blames for the "ear"/"muzzle" reads), so
+## without this the camera sat level with their back and looked straight past
+## the head into open sky -- the jackal was not in frame at all (Nick,
+## 2026-09-25, on the 16:11 after frame). Chosen, not derived: it is the
+## smallest tilt that puts the sigil's own screen y (VIS OK sigil, printed by
+## screenshot.gd) in the frame's upper half at the harness's own weak-point
+## scenario -- tune against that printout, not against algebra.
+const CLIMB_FOCUS_PITCH_MAX := 0.55
+## A trusted anchor's clearance term comes out at (or near) zero -- the anchor
+## IS the surface, and `climb_dist_for` no longer pads it with a hull guess.
+## At exactly zero the lens sits on the mesh itself, which reads as clipping
+## rather than as "close." One small fixed pad, same idea `climb_dist_for`'s
+## own doc comment already allows for -- not a return to the hull query, just
+## room to see the hold from outside it.
+const EXACT_RUNG_CLEARANCE_PAD := 2.0
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
 ## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
@@ -1246,22 +1265,35 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	# wrong question — the whole point is showing you WHO you are holding.
 	var slot: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 	_focus_lift = window * lift
+	var foot := 0
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
 			+ HUNTER_HEIGHT * 1.4 + _focus_lift
+		foot = int((_hunters[slot] as Dictionary).get("foot", 0))
 	# Same fixed standoff the ground shot uses (ACTIVE_HUNTER_DIST), not a window
 	# fit around `window` -- fitting the beast's own height is exactly what put
 	# the hunter a speck on a tall beast's chest (Nick, 2026-09-25: "camera
 	# closer, should be locked to character"). One number, on the ground and up
 	# the side, is what makes the hunter read as the same size in both.
 	#
-	# The clearance term reads the hold's OWN local surface (_front_of_beast at
-	# the hunter's actual column), not the whole beast's bounding box front
-	# face. The sigil sits on top of the body, near the world-z centreline, far
-	# short of `_beast_box.end.z` (measured at the chest) -- charging the box's
-	# full depth there added ~13 units of clearance nothing was in the way of,
-	# and pushed the hunter down behind the card fan at the top hold.
-	_dist = minf(climb_dist_for(_front_of_beast(_pivot.x, _pivot.y), _pivot.z), _cam_reach())
+	# The clearance term trusts the HOLD'S OWN authored z on an exact rung (or
+	# past the model's highest one), the same rule stand_z_for/
+	# stand_needs_hull_clearance already use to place the hunter there -- only
+	# a foothold genuinely BETWEEN two rungs has no baked anchor to trust and
+	# still needs the hull guess (_front_of_beast). Asking the hull for an
+	# exact rung is what put the sigil's clearance at ~13 units instead of the
+	# ~0 its own anchor already accounts for: the sigil sits on the head/neck,
+	# and hull_front_at's neighbourhood search picks that mass up the same way
+	# it once read the jackal's ear as "the front of the body" (see its own
+	# doc comment).
+	var cf := climb_focus_for(_climb_points, foot, _front_of_beast(_pivot.x, _pivot.y),
+			_pivot.z, _climb_t)
+	_dist = minf(cf.x, _cam_reach())
+	# And pitch to match -- see CLIMB_FOCUS_PITCH_MAX's own doc comment. Distance
+	# alone put the lens close and level with the hunter's back, aimed past the
+	# head into sky; only sitting above them and looking down brings the head
+	# into frame at all.
+	_pitch = cf.y
 	_apply_orbit()
 
 
@@ -2574,6 +2606,37 @@ func _dist_for_window(window: float) -> float:
 ## be locked to character").
 static func climb_dist_for(beast_front_z: float, pivot_z: float) -> float:
 	return ACTIVE_HUNTER_DIST + maxf(beast_front_z * 0.85 - pivot_z, 0.0)
+
+
+## The locked climbing camera's distance and pitch at one hold. Split out
+## static (backlog #86 duty 3's own pattern) so the sigil case -- clearance
+## reading the hull, not the anchor, and pitch never moving off whatever it
+## last was -- is provable headless instead of only checkable by eye.
+##
+## Distance trusts the hold's own authored anchor z on an exact rung, or on
+## any foot past the model's highest one (`stand_needs_hull_clearance`'s own
+## rule -- the same one `stand_z_for` already uses to PLACE the hunter there),
+## padded by EXACT_RUNG_CLEARANCE_PAD so the lens does not sit ON the surface
+## it just started trusting. `hull_front` (the caller's `_front_of_beast`
+## reading) is used, unpadded, only for a foothold actually BETWEEN two rungs,
+## where there is no baked anchor to trust. Trusting the hull on an exact rung
+## instead is what put the sigil's clearance at ~13 units on top of the fixed
+## 6 -- the hull's neighbourhood search reads the head/neck mass the sigil
+## itself sits on the same way it once misread the jackal's ear as "the front
+## of the body" (see hull_front_at's own doc comment).
+##
+## Pitch rises with `climb_t` (0 at the ground, 1 at the top) so the lens
+## ends up ABOVE the hold looking down, not level with it -- level is what
+## put the lens looking straight past the sigil into open sky (Nick,
+## 2026-09-25, on the 16:11 after frame: "the jackal is not in frame at all").
+static func climb_focus_for(anchors: Dictionary, foot: int, hull_front: float,
+		pivot_z: float, climb_t: float) -> Vector2:
+	var trust_anchor := not anchors.is_empty() and not stand_needs_hull_clearance(anchors, foot)
+	var front_z := foothold_anchor(anchors, foot).z if trust_anchor else hull_front
+	var pad := EXACT_RUNG_CLEARANCE_PAD if trust_anchor else 0.0
+	var dist := climb_dist_for(front_z, pivot_z) + pad
+	var pitch := lerpf(GROUND_VIEW_PITCH, CLIMB_FOCUS_PITCH_MAX, clampf(climb_t, 0.0, 1.0))
+	return Vector2(dist, pitch)
 
 
 ## Whether any hunter has left the ground — the same 0.05 epsilon
