@@ -1254,7 +1254,14 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	# the hunter a speck on a tall beast's chest (Nick, 2026-09-25: "camera
 	# closer, should be locked to character"). One number, on the ground and up
 	# the side, is what makes the hunter read as the same size in both.
-	_dist = minf(climb_dist_for(_beast_box.end.z, _pivot.z), _cam_reach())
+	#
+	# The clearance term reads the hold's OWN local surface (_front_of_beast at
+	# the hunter's actual column), not the whole beast's bounding box front
+	# face. The sigil sits on top of the body, near the world-z centreline, far
+	# short of `_beast_box.end.z` (measured at the chest) -- charging the box's
+	# full depth there added ~13 units of clearance nothing was in the way of,
+	# and pushed the hunter down behind the card fan at the top hold.
+	_dist = minf(climb_dist_for(_front_of_beast(_pivot.x, _pivot.y), _pivot.z), _cam_reach())
 	_apply_orbit()
 
 

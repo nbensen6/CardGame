@@ -63,7 +63,7 @@ run failed.
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
-- [ ] **Climb shot at the sigil: hunter above the hand, head in frame.**
+- [?] **Climb shot at the sigil: hunter above the hand, head in frame.**
       The locked-camera run's own after frame
       (`agents/frames/builder/2026-09-25-locked-camera-climb-after.png`) has
       the Frog at bottom-left BEHIND the card fan and two-thirds of the
@@ -77,6 +77,16 @@ run failed.
       head, which is the natural shot at a weak point on a face. Shot:
       `state=3dclimb`, hunter fully above the card fan, jackal's eyes
       visible.
+      **Builder, 2026-09-25 16:11 EDT:** the clearance term now reads
+      `_front_of_beast(_pivot.x, _pivot.y)` (the hold's own column) instead
+      of `_beast_box.end.z` (the whole box's front face). Dist at the sigil
+      dropped 19.4→17.0 and the hunter grew slightly — the frame moved, but
+      not nearly enough: he's still small and low, not "fully above the
+      cards, eyes visible." `_front_of_beast` at that column still reads
+      ~13.6, not near-zero, which smells like the same hull-neighbourhood
+      contamination (head/neck nearby) `stand_z_for` was written to dodge
+      for exact rungs by trusting the anchor's own z instead of the hull.
+      Proposed follow-up below.
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
@@ -164,3 +174,25 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       fixed stand-off, closer than the old window-fit) is working. The
       weak-point-shot queue item below should measure this directly rather
       than assume the general fix already covers the top hold.
+      **Builder, 2026-09-25 16:11 EDT:** tried feeding `climb_dist_for` the
+      hold's own local surface (`_front_of_beast` at the hunter's column)
+      instead of the box's front face — only dropped the clearance from ~13
+      to ~11 (dist 19.4→17.0), not the near-zero an exact-rung anchor should
+      need. See the two items directly below.
+- [ ] (proposed) `_front_of_beast`'s 5x3 hull neighbourhood, queried at the
+      sigil's own (x, y), still reads ~13.6 even though the sigil's authored
+      anchor z is 0.53 — almost certainly the jackal's head/neck passing
+      through the same column, the same shape of contamination the
+      "ear"/"muzzle" bugs hit (see `hull_front_at`'s own doc comment).
+      `stand_z_for` already dodges exactly this for exact-rung footholds by
+      trusting the anchor's own z and never asking the hull
+      (`stand_needs_hull_clearance` returns false for them). The climbing
+      camera's clearance term should probably do the same: for an exact
+      rung, use the hold's own anchor z (clearance ~0) instead of
+      `_front_of_beast`, and reserve the hull query for interpolated
+      footholds only, if any of those ever reach `_focus_camera`.
+- [ ] (proposed) Nick's own suggested read on the sigil shot ("the camera
+      may sit above the hold looking down at the head") is a different
+      aim/pitch at the weak point, not just less clearance distance —
+      probably belongs in the "Weak-point shot" item below rather than this
+      one; the two should be looked at together once that item is up.

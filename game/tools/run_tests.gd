@@ -2511,6 +2511,13 @@ func _finish_with_deferred_tests() -> void:
 	_test_anyone_off_ground_epsilon()
 	_test_focus_camera_holds_the_wide_ground_shot_before_anyone_climbs()
 	_test_focus_camera_still_locks_tight_once_someone_climbs()
+	# _focus_camera's clearance term reads the hold's own local surface
+	# (_front_of_beast), not the whole beast box's front face (builder,
+	# 2026-09-25, "climb shot at the sigil"): a hold near the body's
+	# centreline (the sigil, high on the back) has a shallow local surface
+	# far short of the box's front, and charging the box's own depth there
+	# added ~13 units of clearance nothing was in the way of.
+	_test_focus_camera_clearance_reads_the_holds_own_surface_not_the_box_front()
 	# The Risk of Rain shot (director/Nick, 2026-09-24 22:56 EDT): over-the-
 	# shoulder on the active hunter at rest as well as mid-climb.
 	_test_want_shoulder_truck_engages_at_rest_now()
@@ -29268,6 +29275,45 @@ func _test_climb_dist_for_adds_exactly_the_uncovered_clearance() -> void:
 	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 3.0),
 			Combat3D.ACTIVE_HUNTER_DIST + 5.5),
 		"moving the hold 3 units toward the front cuts the same 3 units off the clearance, not the fixed part")
+
+
+## Reproduces the sigil bug live: a hold near the beast's back/centreline
+## (small pivot z, high pivot y) has a shallow LOCAL surface, but the old
+## `_focus_camera` charged the whole beast box's front face regardless of
+## where the hold sat, adding ~13 units of clearance nothing was in the way
+## of and pushing the hunter down behind the card fan. Faking a hull whose
+## sigil-column band reads far shallower than the box's own front proves
+## `_dist` now tracks that local reading instead of `_beast_box.end.z`.
+func _test_focus_camera_clearance_reads_the_holds_own_surface_not_the_box_front() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._client = GameClient.new(LocalTransport.new(), 1)
+	var box := AABB(Vector3(-6.0, 0.0, -16.0), Vector3(12.0, 20.0, 32.0))
+	c3d._beast_box = box
+	var hull := PackedFloat32Array()
+	hull.resize(Combat3D.HULL_X * Combat3D.HULL_Y)
+	hull.fill(box.end.z)  # everywhere else reads as deep as the box's own front
+	var home := Vector3(2.0, 15.0, 0.5)  # high on the back, near the centreline -- the sigil
+	var idx := Combat3D.hull_index_for(home.x, home.y + Combat3D.HUNTER_HEIGHT * 1.4, box,
+			Combat3D.HULL_X, Combat3D.HULL_Y)
+	for dy: int in [-2, -1, 0, 1, 2]:
+		for dx: int in [-1, 0, 1]:
+			var i: int = idx.x + dx
+			var j: int = idx.y + dy
+			if i >= 0 and i < Combat3D.HULL_X and j >= 0 and j < Combat3D.HULL_Y:
+				hull[j * Combat3D.HULL_X + i] = 2.0  # the sigil's own shallow local surface
+	c3d._hull = hull
+	c3d._hunters = [{"node": null, "home": home}]
+	c3d._focus_camera()
+	var expected := minf(Combat3D.climb_dist_for(2.0, home.z), c3d._cam_reach())
+	var old_buggy := minf(Combat3D.climb_dist_for(box.end.z, home.z), c3d._cam_reach())
+	_expect(is_equal_approx(c3d._dist, expected),
+		"the climbing camera's clearance must come from the hold's own local surface (2.0), not the box's front face (%.1f) [got dist=%.2f, want=%.2f]"
+			% [box.end.z, c3d._dist, expected])
+	_expect(not is_equal_approx(c3d._dist, old_buggy),
+		"regression guard: this must differ from the old box-front reading that put the hunter behind the card fan")
+	get_root().remove_child(c3d)
+	c3d.free()
 
 
 ## backlog #86 duty 2: `_switch_to()` already cancelled an in-progress
