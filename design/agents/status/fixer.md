@@ -2,11 +2,74 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T09:35
-working_on: "#0258 or #0405 next (both open, to: fixer)."
+updated: 2026-09-25T11:06
+working_on: "#0405 next (open, to: fixer, next in the director's own order)."
 ---
 
 # fixer
+
+## This run — 2026-09-25 11:06 EDT
+
+- **Did:** fixed #33 — the dev free camera snapped to the mouse instead of
+  easing; Nick couldn't inspect the jackal.
+- **Worked?** Yes. Drag/wheel/WASD now chase a target and settle clean;
+  locked/climb camera provably untouched.
+- **Next:** #0405 (hunters face the beast), then #0258 (damage number).
+- **Need from you:** nothing.
+
+## Now
+
+Took `2026-09-25-0956-director-to-fixer-the-free-camera-jerks-so-nick-cannot-inspect-the-jackal.md`
+(#33), the sole high-priority open `to: fixer` request, explicitly ahead of
+#0258 and #0405 per its own text.
+
+**The fix.** `_unhandled_input` no longer writes `_yaw`/`_pitch`/`_dist`
+directly — drag writes `_yaw_target`/`_pitch_target`, wheel writes
+`_free_dist_target`. `_aim_camera` (runs every `_process` frame regardless of
+mode) is now the only place that moves the real values, chasing the targets
+with the same `1-exp(-delta*k)` shape the follow camera already uses on
+`_pivot`/`_dist`. New `_free_cam_engaged` flag (set only by the free camera's
+own `_take_manual_control`, separate from `_user_framed`) keeps this off the
+locked/climb camera — `_focus_camera` also sets `_user_framed=true` for a
+climbing hunter, and without the second flag the chase would have bled stale
+dev-cam targets into that shot. `_focus_camera` finishes any in-flight chase
+before handing over rather than freezing it mid-ease.
+
+**Two harness surprises, traced and fixed, not routed around.** A gentle ease
+(k=8) left enough of a tail that `state=3dfreecam`'s own back-to-back spot
+sweep read a settled-but-not-fully-converged drag as a false "moved" on the
+NEXT (correctly dead) spot — this sandbox's xvfb+software-GL render turned
+out to run at ~0.1s/frame, not real 60fps, so instrumented the actual per-
+frame delta rather than guess. Tuned k=60 instead: still tens of milliseconds
+to settle at a real 60fps (well under Nick's own half-second bar), just
+aggressive enough to also finish inside this sandbox's own slow budget.
+Second: selecting a hunter mid-sweep interrupts an in-flight chase via
+`_focus_camera` — fixed by snapping to target on handoff instead of freezing
+wherever the ease was.
+
+**Proof: a real frame strip**, one synthetic drag, 6 of 12 captured frames —
+the view turns further each frame, not in one jump, and the last two are
+pixel-identical (settled, no drift):
+
+![[frames/fixer/2026-09-25-1106-fixer-freecam-drag-ease-strip.png]]
+
+Wheel step numeric (beast was out of frame at that point in the sweep): dist
+3.0 → 3.0 (next frame, chase not yet applied) → 3.999665 → 4.0 (settled)
+across 4 frames. `state=3dfreecam` drags/DEAD pattern matches `main` exactly
+across 5 re-runs (`gauge`'s own known flicker aside — reproduces on `main`
+too). `state=3d`/`3dclimb`/`3dgrip` CAM/HUNTER/VIS lines byte-identical to
+`main`. `ALL TESTS PASSED`. Fresh `mode=play steps=24`:
+`PLAYTEST FAIL: 1 failing check(s) { "beast-behind-stone": 1 }` — confirmed
+byte-identical on `git stash` of unmodified `main`, same run, so pre-existing
+and untouched by this change. Both temporary verification instrumentations
+(a saved-PNG strip and a debug print, both inside local copies of
+`screenshot.gd`) were fully reverted before this push.
+
+Set #33 `status: done` — its own Done-when is measured (the strip, the
+byte-identical locked-camera lines, the regression), not Nick's judgement.
+Full writeup on the ticket's own `## Result`.
+
+## Old: 2026-09-25 09:35 EDT — #0905 investigation, harness bug filed to playtester
 
 ## This run — 2026-09-25 09:35 EDT
 

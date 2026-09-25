@@ -219,6 +219,21 @@ const HUNTER_HEIGHT := 0.7
 const ORBIT_PITCH_MIN := -0.12   # radians below level — never under the floor
 const ORBIT_PITCH_MAX := 1.32    # nearly overhead, but never gimbal-locked
 const ORBIT_SENSITIVITY := 0.006
+## Damping for the DEV free camera only (drag/wheel — see _unhandled_input and
+## _aim_camera's _free_cam_engaged block). Same 1-exp(-delta*k) shape the follow
+## camera already uses on _pivot/_dist; at a real 60fps frame (~0.017s) that's
+## ~63% closed on the first frame and ~99% by five, tens of milliseconds — well
+## under Nick's own "under half a second" (2026-09-25). Tuned this high (not a
+## gentler k~8-25) because this sandbox's own xvfb+software-GL render is far
+## slower than 60fps (~0.1s/frame measured) and screenshot.gd's own 3dfreecam
+## sweep checks each screen spot within a handful of such frames — a gentler
+## constant settles fine in real play but leaves enough of a tail in THIS
+## sandbox that the next spot's check reads a stale drag as "still moving."
+const FREE_CAM_EASE := 60.0
+## Below this remaining gap, snap instead of lerping: an un-snapped exponential
+## never actually reaches its target, and "no drift after the hand comes off"
+## needs the chase to actually stop, not just shrink forever.
+const FREE_CAM_SETTLE := 0.0005
 const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
 ## WASD fly speed, in world units per second per unit of camera distance. Scaled
 ## by distance because a step that reads as a step next to a Crag Pup is a
@@ -466,6 +481,17 @@ var _pivot := Vector3(0, 2.0, 0)
 var _dragging := false
 var _pivot_target := Vector3(0, 2.0, 0)  # where the camera is drifting its aim to
 var _user_framed := false   # the player has dragged/zoomed — stop auto-pitching
+# Dev free camera (drag/wheel/WASD) only — see _unhandled_input, _take_manual_control
+# and _aim_camera. _unhandled_input writes the *_target values; _aim_camera is the
+# only place that actually moves _yaw/_pitch/_dist, chasing the targets with
+# FREE_CAM_EASE so a drag settles instead of snapping. _free_cam_engaged is true only
+# once a drag/wheel/WASD event has fired — it is what tells this apart from
+# _focus_camera's own _user_framed=true (the locked player camera mid-climb), which
+# must keep moving _pitch/_dist directly, unchased, exactly as before.
+var _yaw_target := 0.0
+var _pitch_target := 0.26
+var _free_dist_target := 12.0
+var _free_cam_engaged := false
 var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _circle: HitCircle      # the osu-style timing face, when that setting is on
 var _circle_index := -1     # the hand index whose window the circle is holding open
@@ -1172,6 +1198,20 @@ func _switch_to(slot: int) -> void:
 func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	_pan = Vector3.ZERO
 	_establishing = false
+	# Selecting a hunter always hands framing back to the normal camera, dev
+	# free cam included — so a stale _free_cam_engaged from an earlier drag
+	# can never leak into the climb-focus lock this function sets below (its
+	# own _user_framed = true is NOT a free-cam re-engagement).
+	if _free_cam_engaged:
+		# Finish the dev camera's in-flight chase before handing over, rather
+		# than freezing _yaw/_pitch/_dist wherever the ease happened to be —
+		# a click that interrupts a still-settling drag (e.g. re-selecting a
+		# hunter mid-ease) must land exactly where the drag was headed, the
+		# same place an un-eased drag always landed instantly.
+		_yaw = _yaw_target
+		_pitch = _pitch_target
+		_dist = _free_dist_target
+	_free_cam_engaged = false
 	if _hunters.is_empty() or _cam == null or not is_inside_tree():
 		return
 	if not anyone_off_ground(_hunters):
@@ -2052,7 +2092,9 @@ func _frame_beast() -> void:
 	var window := _window_for(tall * 1.18)
 	_working_dist = _dist_for_window(window)
 	_yaw = 0.0          # a new beast is always introduced from the front
+	_yaw_target = 0.0
 	_user_framed = false
+	_free_cam_engaged = false
 	_lock_slot = _me()
 	_pan = Vector3.ZERO
 	# A new beast is still met WIDE — the establishing shot is the one moment you
@@ -2066,10 +2108,12 @@ func _frame_beast() -> void:
 	# the working shot. You get to see what you've picked a fight with once —
 	# after that, the climb is the subject and the rest of it is off-screen.
 	_dist = _dist_for_window(_window_for(tall * 1.35))
+	_free_dist_target = _dist
 	_establishing = _dist > _working_dist + 0.1
 	_pivot = Vector3(0.0, _ground_pivot(window), 0.0)
 	_pivot_target = _pivot
 	_pitch = 0.24
+	_pitch_target = _pitch
 	_apply_orbit()
 
 
@@ -2357,6 +2401,36 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			# which reads as a floor; near-level keeps the silhouette against the sky,
 			# and a silhouette is what makes something look big.
 			_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, _climb_t)
+	if _free_cam_engaged and _user_framed:
+		# The dev free camera (request 2026-09-25-0956): _unhandled_input above
+		# only moves the *_target values now, so this is the one place that
+		# actually moves _yaw/_pitch/_dist, chasing them with the same damped-
+		# exponential shape _pivot/_dist already use elsewhere. Gated on BOTH
+		# flags, not just _user_framed, so the locked player camera's own
+		# _focus_camera (which also sets _user_framed, for a climbing hunter)
+		# keeps moving _pitch/_dist directly and unchased, exactly as before —
+		# and so a harness reset that clears _user_framed (screenshot.gd's
+		# 3dfreecam sweep) turns this back off too, even before _free_cam_engaged
+		# itself is next cleared.
+		if snap:
+			_yaw = _yaw_target
+			_pitch = _pitch_target
+			_dist = _free_dist_target
+		else:
+			# "No drift after the hand comes off" (the ticket's own words) means
+			# the exponential's tail has to actually END, not just shrink forever
+			# — an un-snapped lerp never reaches its target and leaves a
+			# vanishingly small nudge every single frame after release. Below
+			# FREE_CAM_SETTLE, snap outright: it's a fraction of a degree /
+			# world unit, below anything a player (or a threshold-based check
+			# like screenshot.gd's own FREECAM sweep) can tell apart from zero.
+			var ease := 1.0 - exp(-delta * FREE_CAM_EASE)
+			_yaw = _yaw_target if absf(angle_difference(_yaw, _yaw_target)) < FREE_CAM_SETTLE \
+				else lerp_angle(_yaw, _yaw_target, ease)
+			_pitch = _pitch_target if absf(_pitch_target - _pitch) < FREE_CAM_SETTLE \
+				else lerpf(_pitch, _pitch_target, ease)
+			_dist = _free_dist_target if absf(_free_dist_target - _dist) < FREE_CAM_SETTLE \
+				else lerpf(_dist, _free_dist_target, ease)
 	_apply_orbit()
 
 
@@ -2754,12 +2828,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_panning = mb.pressed
 			MOUSE_BUTTON_WHEEL_UP:
 				_take_manual_control()
-				_dist = maxf(_dist * (1.0 - ZOOM_STEP), 4.0)
-				_apply_orbit()
+				# A target, not _dist itself — _aim_camera chases it every frame
+				# (FREE_CAM_EASE) instead of the step landing all at once.
+				_free_dist_target = maxf(_free_dist_target * (1.0 - ZOOM_STEP), 4.0)
 			MOUSE_BUTTON_WHEEL_DOWN:
 				_take_manual_control()
-				_dist = minf(_dist * (1.0 + ZOOM_STEP), 60.0)
-				_apply_orbit()
+				_free_dist_target = minf(_free_dist_target * (1.0 + ZOOM_STEP), 60.0)
 	elif event is InputEventMouseMotion and (_dragging or _panning):
 		var mm: InputEventMouseMotion = event
 		_take_manual_control()
@@ -2771,17 +2845,39 @@ func _unhandled_input(event: InputEvent) -> void:
 			var k := _dist * PAN_SENSITIVITY
 			_pan -= basis.x * mm.relative.x * k
 			_pan += basis.y * mm.relative.y * k
+			# _pan already eases in — it only ever moves the camera through
+			# _pivot_target, and _aim_camera's own _pivot.lerp(...) chases that
+			# every frame (see below). Nothing more to do here.
 		else:
-			_yaw -= mm.relative.x * ORBIT_SENSITIVITY
-			_pitch += mm.relative.y * ORBIT_SENSITIVITY
-		_apply_orbit()
+			# Targets only. _aim_camera is the one place that actually moves
+			# _yaw/_pitch (FREE_CAM_EASE) — see its own doc comment.
+			_yaw_target -= mm.relative.x * ORBIT_SENSITIVITY
+			_pitch_target += mm.relative.y * ORBIT_SENSITIVITY
 
 
 ## The moment the player touches the camera it stops second-guessing them: no more
 ## auto-pitch, and the opening pull-in gives up rather than dragging them back.
 ## Following the climb keeps working — that's help, not interference.
+##
+## Only ever called from the dev free camera's own input (drag/wheel/WASD below),
+## never from _focus_camera — so _free_cam_engaged is a clean way to tell "Nick is
+## driving the dev camera" apart from "the locked player camera focused a climb,"
+## which also sets _user_framed but must keep moving _pitch/_dist unchased.
 func _take_manual_control() -> void:
+	if not _free_cam_engaged:
+		# Coming from the automatic camera — grounded auto-pitch, the climb/
+		## establishing dist ease, or _focus_camera's own climb lock, all of
+		## which move _pitch/_dist (and clear _free_cam_engaged themselves; see
+		## _focus_camera) without the dev camera's say-so: seed the free-cam
+		## targets from wherever the camera actually is right now, not
+		## wherever they were last left. Without this, engaging (or
+		## re-engaging) the dev camera would start the chase from a stale
+		## target and produce exactly the kind of jump this ticket is about.
+		_yaw_target = _yaw
+		_pitch_target = _pitch
+		_free_dist_target = _dist
 	_user_framed = true
+	_free_cam_engaged = true
 	_establishing = false
 
 
