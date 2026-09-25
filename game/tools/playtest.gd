@@ -676,7 +676,8 @@ func _check(v: Node, when: String) -> void:
 	var route_ok: bool = c != null and hunters is Array and c.boss != null \
 		and climb_points is Dictionary and not (climb_points as Dictionary).is_empty() \
 		and beast_box is AABB
-	var route_top_hold := Vector3.ZERO
+	var route_top_p := Vector3.ZERO   # raw anchor, unshifted -- each hunter's own route_side is applied below
+	var route_box_width := 0.0
 	var route_rungs: Array = []
 	var route_ground_z := 0.0
 	var route_height := 1
@@ -686,9 +687,8 @@ func _check(v: Node, when: String) -> void:
 		var top_h := 0
 		for hk in (climb_points as Dictionary).keys():
 			top_h = maxi(top_h, int(hk))
-		var top_p: Vector3 = v.call("foothold_anchor", climb_points, top_h)
-		var top_x: float = v.call("stand_offset_x", top_p.x, 0.0, box.size.x)
-		route_top_hold = v.call("stone_point", Vector3(top_x, top_p.y, top_p.z))
+		route_top_p = v.call("foothold_anchor", climb_points, top_h)
+		route_box_width = box.size.x
 		for hk2 in (climb_points as Dictionary).keys():
 			if int(hk2) > 0:
 				route_rungs.append(int(hk2))
@@ -729,6 +729,16 @@ func _check(v: Node, when: String) -> void:
 				# hunter actually lands on now, so "expected" has to match --
 				# else this check would measure the hunter against a route the
 				# game no longer walks.
+				#
+				# Fixed per SLOT, not the dynamic sharing-based side the top
+				# branch above still uses: _stand_on_model's own `route_side`
+				# (2026-09-25, "two sets of stones, one set for each character")
+				# is always -1/1 by hunter index for this branch, never 0, so
+				# the expected point has to be computed the same way.
+				var route_side: float = -1.0 if idx == 0 else 1.0
+				var route_top_hold: Vector3 = v.call("stone_point", Vector3(
+					v.call("stand_offset_x", route_top_p.x, route_side, route_box_width),
+					route_top_p.y, route_top_p.z))
 				var expected: Vector3 = v.call("route_pos_cleared", route_top_hold, route_ground_z, i, n, STONE_SWEEP_WIDTH)
 				var miss := home.distance_to(expected)
 				if miss > 0.10:
@@ -830,15 +840,23 @@ func _check(v: Node, when: String) -> void:
 	# for -- see the request this rule came from).
 	if route_ok:
 		var n2 := route_rungs.size()
+		# Side doesn't matter here: route_pos_cleared only ever adds a
+		# constant x offset for a given side (the whole line translates, see
+		# combat_3d.gd's _top_hold), so consecutive-leg DISTANCE -- all this
+		# check measures -- is identical on either hunter's own line. 0.0
+		# (centred) is just a convenient one to compute once.
+		var hop_top_hold: Vector3 = v.call("stone_point", Vector3(
+			v.call("stand_offset_x", route_top_p.x, 0.0, route_box_width),
+			route_top_p.y, route_top_p.z))
 		var pts: Array = []
 		for i in range(n2):
 			if i >= n2 - 1:
-				pts.append(route_top_hold)
+				pts.append(hop_top_hold)
 			else:
 				# route_pos_cleared, same reason as check 8 above: the real
 				# hop legs the hunter animates now start from the chest-cleared
 				# point, not the raw sweep line.
-				pts.append(v.call("route_pos_cleared", route_top_hold, route_ground_z, i, n2, STONE_SWEEP_WIDTH))
+				pts.append(v.call("route_pos_cleared", hop_top_hold, route_ground_z, i, n2, STONE_SWEEP_WIDTH))
 		for i in range(pts.size() - 1):
 			var a3: Vector3 = pts[i]
 			var b3: Vector3 = pts[i + 1]

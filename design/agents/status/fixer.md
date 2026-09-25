@@ -2,23 +2,69 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T12:11
-working_on: "#0405 next (open, to: fixer, next in the director's own order)."
+updated: 2026-09-25T13:00
+working_on: "#14 handed to nick; #19 (camera lock) next if no answer lands first."
 ---
 
 # fixer
 
-## This run — 2026-09-25 12:11 EDT
+## This run — 2026-09-25 13:00 EDT
 
-- **Did:** fixed #34 — Frog hung off its own stone at every hold past the
-  first, worse at foot 7/11 (the director's own repro).
-- **Worked?** Yes. Two real bugs, both fixed: pre-sigil rungs now match
-  their stone; every Height past the weak point lands on the sigil's own
-  stone too. `PLAYTEST OK: 0 failing check(s)`.
-- **Next:** #0405 (hunters face the beast), then #0258 (damage number).
-- **Need from you:** nothing.
+- **Did:** rebuilt the approach stones to exactly 5 per hunter (10 total),
+  two separate lines, per Nick's answer on #14.
+- **Worked?** Yes. Also fixed #36 (playtester's floating-Frog-after-Leap
+  bug) as the same change — closed both.
+- **Next:** handed #14 back to Nick for a look; #19 (camera lock) after.
+- **Need from you:** does the five-stone route match your drawing?
 
 ## Now
+
+Took #14 (`2026-09-24-1835-director-to-fixer-...`), the ticket Nick's own
+10:45/10:51 EDT GitHub answer was sitting on, explicitly ahead of #1142/#30/
+#25 per the ticket's own order.
+
+**Three asks, one change.** `_build_float_stones` no longer drops a
+decorative stone under every `hop_subpoints()` sub-hop landing (the source
+of the old 15-20-stone clutter) — it builds one stone per NAMED climb
+Height (`_rung_count()`, already == `weak_point_height`), twice, once per
+hunter, off a new `route_side` param (`_stand_on_model`, `_top_hold`) fixed
+by hunter slot rather than the existing dynamic "only split when sharing a
+foothold" `side`. Verified stone count live before reverting the print:
+`DEBUG_STONES total=10 n=5`.
+
+**Same fix closed #36.** The playtester's floating-Frog bug (foot 6/8 after
+a multi-height Leap, `hunter-on-stone` reading 0.0%) was the SAME root
+cause: a hunter landing straight on or past the top named rung in one card
+never passed through any sub-hop landing, so no decorative stone ever
+existed at the point it actually settles. One stone per named Height (this
+ticket's own ask, independent of #36) puts a real stone exactly there.
+Fresh `mode=play steps=8`: `hunter-on-stone` 100%/22.2%/22.2% at feet
+2/6/8 (was 0.0% at 6 and 8 before this run). Closed #36 on this same run
+per the director's 12:08 EDT instruction not to fix it twice.
+
+**Proof.** `ALL TESTS PASSED`, no test changes needed (route_pos/
+route_pos_cleared/foothold_anchor are pure and untouched; only their
+callers changed). `playtest.gd`'s own check 8 (hunter-off-marker) updated
+to expect the same per-slot side; check 8c (hop-distance-band) needed no
+change — a per-hunter lateral offset translates the whole line, so
+leg-to-leg distance is unchanged, noted why in its own comment. Fresh
+`--import`, full `mode=play beast=cinder_jackal steps=8`: 0
+`route-reversal`, 0 `hunter-off-marker`, 0 `script-error`.
+
+**One number not clean, not chasing it.** `beast-behind-stone` fired once
+(a small on-body stone near the chest at 18.5%/22.9%) — the same
+correct-by-design category Nick already excused 04:05 EDT, now also
+reachable on hunter 1's own new line. Flagged on #14, not tuning against
+it.
+
+![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-approach.png]]
+![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-at-sigil.png]]
+
+Handed #14 back `to: nick`, `status: open`, per COMMON §5 (its Done-when
+is his look, not a check). Did not start #19 (camera) or #25 (damage
+number) — one thing this run, per the brief.
+
+## Old: 2026-09-25 12:11 EDT — #34, hull-clearance stand-on-stone fix
 
 Took `2026-09-25-1109-director-to-fixer-...` (#34), the sole high-priority
 open `to: fixer` request, explicitly ahead of #0405.
@@ -2606,6 +2652,9 @@ further either.
 
 ## Log
 
+- 2026-09-25 13:00 EDT — #14: rebuilt approach stones to 5 per hunter, two
+  sets, off Nick's answer. Closed #36 (same root cause). Handed #14 back
+  `to: nick`, `status: open`.
 - 2026-09-25 06:29 EDT — #14 (stones across the gap): all four items
   confirmed landed on a fresh re-import/regression (0 route-reversal, 0
   hunter-off-marker, 0 hop-distance-band). Handed back `to: nick`,

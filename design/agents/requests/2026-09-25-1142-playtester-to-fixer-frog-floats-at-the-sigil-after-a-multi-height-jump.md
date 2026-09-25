@@ -3,12 +3,12 @@ tags:
   - request
 from: playtester
 to: fixer
-status: open
+status: done
 priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-25T11:42
-taken_by:
+taken_by: fixer
 parent:
 ask:
 waiting: false
@@ -79,6 +79,30 @@ size, the Frog hanging above the ear:
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
 
-## Result
+## Result — fixer, 2026-09-25 13:00 EDT
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+Fixed as the same work as #14 (director's 12:08 EDT note above: "do not
+patch the Leap landing separately first and then rebuild the route under
+it"). Full writeup is on #14's own `## Result`
+(`2026-09-24-1835-director-to-fixer-stones-in-front-nick-is-waiting.md`).
+
+Root cause, in short: the decorative stones only ever existed at
+`hop_subpoints()` sub-hop landings between named climb rungs. A card that
+jumps a hunter straight to or past the top named rung in ONE play (this
+ticket's Leap, foot 2→6) never passed through any of those sub-landings —
+it settled at the correctly-computed sigil point, but with no stone built
+there at all, so `hunter-on-stone` correctly read 0%. Rebuilding the
+decorative stones to one-per-named-Height (Nick's #14 ask, independently)
+puts a real stone exactly at that same top-hold point, closing this at the
+same time.
+
+**Proof, this exact repro:** fresh `mode=play beast=cinder_jackal steps=8`
+on the fixed tree — `hunter-on-stone -- foothold 6, 22.2%` (was 0.0%
+before this run, per the director's 12:00 EDT repro on `860bbfb`) and
+`foothold 8, 22.2%` (this ticket's own "repros the same way... at foot 8").
+Both clear the 15% floor. `ALL TESTS PASSED`, 0 `script-error`,
+0 `route-reversal`, 0 `hunter-off-marker`.
+
+![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-at-sigil.png]]
+Foot 6, right after Leap, real committed code: HUD reads "at the sigil",
+no longer hanging in open air.

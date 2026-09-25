@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: fixer
+to: nick
 status: open
 priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-24T20:08
-taken_by:
-ask:
+taken_by: fixer
+ask: Five stones per hunter, landing on each -- does this match your drawing?
 waiting: false
 parent: 18
 issue: 14
@@ -624,3 +624,25 @@ since Nick's b0648db, never this ticket's to move) is what makes it read
 big. Flagging rather than guessing which way you want it.
 
 ![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]
+
+## Fixer — 2026-09-25 13:00 EDT: exactly five stones per hunter, two sets, landing on each -- handing back
+
+Nick's 10:45/10:51 EDT answer (relayed above) asked for three things, all landed this run, `combat_3d.gd`/`playtest.gd` only, no route.py/ai_beast.py/model change:
+
+- **One stone per climb space.** `_build_float_stones` no longer drops a decorative stone under every `hop_subpoints()` sub-landing (the source of the "twenty stones" complaint) — it builds exactly one per NAMED climb Height (`_rung_count()`, which already equals `weak_point_height` — 5 on the jackal, read off the beast's own data, so every other beast gets this for free). Verified live: `DEBUG_STONES total=10 n=5` (5 per hunter, printed and removed before this push).
+- **The last stone is at the sigil, and the character lands on each stone, multi-height jumps included.** This is the same bug the playtester's #36 (1142) reported — foot 6/8 after a Leap floating "0.0% stone or beast" under the feet. Root cause: the OLD decorative stones only existed at sub-hop landings between named rungs; a hunter jumping straight to or past the top named rung in one card never got a real stone under the point it actually settles at, only the beast's own (correctly clamped) anchor — the check was right, my stone-count fix was the actual repair. Reproduced BEFORE fixing (console `climb 6` from a clean load, settled home measured, matched the sigil already — so the placement math itself was fine) then confirmed the real gameplay case with a fresh `mode=play steps=8` baseline on the FIXED tree: `hunter-on-stone -- foothold 2, 100.0%`, `foothold 6, 22.2%`, `foothold 8, 22.2%` — both of #36's exact repro feet, all clear of the 15% floor, 0 `script-error`. Closing #36 on this same run per the director's 12:08 EDT note ("do not patch the Leap landing separately first and then rebuild the route under it").
+- **Two sets of stones, one per hunter.** New `route_side` param on `_stand_on_model` (fixed -1.0 for slot 0 / +1.0 for slot 1, separate from the existing dynamic `side` the sigil/ground stance still use) and `_top_hold(side)` now takes the same offset — `_build_float_stones` loops both sides and builds each hunter's own line off its own `_top_hold`. A hunter's actual foot always lands on ITS OWN line's own stone (same `route_pos_cleared` call on both sides), never a shared centre line.
+
+**Proof:** `run_tests.gd` — `ALL TESTS PASSED`, no changes needed (route_pos/route_pos_cleared/foothold_anchor etc. are untouched, pure functions; only their callers changed). Fresh `--import`, full `mode=play beast=cinder_jackal steps=8`: 0 `route-reversal`, 0 `hunter-off-marker` (playtest.gd's own check updated to expect the new per-slot side), 0 `script-error`, `hunter-on-stone` clean at every settled foothold this run. Updated `playtest.gd`'s check 8 to compute the same fixed per-slot side for its own "expected" point (side doesn't change check 8c/hop-distance-band's numbers at all — a lateral offset by a hunter's own side is a uniform translation of the whole line, so leg-to-leg distances are unchanged; left that check computing off the centred line, noted why in its own comment).
+
+**One number NOT clean, and I'm not chasing it:** `beast-behind-stone` fired once this run (stone at 18.5%/22.9%, "want <= 15%"). Looked at the frame (below) — it's a small on-body stone near the chest/shoulder, the same category you already ruled correct-by-design on 04:05 EDT ("a foothold on the body is the picture, not a fault... the check cannot yet tell the two apart"). This is a NEW instance of that same known gap, on hunter 1's own line (unreachable before this run, since there was only one shared line) — not a new kind of bug, and not something to tune against per your own 04:05 call and the playtester's still-open ticket to sharpen that check.
+
+Two 1:1 frames, real committed code, fresh `mode=play` run:
+
+![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-approach.png]]
+Foot 2: two big near-hunter stones in front, two smaller on-body stones by the collar (one under the Frog) — a real staircase, not a smear.
+
+![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-at-sigil.png]]
+Foot 6, right after Leap: HUD reads "at the sigil", `hunter-on-stone` reads 22.2% (was 0.0% before this run) — no longer floating.
+
+Not done here, per this ticket's own order ("Then #19"): the camera framing at the sigil is tight (#19's own ticket) so the Frog reads small in the second frame above — that is the close third-person camera Nick asked for on #19, not a placement bug, and not mine to touch in this ticket.

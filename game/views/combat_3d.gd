@@ -2480,13 +2480,15 @@ func _rung_count() -> int:
 
 
 ## Where the highest rung sits on the body -- the end of the route, and the one
-## hold that is still ON the beast.
-func _top_hold() -> Vector3:
+## hold that is still ON the beast. `side` shifts it the same way
+## stand_offset_x always has (Nick, 2026-09-25: "two sets of stones, one set
+## for each character") -- default 0.0 keeps every existing caller centred.
+func _top_hold(side: float = 0.0) -> Vector3:
 	var top := 0
 	for h in _climb_points.keys():
 		top = maxi(top, int(h))
 	var p: Vector3 = foothold_anchor(_climb_points, top)
-	var x: float = stand_offset_x(p.x, 0.0, _beast_box.size.x)
+	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
 	return stone_point(Vector3(x, p.y, p.z))
 
 
@@ -3417,7 +3419,14 @@ static func stand_needs_hull_clearance(anchors: Dictionary, foot: int) -> bool:
 ## Exactly on a rung when the Height matches one, and between the two that
 ## bracket it otherwise — so a hunter part-way up a long haul is on the line
 ## between the ledge below and the ledge above rather than on a number.
-func _stand_on_model(foot: int, side: float) -> Vector3:
+## `route_side` is the FIXED per-hunter offset for the approach line (Nick,
+## 2026-09-25: "two sets of stones, one set for each character") -- distinct
+## from `side`, which stays the dynamic on-ledge nudge (zero for a lone
+## hunter, only splitting the two apart when they share a foothold) that the
+## sigil/top hold and every other caller of stand_offset_x still use.
+## Defaults to 0.0 (centred, today's behaviour) for callers that don't climb
+## the gap -- the ledge-ring marker below is the one that leans on that.
+func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3:
 	var p: Vector3 = foothold_anchor(_climb_points, foot)
 	# Two hunters on one ledge stand apart rather than inside each other.
 	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
@@ -3456,7 +3465,7 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	# on the line leading there, so the top is what that line is drawn to.
 	if n <= 1 or i >= n - 1:
 		return on_body
-	return route_pos_cleared(_top_hold(), ground_standoff_for(_beast_box.end.z), i, n,
+	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z), i, n,
 		STONE_SWEEP_WIDTH)
 
 
@@ -3827,8 +3836,11 @@ func _place_hunters(s: Dictionary) -> void:
 			pos = Vector3(side * (_beast_box.size.x * 0.06 + 0.5), 0.0,
 				minf(back, _arena_r * 0.86))
 		elif not _climb_points.is_empty():
-			# The model says where its ledges are, so stand on one.
-			pos = _stand_on_model(foot, side)
+			# The model says where its ledges are, so stand on one. Fixed per
+			# slot (not the dynamic `side` above), so a hunter's own approach
+			# line never depends on where the ally happens to be standing --
+			# Nick, 2026-09-25: "two sets of stones, one set for each character".
+			pos = _stand_on_model(foot, side, -1.0 if i == 0 else 1.0)
 		elif t >= 0.92:
 			# at the weak point — stand ON the sigil, the thing the climb was for.
 			# Scaled off the body: a fixed nudge that cleared a 2-unit-deep bear
@@ -3918,7 +3930,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# effort -- only the total climb's own length stops ballooning.
 			var stops: Array[Vector3] = []
 			for wp in way:
-				stops.append(_stand_on_model(int(wp), side))
+				stops.append(_stand_on_model(int(wp), side, -1.0 if i == 0 else 1.0))
 			stops.append(pos)
 			for stop in stops:
 				var subs: Array[Vector3] = hop_subpoints(at, stop, HOP_MAX_LEG)
@@ -4214,209 +4226,172 @@ func _build_float_stones() -> void:
 	_float_stones.clear()
 	if _beast == null:
 		return
-	# Every SUB-HOP LANDING along the whole route, ground to the top hold —
-	# not just the named rungs (#0505, director, 2026-09-25: "the Frog now
-	# crosses the gap in three hops and lands on air twice"). #14/#0420
-	# already split an over-long Height-to-Height leg into several real
-	# hops (hop_subpoints, HOP_MAX_LEG) so the ANIMATION reads as a chain of
-	# jumps; this is the other half named on #14 item 3 from the start --
-	# a stone under every one of those landings, not just the first and
-	# last. Chains the SAME hop_subpoints call `_place_hunters`' climb
-	# branch makes, leg by leg from the hunters' own ground stance (the
-	# `t<=0.01` formula in `_place_hunters`, side=0.0 to match the existing
-	# centred stone line) through every named rung to the top -- one rule,
-	# both places, the same reasoning `_stand_on_model` already leans on.
-	var rungs: Array[int] = []
-	for hh in _climb_points.keys():
-		if int(hh) > 0:
-			rungs.append(int(hh))
-	rungs.sort()
-	var at := Vector3(0.0, 0.0, minf(ground_standoff_for(_beast_box.end.z), _arena_r * 0.86))
-	# RAW (un-pushed) landings -- built from route_pos() directly, the same
-	# straight line _stand_on_model's own "between" branch starts from, not
-	# from _stand_on_model itself. #0802: chaining _stand_on_model here (its
-	# named-rung stops already chest-cleared) and hop_subpoints-lerping the
-	# SUB-hops between two already-pushed endpoints under-cleared any leg
-	# whose rungs straddle chest_clear_push's own kink (t=CHEST_CLEAR_TAPER)
-	# -- a straight chord under a concave curve. Building the raw line first
-	# and pushing every landing by its OWN position (below) matches
-	# chest_clear_push's real shape at every point, not just at the rungs.
-	var top_pt: Vector3 = _top_hold()
+	# One stone per named climb Height, one set per hunter -- Nick,
+	# 2026-09-25: "I would like the amount of stones be the amount of spaces
+	# needed to climb to reach the sigil... try making two sets of stones,
+	# one set for each character." The previous version also dropped a
+	# stone under every hop_subpoints() sub-landing between two named rungs
+	# (#0505, so a long leg's animation never touched open air mid-flight),
+	# which put 15-20 stones on this beast (5 Heights, several sub-hops
+	# each) against his drawing's five. hop_subpoints still splits a long
+	# leg into several real hops for _place_hunters' own animation,
+	# unchanged -- only the DECORATIVE footing goes back to one per Height,
+	# matching what he actually asked to see. `route_pos_cleared` is the
+	# SAME call `_stand_on_model`'s `route_side` branch makes for a hunter's
+	# real foot at this same rung and side, so a hunter always lands
+	# exactly on its own line's own stone, top hold included (t=1 there is
+	# `top_pt` itself, already `_top_hold(side)` -- no separate case needed).
 	var ground_z: float = ground_standoff_for(_beast_box.end.z)
 	var n := _rung_count()
-	var landings: Array[Vector3] = []
-	# Where the SWEEP itself begins -- rung 1's own raw stop (route_pos's
-	# t=0). Everything before it is the ground->rung-1 leg, on a different
-	# line entirely (never measured as occluding, see check 8's own numbers)
-	# and left out of the push below on purpose.
-	var sweep_from_index := 0
-	for h in rungs:
-		var stop: Vector3 = route_pos(top_pt, ground_z, _rung_index(int(h)), n, STONE_SWEEP_WIDTH)
-		for sub in hop_subpoints(at, stop, HOP_MAX_LEG):
-			landings.append(sub)
-		if h == rungs[0]:
-			sweep_from_index = landings.size() - 1
-		at = stop
-	# The sweep's own near end, recomputed the same way route_pos builds it
-	# internally -- needed here only to recover how far along that line
-	# (t, 0..1) a given landing already sits (chest_clear_push's own domain).
-	var sweep_start_pt := Vector3(top_pt.x - STONE_SWEEP_WIDTH, HUNTER_HEIGHT * 1.6,
-		ground_z - HUNTER_HEIGHT * 6.0)
-	for index in range(landings.size()):
-		# A wrapper, not a mesh directly, so the bob/spin in _process (which
-		# reads/writes `st.position`/`st.rotation.y` by array index — see the
-		# loop over `_float_stones` above) still moves the whole shelf as one
-		# rigid piece, while the flat cap and rim below stay level and don't
-		# inherit the boulder's own random tilt/squash (see BODY below).
-		var stone := Node3D.new()
-		var pos: Vector3 = landings[index]
-		# #0802 (director): apply chest_clear_push to THIS landing's own t,
-		# not the two rung endpoints either side of it (see the comment
-		# above) -- every stone here keeps the FULL clearing push, at
-		# whatever t it actually sits at. Only the first rung's landing
-		# (index == sweep_from_index, exactly where route_pos_cleared also
-		# pushes the hunter's own foot -- see that function's own doc
-		# comment for why not every rung) matches the hunter's real
-		# position; every stone past it is decorative-only again, same as
-		# #0658 shipped, so the beast still reads clean from here to the
-		# sigil.
-		var is_top_hold: bool = index == landings.size() - 1
-		if index >= sweep_from_index and not is_top_hold \
-				and not is_equal_approx(top_pt.y, sweep_start_pt.y):
-			var t: float = clampf((pos.y - sweep_start_pt.y) / (top_pt.y - sweep_start_pt.y), 0.0, 1.0)
-			var push: float = chest_clear_push(t)
-			if push > 0.0:
-				pos.x += signf(sweep_start_pt.x - top_pt.x) * push
-		stone.position = pos
-		_rig.add_child(stone)
+	for side in [-1.0, 1.0]:
+		var top_pt: Vector3 = _top_hold(side)
+		for index in range(n):
+			var pos: Vector3 = route_pos_cleared(top_pt, ground_z, index, n, STONE_SWEEP_WIDTH)
+			_add_float_stone(pos, index, n)
 
-		# BODY: an irregular convex-hull rock (FOOTHOLD_ROCK, the artist's
-		# asset, #17: "the current sphere reads as a pot; this reads as
-		# rock" — replaces the old SphereMesh, which is why this stayed a
-		# `MeshInstance3D` far longer than it needed to). The CAP below is
-		# unaffected — it stays a true flat, standable plane regardless of
-		# the body under it.
-		#
-		# Sized off the HUNTER — it is a place a person stands, so it must
-		# stay the same size under a Crag Pup and a Titan. About three
-		# hunters wide at the near end (Nick, 2026-09-23 — "make the stones
-		# bigger"), as tall as it is wide (#16: "a teacup and a saucer" was
-		# the old squashed-sphere complaint). #0505: "big near the Frog,
-		# smaller as they recede -- the drawing's path" -- shrinks toward
-		# the beast, landing by landing, not a flat size for every stone.
-		var recede: float = float(index) / float(maxi(landings.size() - 1, 1))
-		var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
-		var rock_height := rock_radius * 2.0
-		# Sunk enough that the CAP below (not the bare rock) is what a
-		# hunter visually lands on, with no gap between the two.
-		var cap_height := HUNTER_HEIGHT * 0.22
-		var body := (FOOTHOLD_ROCK as PackedScene).instantiate()
-		# The mesh's own origin is at its base centre (this project's usual
-		# contract), not centred like the old SphereMesh — its flat top
-		# (the landing face) sits at local height ~1.74 before scale
-		# (design/progress/foothold_rock.md, pass 2). Scale to the target
-		# diameter/height off that native size, then sit the base low
-		# enough that the scaled top reaches the underside of the cap.
-		var body_scale: float = (rock_radius * 2.0) / 1.74
-		body.position = Vector3(0.0, cap_height * 0.5 - rock_height, 0.0)
-		body.scale = Vector3.ONE * body_scale
-		# Y-axis spin only (no per-instance tilt/squash, unlike the old
-		# sphere): a hull mesh's irregular shape already reads as a
-		# different rock at each facet a spin lands on, and the artist's
-		# own handoff dropped tilt/squash on purpose — tuned for a sphere,
-		# it would distort this mesh's shape unpredictably.
-		body.rotation.y = randf_range(0.0, TAU)
-		stone.add_child(body)
-		# Geometry only — no colour/texture of its own (foothold_rock.md) —
-		# so the #12 palette and the ROCK_DETAIL multiply below still apply
-		# exactly as they did to the old sphere, via whichever MeshInstance3D
-		# the imported scene actually holds.
-		var body_mesh: MeshInstance3D = body as MeshInstance3D
-		if body_mesh == null:
-			var found := body.find_children("*", "MeshInstance3D", true, false)
-			if not found.is_empty():
-				body_mesh = found[0] as MeshInstance3D
-		var body_mat := StandardMaterial3D.new()
-		# Was BROWN basalt — matched the fight's old warm UMBER ground and
-		# beast so closely it disappeared into both (Nick, 2026-09-24, #12:
-		# "basalt brown against brown ground... the stones are pale, nearly
-		# white... they are the brightest thing in the picture after the
-		# beast's own heat"). Now a pale warm-neutral grey sampled off his
-		# reference (design/art/references/2026-09-24-nick-target-
-		# composition.webp, the stepping-stones: ~(174,171,165)), pushed a
-		# touch paler still since this is the body, not the lit cap below.
-		# Small per-stone jitter so a run of stones at neighbouring heights
-		# doesn't read as the same clone.
-		var tint := randf_range(-0.05, 0.05)
-		body_mat.albedo_color = Color(0.72 + tint, 0.70 + tint, 0.65 + tint)
-		# Generated faceted-rock multiply (ROCK_DETAIL, a toroidal Voronoi
-		# grayscale) so the stone reads as cut rock instead of one flat
-		# colour — "footholds are plain basalt" (artist.md item 1). Every
-		# stone shares the one texture; the per-stone spin above already
-		# turns it to a different facet each time, so they still don't read
-		# as clones.
-		body_mat.albedo_texture = ROCK_DETAIL
-		body_mat.roughness = 1.0
-		if body_mesh != null:
-			body_mesh.material_override = body_mat
 
-		# CAP: the flat top face the playtester's request asked for
-		# (`2026-09-23-1846-...make-ledges-read-as-shelves`). A round boulder
-		# alone reads as a loose rock you jump ONTO; a flat plane sitting on
-		# top reads as a surface you stand ON, from Breath of the Wild's own
-		# cue for "this is footing" (the request's named reference). Left
-		# level (no random tilt) so it always reads as a true horizontal
-		# shelf no matter how the body under it is squashed/rotated, and its
-		# top face sits exactly at the local origin — the same anchor
-		# `_stand_on_model` puts the hunter's feet at.
-		var cap := MeshInstance3D.new()
-		var cap_mesh := CylinderMesh.new()
-		cap_mesh.top_radius = rock_radius * 0.92
-		cap_mesh.bottom_radius = rock_radius * 1.05
-		cap_mesh.height = cap_height
-		cap_mesh.radial_segments = 8
-		cap.mesh = cap_mesh
-		var cap_mat := StandardMaterial3D.new()
-		# Nearly white — was a warm sandstone tan, lighter than the body
-		# under it but still close enough to the fight's old orange-brown
-		# family to blend in (Nick, 2026-09-24, #12). Pushed paler than the
-		# body above so the worn top face, the part a foot actually lands
-		# on, is unmistakably the lightest thing on screen after the beast's
-		# own glow, per the request's own "Done when": readable as the
-		# lightest thing at a glance, even at the wide shot's distance.
-		var cap_tint := randf_range(-0.04, 0.04)
-		cap_mat.albedo_color = Color(0.88 + cap_tint, 0.86 + cap_tint, 0.82 + cap_tint * 0.7)
-		cap_mat.albedo_texture = ROCK_DETAIL
-		cap_mat.roughness = 0.75   # a touch less rough than the raw body: worn, not raw rock
-		cap.material_override = cap_mat
-		cap.position = Vector3(0.0, -cap_height * 0.5, 0.0)
-		cap.rotation.y = randf_range(0.0, TAU)
-		stone.add_child(cap)
+## One decorative rock+cap+rim at `pos`, sized by how far along its own route
+## (`index` of `count`) it sits -- big near the hunter, smaller toward the
+## beast (Nick, 2026-09-24, with a drawing). Pulled out of _build_float_stones
+## so building one hunter's line and then the other's is one call each, not a
+## duplicated block.
+func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
+	# A wrapper, not a mesh directly, so the bob/spin in _process (which
+	# reads/writes `st.position`/`st.rotation.y` by array index — see the
+	# loop over `_float_stones` above) still moves the whole shelf as one
+	# rigid piece, while the flat cap and rim below stay level and don't
+	# inherit the boulder's own random tilt/squash (see BODY below).
+	var stone := Node3D.new()
+	stone.position = pos
+	_rig.add_child(stone)
 
-		# RIM: a thin warm edge along the cap's lip. This is the "rim
-		# light or edge highlight" the request asked for — unshaded so it
-		# reads the same regardless of which way the key light is falling,
-		# and it is what actually carries the shelf's silhouette at the
-		# distance/size of the wide shot, where the cap/body colour
-		# difference alone gets small on screen.
-		var rim := MeshInstance3D.new()
-		var rim_mesh := TorusMesh.new()
-		rim_mesh.inner_radius = cap_mesh.top_radius * 0.86
-		rim_mesh.outer_radius = cap_mesh.top_radius * 1.02
-		rim_mesh.rings = 24
-		rim_mesh.ring_segments = 5
-		rim.mesh = rim_mesh
-		var rim_mat := StandardMaterial3D.new()
-		rim_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		rim_mat.albedo_color = Color(0.95, 0.55, 0.18, 0.9)   # warm ember edge, matches this fight's palette
-		rim_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		rim.material_override = rim_mat
-		rim.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		rim.position = Vector3(0.0, -0.005, 0.0)   # just under the cap's own top face, at its edge
-		stone.add_child(rim)
+	# BODY: an irregular convex-hull rock (FOOTHOLD_ROCK, the artist's
+	# asset, #17: "the current sphere reads as a pot; this reads as
+	# rock" — replaces the old SphereMesh, which is why this stayed a
+	# `MeshInstance3D` far longer than it needed to). The CAP below is
+	# unaffected — it stays a true flat, standable plane regardless of
+	# the body under it.
+	#
+	# Sized off the HUNTER — it is a place a person stands, so it must
+	# stay the same size under a Crag Pup and a Titan. About three
+	# hunters wide at the near end (Nick, 2026-09-23 — "make the stones
+	# bigger"), as tall as it is wide (#16: "a teacup and a saucer" was
+	# the old squashed-sphere complaint). #0505: "big near the Frog,
+	# smaller as they recede -- the drawing's path" -- shrinks toward
+	# the beast, landing by landing, not a flat size for every stone.
+	var recede: float = float(index) / float(maxi(count - 1, 1))
+	var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
+	var rock_height := rock_radius * 2.0
+	# Sunk enough that the CAP below (not the bare rock) is what a
+	# hunter visually lands on, with no gap between the two.
+	var cap_height := HUNTER_HEIGHT * 0.22
+	var body := (FOOTHOLD_ROCK as PackedScene).instantiate()
+	# The mesh's own origin is at its base centre (this project's usual
+	# contract), not centred like the old SphereMesh — its flat top
+	# (the landing face) sits at local height ~1.74 before scale
+	# (design/progress/foothold_rock.md, pass 2). Scale to the target
+	# diameter/height off that native size, then sit the base low
+	# enough that the scaled top reaches the underside of the cap.
+	var body_scale: float = (rock_radius * 2.0) / 1.74
+	body.position = Vector3(0.0, cap_height * 0.5 - rock_height, 0.0)
+	body.scale = Vector3.ONE * body_scale
+	# Y-axis spin only (no per-instance tilt/squash, unlike the old
+	# sphere): a hull mesh's irregular shape already reads as a
+	# different rock at each facet a spin lands on, and the artist's
+	# own handoff dropped tilt/squash on purpose — tuned for a sphere,
+	# it would distort this mesh's shape unpredictably.
+	body.rotation.y = randf_range(0.0, TAU)
+	stone.add_child(body)
+	# Geometry only — no colour/texture of its own (foothold_rock.md) —
+	# so the #12 palette and the ROCK_DETAIL multiply below still apply
+	# exactly as they did to the old sphere, via whichever MeshInstance3D
+	# the imported scene actually holds.
+	var body_mesh: MeshInstance3D = body as MeshInstance3D
+	if body_mesh == null:
+		var found := body.find_children("*", "MeshInstance3D", true, false)
+		if not found.is_empty():
+			body_mesh = found[0] as MeshInstance3D
+	var body_mat := StandardMaterial3D.new()
+	# Was BROWN basalt — matched the fight's old warm UMBER ground and
+	# beast so closely it disappeared into both (Nick, 2026-09-24, #12:
+	# "basalt brown against brown ground... the stones are pale, nearly
+	# white... they are the brightest thing in the picture after the
+	# beast's own heat"). Now a pale warm-neutral grey sampled off his
+	# reference (design/art/references/2026-09-24-nick-target-
+	# composition.webp, the stepping-stones: ~(174,171,165)), pushed a
+	# touch paler still since this is the body, not the lit cap below.
+	# Small per-stone jitter so a run of stones at neighbouring heights
+	# doesn't read as the same clone.
+	var tint := randf_range(-0.05, 0.05)
+	body_mat.albedo_color = Color(0.72 + tint, 0.70 + tint, 0.65 + tint)
+	# Generated faceted-rock multiply (ROCK_DETAIL, a toroidal Voronoi
+	# grayscale) so the stone reads as cut rock instead of one flat
+	# colour — "footholds are plain basalt" (artist.md item 1). Every
+	# stone shares the one texture; the per-stone spin above already
+	# turns it to a different facet each time, so they still don't read
+	# as clones.
+	body_mat.albedo_texture = ROCK_DETAIL
+	body_mat.roughness = 1.0
+	if body_mesh != null:
+		body_mesh.material_override = body_mat
 
-		_float_stones.append(stone)
-		_float_home.append(stone.position)
+	# CAP: the flat top face the playtester's request asked for
+	# (`2026-09-23-1846-...make-ledges-read-as-shelves`). A round boulder
+	# alone reads as a loose rock you jump ONTO; a flat plane sitting on
+	# top reads as a surface you stand ON, from Breath of the Wild's own
+	# cue for "this is footing" (the request's named reference). Left
+	# level (no random tilt) so it always reads as a true horizontal
+	# shelf no matter how the body under it is squashed/rotated, and its
+	# top face sits exactly at the local origin — the same anchor
+	# `_stand_on_model` puts the hunter's feet at.
+	var cap := MeshInstance3D.new()
+	var cap_mesh := CylinderMesh.new()
+	cap_mesh.top_radius = rock_radius * 0.92
+	cap_mesh.bottom_radius = rock_radius * 1.05
+	cap_mesh.height = cap_height
+	cap_mesh.radial_segments = 8
+	cap.mesh = cap_mesh
+	var cap_mat := StandardMaterial3D.new()
+	# Nearly white — was a warm sandstone tan, lighter than the body
+	# under it but still close enough to the fight's old orange-brown
+	# family to blend in (Nick, 2026-09-24, #12). Pushed paler than the
+	# body above so the worn top face, the part a foot actually lands
+	# on, is unmistakably the lightest thing on screen after the beast's
+	# own glow, per the request's own "Done when": readable as the
+	# lightest thing at a glance, even at the wide shot's distance.
+	var cap_tint := randf_range(-0.04, 0.04)
+	cap_mat.albedo_color = Color(0.88 + cap_tint, 0.86 + cap_tint, 0.82 + cap_tint * 0.7)
+	cap_mat.albedo_texture = ROCK_DETAIL
+	cap_mat.roughness = 0.75   # a touch less rough than the raw body: worn, not raw rock
+	cap.material_override = cap_mat
+	cap.position = Vector3(0.0, -cap_height * 0.5, 0.0)
+	cap.rotation.y = randf_range(0.0, TAU)
+	stone.add_child(cap)
+
+	# RIM: a thin warm edge along the cap's lip. This is the "rim
+	# light or edge highlight" the request asked for — unshaded so it
+	# reads the same regardless of which way the key light is falling,
+	# and it is what actually carries the shelf's silhouette at the
+	# distance/size of the wide shot, where the cap/body colour
+	# difference alone gets small on screen.
+	var rim := MeshInstance3D.new()
+	var rim_mesh := TorusMesh.new()
+	rim_mesh.inner_radius = cap_mesh.top_radius * 0.86
+	rim_mesh.outer_radius = cap_mesh.top_radius * 1.02
+	rim_mesh.rings = 24
+	rim_mesh.ring_segments = 5
+	rim.mesh = rim_mesh
+	var rim_mat := StandardMaterial3D.new()
+	rim_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	rim_mat.albedo_color = Color(0.95, 0.55, 0.18, 0.9)   # warm ember edge, matches this fight's palette
+	rim_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	rim.material_override = rim_mat
+	rim.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	rim.position = Vector3(0.0, -0.005, 0.0)   # just under the cap's own top face, at its edge
+	stone.add_child(rim)
+
+	_float_stones.append(stone)
+	_float_home.append(stone.position)
 
 
 func _build_ledge_marks() -> void:
