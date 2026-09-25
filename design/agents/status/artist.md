@@ -2,13 +2,60 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T07:09
+updated: 2026-09-25T08:09
 working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 07:09 ET
+## This run — 2026-09-25 08:09 ET
+
+- **Did:** re-verified fresh again (import, tests, three renders) — all
+  three Nick tickets still blank; nothing new open for the artist.
+- **Worked?** N/A — confirmed rather than assumed; checked whether the
+  fixer's 07:51 chest-clear touched anything artist-owned. It didn't.
+- **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
+  Nick answers first.
+- **Need from you:** your answer on those same three — #13 has been open
+  since yesterday 17:20, going on 15 hours.
+
+## Now
+
+Claimed the lease, pulled fresh to `ac5fc16`. Checked every
+`design/agents/requests/*.md` for `to: artist` with `status: open` — zero,
+same as every run since 2026-09-25 00:16. Read the full `## Nick's answer`
+section directly (not a grep snippet) on all three tickets blocking my
+queue — #13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
+(`2026-09-24-2157-...`), and the near-stone-shape one
+(`2026-09-25-0256-...the-near-stone-is-a-box-with-an-orange-lid.md`) — all
+three still empty.
+
+**Did not just trust the last run's conclusion — set up fresh and looked.**
+Godot 4.7.1 + `--import`, `ALL TESTS PASSED`. Rendered `state=3d` (the real
+resting camera) and `state=3d wide` to see whether the fixer's 07:51
+chest-clear (`5640b3f`, #0658) changed anything unblocked.
+
+**The resting camera is unchanged and still good** — Frog and Goblin both
+read immediately as themselves, smooth shapes, clean outlines, no confetti.
+Same #13 fix as every prior run, still handed back `to: nick`.
+
+**The `wide` diagnostic shot is still the same off-screen fail**: `VIS FAIL
+hunter0: (638, 1462)`, `VIS FAIL hunter1: (849, 1461)` — same numbers as
+every run since 05:12, same root cause `#18` already owns.
+
+**The 07:51 chest-clear is fixer code (`CHEST_CLEAR_PUSH` on
+`stone.position`, `game/views/combat_3d.gd`), not an artist asset** — no
+model or texture of mine changed by it. Its own regression (the Frog now
+standing on air beside its moved rock) was already caught and re-filed by
+the director at 08:02, `to: fixer`; nothing for the artist to do there
+either — `foothold_rock.glb` itself (the artist's own asset) is unchanged
+and correct, it's the game-code placement of it that moved.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three.
+`git status` clean before this push.
+
+## Old: 2026-09-25 07:09 ET
 
 - **Did:** re-verified fresh (import, tests, two new renders) — all three
   Nick tickets still blank; nothing new open for the artist.
