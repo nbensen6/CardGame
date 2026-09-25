@@ -56,7 +56,25 @@ else is a question he will never be shown and you will sit blocked waiting for
 a reply he does not know you want (Nick, 2026-09-24).
 
 One question per request, with `ask:` filled in — that sentence IS the row he
-sees. Give him the options and your recommendation; he answers in a line.
+sees, on a phone, among several others.
+
+**`ask:` rules, and they are hard** (Nick, 2026-09-25: "it's really difficult
+to tell what they are asking of me"):
+
+- **One question. Fifteen words or fewer.**
+- **No parentheses, no asides, no caveats.** If it needs a caveat it is two
+  questions; file one and leave the other.
+- **No recommendation in the `ask:`.** "(my pick)" belongs in the body.
+- It must be answerable by someone who has not read the ticket.
+
+      GOOD  ask: Plain rounded boulders, or keep the flat top and orange rim?
+      BAD   ask: The big near stone reads as a pale box with an orange lid, but
+            your drawing has plain rounded boulders — plain boulders, or keep
+            the flat top and orange rim as a "you can stand here" cue?
+
+Put the reasoning, the options and your recommendation in the body, under a
+`## What I need` heading. He opens the ticket only if the one-line question
+needs more than a yes or a no.
 
 **When he answers, clear it.** Take the request the way you take any other:
 `status: taken`, `taken_by: <you>`, and set `to:` back to yourself. That is

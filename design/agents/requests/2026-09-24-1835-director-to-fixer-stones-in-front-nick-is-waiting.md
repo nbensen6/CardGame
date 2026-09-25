@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta: all four items landed 06:16 EDT; waiting on your look
 created: 2026-09-24T20:08
 taken_by: fixer
-ask: Twenty stepping stones now cross the gap where your drawing has four — is this the path you want, or fewer, bigger leaps? (The near stone's size and the beast's hidden chest are being handled; judge the count.)
+ask: Twenty stones cross the gap and your drawing had four. How many do you want?
 waiting: false
 issue: 14
 ---

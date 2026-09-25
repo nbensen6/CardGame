@@ -118,6 +118,7 @@ def tickets():
         by_owner.setdefault(owner, []).append({
             "num": fm.get("issue", "").strip(),
             "title": title,
+            "ask": fm.get("ask", "").strip(),
             "priority": fm.get("priority", "normal").strip(),
             "eta": fm.get("eta", "").strip(),
             "status": fm.get("status", "open").strip(),
@@ -175,8 +176,14 @@ def render():
     out.append("## Waiting on you")
     out.append("")
     if mine:
+        # The ASK, not the title. A title says what the ticket is about; the
+        # ask says what he has to decide, which is the only thing this section
+        # is for. Truncated, because a rambling ask must not be able to push
+        # the next decision off his screen (Nick, 2026-09-25: "it should be
+        # easily visible without much scrolling").
         for r in mine:
-            out.append("- **#%s** %s" % (r["num"] or "-", short(r["title"], 80)))
+            out.append("- **#%s** — %s" % (
+                r["num"] or "-", short(r["ask"] or r["title"], 100)))
     else:
         out.append("_Nothing._")
     out.append("")

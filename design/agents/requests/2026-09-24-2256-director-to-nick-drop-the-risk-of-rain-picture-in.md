@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta:
 created: 2026-09-24T22:56
 taken_by:
-ask: Please drop the Risk of Rain 2 camera picture you sent at 22:30 into design/art/references so the fixer can render beside it.
+ask: Add your Risk of Rain 2 camera picture to the repo so agents can use it.
 waiting: false
 issue: 22
 ---

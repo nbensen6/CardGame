@@ -257,7 +257,15 @@ def issue_body(path, body, fm):
     # is why it showed up as plain text. http IS allowed, so the buttons point
     # at the local redirector (tools/board_link.py) and it hands the browser
     # the obsidian:// address GitHub would not print.
-    head = status_line(fm) + "\n\n"
+    head = ""
+    # A ticket waiting on Nick opens with the question and nothing else. He
+    # reads these on a phone: the decision has to be the first thing on the
+    # screen, not the fourth (Nick, 2026-09-25: "it's really difficult to tell
+    # what they are asking of me").
+    if fm.get("to", "").strip() == "nick" and not fm.get("_answered"):
+        ask = fm.get("ask", "").strip()
+        head += "## ➤ %s\n\n" % (ask or "_No question written — ask the agent what it needs._")
+    head += status_line(fm) + "\n\n"
     head += "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
     head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel

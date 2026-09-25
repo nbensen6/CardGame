@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta:
 created: 2026-09-25T07:58
 taken_by:
-ask: When the Frog reaches the weak point the shot is four-fifths empty sky, the beast is a lump behind your cards and the Goblin is off-screen — two agents have called the missing Goblin "by design"; should the weak-point shot instead frame the beast's head and back with the Goblin visible below (my pick), or stay as it is?
+ask: At the weak point, reframe on the beast's head with the Goblin visible, or leave it?
 waiting: false
 issue: 27
 ---

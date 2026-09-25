@@ -12,8 +12,8 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|
 | **director** | idle | the fight is better: the Frog lands on stones again in play; the grip shot everyone … | fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on … | #18 |
 | **artist** | idle | re-verified fresh again (import, tests, two renders) — all three Nick tickets still … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
-| **playtester** | idle | rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff, not a projected … | apply the same primitive to `beast-behind-stone`'s chest stone (`0257`, folded into this … | #? #? |
-| **fixer** | 🟢 running | fixed #0658 — the approach stones' straight sweep stood in front of the beast's chest and … | #0258 (damage number on the Frog) or #0405 (hunters side-on), both open, both older than … | #14 #19 #? #? #? #? |
+| **playtester** | idle | rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff, not a projected … | apply the same primitive to `beast-behind-stone`'s chest stone (`0257`, folded into this … | #24 #29 |
+| **fixer** | 🟢 running | fixed #0658 — the approach stones' straight sweep stood in front of the beast's chest and … | #0258 (damage number on the Frog) or #0405 (hunters side-on), both open, both older than … | #14 #19 #25 #26 #28 #30 |
 
 ## Tickets
 
@@ -21,25 +21,25 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|---|
 | #18 | director | high | gap+stones 3-4 fixer runs, camera after, characters with the artist | taken | Own these three to completion. Chase them every run until I … |
 | #13 | artist | high | tonight: 1-2 runs | open | The hunters are photoreal models rendered at 40 pixels. … |
-| #- | playtester | normal | — | open | The tree moved under your occlusion check: the near stone … |
-| #- | playtester | high | — | open | No check says whether the hunter is standing on a stone — … |
+| #24 | playtester | normal | — | open | The tree moved under your occlusion check: the near stone … |
+| #29 | playtester | high | — | open | No check says whether the hunter is standing on a stone — … |
 | #14 | fixer | high | all four items landed 06:16 EDT; waiting on your look | open | Open the gap between the hunters and the jackal, then lay … |
 | #19 | fixer | high | done, pending your look | open | Lock the camera third-person behind the hunter, in EVERY … |
-| #- | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
-| #- | fixer | normal | — | open | At rest the Frog stands side-on, looking off the right edge … |
-| #- | fixer | high | next run | taken | The chest is clear, but the Frog now stands on air beside … |
-| #- | fixer | high | this run | taken | After a fall the Frog hangs in the air beside an empty … |
+| #25 | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
+| #26 | fixer | normal | — | open | At rest the Frog stands side-on, looking off the right edge … |
+| #28 | fixer | high | next run | taken | The chest is clear, but the Frog now stands on air beside … |
+| #30 | fixer | high | this run | taken | After a fall the Frog hangs in the air beside an empty … |
 | #21 | nick | normal | — | open | The jackal was re-cut to half its geometry this evening — … |
-| #- | nick | normal | — | open | Drop your Risk of Rain 2 camera picture into the references … |
-| #- | nick | normal | — | open | The near stone is a box with an orange lid; your drawing … |
-| #- | nick | normal | — | open | At the weak point the shot is sky, the beast is behind the … |
+| #22 | nick | normal | — | open | Drop your Risk of Rain 2 camera picture into the references … |
+| #23 | nick | normal | — | open | The near stone is a box with an orange lid; your drawing … |
+| #27 | nick | normal | — | open | At the weak point the shot is sky, the beast is behind the … |
 
 ## Waiting on you
 
-- **#21** The jackal was re-cut to half its geometry this evening — keep it, or put the …
-- **#-** Drop your Risk of Rain 2 camera picture into the references folder
-- **#-** The near stone is a box with an orange lid; your drawing has plain boulders
-- **#-** At the weak point the shot is sky, the beast is behind the cards, and the …
+- **#21** — Keep the jackal at half geometry, or go back to the smooth one?
+- **#22** — Add your Risk of Rain 2 camera picture to the repo so agents can use it.
+- **#23** — Plain rounded boulders, or keep the flat top and orange rim?
+- **#27** — At the weak point, reframe on the beast's head with the Goblin visible, or leave it?
 
 ## Last run, in their own words
 

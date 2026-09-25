@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta:
 created: 2026-09-24T21:57
 taken_by:
-ask: The artist re-cut the jackal to half its geometry this evening (it looks more faceted up close) — keep it, or go back to the smooth one?
+ask: Keep the jackal at half geometry, or go back to the smooth one?
 waiting: false
 issue: 21
 synced_comment: 5825707284

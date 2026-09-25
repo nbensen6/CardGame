@@ -10,7 +10,7 @@ beast: cinder_jackal
 eta: tonight: 1-2 runs
 created: 2026-09-24T17:20
 taken_by: artist
-ask: Both the Frog and the Goblin are smooth now, matched to each other, at fight size — is this the "smooth character model" you wanted for the cast?
+ask: Are the Frog and Goblin good enough at fight size?
 waiting: false
 issue: 13
 ---

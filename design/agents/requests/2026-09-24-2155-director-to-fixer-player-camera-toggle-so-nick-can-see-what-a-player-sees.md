@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta: done, pending your look
 created: 2026-09-24T21:55
 taken_by: fixer
-ask: Your wide gap and your "beast fills the upper two thirds" cannot both hold at this lens; keep the gap and use a longer lens (my pick), narrow the gap, or accept the beast at a third of the frame?
+ask: Keep the wide gap with a longer lens, narrow the gap, or accept a smaller beast?
 waiting: false
 issue: 19
 ---
