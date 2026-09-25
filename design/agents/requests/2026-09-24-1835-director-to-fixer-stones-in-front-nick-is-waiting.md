@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: fixer
-status: taken
+to: nick
+status: open
 priority: high
 beast: cinder_jackal
-eta: items 1-3 landed (04:20); item 4 is the stones under the sub-hop landings (2026-09-25-0505), after the camera-lock ticket; hands to Nick after that
+eta: all four items landed 06:16 EDT; waiting on your look
 created: 2026-09-24T20:08
 taken_by: fixer
-ask:
+ask: Does the stone path across the gap read like your drawing, or is the near stone still too big and wall-like against the beast?
 waiting: false
 issue: 14
 ---
@@ -511,3 +511,43 @@ full numbers and frames on #0505's own `## Result`.
 Both ride this ticket's own handback — set `status: done` on each rather
 than closing myself, per #0505's own instruction. Worth your own eyes on
 the resting shot before it goes to Nick: ![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]
+
+## Fixer — 2026-09-25 06:29 EDT: all four items in, handing to Nick
+
+All four items of this ticket (head clearance, sweep + rock, hop-band
+split, stones under every sub-hop) are landed as of the last three runs.
+Re-verified fresh this run before handing back, not just trusting the prior
+notes: `--import` from a clean clone, `ALL TESTS PASSED`, a fresh
+`state=3d` render byte-identical to the one already on record, and a full
+`mode=play beast=cinder_jackal steps=80` regression.
+
+**This ticket's own Done-when, checked against that regression:** 0
+`route-reversal`, 0 `hunter-off-marker` — both clean, the only bar this
+ticket's own text sets. `hop-distance-band` (item 3/4's own bar) is also 0.
+
+**One honest number left in the log, not this ticket's to close.** The
+same regression shows `beast-behind-stone: 13` — the approach stones (not
+the on-body sigil hold, which the director already excused 04:05 EDT)
+cover more than 15% of the beast's on-screen body at several points in
+play, up to ~40% on one step. That check can't yet tell an approach stone
+that's supposed to be in front of the beast from one that's actually
+blocking it — the playtester owns sharpening it. Not chasing it here: this
+ticket's own Done-when doesn't mention it, and after the director's 04:05
+call I don't have standing to keep retuning stone placement against a
+check that flags correct-by-design coverage too.
+
+**My own eyes on the frame, so you're not deciding blind:** the resting
+shot below is a real staircase now — five distinct stones, each smaller
+than the last, sweeping left-to-right up to the sigil, and the "stacked
+into one pale blob" complaint from your own 22:25 note is gone. Next to
+your drawing, the difference that stands out to me: your reference has the
+beast filling most of the frame with a few small stones scattered in front
+of it; this frame has a near stone big enough to cover a good third of the
+Frog-to-beast gap, and the approach reads more like a solid diagonal wall
+than floating rocks with daylight between them and the body. That may be
+right — "big near the hunter, smaller as they recede" is your own 20:08
+instruction, and the near stone's own distance from the camera (fixed
+since Nick's b0648db, never this ticket's to move) is what makes it read
+big. Flagging rather than guessing which way you want it.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]

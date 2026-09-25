@@ -2,11 +2,70 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T06:16
-working_on: "#0505 done: a stone under every sub-hop landing, receding in size. Rides #14's own handback to Nick."
+updated: 2026-09-25T06:29
+working_on: "#14 handed to Nick — all four items landed, waiting on his look at the frame."
 ---
 
 # fixer
+
+## This run — 2026-09-25 06:29 EDT
+
+- **Did:** re-verified #14 (stones across the gap) is fully landed, then
+  handed it back to Nick — it was the last run's own explicit next step.
+- **Worked?** Yes. Fresh regression: 0 route-reversal, 0 hunter-off-marker,
+  0 hop-distance-band. Flagged one honest caveat in the ask.
+- **Next:** nothing of mine — waiting on Nick's answer on #14.
+- **Need from you:** nothing.
+
+## Now
+
+Checked every request's frontmatter fresh this run: no new `open` `to:
+fixer` request outranked finishing #14's own handback, which the prior
+run explicitly left undone ("rides #14's own handback to Nick — not mine
+to close"). #14's own text has said since 20:08 EDT that once the work
+lands it goes `to: nick`, `status: open`, never `done` — and as of the
+06:16 EDT note all four items (head clearance, sweep + rock, hop-band
+split, stones under every sub-hop) were in. That bookkeeping was this
+run's one thing, done properly rather than assumed.
+
+**Verified fresh, not trusted from the notes.** Clean `--import` on this
+sandbox, `ALL TESTS PASSED`. Rendered `state=3d` fresh — byte-identical to
+the frame already on record from #0505. Ran a full fresh
+`mode=play beast=cinder_jackal steps=80` regression: `PLAYTEST FAIL: 1
+failing check(s) { "beast-behind-stone": 13 }` — zero `route-reversal`,
+zero `hunter-off-marker`, matching #14's own Done-when exactly.
+
+**Looked at the frame myself before sending it to Nick**, per COMMON's own
+rule that a handback needs a 1:1 frame, not just a passing number. The
+staircase reads clean — five distinct stones, shrinking, swept
+left-to-right, the old "stacked pale blob" complaint is gone. But set next
+to Nick's own reference drawing, the near stone covers a good third of the
+Frog-to-beast gap and the approach reads more like a solid wall than
+scattered floating rocks with daylight around them. That might be exactly
+"big near the hunter, smaller as they recede" (Nick's own 20:08 words) —
+or it might not be. Not my call, so I put it in the `ask:` rather than
+deciding it myself or silently shipping it.
+
+**The `beast-behind-stone` number (13) is real but not this ticket's to
+chase.** It's the same check the director already ruled on at 04:05 EDT
+(on-body stones like the sigil hold are correct-by-design, not a fault);
+post-#0505 it also fires on several of the new approach sub-stones at
+various hunter positions. #14's own Done-when never mentions this check,
+and sharpening it to tell "correctly in front" from "actually blocking"
+apart is the playtester's own open item, not something for me to retune
+stone geometry against. Said so plainly on the ticket rather than quietly
+leaving the number out.
+
+Set #14's frontmatter to `to: nick` / `status: open` / `ask:` filled /
+`waiting: false` (I have other open requests to work if he's slow —
+`2026-09-25-0258` and `2026-09-25-0405`, both still open, next run's
+pick). Left `2026-09-24-2356` (the head-behind-tag ticket) exactly as the
+prior run set it — its own Done-when already says it rides #14's handback
+and stays `taken`, not something this run needed to touch.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]
+
+## Old: 2026-09-25 06:16 EDT — a stone under every sub-hop landing (#0505)
 
 ## This run — 2026-09-25 06:16 EDT
 
@@ -2313,6 +2372,12 @@ further either.
 
 ## Log
 
+- 2026-09-25 06:29 EDT — #14 (stones across the gap): all four items
+  confirmed landed on a fresh re-import/regression (0 route-reversal, 0
+  hunter-off-marker, 0 hop-distance-band). Handed back `to: nick`,
+  `status: open`, with an honest ask about the near stone's size and the
+  still-open `beast-behind-stone: 13` (playtester's check to sharpen, not
+  this ticket's Done-when).
 - 2026-09-25 04:20 EDT — #14 item 3 (2026-09-24-2344, high): every ordinary
   climb hop measured ~20m, 2-8x `hop_arc()`'s ceiling. New
   `Combat3D.hop_subpoints` splits a too-long hop into several inside the
