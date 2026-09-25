@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T17:41
-working_on: "goblin trim recolour handed to Nick"
+updated: 2026-09-25T17:52
+working_on: "playtest checks re-derived, waiting on Nick"
 ---
 
 # builder
@@ -13,16 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 17:41 EDT
+2026-09-25 17:52 EDT
 
-- **Did:** Unified the Goblin's boots/shorts/strap/ear-tuft from four bright warm hues into one muted rust, so green (body) + blue (pack) read as the one silhouette, same as the Frog's own palette shape.
-- **Worked?** Yes — the goblin-only crop shows 47% of its own pixels changed, boots and straps read as trim now instead of a third competing bright colour.
-- **Look at:** ![[frames/builder/2026-09-25-goblin-reads-before.png]] then ![[frames/builder/2026-09-25-goblin-reads-after.png]]
-- **Ask:** does this read as "one silhouette" now, or does the pack still need to shrink too?
-- **Found:** the loose `goblin_mech_ai_Image_0.png` is gitignored and regenerated from the `.glb`'s embedded image on import — editing only that file (as a couple of the artist's own earlier passes did) does not survive a fresh checkout; the fix has to live in the `.glb` itself. Also: two screenshots of the identical, unchanged state differ by ~43,000 px in the background tent/box region alone — a real, large, pre-existing run-to-run render difference there, not just the small idle-animation jitter this project's notes usually describe; not chased, since it wasn't part of this item.
+- **Did:** hunter-off-marker/hop-distance-band's own top-hold z now matches `_top_hold()`'s hull-pushed z instead of the raw sigil anchor, so mid-route legs measure against where the route actually is.
+- **Worked?** Partly — hunter-off-marker's route-mismatch failures dropped from 10 to 2 on a 25-step playtest run (the 2 left are a different, pre-existing bug, see Found); hop-distance-band stayed clean before and after.
+- **Look at:** no shot — this item is ALL TESTS PASSED plus playtest.cmd, both run before/after below.
+- **Ask:** the queue item wants a fully green playtest.cmd — camera-not-over-shoulder/hunter-offscreen/beast-behind-stone are still red, but read as the same camera work already open above in the queue. Same run, or split off?
+- **Found:** the 2 remaining hunter-off-marker fails are footholds AT/PAST the top rung (weak_point_height) — a hunter that hops past the sigil (Leap/Grappling Hook) lands off the check's dynamic shared-foothold x by ~1.7-2.6m, byte-identical failure before and after this fix, so it's a separate bug in the check's top-branch side logic, not the route-vs-anchor bug this item targeted. Also confirmed real: `run_tests.gd` still ALL TESTS PASSED, and every OTHER playtest failure this run (beast-behind-stone, camera-not-over-shoulder, hunter-offscreen, hunter-lost-mid-hop, damage-popup-offscreen, intent-tag-vs-hunter) was already red before this change too — all already tracked by the open camera items above in the queue, not new.
 
 ## Log
 
+- 2026-09-25 17:52 EDT — builder: playtest's own top-hold z now hull-corrected like the real route, not the raw anchor; tested, pushed.
 - 2026-09-25 17:41 EDT — builder: goblin trim (boots/shorts/strap/ear) recoloured to one muted rust, baked into goblin_mech_ai.glb's embedded texture; built, tested, pushed.
 - 2026-09-25 17:26 EDT — builder: ground hunters face the beast, backs to camera, not the camera itself; built, tested, pushed.
 - 2026-09-25 17:15 EDT — builder: hull built before the decorative stones, so mid-route hunters land on their own stone; built, tested, pushed.

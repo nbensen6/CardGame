@@ -156,10 +156,24 @@ run failed.
       or skin. Frame confirmed changed (goblin-only crop: 47% of its own
       pixels differ). Did not touch the goggles option, or shrink the pack
       itself — only the competing trim.
-- [ ] **Re-derive the two failing playtest checks.** `hop-distance-band` and
+- [?] **Re-derive the two failing playtest checks.** `hop-distance-band` and
       `hunter-off-marker` measure the beast's authored anchors, not the stone
       route. Measure the route, or delete them. Shot: none — this one is
       `ALL TESTS PASSED` plus a green `playtest.cmd`.
+      **Builder, 2026-09-25 17:52 EDT:** both checks' own top-hold z was the
+      raw sigil anchor, never the hull-pushed z `_top_hold()` actually builds
+      the route from — exactly the "authored anchor, not the route" bug named
+      above, just left in the checks themselves after an earlier pass
+      (962e3f0) re-derived everything else about them. Now both call
+      `top_hold_z_for`/`_front_of_beast` the same way `_top_hold()` does.
+      hunter-off-marker's route-mismatch fails: 10 → 2 on a 25-step
+      `playtest.cmd mode=play beast=cinder_jackal steps=25` run;
+      hop-distance-band clean before and after. `playtest.cmd` is not fully
+      green: the 2 remaining hunter-off-marker fails are a different bug (see
+      the proposed item below), and beast-behind-stone/camera-not-over-
+      shoulder/hunter-offscreen/hunter-lost-mid-hop/damage-popup-offscreen/
+      intent-tag-vs-hunter were already red before this change, unrelated,
+      and already tracked by the open camera items above.
 - [ ] **Weak-point shot.** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
@@ -320,6 +334,15 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       look before it's mistaken for a real change in some future before/after
       pair: isolate the diff to the subject's own bounding box, the way this
       run had to, rather than trust a full-frame pixel count.
+- [ ] (proposed) `hunter-off-marker`'s TOP branch (a foothold AT or PAST the
+      route's top rung — a hunter that hops past the sigil, e.g. Leap or
+      Grappling Hook landing beyond weak_point_height) still measures the
+      hunter ~1.7-2.6m off its own expected x, byte-identical before and
+      after this run's route/top-z fix, so it's a separate bug in the check's
+      dynamic shared-foothold `side` logic (line ~732 of playtest.gd), not
+      the route-vs-anchor mismatch this item targeted. Worth a dedicated
+      look with the harness's STONE/HUNTER/RUNGS print at a foothold past
+      the top, the same way the "hops land on stones" item measured its bug.
 - [ ] (proposed) `goblin_mech_ai_Image_0.png` (and the same pattern would hit
       any other `*_Image_*.png`) is gitignored as "derived, regenerable from
       the tracked `.jpg` beside it" (`8e5a27c`), but the live fight actually

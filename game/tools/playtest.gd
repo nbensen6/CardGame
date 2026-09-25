@@ -751,9 +751,16 @@ func _check(v: Node, when: String) -> void:
 				# is always -1/1 by hunter index for this branch, never 0, so
 				# the expected point has to be computed the same way.
 				var route_side: float = -1.0 if idx == 0 else 1.0
-				var route_top_hold: Vector3 = v.call("stone_point", Vector3(
-					v.call("stand_offset_x", route_top_p.x, route_side, route_box_width),
-					route_top_p.y, route_top_p.z))
+				# _top_hold()'s own z, not the raw anchor: the sigil's authored z is
+				# only a floor, pushed forward by _front_of_beast's hull query
+				# whenever the muzzle/head sits further out (top_hold_z_for). Using
+				# the raw anchor here was exactly the "measures the authored anchor,
+				# not the route" bug this check was filed to close -- the error grew
+				# with t (how close a rung sits to the top) because that is exactly
+				# how much of the real top's forward push this line was missing.
+				var top_x: float = v.call("stand_offset_x", route_top_p.x, route_side, route_box_width)
+				var top_z: float = v.call("top_hold_z_for", route_top_p.z, v.call("_front_of_beast", top_x, route_top_p.y))
+				var route_top_hold: Vector3 = v.call("stone_point", Vector3(top_x, route_top_p.y, top_z))
 				var expected: Vector3 = v.call("route_pos_cleared", route_top_hold, route_ground_z, i, n, STONE_SWEEP_WIDTH)
 				var miss := home.distance_to(expected)
 				if miss > 0.10:
@@ -860,9 +867,12 @@ func _check(v: Node, when: String) -> void:
 		# combat_3d.gd's _top_hold), so consecutive-leg DISTANCE -- all this
 		# check measures -- is identical on either hunter's own line. 0.0
 		# (centred) is just a convenient one to compute once.
-		var hop_top_hold: Vector3 = v.call("stone_point", Vector3(
-			v.call("stand_offset_x", route_top_p.x, 0.0, route_box_width),
-			route_top_p.y, route_top_p.z))
+		# Same hull-corrected z as check 8's route_top_hold, same reason -- a
+		# centred x (side doesn't move distance, see the comment above) still
+		# needs the real top z or every leg near the top measures short.
+		var hop_top_x: float = v.call("stand_offset_x", route_top_p.x, 0.0, route_box_width)
+		var hop_top_z: float = v.call("top_hold_z_for", route_top_p.z, v.call("_front_of_beast", hop_top_x, route_top_p.y))
+		var hop_top_hold: Vector3 = v.call("stone_point", Vector3(hop_top_x, route_top_p.y, hop_top_z))
 		var pts: Array = []
 		for i in range(n2):
 			if i >= n2 - 1:
