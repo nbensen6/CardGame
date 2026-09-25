@@ -17,9 +17,29 @@ run failed.
       one key (F8) that flips Player/Dev live with a one-second HUD label
       saying which. Shot: `state=3d` — locked third-person, hunter's back at
       bottom-centre.
-- [ ] **Nick judges the 2026-09-25 camera and stones** — *waiting on Nick.*
-      Run `tools\dev.cmd`, fight the jackal, compare against the drawing.
-      Answer: is the gap right, is the staircase right, is the lens right.
+- [x] **Nick judged the 2026-09-25 camera and stones** (2026-09-25 14:30 EDT).
+      Verdict, drawn on the frame: `art/references/2026-09-25-nick-stones-and-zoom.webp`.
+      Stones are wrong, camera is too close. The two items below are his answer.
+- [ ] **Stones: first one in front of the hunter, last one in front of the
+      beast's head.** Today the stones sit as a cluster beside the jackal's
+      left flank, floating at chest height, and the ground between the Frog
+      and the jackal is empty. Nick's arrows: the first stone lands just
+      ahead of the active hunter, on the ground he is standing on; the
+      staircase climbs the gap; the last stone is in front of the jackal's
+      head. Project each stone to screen and check it: first stone's screen
+      position is between the Frog and the beast, low; last stone overlaps
+      the head. Do not move the beast, do not shrink it. Shot: `state=3d`,
+      then the same shot beside his drawing.
+- [ ] **Zoom out.** Nick, on the same frame: "zoom out". Pull the locked
+      third-person camera back (and/or widen the lens) until the whole stone
+      path and the whole beast are in frame with the hunter's back still
+      bottom-centre. Do this AFTER the stones item, on the new route. Shot:
+      `state=3d`.
+- [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
+      characters to face the beast." In the frame the Frog and Goblin stand
+      side-on to the camera. At rest, after End Turn, after Switch, both
+      hunters face the jackal (backs to the camera, per the Risk of Rain 2
+      shot). Shot: `state=3d`, both hunters visible.
 - [ ] **Goblin reads at 40 px.** The Frog reads at fight size; the Goblin is
       noise. Same treatment that fixed the Frog: fewer, bigger colour regions,
       one silhouette read (the pack? the goggles?). Shot: `state=goblin`,
