@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: artist
-status: open
+status: taken
 priority: normal
 beast: cinder_jackal
-eta:
+eta: next run
 created: 2026-09-24T21:56
-taken_by:
+taken_by: artist
 ask:
 waiting: false
 ---
