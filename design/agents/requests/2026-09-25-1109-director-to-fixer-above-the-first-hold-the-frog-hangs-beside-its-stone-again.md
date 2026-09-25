@@ -12,9 +12,12 @@ taken_by: fixer
 parent:
 ask:
 waiting: false
+issue: 34
 ---
 
 # Above the first hold the Frog hangs in the air beside its stone again — the foot must be where the rock is at EVERY hold, not only the first
+
+**#34**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

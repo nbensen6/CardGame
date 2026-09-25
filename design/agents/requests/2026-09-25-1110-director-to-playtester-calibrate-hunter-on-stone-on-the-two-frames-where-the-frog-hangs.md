@@ -12,9 +12,12 @@ taken_by:
 parent:
 ask:
 waiting: false
+issue: 35
 ---
 
 # Calibrate `hunter-on-stone` (#29) on the two real frames where the Frog hangs beside its stone — it must fire there and nowhere else
+
+**#35**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
