@@ -2,11 +2,77 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T07:56
-working_on: "#0258 or #0405 next (both open, to: fixer) once Nick answers #14."
+updated: 2026-09-25T09:35
+working_on: "#0258 or #0405 next (both open, to: fixer)."
 ---
 
 # fixer
+
+## This run — 2026-09-25 09:35 EDT
+
+- **Did:** investigated #0905 (grip shot shows a fallen Frog mid-air) —
+  it's a harness timing bug, not a placement bug.
+- **Worked?** Yes. Fall lands correctly; filed the harness fix to
+  playtester (#0933), closed #0802 honestly with real proof frames.
+- **Next:** #0258 or #0405, both open `to: fixer`, both older than this
+  one.
+- **Need from you:** nothing.
+
+## Now
+
+Took the sole high-priority open `to: fixer` request,
+`2026-09-25-0905-director-to-fixer-after-a-fall-the-frog-hangs-in-the-air-and-that-is-the-grip-shot.md`
+(#0905), explicitly ahead of #0258 and #0405 per its own text.
+
+**Which half was mine.** The ticket asked me to find out whether the
+post-fall `state=3dgrip` frame (Frog floating above bare ground, shadow
+far off to one side) is a wrong END position or the harness catching the
+fall still in flight. Instrumented `screenshot.gd`'s own `3dgrip` block
+locally (never committed) to render extra frames past the point its own
+wait loop first exits, and logged the falling hunter's real `node.position`
+every few frames: `y` goes from ~0.6-2.3 (right at loop-exit) down to 0.0
+(landed) over just 6-15 more rendered frames. The fall is an ordinary
+downward hop — same `_hop`/`hop_arc` every climb move uses, arcing forward
+as it falls, which is why the shadow reads so far from the frog in the bad
+frame — and it lands at the exact normal resting spot. **100% a harness
+bug**: the loop's own exit condition (view's local `_climb` dict empty)
+goes true 1-2 frames after the grip timer hits zero, well before the
+resulting fall tween actually finishes. Reverted the probe in full —
+`git diff --stat` on `screenshot.gd`/`combat_3d.gd` is empty.
+
+**Split the work per the ticket's own instruction.** Filed
+`2026-09-25-0933-fixer-to-playtester-3dgrip-shot-fires-before-the-fall-lands.md`
+(playtester owns `screenshot.gd`'s checks) with the exact wait condition to
+fix and the frame trace. Did not touch that file myself. Left #0905 itself
+`status: taken`, not `done` — its own first Done-when item (the `3dgrip`
+frame reading right) can't close until #0933 does; the rest of its
+Done-when (close #0802 honestly, `steps=8` clean, `ALL TESTS PASSED`) is
+met and written up on its own `## Result`.
+
+**Closed #0802 honestly**, the ticket's own second bullet. Its Result was
+empty and its commit message claimed the grip frame showed "feet on the
+rock's own top face" — it doesn't, for the reason above. Rebuilt its proof
+from the real settled landings instead: `mode=play steps=8`, foot 0→2
+(Tongue Snap) and foot 2→6 (Leap), both show the Frog planted on a drawn
+stone.
+
+![[frames/fixer/2026-09-25-0802-landing-foot2-frog-on-stone.png]]
+![[frames/fixer/2026-09-25-0802-landing-foot6-frog-at-sigil.png]]
+
+Struck #0802's own `3dgrip` Done-when line (wrong frame from the start,
+not just wrong this run) and set it `status: done` — the real bar (chest
+clear, one path, hunter on a drawn stone, checks at 0) is met.
+
+**Proof.** `ALL TESTS PASSED`. Fresh `mode=play beast=cinder_jackal
+steps=8`: `PLAYTEST OK: 0 failing check(s)`. No gameplay code changed this
+run (investigation + two request write-ups + one new request only), so the
+#0658/#0802 `steps=24` baseline (`beast-behind-stone`/`hunter-off-marker`/
+`hop-distance-band` all 0) still holds.
+
+![[frames/fixer/2026-09-25-0905-grip-shot-post-fall-frog-in-air.png]]
+![[frames/fixer/2026-09-25-0905-fall-completes-correctly-strip.png]]
+
+## Old: 2026-09-25 07:56 EDT — #0658 chest-clear fix
 
 ## This run — 2026-09-25 07:56 EDT
 

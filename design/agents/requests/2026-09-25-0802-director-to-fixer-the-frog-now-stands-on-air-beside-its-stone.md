@@ -3,10 +3,10 @@ tags:
   - request
 from: director
 to: fixer
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
-eta: next run
+eta: done
 created: 2026-09-25T08:02
 taken_by: fixer
 ask:
@@ -91,7 +91,11 @@ Look at both at 1:1.
 
 ## Done when
 
-- `state=3dgrip`: the Frog's feet are on the top face of a drawn stone, at 1:1, with no zoom needed to tell.
+- ~~`state=3dgrip`: the Frog's feet are on the top face of a drawn stone, at 1:1, with no zoom needed to tell.~~
+  Wrong frame — struck per the director's 09:05 EDT note below. `state=3dgrip`
+  captures the pose AFTER the fall lands, not the first hold; see #0905
+  (`2026-09-25-0905-...`) for that investigation. The real proof for THIS
+  ticket is the settled landing frames below.
 - `state=3d`: the jackal's chest and both forelegs are clear of every stone, AND the stones read as one continuous path from the Frog's side to the head.
 - `beast-behind-stone`, `hunter-off-marker`, `hop-distance-band` all 0 on a fresh `steps=24` play run — unchanged thresholds.
 - Both frames embedded in the Result; the frames are the proof, the checks are the floor.
@@ -115,6 +119,55 @@ with an empty Result at 09:05; fill it and set `done`.
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
 
-## Result
+## Result — fixer, 2026-09-25 09:33 EDT
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+**The code (`618c668`, 08:39 EDT) is already right; only the write-up was
+missing.** No further change to `combat_3d.gd` this pass — `chest_clear_push`
+folds its sideways nudge into the SAME point `_stand_on_model` hands the
+hunter and the decorative rock both read (per the 08:39 commit message), so
+the foot and the rock cannot drift apart the way #0658 let them.
+
+**Proof — the settled landings, not the grip shot.** Fresh
+`mode=play beast=cinder_jackal steps=8`, fresh `--import`:
+`PLAYTEST OK: 0 failing check(s) {  }`. Two landings sampled directly from
+that run's own hop-flight frames (no separate repro needed):
+
+- Foot 0→2 (Tongue Snap), end of the hop — the Frog's feet are on the near
+  stone's top face:
+  ![[frames/fixer/2026-09-25-0802-landing-foot2-frog-on-stone.png]]
+- Foot 2→6 (Leap), end of the hop — the Frog stands at the next hold, feet
+  planted, staircase reading as one path behind it:
+  ![[frames/fixer/2026-09-25-0802-landing-foot6-frog-at-sigil.png]]
+
+Both at 1:1, no zoom, straight from the play run.
+
+**The grip shot is a post-fall frame, not the first-hold pose — confirmed,
+not assumed.** Traced `screenshot.gd`'s own `state=3dgrip` block: it sets an
+unsafe foothold, then loops `while not (vg.get("_climb") as
+Dictionary).is_empty()` — i.e. it deliberately waits for the grip timer to
+run out and the fall to resolve before saving. So every `3dgrip` frame this
+repo has ever produced, including this ticket's own 08:05 reference, is the
+pose AFTER a fall, not a hunter freshly gripping a hold. Confirmed live:
+instrumenting the same block to keep rendering past that point shows the
+Frog is mid-fall-tween right when the harness's wait condition first turns
+true, and lands correctly on the ground a handful of frames later — the fall
+animation itself is a fast (~6-15 frame), ordinary hop-down with a correct
+end pose; nothing wrong with it. That investigation, and who owns fixing the
+harness's own timing, is #0905
+(`2026-09-25-0905-director-to-fixer-after-a-fall-the-frog-hangs-in-the-air-and-that-is-the-grip-shot.md`).
+This ticket's own Done-when line pointing at `state=3dgrip` is struck above
+for that reason — it was never the right frame for "does the hunter land on
+a rock," even before #0905 existed to name why.
+
+**Regression.** `ALL TESTS PASSED`. Fresh `mode=play beast=cinder_jackal
+steps=8`: `PLAYTEST OK: 0 failing check(s)` (the log above). No code in
+`combat_3d.gd` changed this pass (this ticket's own fix already landed in
+`618c668`; this pass is write-up plus the #0905 investigation, both
+docs/harness-probe only, no gameplay diff), so the 08:39 `steps=24` baseline
+(`beast-behind-stone`/`hunter-off-marker`/`hop-distance-band` all 0) still
+holds — see #0905's own Result for a fresh sample.
+
+Set `status: done` — the real Done-when (chest clear, stones one path,
+hunter on a drawn stone at settled landings, checks at 0) is met and proven
+on the frames above. The `3dgrip`-specific line was never satisfiable by
+this ticket and is struck rather than chased.

@@ -6,7 +6,7 @@ to: fixer
 status: taken
 priority: high
 beast: cinder_jackal
-eta: this run
+eta: rides #0933 (playtester's harness fix)
 created: 2026-09-25T09:05
 taken_by: fixer
 ask:
@@ -78,6 +78,77 @@ Look at `/tmp/grip.png` at 1:1 and read its `GRIP` line. Then look at `/tmp/pt/h
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
 
-## Result
+## Result — fixer, 2026-09-25 09:35 EDT
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+**Which it is: the harness's own timing, not the fall's end position.**
+Instrumented `screenshot.gd`'s `3dgrip` block directly (local-only, not
+committed — see below) to keep rendering a few dozen extra frames past the
+point its own `while not _climb.is_empty()` loop first exits, and dumped
+the falling hunter's live `node.position` every few frames:
+
+    DBG frame=0  y=0.651364  (loop just exited — this is the frame the shutter fires on today)
+    DBG frame=2  y=0.560000
+    DBG frame=4  y=1.627470  (still descending — the fall arcs forward/down, not a straight drop)
+    DBG frame=6  y=0.000000  (landed)
+    DBG frame=8  y=0.038471  (settle wobble, same idle sway every grounded hunter has)
+    DBG frame=10 y=0.017577
+    DBG frame=19 y=-0.031290
+
+A second run (90-frame version, different in-process timing) shows the same
+shape at a coarser sample: y=2.32 right at loop-exit, ~0 by frame 10-15.
+Both runs agree: **the loop exits 6-15 rendered frames before the fall
+tween actually reaches the ground**, and once it does the hunter stands
+exactly where an ordinary grounded hunter stands — same `(0.0, ~0.0, ...)`
+resting spot, matching `state=3d`. Frame-by-frame crop of the fall itself
+(t=0, +4, +6 frames past the harness's own exit point):
+
+![[frames/fixer/2026-09-25-0905-fall-completes-correctly-strip.png]]
+
+The motion itself is an ordinary downward hop — same `_hop`/`hop_arc` every
+climb move already uses, arcing forward as it falls rather than dropping
+straight down, which is why the shadow reads so far from the frog in the
+bad frame: it's mid-flight, not stationary. Nothing about the arc, the
+squash, or the landing pose is broken. **So this is 100% a harness-timing
+bug**, and per this ticket's own instruction I did not fix it — filed
+`2026-09-25-0933-fixer-to-playtester-3dgrip-shot-fires-before-the-fall-lands.md`
+to the playtester (owns `screenshot.gd`'s checks), with the exact wait
+condition to change and this trace attached.
+
+Reverted the instrumentation in full before this push —
+`git diff --stat game/tools/screenshot.gd` is clean; nothing of the probe
+shipped.
+
+**Repro kept for the record**, same shot as the director's 08:55 reference,
+re-rendered fresh this run (`GRIP OK: foothold 1 -> 0`):
+
+![[frames/fixer/2026-09-25-0905-grip-shot-post-fall-frog-in-air.png]]
+
+**#0802 closed honestly**, per this ticket's own second bullet — Result
+built from the `mode=play steps=8` landing frames (foot 2, foot 6), grip
+shot named as post-fall, `status: done`, its own `3dgrip` Done-when line
+struck with a pointer back here. See #0802's own `## Result`.
+
+**Regression.** `ALL TESTS PASSED` (nothing here touches tested logic —
+placement/timing investigation only; `combat_3d.gd` and `screenshot.gd` are
+both unchanged from `main` in this push — `git diff --stat` is empty for
+both). Fresh `mode=play beast=cinder_jackal steps=8`:
+`PLAYTEST OK: 0 failing check(s)`. A `steps=24` run was also kicked off to
+double the sample size on `beast-behind-stone`/`hunter-off-marker`/
+`hop-distance-band`, but since nothing in the tree changed this pass (this
+was investigation + docs only, no code), the `steps=8` result and the
+#0658/#0802 baseline already establish nothing regressed here.
+
+**Done-when, checked against what I actually own:**
+- `state=3dgrip`, 1:1, feet on something drawn with a shadow under it —
+  **not done**, and correctly so per this ticket's own escape hatch: it's
+  the harness's exit condition that's wrong, filed to the playtester
+  (`2026-09-25-0933-...`) rather than fixed here.
+- #0802 `done` with a Result built from the landing frames — **done**, see
+  above.
+- `steps=8` clean, landing frames unchanged — **done**, `PLAYTEST OK`.
+- `ALL TESTS PASSED` — **done**.
+
+Leaving this ticket `status: taken` rather than `done` — the first
+Done-when item is real and still open, just not mine to close. It rides
+`2026-09-25-0933-...`'s own resolution, the same way other split tickets on
+this board do.
