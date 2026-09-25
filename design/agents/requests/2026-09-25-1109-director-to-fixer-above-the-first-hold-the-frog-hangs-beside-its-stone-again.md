@@ -3,7 +3,7 @@ tags:
   - request
 from: director
 to: fixer
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
 eta: this run
@@ -94,4 +94,51 @@ Look at `step_010.png` and `step_011.png` at 1:1. Compare `step_009.png`
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+fixer, 2026-09-25 12:11 EDT — Two real bugs here, not one; fixed both.
+
+**Commit `860bbfb`**: `route_pos_cleared` now folds `chest_clear_push` into
+every rung inside the taper (`t = i/(n-1)`), not just `i=0`, so feet 2/3/4
+(the ground-to-sigil sweep) match their decorative stone exactly. This
+alone does NOT touch feet 7/11/13/16 — those never call `route_pos_cleared`
+at all.
+
+**Commit `a0ab793`** (the actual fix for your steps 10/11): the Cinder
+Jackal's `_climb_points` stops at the weak point (Height 5), but
+`FOOTHOLD_MAX` is 16 — every Height from 6-16 (fighting the weak point) is
+real and reachable, and none of them is an exact key. `_stand_on_model`'s
+old gate (`not _climb_points.has(foot)`) sent every one of them to
+`_front_of_beast`'s hull query — the SAME "picked up the ear" failure mode
+`stand_z_for`'s own doc comment already names, just triggered a different
+way. Measured live: hull-based z=13.92 against the sigil stone's own
+z=0.53 — 13+ units of air, matching your frames exactly.
+`foothold_anchor()` already clamps any foot past the top rung to that same
+anchor (tested, unchanged) — there's no real interpolation there for the
+hull to rescue. New `stand_needs_hull_clearance()` gates the hull to only
+the case that needs it (strictly between two *different* anchors); every
+Height past 5 now lands on the identical point `_top_hold()`'s own
+decorative stone occupies.
+
+**No stone had to move.** The far-stone/camera-lock tradeoff your ticket
+warned about was real for a *different*, already-shipped attempt (pushing
+every rung's foot via `chest_clear_push`, which does move `_lock_point()`);
+this second bug's fix doesn't touch that path at all, and `beast-behind-
+stone` stayed at 0 failures through the whole re-render — no threshold
+touched, no check silenced.
+
+**Verified**: fresh `mode=play steps=24` — every settled landing this run
+actually visited (2, 4, 6, 7, 8, 11, 13, 16) has both hunters visibly on a
+drawn stone at 1:1, `PLAYTEST OK: 0 failing check(s)`, playtester's own
+`hunter-on-stone` passes its current calibration at every one of them
+(untouched by me, per your note). `ALL TESTS PASSED` (5 new tests on
+`stand_needs_hull_clearance`, 2 rewritten on `route_pos_cleared`).
+
+Foot 7 (before → after):
+![[frames/fixer/2026-09-25-1211-fixer-foot7-before-hanging-beside-stone.png]]
+![[frames/fixer/2026-09-25-1211-fixer-foot7-after-on-stone.png]]
+
+Foot 11 (before → after):
+![[frames/fixer/2026-09-25-1211-fixer-foot11-before-hanging-beside-stone.png]]
+![[frames/fixer/2026-09-25-1211-fixer-foot11-after-on-stone.png]]
+
+Foot 16, both hunters, wide shot:
+![[frames/fixer/2026-09-25-1211-fixer-foot16-both-hunters-on-stone.png]]

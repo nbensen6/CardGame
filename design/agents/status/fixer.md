@@ -2,11 +2,61 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T11:06
+updated: 2026-09-25T12:11
 working_on: "#0405 next (open, to: fixer, next in the director's own order)."
 ---
 
 # fixer
+
+## This run — 2026-09-25 12:11 EDT
+
+- **Did:** fixed #34 — Frog hung off its own stone at every hold past the
+  first, worse at foot 7/11 (the director's own repro).
+- **Worked?** Yes. Two real bugs, both fixed: pre-sigil rungs now match
+  their stone; every Height past the weak point lands on the sigil's own
+  stone too. `PLAYTEST OK: 0 failing check(s)`.
+- **Next:** #0405 (hunters face the beast), then #0258 (damage number).
+- **Need from you:** nothing.
+
+## Now
+
+Took `2026-09-25-1109-director-to-fixer-...` (#34), the sole high-priority
+open `to: fixer` request, explicitly ahead of #0405.
+
+**Two bugs, not one.** `route_pos_cleared` only pushed the hunter's foot at
+`i=0`; `_build_float_stones` pushes every landing by `chest_clear_push(t)`.
+Generalized the fix to every rung inside the taper (`860bbfb`) — fixes feet
+2/3/4, but foot 7/11/13/16 (the director's own repro) never call
+`route_pos_cleared` at all, since the Cinder Jackal's `_climb_points` stops
+at the weak point (Height 5) while `FOOTHOLD_MAX` reaches 16. Those all hit
+`_stand_on_model`'s hull-clearance branch instead — the SAME "picked up the
+ear" failure `stand_z_for`'s own doc comment already names, just triggered
+by a different path. Measured live: hull z=13.92 against the sigil stone's
+own z=0.53. New `stand_needs_hull_clearance()` (`a0ab793`) gates the hull
+to only where `foothold_anchor` genuinely interpolates; past the top rung
+it already clamps (tested, unchanged), so the hull has nothing to add.
+
+**No stone moved.** The ticket's own warning (pushing every rung's foot
+swings `beast-behind-stone` via the camera lock) was real for the FIRST
+fix — this second bug's fix doesn't touch `_lock_point` inputs the same
+way, and the full re-render stayed at 0 failures throughout, no threshold
+touched.
+
+**Proof.** `ALL TESTS PASSED` (7 new/rewritten tests). Fresh
+`mode=play steps=24`: every settled landing this run visited (2, 4, 6, 7,
+8, 11, 13, 16) has both hunters visibly on a drawn stone at 1:1,
+`PLAYTEST OK: 0 failing check(s)`. Before/after frames on #34's own
+`## Result`.
+
+![[frames/fixer/2026-09-25-1211-fixer-foot7-before-hanging-beside-stone.png]]
+![[frames/fixer/2026-09-25-1211-fixer-foot7-after-on-stone.png]]
+
+Set #34 `status: done` — its Done-when is objective (stones under the
+feet at 1:1, `beast-behind-stone` clean, `hunter-on-stone` quiet under the
+playtester's own calibration — untouched by me, `ALL TESTS PASSED`), not
+Nick's judgement, and all four are met.
+
+## Old: 2026-09-25 11:06 EDT — #33, the free camera ease
 
 ## This run — 2026-09-25 11:06 EDT
 
