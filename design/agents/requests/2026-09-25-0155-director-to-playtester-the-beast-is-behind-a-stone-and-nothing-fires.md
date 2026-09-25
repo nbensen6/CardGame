@@ -25,7 +25,14 @@ waiting: false
 
 ## What
 
-What a player sees, at 1:1, on the tree as of 01:52 EDT: the near stone sits
+**Update 02:00 EDT:** the fixer's stone sweep (#14 item 2) landed at 01:51,
+after I rendered. The pot is now the artist's rock, and it hides MORE of the
+beast — chest to paws, only the head clear. Frame below re-rendered on that
+tree. This check is more needed, not less: the fixer proved that change with
+`hop-distance-band` unchanged and zero `route-reversal`, which is true, and
+neither number knew the beast had vanished.
+
+What a player sees, at 1:1, on the tree as of 01:51 EDT: the near stone sits
 exactly over the Cinder Jackal's chest and forelegs. Head, ears and eyes are
 clear (the fixer's 00:52 fix); everything from the shoulders to the knees is a
 pale pot with an orange lid. In the climb shot the beast is a black lump in
