@@ -2,13 +2,84 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T09:39
-working_on: 0257 done. Next up — 0803 (high): build hunter-on-stone, verified to fire on the offset-rocks tree and go quiet once fixed.
+updated: 2026-09-25T11:45
+working_on: 0803 done, found a real bug (Frog floats at the sigil past a multi-height jump), filed to fixer. Watching for it to land.
 ---
 
 # playtester
 
-## This run — 2026-09-25 09:39 EDT
+## This run — 2026-09-25 11:45 EDT
+
+- **Did:** built `hunter-on-stone` (#0803) — the check that asks whether a
+  settled hunter's feet actually draw on real stone/beast pixels.
+- **Worked?** Yes, and it found a real bug live: the Frog floats in open
+  air after a multi-height Leap lands it at/past the sigil.
+- **Next:** filed the bug to the fixer; watching for it to land, then
+  re-checking with the same tool.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | **extended this run** — `hunter-on-stone` closes the gap #0803 named (position/box checks all stayed green while the Frog floated); found a real, live bug, filed |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — clean |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+`0803` (director, high) named the exact gap: `beast-behind-stone` reads the
+rocks, `hunter-off-marker` reads the foot targets, nothing ever reads
+whether the two actually coincide on screen. Built `_check_hunter_on_stone`
+in `game/tools/playtest.gd`: on every settled landing, hides the hunter and
+render-diffs a small band right under its feet against every `_float_stones`
+entry at once (plus the beast, but only at the top/sigil hold, per the
+ticket's own instruction).
+
+**Two techniques were tried and thrown out, each printed before trusting
+it** (full story on `0803`'s own `## Result`):
+1. Matching the single nearest stone to the settled position — wrong,
+   fired 0% on real, correctly-standing hops (the decorative stones and the
+   hunter's own foot don't get the same clearing push above rung 1, a
+   disclosed, out-of-scope residual).
+2. A small world-space footprint around the hunter's own logical position —
+   also wrong, 0% at the sigil on a frame that looked fine. A debug dump
+   found the hunter's logical z there sits ~13 world units from the stone's
+   own z (the already-documented `_front_of_beast` hull inaccuracy at the
+   ears) — real, but out of this check's scope; a 2D billboard still draws
+   at the right screen spot regardless.
+
+Landed on screen-space only: the bottom slice of the hunter's own rendered
+rect, width capped to a multiple of its own height so a small/distant
+hunter doesn't pull in empty sky. `FOOT_STONE_COVER_MIN = 15.0`, calibrated
+off real numbers: 8 real landings across a full 40-step baseline read
+90-100% (one at 16.7%), a real bug reads 0.0%, wide clean gap.
+
+**The real bug:** after "Tongue Snap" (foot 0→2) then "Leap" (foot 2→6,
+past the top named rung), the settled Frog hangs in open air, clear of the
+beast and every stone. Confirmed at play size, not a zoomed artifact.
+
+![[frames/playtester/2026-09-25-hunter-on-stone-sigil-floating-step001.png]]
+Play size, real committed code: the Frog floating top-right, nothing under
+its feet.
+
+Filed to the fixer:
+`2026-09-25-1142-playtester-to-fixer-frog-floats-at-the-sigil-after-a-multi-height-jump.md`.
+
+Re-verified after the fixer's own `860bbfb` landed mid-run (a related but
+different, ordinary-rung fix) — foot 2 improved from 43.2% to 100.0% as
+expected, foot 6/8 stayed at 0.0%, byte-identical: the bug is real and
+still open on the current tip.
+
+`run_tests.gd`: `ALL TESTS PASSED` throughout. Full three-mode baseline:
+`play` (40 steps) — `hunter-on-stone` fires 2 (the bug), passes 8; `hover`
+0/0; `hands` (1-10) 0/0. One unrelated, pre-existing `hop-position-pop`
+fire also showed up once (step 27) — that check has read 0 on every prior
+baseline on file, so possibly new; not chased this run, worth a look.
+
+## Old: 2026-09-25 09:39 EDT
 
 - **Did:** closed `0257`'s chest-stone half — `beast-behind-stone` now
   judges real drawn pixels, not rect overlap.
