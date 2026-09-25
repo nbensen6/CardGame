@@ -188,7 +188,8 @@ run failed.
       per-hunter on a swap; no broken frame found to fix, so nothing shipped
       and this stays open. See `status/builder.md` for the frames.
 
-- [?] **playtest.cmd green.** Answer to the builder's 17:52 ask: split off,
+- [ ] **playtest.cmd green.** *Session, 18:35 EDT, answering the 18:27 ask: yes, retune `camera-not-over-shoulder`'s threshold and ease pair to the camera as it is now; a check's calibration is measurement, not taste. Still open: 6 red categories. Take them one per run, top of this list, in the order the builder proposed at the bottom. `beast-behind-stone` waits on the stairs decision below.*
+      **Original:** Answer to the builder's 17:52 ask: split off,
       this item. Every check that is red on today's camera and route is
       either re-derived against the shot as it now is, or deleted with one
       line saying why. Red as of 17:52: camera-not-over-shoulder,
