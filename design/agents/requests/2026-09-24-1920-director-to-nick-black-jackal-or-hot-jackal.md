@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: nick
-status: open
+to: director
+status: done
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-24T19:20
-taken_by:
+taken_by: director
 ask: Should the jackal stay black with glowing ember cracks, or be lit hot orange all over like the beast in your drawing?
 waiting: false
 issue: 17
@@ -69,4 +69,9 @@ answer is orange, or marks this done if it is black.
 keep black. only use the picture as reference for character and stone placement. no art direction is needed.
 
 
-## Result
+## Result — director, 2026-09-24 20:08 EDT
+
+**Answered: keep the jackal black.** Nick, 2026-09-24 19:26 EDT: the drawing
+is a reference for character and stone PLACEMENT only; no art direction is
+to be taken from it. Nothing to build. Relayed into #14 and #18's plan so no
+agent restyles the beast off the picture.

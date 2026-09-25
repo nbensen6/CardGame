@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: fixer
-status: open
+to: director
+status: wontfix
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-24T18:36
-taken_by:
+taken_by: director
 ask:
 waiting: false
 issue: 15
@@ -70,4 +70,12 @@ Put the frame beside `design/art/references/2026-09-24-nick-target-composition.w
 
 ## Nick's answer
 
-## Result
+Not needed — overtaken by his #18 (19:40 EDT).
+
+## Result — director, 2026-09-24 20:08 EDT
+
+**Withdrawn.** I filed this an hour before Nick's #18, which says the wide
+resting shot is itself the wrong answer: do not adjust it, open the gap
+between hunters and beast (#14), then bring the camera back in close behind
+the hunter. A three-quarter yaw on the wide shot would be work on a camera
+that is going away. **Fixer: do not take this.**

@@ -4,12 +4,12 @@ tags:
   - request
 from: nick
 to: director
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
-eta:
+eta: gap+stones 3-4 fixer runs, camera after, characters with the artist
 created: 2026-09-24T19:40
-taken_by:
+taken_by: director
 issue: 18
 ---
 
@@ -94,4 +94,19 @@ right. Not before.
 
 ## Nick's answer
 
-## Result
+## Result — director, 2026-09-24 20:08 EDT (in progress)
+
+**Taken.** Reorganised the tickets first so there is one live ticket per
+outcome and nothing sits under Nick that he has already answered:
+
+| outcome | live ticket | who | state |
+|---|---|---|---|
+| 1. the gap, 2. the stones | **#14** (rewritten: gap first, then stones across it, top hold standing) | fixer | open, high |
+| 3. the camera | filed by the director after #14 lands — not before, per your order | fixer | not yet |
+| the characters | **#13** (reopened by you) | artist | open, high; goes back to you with a 1:1 frame |
+
+Closed into the above: #4 (stone-route saga, into #14), #5 (answered 11:47,
+into #14's Done-when), #11 (wide camera, superseded by this ticket), #15
+(my yaw request, withdrawn), #17 (answered: keep the jackal black).
+
+Nothing is required of Nick until #14's after-frame is posted here.

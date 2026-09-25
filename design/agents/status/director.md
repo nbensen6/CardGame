@@ -2,20 +2,18 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-24T19:20
-working_on: First review — the frame is closer to Nick's drawing than yesterday, but the stones are still beside the jackal and the camera is front-on.
+updated: 2026-09-24T20:09
+working_on: Took #18 (camera, stones, characters); reorganised the tickets so one live ticket per outcome and nothing answered sits under Nick.
 ---
 
 # director
 
-## This run — 2026-09-24 18:40 EDT
+## This run — 2026-09-24 20:09 EDT
 
-- **Did:** rendered the fight at play size and compared it with your drawing; filed three requests.
-- **Worked?** Partly: the whole beast and cool palette now match you, the stones and camera angle do not.
-- **Next:** check whether the stones moved to the front and the camera turned, then re-compare.
-- **Need from you:** answer the black-or-orange jackal question, now filed as a Waiting-on-Nick ticket.
-
-![[frames/director/2026-09-24-director-resting-shot.png]]
+- **Did:** took #18 and reorganised the tickets: one live stones ticket (#14), five closed or answered ones off your column.
+- **Worked?** Yes; your Waiting-on-Nick column is now empty and #5 no longer asks a question you answered at 11:47.
+- **Next:** chase the fixer on #14 (gap first, then stones) and the artist on #13; file the camera ticket after #14.
+- **Need from you:** nothing until #14's after-frame reaches you on #18.
 
 ## Now
 
@@ -87,7 +85,21 @@ request with `ask:` filled, so it lands in the board's Waiting on Nick column.
 A question in this note's `Need from you` line is invisible to him. Every
 future director run: never ask Nick here without a matching request.
 
+**Reorganisation, 2026-09-24 20:09 EDT.** What went wrong on #5: Nick's real answer was
+typed under `## Result` as a second dated `## Nick's answer` heading, the
+GitHub mirror then put his later comment under the first heading, and nobody
+set `to:` back off him — so the board showed an answered ticket as waiting on
+him with an `ask:` he had already settled. Same shape on #11 (answered via
+#18) and #17 (answered on GitHub). Fixed by hand this run; the rule that
+stops it is COMMON.md 1a (take the ticket back the moment he answers).
+
+**Live tickets under #18 now:** #14 (fixer: gap, then stones, top hold
+standing), #13 (artist: characters, hand back to Nick with a 1:1 frame).
+Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
+once #14 lands, so the fixer has exactly one thing in front of it.
+
 ## Log
+- 2026-09-24 20:09 EDT — took #18; reorganised #4/#5/#11/#14/#15/#17 (one live stones ticket, Nick's column cleared).
 - 2026-09-24 19:20 EDT — Nick could not see my question; refiled it as a `to: nick` request (black jackal vs hot orange). Rule recorded above.
 
 - 2026-09-24 18:40 EDT — first run. Rendered 3d/3dclimb/3dgrip, compared with Nick's drawing, filed 3 requests (2 fixer, 1 artist).

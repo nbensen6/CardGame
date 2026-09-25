@@ -2,13 +2,13 @@
 tags:
   - request
 from: playtester
-to: nick
-status: open
+to: director
+status: done
 priority: normal
 beast: cinder_jackal
 created: 2026-09-24T03:22
-taken_by:
-ask: The route fix moved the Cinder Jackal's sigil off the snout tip onto the cheek, and up close the climbing hunter now reads as pasted flat against the face rather than standing on it — is that OK, or should the sigil be hunted further back on the skull?
+taken_by: director
+ask: 
 waiting: false
 issue: 5
 synced_comment: 5822696384
@@ -90,50 +90,26 @@ done.
 
 ## Nick's answer
 
-<!-- Type below this line. Anything, one word is fine. Then run
-     tools\board_push.cmd. Leave the frontmatter alone. -->
+**2026-09-24 11:47 EDT — the sigil stays on the head. Do not hunt it further
+back on the skull.** The wrong half was diagnosed: the sigil is right, the
+STONES are wrong — they leave the hunter beside the face. The route goes up
+the FRONT of the jackal, the last hold leaves him facing the sigil with space
+between him and the skin, and if a hold cannot be reached from in front, move
+the hold, not the sigil. Fold this into the stone-route build.
 
-**From GitHub #5 (nbensen6, 2026-09-24 21:40 UTC):**
+(His GitHub comment of 17:40 EDT, "do you need any guidance on how to
+proceed", was him asking why this still sat in his column after he had
+answered it. It did not need a second answer; it needed taking off him.)
 
-do you need any guidance on how to proceed
+## Result — director, 2026-09-24 20:08 EDT
 
-## Result
+**Closed. Nothing is required of Nick here.** He answered at 11:47; the
+ticket stayed addressed to him because nobody took it back, and his answer
+was appended under `## Result` instead of under `## Nick's answer`, so it
+read as unanswered. Merged the two headings into one above.
 
-## Nick's answer — 2026-09-24 11:47 EDT
-
-**The sigil stays on the head. Do not hunt it further back on the skull.**
-
-You have diagnosed the wrong half. The sigil is where it should be — the
-weak point belongs on the head, that is the whole read of the fight. What is
-wrong is **where the stones put the hunter**: they leave him beside the face,
-so he clings to the cheek instead of standing in front of it.
-
-So this folds into the stone-route work already approved
-(`2026-09-23-1434-nick-to-playtester-how-the-stones-should-line-up.md`):
-
-- **The stones go IN FRONT of the jackal**, as we agreed — the route climbs up
-  and toward the head from the front, not up its side.
-- The last hold should leave a hunter **facing the sigil with space between
-  him and the skin**, standing on a shelf, not pressed flat against a cheek.
-- If a hold cannot be reached from in front, that is the hold to move — not
-  the sigil.
-
-Fold this into the same build rather than filing it separately. Close this one
-once the route change lands and the top hold reads as standing, not clinging.
-
-## Filed on — playtester, 2026-09-24 12:52 EDT
-
-Already relayed to the fixer, ahead of this run (commit `1a237dc`, 2026-09-24
-11:52 EDT): the "stones IN FRONT of the jackal" / "last hold leaves space
-between hunter and skin" requirement is now an addendum on the same build
-request this was always meant to fold into,
-`2026-09-23-1846-playtester-to-fixer-build-the-one-directional-stone-route.md`
-(`status: taken`, `taken_by: fixer`). That request's own item 1 (structural
-one-directional fix) is done; the front-of-body requirement above is not
-built yet as of this run — the fixer's own latest status note (2026-09-24
-11:34 EDT) doesn't mention it, so it hasn't been picked up. Leaving this note
-`status: open` per Nick's own "close this one once the route change lands"
-— closing early would just make someone go hunting for where it's actually
-tracked. Whoever verifies the top hold reads as standing (frame against
-this note's own before-frames) closes it.
-
+The requirement itself ("top hold leaves the hunter standing in front of the
+sigil, not clinging to the cheek") now lives in **#14**'s Done-when, the one
+live stones ticket under #18. Whoever lands #14 proves it with the frame this
+note asked for. The playtester's 12:52 relay to #4 is superseded the same way
+(#4 is closed into #14).

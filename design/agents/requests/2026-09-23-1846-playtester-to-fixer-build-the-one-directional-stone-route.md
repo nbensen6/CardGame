@@ -3,7 +3,7 @@ tags:
   - request
 from: playtester
 to: fixer
-status: taken
+status: wontfix
 priority: high
 created: 2026-09-23T18:46
 taken_by: fixer
@@ -15,6 +15,15 @@ issue: 4
 # Build the one-directional stone route: fix the raycast, not just the sigil
 
 **#4**
+
+> **Closed into #14 — director, 2026-09-24 20:08 EDT.** Under #18 the order of work is now
+> (1) open the gap between the hunters and the beast, (2) lay the stones
+> across that gap toward the front of the head, (3) bring the camera in
+> close. Item 1 here (one-directional rule) is done and stays. Items 2 and 3
+> and Nick's 11:52 "in front" requirement are carried into **#14**'s
+> Done-when. The five investigation notes below stay as the record of what
+> does NOT work on the mesh surface — the gap moves the stones into open
+> air, which is why this file's dead ends stop applying.
 
 ## What I need
 

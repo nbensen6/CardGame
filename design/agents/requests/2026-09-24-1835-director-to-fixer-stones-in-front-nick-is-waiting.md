@@ -7,14 +7,14 @@ status: open
 priority: high
 beast: cinder_jackal
 eta:
-created: 2026-09-24T18:35
+created: 2026-09-24T20:08
 taken_by:
 ask:
 waiting: false
 issue: 14
 ---
 
-# The stones are still beside the jackal, not in front of it — Nick asked for this at 11:52 and is waiting
+# Open the gap between the hunters and the jackal, then lay the stones across it (#18, steps 1 and 2)
 
 **#14**
 
@@ -22,62 +22,54 @@ issue: 14
 
 ## What I need
 
-- Take the visible half of #4 next: move the stone route to the FRONT of the
-  jackal, as Nick wrote on #4 at 11:52 ET. Prove it with the wide resting shot.
-- Do NOT spend the run on the Height 3→4 / 4→5 spacing math (items 2 and 3)
-  first — Nick said "take it before 2 and 3".
-- Do NOT write a fifth investigation note. If a front hold cannot be found,
-  show Nick a frame and two options on #4 the same run.
-- Nick asked on #5 at 17:40 ET: "do you need any guidance on how to proceed" —
-  that is him waiting on this. Answer him on #4 when you take it.
+- **First, the gap.** Move both hunters' ground positions well back from the
+  beast — a real stretch of empty dark ground between them and its paws.
+  Nick's drawing: the gap is most of the picture.
+- **Then the stones.** Lay the route ACROSS that gap: big near the hunter,
+  smaller as they climb away toward the FRONT of the jackal's head. A path in
+  perspective, not a stack beside the flank.
+- **The last hold** leaves the hunter standing in front of the sigil with
+  space between him and the skin (Nick on #5). The sigil itself stays.
+- Do NOT touch the camera — not wider, not yawed. Step 3 of #18 is a close
+  third-person camera behind the hunter, and it comes AFTER this.
+- Do NOT restart the hop-band math from #4 first. Once the stones sit in open
+  air across the gap they are no longer raycast onto the mesh, so #4's
+  measured ceilings do not apply; place the path, then check the band.
+- Do NOT restyle anything off the drawing — Nick (#17): placement only.
 
 ## What
 
-What a player sees in the resting shot right now (fresh render at 1:1,
-current main, your #11 camera fix included):
+Rewritten by the director, 2026-09-24 20:08 EDT, under Nick's #18. Before this the stones
+work was spread over #4 (five investigation notes, closed into here), #5
+(answered, closed into here), #11 (superseded) and the first version of this
+ticket. This is now the ONE live ticket for the gap and the stones.
+
+What a player sees today, at 1:1 on current main:
 
 ![[frames/director/2026-09-24-director-resting-shot.png]]
 
-The two footholds sit at the jackal's right flank, level with its belly.
-Nothing on screen says "climb up the front to the head". Zoomed only to
-diagnose what the shapes are (the 1:1 frame above is the one that counts):
+The hunters stand between the paws, about ten units out. Two pale saucers
+float at the right flank. Nick's diagnosis on #18: *there is not enough space
+between the hunters and the beast.* At that range no camera can be close on a
+hunter and show the beast, which is why the wide shot happened. Open the gap
+and everything else follows.
 
-![[frames/director/2026-09-24-director-stones-zoom-diagnosis.png]]
+Nick's drawing, which is the target for **placement only**:
 
-Since Nick's 11:52 note on #4 the fixer has shipped #6 (intent-tag graze)
-and #11 (camera). Both are real and verified, and both were smaller than
-this. #4's last two entries are investigations dated 02:54 and 08:35, both
-BEFORE Nick's requirement landed. So the thing he asked for most has had no
-work since he asked for it, while two smaller things finished past it. That
-is the pattern to break this run.
-
-Nick's own words on #4 (11:52 ET), so you do not have to scroll:
-
-- the stones go IN FRONT of the jackal, climbing up the front toward the head
-- the last hold leaves the hunter facing the sigil with space between him
-  and the skin, on a shelf, not pressed flat on the cheek
-- if a hold cannot be reached from the front, move the hold, not the sigil
-
-## What is working — keep it
-
-The route-direction rule (`keep_route_going`, item 1) is right and the
-evidence discipline on #4 is exactly what Nick wants. Do not undo item 1 to
-get the front route; build the front route on top of it.
+![[art/references/2026-09-24-nick-target-composition.webp]]
 
 ## How to see it
 
     xvfb-run -a -s '-screen 0 1280x720x24' $GODOT --rendering-driver opengl3 --path game --script res://tools/screenshot.gd -- out=/tmp/s.png state=3d beast=cinder_jackal size=1280x720
 
-Compare with `design/art/references/2026-09-24-nick-target-composition.webp`:
-his stones climb a diagonal from the frog up to the beast's front.
-
 ## Done when
 
-- In the `state=3d` resting shot the footholds sit between the hunters and
-  the jackal's chest/face, not at its flank.
-- The 80-step playtest still shows 0 `route-reversal`.
-- A reply under `## Nick's answer` on #4 tells Nick what changed, with the
-  frame.
+- In `state=3d` at 1:1: hunters at the bottom of frame, a clear stretch of
+  ground, then the stones climbing away toward the front of the beast's head.
+- At the top hold the hunter reads as standing in front of the sigil, not
+  pasted on the cheek (the frame #5 asked for).
+- 80-step playtest: 0 `route-reversal`, 0 `hunter-off-marker`.
+- The after frame is posted here; the director hands it to Nick on #18.
 
 ## Nick's answer
 
