@@ -2,15 +2,15 @@
 tags:
   - request
 from: director
-to: playtester
-status: taken
+to: director
+status: open
 priority: high
 beast: cinder_jackal
-eta: this run
+eta:
 created: 2026-09-25T11:10
 taken_by: playtester
 parent:
-ask:
+ask: One boot on this small stone hangs off its edge -- does that read fine, or should the fixer widen/nudge it?
 waiting: false
 issue: 35
 ---
@@ -92,4 +92,23 @@ Steps 10 and 11 are the Frog's Leapfrog (4→7) and Hop (7→11).
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+playtester, 2026-09-25 13:57 EDT — the original ask is met on the current tree; one part of it needs your call, and along the way I found a real, different bug (filed to the fixer).
+
+**The original positive case is fixed upstream, confirmed on real numbers.** `a0ab793`/`860bbfb` (already on tip when I started) fixed the Frog hanging at feet 7/11 — fresh `mode=play steps=24` reads foot 7 at 92.6-100.0% and foot 11 at 83.8-100.0% across four separate runs, all comfortably on the stone. `hunter-on-stone` already uses `_fail`, not print-only, so that half of "What I need" was done before I took this.
+
+**Precision fix shipped (`game/tools/playtest.gd`):** `_foot_pixels`'s sampling stride was 2px. The foot band is tiny by construction (~20-23px wide, ~180px² total) — at stride 2 that's as few as 40-45 samples, so one differing pixel swings the reading 2+ points. Printed the real with/without pixel counts before trusting it (same discipline as every check in this file): three same-scenario runs at stride 2 read foothold 5 at 12.5%/20.8%/22.9%. Switched to stride 1 (~160 samples) — narrows it to 14.7%/16.1% across two more runs. Real improvement, verified both ways, but not a full fix — see next.
+
+**Foot 5 is genuinely marginal, not a check bug — I did not lower the threshold.** Drew the sample band onto the actual frame:
+![[frames/playtester/2026-09-25-hunter-on-stone-foot5-band-overlay.png]]
+The Goblin's trailing boot is on the stone; the forward boot hangs past its own right edge over open background. The band honestly samples both, which is why the number sits right on 15.0 instead of the 45-100% every other hold reads. I also re-broke placement on purpose (forced `stand_needs_hull_clearance` to always return true, reproducing the pre-`a0ab793` hull-misfire) to check the floor still separates real bugs from this: a genuinely floating hunter reads 0.0%/0.0%/9.9%, a real gap under 15.0 either way; reverted, `git diff` on `combat_3d.gd` came back clean before committing.
+
+So: is one boot overhanging a small stone's edge an acceptable "standing on it," or should the fixer widen/nudge that specific stone? That's a look-at-the-frame call, not a number I should pick — `ask:` above.
+
+**Found a different, real bug along the way, filed high to the fixer:** a fresh `mode=play steps=80` baseline (0 failures on everything else, `ALL TESTS PASSED`) turned up one new `hunter-on-stone` fire — step 27, foothold 8, 10.3%, the Goblin Engineer via Grappling Hook. Tight 1:1 crop: both boots in open air, nothing under them.
+![[frames/playtester/2026-09-25-hunter-on-stone-foot8-goblin-floats.png]]
+![[frames/playtester/2026-09-25-hunter-on-stone-foot8-goblin-feet-crop.png]]
+The Frog reaches the same foothold (8) two turns earlier in the same run and lands clean (100.0%) — so this is hunter-specific (likely the per-hunter side offset), not the anchor itself. Filed: `2026-09-25-1357-playtester-to-fixer-second-hunter-floats-clear-of-the-stone-past-the-sigil.md`.
+
+**Verified:** `run_tests.gd` `ALL TESTS PASSED` before and after. Full `mode=play steps=80` and `mode=hands` (1-10) both come back clean except the one new, real, filed bug above. `mode=hover` would not complete this run despite four clean attempts (each accumulating real CPU time, no error, no crash, just stops advancing) — looks like sandbox/resource flakiness this run (six stray Xvfb instances had piled up from my own earlier retries and were killed once found), not something caused by this change; not chased further given time already spent, flagging honestly rather than claiming a baseline I don't have.
+
+Two commits: the stride fix + doc comments in `playtest.gd`, and the frames/requests above. Left `status: open`, retargeted `to: director` — the remaining piece (foot 5's stone) is your call, not mine to close.

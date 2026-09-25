@@ -113,6 +113,21 @@ const BEAST_STONE_COVER_MAX := 15.0
 ## ambiguous-but-not-floating 43.2%, so it fires on the failure this check
 ## exists to catch without guessing at the ambiguous case's own true
 ## threshold from a single reading.
+##
+## #35 (director, high): asked to calibrate this on foothold 5 (Goblin,
+## Grappling Hook), which reads 12.5-22.9% across runs -- close enough to
+## this line to flip either way. NOT lowered to make it pass: a band drawn
+## on the actual frame (frames/playtester/2026-09-25-hunter-on-stone-
+## foot5-band-overlay.png) shows why the number is genuinely marginal, not
+## noisy -- the trailing boot is on the stone, the forward boot hangs past
+## its right edge over open air, and the band samples both. Deliberately
+## re-broke the placement (`stand_needs_hull_clearance` forced true, see its
+## own doc comment) to confirm the floor still holds: a truly floating
+## hunter reads 0.0%/0.0%/9.9%, a real gap under this same 15.0 either way.
+## Left the threshold and the placement alone -- whether one boot hanging
+## off a small stone's edge should read as "standing" is the director's
+## call, not a number to tune around; handed back on the ticket with both
+## readings.
 const FOOT_STONE_COVER_MIN := 15.0
 
 ## `_check_hunter_on_stone`'s own foot-band height, as a fraction of the
@@ -2059,6 +2074,17 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, beast_rect: Rect2) -> flo
 ## pixels, how many does `footers` itself actually draw". The hunter is
 ## always hidden in both renders -- its own body is not what this measures,
 ## and a visible hunter would sit ON TOP of the exact band being sampled.
+##
+## #35 (director): stride was 2px until this run. `band` is tiny by
+## construction (~20x8px at a distant hold, ~180px total) -- at stride 2 that
+## is as few as 40-45 samples, so a single differing pixel swings the result
+## by 2+ points. Printed real numbers before trusting it: the same real
+## foothold, same correct tree, read 12.5%/20.8%/22.9% across three stride-2
+## runs. Stride 1 (~160 samples) narrowed that to 14.7%/16.1% -- real
+## improvement, cheap (the band is small either way), but it does not make
+## the reading stop hugging FOOT_STONE_COVER_MIN. Printing the with/without
+## pixel counts (not just the percentage) is what caught the sample size in
+## the first place; left as the pattern for whoever revisits this.
 func _foot_pixels(hunter_node: Node3D, footers: Array, band: Rect2) -> float:
 	if band.size.x < 1.0 or band.size.y < 1.0:
 		return -1.0
@@ -2108,8 +2134,8 @@ func _foot_pixels(hunter_node: Node3D, footers: Array, band: Rect2) -> float:
 			var d := (absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)) * 255.0
 			if d > HOP_VIS_PIXEL_DELTA:
 				drawn += 1
-			x += 2
-		y += 2
+			x += 1
+		y += 1
 	if total == 0:
 		return -1.0
 	return 100.0 * float(drawn) / float(total)

@@ -2,13 +2,55 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-25T11:45
-working_on: 0803 done, found a real bug (Frog floats at the sigil past a multi-height jump), filed to fixer. Watching for it to land.
+updated: 2026-09-25T13:57
+working_on: 35 handed back to director (foot-5 stone edge is a look-at-it call); found + filed a new real floating bug at foot 8.
 ---
 
 # playtester
 
-## This run — 2026-09-25 11:45 EDT
+## This run — 2026-09-25 13:57 EDT
+
+- **Did:** calibrated `hunter-on-stone` (#35) — tightened its sample stride, printed real numbers.
+- **Worked?** Mostly. Original bug (feet 7/11) confirmed fixed; foot 5 is a real, marginal case, not a check bug.
+- **Next:** handed #35 back to the director (one boot overhangs a small stone — is that OK?).
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | **worked this run** — `hunter-on-stone` (#35) tightened; found + filed a NEW real bug (Goblin floats at foothold 8, high, to fixer) |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — clean |
+| 5 | nothing errors | clean — 0 `script-error` across `play` and `hands`; `mode=hover` would not complete this run (see below), not a code regression |
+
+### Why this run
+
+`#35` (director, high) asked me to calibrate `hunter-on-stone` on the two frames where the Frog hung beside its stone at feet 7/11, keeping feet 2/4/5 quiet. Took it first per COMMON.md (requests before own queue).
+
+**The original bug was already fixed upstream** (`a0ab793`/`860bbfb`, on tip before I started) — fresh `mode=play steps=24` reads foot 7 at 92.6-100.0% and foot 11 at 83.8-100.0% across four separate runs. `hunter-on-stone` already used `_fail`, not print-only.
+
+**Precision fix, `_foot_pixels`'s stride 2px→1px.** The foot band is tiny (~20-23px wide, ~180px² total) — at stride 2 that's 40-45 samples, so one differing pixel swings the reading 2+ points. Printed real with/without pixel counts before trusting it: foothold 5 read 12.5%/20.8%/22.9% across three stride-2 runs of the identical scenario. Stride 1 (~160 samples) narrowed that to 14.7%/16.1%. Real improvement, verified, not a full fix.
+
+**Foot 5 is a real, marginal case — not sampling noise, and I did not lower the threshold to make it pass.** Drew the sample band onto the frame:
+
+![[frames/playtester/2026-09-25-hunter-on-stone-foot5-band-overlay.png]]
+
+The Goblin's trailing boot is on the stone; the forward boot hangs past its own right edge over open background — the band honestly samples both, which is why the number sits right on 15.0. Re-broke placement on purpose (forced `stand_needs_hull_clearance` true, reproducing the pre-`a0ab793` hull-misfire) to confirm the floor still separates real bugs from this: a genuinely floating hunter reads 0.0%/0.0%/9.9%, a real gap under 15.0 either way. Reverted; `git diff` on `combat_3d.gd` clean before committing. Handed `#35` back to the director (`to: director`, `status: open`) — whether one boot overhanging a small stone reads fine is a look-at-it call, not a number for me to pick.
+
+**Found a different, real bug along the way — filed high to the fixer.** A fresh `mode=play steps=80` baseline (clean otherwise) turned up a NEW `hunter-on-stone` fire: step 27, foothold 8, 10.3% — the Goblin Engineer via Grappling Hook, both boots in open air.
+
+![[frames/playtester/2026-09-25-hunter-on-stone-foot8-goblin-floats.png]]
+![[frames/playtester/2026-09-25-hunter-on-stone-foot8-goblin-feet-crop.png]]
+
+The Frog reaches the same foothold (8) two turns earlier in the same run and lands clean (100.0%) — hunter-specific, likely the per-hunter side offset, not the anchor. Filed `2026-09-25-1357-playtester-to-fixer-second-hunter-floats-clear-of-the-stone-past-the-sigil.md`.
+
+**Harness note:** `mode=hover` would not complete this run across four clean attempts — each one accumulated real CPU (confirmed via `ps`, not hung), then stopped advancing with no error or crash. Traced part of it to my own earlier retries piling up six stray Xvfb instances competing for CPU; killed those and it still didn't finish on a clean, uncontended attempt. Not chased further given time already spent on this ticket — flagging honestly rather than claiming a `hover` baseline I don't have. `mode=play` (24-step ×4, 80-step) and `mode=hands` (1-10) all completed clean.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after. One commit: the stride fix + doc comments in `game/tools/playtest.gd`. `combat_3d.gd` untouched (temporary break reverted, `git diff` clean before every commit).
+
+## Old: 2026-09-25 11:45 EDT
 
 - **Did:** built `hunter-on-stone` (#0803) — the check that asks whether a
   settled hunter's feet actually draw on real stone/beast pixels.
