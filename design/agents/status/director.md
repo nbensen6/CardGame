@@ -2,20 +2,145 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T02:05
-working_on: Cast reads; the fixer's swept near stone now hides the beast chest-to-paws — filed the placement fix; playtester to measure it.
+updated: 2026-09-25T02:58
+working_on: Whole beast back in the resting shot; the near stone's box-with-a-lid look is with Nick; fixer's next is the 20 m hops.
 ---
 
 # director
 
-## This run — 2026-09-25 02:05 EDT
+## This run — 2026-09-25 02:58 EDT
+
+- **Did:** the fight is better — whole beast back in the resting shot, red horizon line gone; both real, both visible.
+- **Worked?** Yes; all that still stands between the frame and your drawing is the near stone, a box with a lid.
+- **Next:** you pick boulders or shelves; fixer rewrites the 20 m hops; playtester re-measures on the fixed tree.
+- **Need from you:** one line on the stone shape, and #13 — nothing else new tonight.
+
+## Now
+
+**What a player sees, before I read anyone's note (02:53, on the 02:49
+tree).** Resting shot: the Cinder Jackal whole, upper-middle, black with
+ember cracks, ears against a soft purple sky, "Attack 7" beside the head;
+a big smooth green Frog bottom-left, the Goblin small on the right; the
+horizon a clean gradient, no red line. Left of the beast a large pale
+block with a flat top and an orange lid — the eye reads "box", or "cake",
+before it reads "rock". A small stone with a gold ring hangs at the
+beast's chest. Climb shot: unchanged — four-fifths sky, the beast a black
+lump bottom-left, the Frog tiny on a rock, "Attack 7" over nothing. Grip
+shot: the red line is gone here too; the Frog stands on a pale bucket with
+an orange band, and a big red "3" sits on the Frog and hides all but its
+ears; only the beast's legs are in frame.
+
+![[frames/director/2026-09-25-0253-director-resting-shot.png]]
+![[frames/director/2026-09-25-0253-director-at-the-sigil.png]]
+![[frames/director/2026-09-25-0253-director-grip.png]]
+
+**Against the drawing**, 1:1 beside it:
+
+![[frames/director/2026-09-25-0253-director-resting-vs-reference.png]]
+
+| his drawing | the frame now | verdict |
+|---|---|---|
+| whole beast, upper-middle, sky above its ears | whole beast, upper-middle, sky above | **yes — fixer, 02:49** |
+| frog large, bottom-left, camera near it | quarter of the frame, bottom-left | yes |
+| the frog is a smooth cartoon frog | yes | yes (#13, with Nick) |
+| (no goblin in the drawing) | smooth cartoon goblin, same treatment | yes (#13, with Nick) |
+| stones are plain pale rounded boulders, big near, small on the body | big near stone is a box with an orange lid; a small stone on the chest, as drawn | **half — shape is with Nick** |
+| path runs diagonally, left to right, ground onto the beast | near stone left, chest stone right and up; the rungs between are hidden behind the beast at this camera | half — the 20 m hops are the remaining half |
+| broad hot glow at the horizon | clean gradient, no line | n/a — Nick: no art direction; the LINE was the fault and it is gone (#19) |
+| cool sky, dark ground, pale stones | yes | yes |
+| beast black | black | settled (#17) |
+
+**Did the fight get better for Nick, or did three scores go up?** Better,
+and no score moved. The fixer's one number put the whole beast back;
+the artist's two numbers took out the line the eye used to snag on. Both
+were judged in the real frame, both were the visible half of their ticket,
+and the fixer said honestly what it had uncovered instead of chasing it.
+That is the pattern I want, so I have said so on both tickets.
+
+**Where it is still not his drawing:** the near stone. Now that it is off
+the beast you can see what it is: a flat-topped block with an orange rim,
+the second-biggest thing on screen. That shape came from a playtester
+request ("ledges should read as shelves", a Breath of the Wild footing cue)
+that Nick approved inside the stone line-up; his drawing has plain rounded
+boulders. Two of his own inputs, pulling opposite ways — that is his to
+settle, not the artist's or mine, so it is `to: nick` with the three
+options and a recommendation (plain boulders, one warm ring on the next
+stone). I held this back last run until the stone was clear of the beast;
+it is clear now.
+
+**Audit of what closed since 02:05.** #19 (horizon line) closed by the
+artist on a measured bar — saturation of the old line's row against its
+neighbours, seven points across the frame — and the frame agrees. Correct
+close. Worth one line: the artist's 23:40 "it is the Wall" diagnosis was a
+stale import cache, and it said so plainly instead of burying it; the real
+fix is two numbers in the biome, exactly the size the ticket asked for.
+Nothing else changed status. **Stuck audit:** the near-stone ticket is
+`taken` with a finished Result and a question to me — answered on the
+ticket (Height 2 stays; close it yourself, the Done-when is measured).
+#14 `taken`, eta honest. The 23:56 head ticket rides #14. The 20 m ticket
+`open` to the fixer, high — it is the fixer's next run and I have said so
+twice on its own tickets. **Nick's column:** five rows now, all with
+`ask:` — #13, the camera shot, keep-or-revert the Jackal, the Risk of Rain
+picture, and the stone shape. No answers since 23:48.
+
+**Judgement calls sitting elsewhere:** one, the fixer's "director to
+decide if Height 2 needs its own ticket" — mine, not Nick's, answered
+from the drawing (stones sit on the body in it). None of Nick's.
+
+**A timing hazard I could see and the playtester could not:** it claimed
+the occlusion-check ticket at 02:46, three minutes before the fixer's fix
+landed. It is live now, measuring a frame that no longer exists. Filed to
+it: re-baseline on the 02:49 tree, and make the check tell "stone between
+the camera and the beast" from "foothold on the body", because the chest
+stone is the drawing and must not fire.
+
+**Filed (three):**
+
+1. `to: nick` (new) — the near stone reads as a box with an orange lid;
+   plain boulders like the drawing, keep the shelf and rim, or keep the
+   top and drop the rim; recommendation: plain boulders, warm ring on the
+   next stone only. Shape only; no colour, no lighting.
+2. `to: playtester` (new, high) — the tree moved under you; re-baseline on
+   `2f9813c`; a stone ON the body is not a failure, only one between the
+   camera and the beast is. NOT: a threshold that fires on the chest
+   stone, or a request to move it.
+3. `to: fixer` (new, normal) — the hunter damage number sits on the Frog
+   and hides it in the grip shot; put it above the head, keep size, colour
+   and timing. Explicitly AFTER the 20 m hops, so the small fix does not
+   crowd out the awaited one.
+
+**Held back (watch next run):**
+
+- The climb shot is still four-fifths sky. That is the camera at the sigil,
+  and Nick's own sequencing (#18) puts the camera after the gap and the
+  stones; the 20 m hop rewrite may change where the sigil camera wants to
+  sit. Not filed until the hops land.
+- The Frog's shadow is a hard black slab in the resting shot. Small, and
+  the drawing has soft shadows, but it is under the biggest thing on screen
+  and the eye forgives it. Watch.
+- The chest stone's gold ring: it is the "next rung" ring, and both hunters
+  are on the ground, so the next rung should be the near stone. Possibly
+  the ring is on the wrong stone at Height 0. I did not verify this in
+  code and it is not a ticket until I have; a line for the playtester's
+  next baseline, not a request.
+- Fixer and artist `## This run` bullets are two sentences and 30-45
+  words each; the board truncates. Not a ticket, a reminder.
+
+**What is working, so nobody optimises it away:** the fixer rendering
+eight widths and picking the smallest clean one instead of the first; the
+fixer surfacing the Height-2 stone on the ticket rather than fixing it out
+of scope or hiding it; the artist re-testing its own wrong diagnosis with
+a clean import and saying so; every close tonight backed by a frame or a
+measurement. Keep all of that.
+
+## Old: 2026-09-25 02:05 EDT
 
 - **Did:** the Goblin now reads beside the Frog, but the fixer's new near stone hides the beast from chest to paws.
 - **Worked?** Half; the cast is right, the resting shot is a step back on the whole-beast line of your drawing.
 - **Next:** fixer moves the near stone off the beast; artist clears the red horizon line; playtester measures the hidden beast.
 - **Need from you:** answer #13 — one line settles both hunters; nothing else new is yours tonight.
 
-## Now
+### Now (02:05)
 
 **The tree moved under me twice this run.** I rendered at 01:52 on the
 01:36 tree; the fixer's stone sweep (#14 item 2) pushed at 01:51 while
@@ -665,6 +790,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+- 2026-09-25 02:58 EDT — fight better (whole beast back, fixer 02:49; red horizon line gone, artist 02:35), no scores moved; the near stone's box-with-a-lid shape is two of Nick's own inputs in conflict — filed to him with options; playtester told the tree moved under it and a stone on the body is not a failure; fixer told Height 2 stays, close the ticket, hops next; popup-on-the-Frog filed to fixer for after the hops.
 - 2026-09-25 02:05 EDT — Goblin reads beside the Frog (artist, #13 handed back right); the fixer's stone sweep landed mid-run and the near rock now hides the beast chest-to-paws — filed the placement fix to the fixer, the occlusion check to the playtester, unblocked #19 for the artist. My miss: #14's visible half ("beast stays visible") was never stated.
 - 2026-09-25 01:00 EDT — fight better again (Frog reads and matches the drawing; beast's head clear of the HUD, fixer 00:52); no scores moved; named the style-C vs smooth contradiction for Nick on #13 with options; artist sequenced (Goblin next, do not touch the Frog, do not decimate); #14 now the only blocker.
 - 2026-09-25 00:03 EDT — fight visibly better (close shot landed: Frog quarter-frame, diagonal); beast head behind the HUD filed to fixer; #13 told it is unblocked; #19 re-routed to artist with the artist's correct cause; #14 sequenced (head → stones → 20 m hop).

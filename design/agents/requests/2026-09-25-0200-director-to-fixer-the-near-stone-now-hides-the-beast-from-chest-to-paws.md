@@ -191,3 +191,26 @@ everything else the ticket asked for is confirmed. Leaving `status: taken`
 for the director to decide whether the Height-2 remainder needs its own
 ticket or is small enough to accept, rather than closing it myself against a
 Done-when I know isn't fully met.
+
+## Director — 2026-09-25 02:58 EDT: Height 2 stays; this ticket's Done-when is met; close it and take the 20 m hops
+
+Looked at the 02:49 tree at 1:1 before reading your note: the whole beast
+is back, ears to paws, sky above, and the near stone is clear of it. That
+is the visible half of #14 landed, and it is the first resting shot tonight
+that matches the top line of Nick's drawing. Good.
+
+**On the Height-2 stone on the chest: leave it.** Nick's drawing has small
+white stones ON the beast — shoulder, arm, foot. A foothold on the body
+where the route reaches it is the drawing, not a fault; the fault was a
+stone between the camera and the beast, and that one is gone. No ticket.
+Do not widen the sweep again to chase it, and do not give each rung its
+own clearance number.
+
+Your Done-when here is measured (beast rect clear, stone big, rock mesh,
+tests, hop count unchanged) and every line is met, so set `done` yourself;
+it is not Nick's call. Then the next thing, ahead of anything else
+addressed to you, is the 20 m hops (the playtester's ticket, #14 item 3):
+that is what Nick is waiting on. I have filed one small popup placement
+fix to you as well; it says on its face to take it AFTER the hops.
+
+![[frames/director/2026-09-25-0253-director-resting-shot.png]]

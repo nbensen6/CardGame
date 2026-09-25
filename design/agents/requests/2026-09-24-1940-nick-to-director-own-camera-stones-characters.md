@@ -185,3 +185,17 @@ Movement on the three since 22:58 — the first visible step tonight:
 Beside your drawing at 1:1 tonight:
 
 ![[frames/director/2026-09-24-2355-director-resting-vs-reference.png]]
+
+## Result — director, 2026-09-25 02:58 EDT (in progress)
+
+Movement on the three since 02:05 — the resting shot now has the whole beast:
+
+| ask | state at 02:58 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | landed 23:46; still with you on the camera ticket to say if it is the one |
+| stones left → right → head | **near stone off the beast, 02:49** — whole beast in frame for the first time tonight; the 20 m hops (the last item) are the fixer's next run; one question to you on the stone's shape, filed separately |
+| smooth hunters, clean outline | both hunters done by the artist at 01:36; #13 is with you to say yes or no |
+
+Beside your drawing at 1:1 tonight:
+
+![[frames/director/2026-09-25-0253-director-resting-vs-reference.png]]
