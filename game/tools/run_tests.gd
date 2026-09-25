@@ -2568,6 +2568,12 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_intent_tag_pos_falls_back_below_the_hunter_when_above_has_no_room()
 	_test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side_has_room()
 
+	# director, 2026-09-24-2356: the resting shot's crown lands inside the
+	# HP-bar's own clear band, so "above" has no room and clamps the tag onto
+	# the head instead of over it -- hang it beside the head there.
+	_test_backlog_intent_tag_pos_repros_the_pre_fix_crown_behind_tag()
+	_test_backlog_intent_tag_pos_hangs_beside_the_crown_near_the_top()
+
 	# request 2026-09-24-1002: a sliver of the same bug survived the hunter
 	# clamp above -- not a math gap in intent_tag_pos, but _position_intent_tag
 	# reading the hunter's position one climb-tween step behind whatever the
@@ -29385,6 +29391,43 @@ func _test_backlog_intent_tag_pos_leaves_the_prior_clamp_alone_when_neither_side
 	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), hunter)
 	_expect(is_equal_approx(pos.y, 168.0),
 		"no clear spot either side of a too-tall hunter -- keeps the pre-hunter clamp's own y unchanged (got y=%f want=168)" % pos.y)
+
+
+## Director, 2026-09-24: "the beast's face is behind the Attack tag" -- on the
+## Cinder Jackal's own resting `state=3d` shot at 1280x720, the crown's real
+## measured screen position (instrumented live, `_position_intent_tag`'s own
+## `p`/`sz`) is (544.917725, 94.703629) / (160, 34). Reconstructed here as the
+## OLD "above" formula would have placed it, same style as the party/hunter
+## sanity checks above: no party or hunter is in play, so the pre-fix code's
+## only lever was clampf(p.y - sz.y - 10, lo_y, hi_y) with lo_y=70 -- which
+## clamps UP to 70 because the natural position (50.7) is already above the
+## HP-bar floor, landing the tag's own [70, 104] band squarely on the crown
+## (94.7) instead of clearing it. This is the bug the frame showed: two eyes
+## under the tag, ears and muzzle hidden.
+func _test_backlog_intent_tag_pos_repros_the_pre_fix_crown_behind_tag() -> void:
+	var p := Vector2(544.917725, 94.703629)
+	var sz := Vector2(160.0, 34.0)
+	var lo_y := 70.0
+	var old_y := clampf(p.y - sz.y - 10.0, lo_y, 436.0)
+	_expect(old_y <= p.y and old_y + sz.y >= p.y,
+		"sanity check: the pre-fix 'above' formula really does clamp the tag onto the crown (got y=%f, crown=%f)" % [old_y, p.y])
+
+
+## The fix: a crown inside the HP-bar's own clear band (lo_y..lo_y+sz.y) has
+## no room for "above" at all, so it hangs beside the head instead, roughly
+## level with it, toward screen centre (the crown sits left-of-centre here,
+## so it hangs to the right). Real party rect included, as every real call
+## site passes one -- it sits nowhere near this crown's x, so it must not
+## change the answer.
+func _test_backlog_intent_tag_pos_hangs_beside_the_crown_near_the_top() -> void:
+	var p := Vector2(544.917725, 94.703629)
+	var sz := Vector2(160.0, 34.0)
+	var vp := Vector2(1280.0, 720.0)
+	var party := Rect2(16.0, 12.0, 304.0, 148.0)
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, party)
+	_expect(is_equal_approx(pos.x, 584.917725) and is_equal_approx(pos.y, 77.703629),
+		"the tag must hang beside the crown, not clamp onto it (got %s want (584.92, 77.70))" % pos)
+	_expect(pos.x > p.x, "near the top the tag moves toward screen centre, away from the crown's own x")
 
 
 ## Request 2026-09-24-1002: the playtester's own margin-guarded check

@@ -1525,15 +1525,30 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 ## spot arbitrarily.
 static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rect2,
 		hunter_rect: Rect2 = Rect2()) -> Vector2:
-	var x := clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0))
 	var lo_y := 70.0                                   # clear of the boss HP bar
 	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
+	# A crown that lands IN the HP-bar's own clear band (director, 2026-09-24:
+	# "the beast's face is behind the Attack tag") has no room for "above" at
+	# all -- that slot clamps to lo_y, which sits AT OR BELOW the crown itself,
+	# so the tag lands on the head instead of clearing it. A crown further up
+	# (off the top of frame, e.g. a Titan) or further down (plenty of room
+	# above) isn't this bug and keeps the ordinary "above" placement.
+	var near_top := p.y >= lo_y and p.y <= lo_y + sz.y
+	var x: float
+	if near_top:
+		var side_lo_x := 12.0
+		var side_hi_x := maxf(side_lo_x, vp.x - sz.x - 12.0)
+		x = clampf(p.x + 40.0, side_lo_x, side_hi_x) if p.x < vp.x * 0.5 \
+			else clampf(p.x - sz.x - 40.0, side_lo_x, side_hi_x)
+	else:
+		x = clampf(p.x - sz.x * 0.5, 12.0, maxf(12.0, vp.x - sz.x - 12.0))
 	if party_rect.size.x > 0.0 and party_rect.size.y > 0.0 \
 			and x < party_rect.position.x + party_rect.size.x \
 			and x + sz.x > party_rect.position.x:
 		lo_y = maxf(lo_y, party_rect.position.y + party_rect.size.y + 10.0)  # clear of the party panel
 		hi_y = maxf(lo_y, hi_y)
-	var y := clampf(p.y - sz.y - 10.0, lo_y, hi_y)
+	var y := clampf(p.y - sz.y * 0.5, lo_y, hi_y) if near_top \
+		else clampf(p.y - sz.y - 10.0, lo_y, hi_y)
 	if hunter_rect.size.x > 0.0 and hunter_rect.size.y > 0.0 \
 			and x < hunter_rect.position.x + hunter_rect.size.x \
 			and x + sz.x > hunter_rect.position.x \

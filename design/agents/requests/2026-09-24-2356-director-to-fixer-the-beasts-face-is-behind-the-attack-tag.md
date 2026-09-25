@@ -65,4 +65,73 @@ handback to Nick — do not close it yourself.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-25 01:05 EDT
+
+**Tried the camera numbers first, as asked — they can't do it without a new
+regression.** `GROUND_VIEW_EYE`/`GROUND_VIEW_PITCH` are the only two levers
+`_aim_camera` exposes for the grounded shot. Measured both in isolation:
+
+| change | hunter0 (Frog) | hunter1 (Goblin) |
+|---|---|---|
+| shipped (1.05 / 0.08) | (431, 502) OK | (1014, 485) OK |
+| EYE 1.15 (+0.10) | (430, 521) OK | (1015, 504) **FAIL** |
+| EYE 1.6, PITCH 0.08 | (432, 604) OK, huge | (1012, 580) **FAIL** |
+| EYE 1.6, PITCH 0.02 | (427, 609) OK, huge | (1019, 588) **FAIL** |
+| PITCH alone, 0.00–0.08 (EYE 1.05) | no change at all | no change at all |
+
+The Goblin already sits at y=485 against a hard-coded reserved corner at
+y>500 (the turn/switch buttons) — only 15px of slack. `EYE` raises the whole
+rig (a pure translation, since `_cam_home` = pivot + a height-independent
+offset), which is exactly what pushes the far beast head down into frame —
+but it pushes the Goblin down by the same amount, into that corner, at the
+very first step tried (+0.10). `PITCH` alone does nothing at the shipped
+`EYE`: `_cam_home.y` is pinned by the `CAMERA_FLOOR + lift` clamp
+(`combat_3d.gd`) at every pitch from 0.00–0.08, so the camera's height (and
+therefore the hunters' screen position) never moves — pitch only starts
+doing anything once `EYE` is raised enough to clear that floor, and by then
+it also blows up the Frog's own size (looking more level at an object 3
+units from the lens makes it loom, confirmed live: Frog goes from a normal
+crouch to filling half the screen). No combination of the two numbers alone
+clears the head without failing the Goblin's on-screen position or wrecking
+the Frog's scale — so per the ticket's own fallback, moved to the tag.
+
+**The fix: `intent_tag_pos` (`combat_3d.gd`).** A crown that lands inside the
+HP-bar's own clear band (`lo_y..lo_y+sz.y`, i.e. it's close enough to the top
+of frame that "above" has no room) now hangs the tag beside the head instead
+— toward screen centre, roughly level with the crown — rather than clamping
+down onto it. Everywhere else (crown lower in frame, or so high it's off the
+top by design, e.g. a Titan) is untouched: same "above" placement as before,
+byte-for-byte.
+
+**Real numbers, not guessed.** Instrumented `_position_intent_tag`'s own `p`/
+`sz` live on `state=3d`: the resting shot's crown is `(544.917725,
+94.703629)`, tag size `(160, 34)`. `lo_y=70`, so `lo_y+sz.y=104` — the crown
+(94.7) sits inside that band, which is exactly why the old formula clamped
+the tag down onto it (`clampf(94.7-34-10, 70, hi)` clamps up to 70, and
+`[70,104]` covers the crown at 94.7). New position: beside it at
+`(584.9, 77.7)`.
+
+**Proof.**
+- Two new tests in `run_tests.gd`, built on those exact live numbers: one
+  reconstructs the pre-fix "above" formula and confirms it really does
+  clamp onto the crown (sanity check the bug is real, same style as the
+  existing party/hunter sanity checks); the other pins the fix's exact
+  output. `ALL TESTS PASSED` (26 intent-tag tests total, all the
+  pre-existing party-panel and hunter-overlap ones untouched).
+- `state=3dclimb`/`3dgrip` `CAM` lines: byte-for-byte identical before/after
+  (`git stash` diff), matching Done-when's own requirement.
+- `state=3d` hunters: `VIS OK hunter0: (431, 502)` and
+  `VIS OK hunter1: (1014, 485)` — both unchanged from shipped (I never
+  touched the camera in the shipped fix).
+- 1:1 frame, before/after:
+
+![[frames/fixer/2026-09-25-head-behind-tag-before.png]]
+![[frames/fixer/2026-09-25-head-behind-tag-after.png]]
+
+Whole head — both ears, both eyes, the muzzle — now clears the boss bar with
+a visible strip of sky above, and the tag sits beside it instead of on it.
+Frog unchanged (still above the card fan, still a quarter of the frame).
+
+Per the ticket's own Done-when, **not closing this myself** — it rides #14's
+own handback to Nick. Leaving `status: taken`, `to: fixer`. Wrote the
+progress into #14 itself (23:57 sequencing note, item 1 of 3).

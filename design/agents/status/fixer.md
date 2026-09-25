@@ -2,11 +2,87 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T23:44
-working_on: Handed the Risk of Rain camera shot back to Nick; #14 (stones/gap) is next.
+updated: 2026-09-25T00:51
+working_on: Fixed the head-behind-tag bug (#14 item 1). Stones (#14 items 2-3) are next, a real rewrite.
 ---
 
 # fixer
+
+## This run — 2026-09-25 00:51 EDT
+
+- **Did:** fixed the beast's head hiding behind the "Attack" tag on the
+  resting shot (#14's own item 1, director's 23:56 ticket).
+- **Worked?** Yes. Whole head — ears, eyes, muzzle — now clears the boss bar
+  with sky above; tag hangs beside it instead of on it. Frog, both cameras,
+  and the pre-existing failures all unchanged.
+- **Next:** #14 itself (the stones across the gap) — a real rewrite
+  (parametric path), not started this run.
+- **Need from you:** nothing.
+
+## Now
+
+Took the director's 23:56 ticket, item 1 of the #14 sequencing note (head
+clearance first, then stones, then the hop-band symptom clears on its own).
+
+**Tried the camera numbers first, as the ticket asked.** Measured
+`GROUND_VIEW_EYE`/`GROUND_VIEW_PITCH` in isolation on `state=3d`: any rise in
+`EYE` (even +0.10, the first step tried) pushes the Goblin's own screen
+position down into the reserved turn/switch-button corner — it already sits
+at only 15px of slack (485 against a 500 cutoff) on shipped numbers. `PITCH`
+alone does nothing at all at the shipped `EYE`, because `_cam_home.y` is
+pinned by the pre-existing `CAMERA_FLOOR + lift` clamp across the whole
+0.00-0.08 range — it only starts moving once `EYE` is raised enough to clear
+that floor, and by then the Frog (3 units from the lens) blows up to fill
+half the screen. No combination clears the head without a new regression;
+full table in the ticket's own `## Result`.
+
+**Fix: `intent_tag_pos` (`combat_3d.gd`), the ticket's own fallback lever.**
+A crown that lands inside the HP-bar's own clear band (`lo_y..lo_y+sz.y` —
+close enough to the top that "above" has zero room) now hangs the tag beside
+the head, roughly level with it, toward screen centre, instead of clamping
+down onto it. Everywhere else (lower in frame, or off the top entirely, e.g.
+a Titan) keeps the exact old "above" placement.
+
+Real numbers, not guessed: instrumented `_position_intent_tag`'s own inputs
+live — the resting shot's crown is `(544.917725, 94.703629)`, tag size
+`(160, 34)`. `lo_y=70`, so the old clamp's own `[70, 104]` band covered the
+crown at 94.7, which is exactly the bug. New position: `(584.9, 77.7)`.
+
+**Proof.**
+- 2 new tests in `run_tests.gd` on those exact live numbers (one
+  reconstructs the pre-fix clamp and confirms it really lands on the crown;
+  the other pins the fix's exact output). `ALL TESTS PASSED`, all 24
+  pre-existing intent-tag tests (party panel, hunter overlap) untouched.
+- `state=3dclimb`/`3dgrip` `CAM` lines: byte-for-byte identical before/after.
+- `state=3d` hunters: `VIS OK` at the same pixels as shipped — the camera
+  itself was never touched.
+- Full `mode=play beast=cinder_jackal steps=30` regression under `xvfb-run`:
+  only the pre-existing, already-open `hop-distance-band` (124, #14's own
+  known symptom) — zero `intent-tag-vs-hunter`, zero new failure of any
+  kind. "intent tag stayed clear of the jumping hunter" passed on every
+  sampled hop across the whole run.
+
+![[frames/fixer/2026-09-25-head-behind-tag-before.png]]
+![[frames/fixer/2026-09-25-head-behind-tag-after.png]]
+
+Left the 23:56 ticket at `status: taken`, not `done` — its own Done-when
+says it rides #14's handback to Nick, so only Nick (via #14) closes it.
+Wrote the same progress into #14 itself, with a note for whoever picks up
+the stones next: narrowing the gap will make the beast bigger again, which
+may reopen the head-clearance question — the tag fix should still hold
+(it reacts to wherever the crown actually projects, not a fixed number),
+but re-check `state=3d` once the stones land rather than assume it does.
+
+**Not started this run:** #14's own items 2 (the stones across the gap) and
+3 (the hop-band symptom, which item 2 is expected to clear on its own,
+per the director's 23:57 note — do NOT widen `hop_arc()`'s ceiling to fake
+it green). The 21:49 write-up's recommendation stands: a parametric path
+(a curve from near the hunter to near rung 1, N holds, checked only for
+clearance against the body) rather than another raycast-onto-surface
+attempt. A real rewrite, 2-3 runs, not something to start on this run's
+remaining budget.
+
+## Old: 2026-09-24 23:44 EDT — the Risk of Rain shot, handed to Nick
 
 ## This run — 2026-09-24 23:44 EDT
 

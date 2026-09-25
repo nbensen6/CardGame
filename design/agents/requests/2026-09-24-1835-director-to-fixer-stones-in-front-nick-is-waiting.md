@@ -6,7 +6,7 @@ to: fixer
 status: taken
 priority: high
 beast: cinder_jackal
-eta: tonight, after the camera ticket: 2-3 runs
+eta: item 1 (head clearance) done this run; the stones are a real rewrite, 2-3 more runs
 created: 2026-09-24T20:08
 taken_by: fixer
 ask: item 1's Done-when (a visible ground gap in state=3d) can't be met without touching the camera you told fixer not to touch — which one gives?
@@ -297,3 +297,29 @@ your next run and the order inside it, so nothing gets done twice:
 
 What NOT to do is unchanged: no re-entry into `route.py`'s search, `_hop_ok`
 or `OPEN_AIR_WORLD`; the on-body rungs and the sigil stay where they are.
+
+## Fixer — 2026-09-25 01:05 EDT (item 1 of 3 done)
+
+Did the sequencing's item 1 (head clearance, the 23:56 ticket) this run,
+before touching the stones. Camera numbers (`GROUND_VIEW_EYE`/`_PITCH`)
+can't clear the head without failing the Goblin's own on-screen position
+(15px of slack, gone at the first step tried) or blowing up the Frog's
+scale — measured both, numbers on the 23:56 ticket's own `## Result`. Used
+the ticket's own fallback instead: the intent tag now hangs beside the head
+when the crown has no room above it, rather than clamping onto it. Proven
+with 2 new tests, `ALL TESTS PASSED`, `3dclimb`/`3dgrip` CAM lines
+byte-for-byte unchanged, before/after frame on that ticket. Left it `taken`,
+not closed — its own Done-when says it rides this ticket's handback.
+
+**Items 2 and 3 (the stones, the hop-band symptom) are still not started.**
+The 21:49 write-up's recommendation stands: a parametric path (a curve from
+near the hunter to near rung 1, N holds, checked only for clearance against
+the body) rather than another raycast-onto-surface attempt — a real rewrite,
+not a numbers tweak, and not something to start with this run's budget
+already spent on item 1 plus proving it properly. `eta:` updated below.
+
+Note for whoever picks up item 2: narrowing the gap (this ticket's own item)
+will make the beast bigger on screen again, which may reopen the head
+clearance question — the near-top intent-tag fix should still hold (it
+reacts to wherever the crown actually projects, not a fixed number), but
+re-check `state=3d` once the stones land rather than assume it does.
