@@ -3,16 +3,16 @@ tags:
   - agent-status
 agent: director
 updated: 2026-09-25T01:00
-working_on: The Frog reads now; named the smooth-vs-faceted cast contradiction for Nick on #13; fixer live on the beast's head, #14 still the blocker.
+working_on: Frog reads and the beast's head is clear; named the smooth-vs-faceted cast contradiction for Nick on #13; #14 (stones) is the only blocker.
 ---
 
 # director
 
 ## This run — 2026-09-25 01:00 EDT
 
-- **Did:** the fight is better again — the Frog finally reads as a frog, and it matches the one in your drawing.
+- **Did:** the fight is better again — the Frog reads as a frog, and the beast's whole head is now clear of the HUD.
 - **Worked?** Yes, but the frame now mixes two looks: smooth Frog beside faceted Goblin and Jackal; your call.
-- **Next:** fixer is live on the beast's head; artist does the Goblin; the stones (#14) remain the one blocker.
+- **Next:** fixer lays the stones (#14, now the only blocker); artist does the Goblin; nothing else in the way.
 - **Need from you:** answer #13 — one line settles the Frog, the Goblin and the cast's look together.
 
 ## Now
@@ -23,8 +23,10 @@ facing right at the beast — the first time this fight has had a hunter you
 would recognise from across a room. The Goblin small on the right, still a
 faceted blue-and-orange crystal thing. Between them the pale pot with the
 orange lid, the beast's torso hidden behind it; the second pot with the gold
-ring at its chest. The black jackal at the top, eyes just under "Attack 7",
-skull behind the tag and the boss bar. The hard red line still runs full
+ring at its chest. The black jackal at the top, its whole head — ears, eyes, muzzle —
+clear under the boss bar with a strip of sky, the "Attack 7" tag hung
+beside its crown (the fixer's 00:52 commit, which landed while I was
+rendering; the first frame I judged still had the head behind the tag). The hard red line still runs full
 width at the beast's ankles. Climb shot: unchanged — sky, a black lump
 bottom-left, the Frog tiny on a pot, "Attack 7" over nothing. Grip shot:
 unchanged — the Frog half behind a "3", only the beast's legs in frame.
@@ -39,7 +41,7 @@ unchanged — the Frog half behind a "3", only the beast's legs in frame.
 
 | his drawing | the frame now | verdict |
 |---|---|---|
-| whole beast, upper-middle, sky above its ears | top edge, head behind tag and bar, torso behind the near pot | no — fixer live on the head (taken 00:22); torso is #14 |
+| whole beast, upper-middle, sky above its ears | head whole with sky above, torso behind the near pot | **half — head yes (fixer, 00:52); torso is #14** |
 | frog large, bottom-left, camera near it | quarter of the frame, bottom-left | yes |
 | the frog is a smooth cartoon frog | a smooth cartoon frog | **yes — artist, #13, 00:16** |
 | stones recede from frog to beast | big near, small far | yes in order; still pots, rock waits on #14 |
@@ -49,9 +51,12 @@ unchanged — the Frog half behind a "3", only the beast's legs in frame.
 | beast black | black | settled (#17) |
 
 **Did the fight get better for Nick, or did three scores go up?** Better,
-and no score went up at all: one commit since 00:03 (the artist's Frog),
-one visible change, judged at 1:1 in the real fight, handed back `to: nick`
-with `ask:` filled and the Goblin left alone on purpose. That is the
+and no score went up at all: two commits since 00:03 (the artist's Frog,
+the fixer's head), two visible changes, both judged at 1:1 in the real
+fight. The artist handed #13 back `to: nick` with `ask:` filled and left
+the Goblin alone on purpose; the fixer tried the camera numbers first as
+asked, proved with a table that they fail the Goblin's position, took the
+fallback I named, and left the ticket riding #14 as told. That is the
 process working exactly as written. The one new thing a player sees that
 nobody has put in front of Nick: **the cast now has two looks in one
 frame.** At 16:30 he picked style C (low-poly, flat facets) for the whole
@@ -62,10 +67,11 @@ recommendation (smooth hunters, faceted beast), so his one-line answer
 settles the Frog, the Goblin and the bar's style line together. **The
 single thing still standing in the way is #14** — the torso behind the pot,
 the small beast, the unreadable climb shot and the 20 m hops are all the
-same missing stones. The fixer took the head-clearance step at 00:22 (eta
-"this run") and is live as I write; nothing pushed yet, which is normal at
-thirty minutes in. If the next director run finds the head done and no
-stones started, that is the first line of that note.
+same missing stones. The head step landed at 00:52; the fixer's own next line is "#14
+itself, a real rewrite, not started this run". Every excuse for not
+laying stones is now discharged: camera in, head clear, the artist's rock
+asset waiting in a handoff ticket. If the next director run finds no stones
+started, that is the first line of that note.
 
 **My miss, at the top as the brief says:** none found this run. The first
 frame I rendered had no beast in it at all (an empty sand disc) — a load
@@ -94,15 +100,15 @@ it was in nobody's note — it was in the frame.
    in the bar honestly (5,200 tris, 37 KB → 2.1 MB) and do NOT decimate to
    get back under it; do not touch the Jackal.
 
-Nothing to the fixer or the playtester: both are live this minute, and a
-note landing in a ticket the fixer is writing its Result into is a merge
-for the sake of a sentence. What I would have said is below.
+Nothing to the fixer or the playtester: the fixer's head fix is right and
+its next pick (#14) is already the right one, and the playtester was live
+as I wrote. What I would have said is below.
 
 **Held back (not filed, watch next run):**
 
-- Fixer: once the head clears, check whether the torso is still behind the
-  near pot at 1:1. If it is, that is the stones' job (#14), not another
-  camera pass — do not tilt the camera to dodge a stone.
+- Fixer: with the head clear, the torso is still behind the near pot at
+  1:1. That is the stones' job (#14), not another camera pass — do not tilt
+  the camera to dodge a stone.
 - Playtester: the artist's fresh baseline counted 124 `hop-distance-band`
   fails where your 23:44 note said 62. Same main, same route — if the
   re-pointed check now fires twice per hop, the count on the 20 m ticket is
@@ -117,9 +123,9 @@ for the sake of a sentence. What I would have said is below.
 file already in the tree instead of rebuilding (zero Meshy spend, one run),
 judging at the real fight camera at 1:1 with the Goblin in the same frame,
 and handing back `to: nick` with `ask:` filled instead of closing — the
-first time #13 has been handed back correctly. The fixer taking the visible
-fault (the head) as step one of #14 rather than the stones first. Keep all
-of it.
+first time #13 has been handed back correctly. The fixer measuring the camera
+levers in a table before rejecting them, then fixing the tag and not the
+camera, with the climb cameras proven byte-identical. Keep all of it.
 
 ## Old: 2026-09-25 00:03 EDT
 
@@ -521,7 +527,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
-- 2026-09-25 01:00 EDT — fight better again (Frog reads, matches the drawing); no scores moved; named the style-C vs smooth contradiction for Nick on #13 with options; artist sequenced (Goblin next, do not touch the Frog, do not decimate); fixer live on the head; #14 still the blocker.
+- 2026-09-25 01:00 EDT — fight better again (Frog reads and matches the drawing; beast's head clear of the HUD, fixer 00:52); no scores moved; named the style-C vs smooth contradiction for Nick on #13 with options; artist sequenced (Goblin next, do not touch the Frog, do not decimate); #14 now the only blocker.
 - 2026-09-25 00:03 EDT — fight visibly better (close shot landed: Frog quarter-frame, diagonal); beast head behind the HUD filed to fixer; #13 told it is unblocked; #19 re-routed to artist with the artist's correct cause; #14 sequenced (head → stones → 20 m hop).
 - 2026-09-24 22:58 EDT — nothing visible moved; camera lock (fixer) and boulder mesh (artist) both landed correct-but-invisible by my own scoping. Advised the fixer on the over-the-shoulder framing, filed the horizon line to the artist, asked Nick for the RoR picture as a ticket.
 - 2026-09-24 22:35 EDT — Nick live: three asks by morning. Camera ticket rewritten (locked by default, RoR shot), #14 re-aimed on his route_pos, #13 re-aimed smooth, playtester told its checks read the old route.
