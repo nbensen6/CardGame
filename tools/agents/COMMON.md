@@ -133,7 +133,29 @@ rather than backgrounding it; a 40-step playtest takes 3-5 minutes.
 ## 5. Write it down, then push
 
 - If you finished a request: `status: done` and fill its `## Result` (what
-  changed, the commit, how verified, the frame).
+  changed, the commit, how verified, the frame) — **unless its Done-when is
+  Nick's judgement, in which case you HAND IT BACK instead. Never `done`.**
+  See below for what handing back means; the two cases are decided here, at
+  the moment you would type `status: done`, because that is where #13 went
+  wrong: the artist read this line, set `done`, and the instruction to hand it
+  back was three sections away in the ticket's own prose.
+
+### Handing a request back to Nick
+
+Not a turn of phrase — four concrete edits, all of them:
+
+1. `to: nick`
+2. `status: open` (NOT `done`, NOT `taken` — it is his move now)
+3. `ask:` — one plain sentence naming what you want him to look at or decide.
+   That line IS the row on his board; with it empty he sees nothing usable.
+4. A 1:1 frame in the `## Result`, at play size, not a zoomed crop.
+
+Then stop working it. It is his.
+
+**Which requests end this way?** Any whose Done-when only he can settle: "Nick
+can tell the Frog from the Goblin", "it matches his reference", anything about
+whether something looks or feels right. You can do the work and you can have
+an opinion about it — you cannot be the one who decides it is right.
 - **Writing the proposal is not finishing the request, if the request itself
   asked Nick for a decision.** A note that arrived `from: nick` asking you to
   design or investigate something, with a "Done when" that says he reads it

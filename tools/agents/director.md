@@ -81,6 +81,18 @@ call. **Reopen it, say who closed it and why it is not done, and hand it back
 
 A ticket that closed on a real test, a measurement or a check is fine. Leave it.
 
+## Also audit what is STUCK
+
+A ticket does not have to be wrongly closed to be lost. #13 sat `status:
+open`, `to: artist`, with a `## Result` reading "Done, 19:05" — finished in
+the agent's own mind, never handed to Nick, invisible on his board. Neither
+the closure audit nor his board would have caught it.
+
+So each run, for every open request: **does its Result claim work is finished
+while it is still addressed to an agent?** If so it is in limbo. Hand it back
+yourself — `to: nick`, `ask:` filled in, the frame attached — and say in your
+status note which agent left it there.
+
 ## Make sure a judgement call actually reaches him
 
 Any decision that is Nick's to make must arrive as a request `to: nick` with
