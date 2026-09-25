@@ -3,12 +3,12 @@ tags:
   - request
 from: fixer
 to: fixer
-status: open
+status: done
 priority: high
 beast: cinder_jackal
 eta: next run
 created: 2026-09-25T04:20
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
@@ -68,4 +68,77 @@ sway already has — is the small fix; try that before anything structural.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-25 09:50 EDT
+
+**Took option (a), as the director asked.** Two changes, both in `combat_3d.gd`:
+
+1. `_tick_grip`'s scrabble sway (~line 1384) got the SAME tween-liveness guard
+   the idle sway right above it already has (`not _tween_is_live(_climb_tw.get(i))`).
+   That guard is the whole reason the earlier attempt at this failed: with it
+   missing, `_tick_grip` wrote `node.position.x` from `home.x` every frame with
+   no idea a climb tween also owned that axis, and the moment `home.x` moved
+   mid-flight (my next change) the two fought and produced a same-frame snap
+   (`hop-position-pop`).
+2. New pure `home_after_leg(home, leg)` (keeps `home.y`, moves `home.x/.z`
+   onto `leg`) plus a thin `_advance_climb_home(slot, leg)` wrapper, fired by
+   `tw.tween_callback(...)` once per sub-hop, right as that leg starts flying
+   (in the `hop_subpoints` loop `_place_hunters` already has). `_lock_point()`
+   (the camera's horizontal aim) reads `home.x/.z`, so the camera now advances
+   leg by leg with the climb instead of sitting at the FINAL stop — set once,
+   before the tween even starts — for the whole flight.
+
+**Proof, not just the check going to 0** (per the director's own 05:07 note
+in this ticket — judged by a frame strip, not the percentage):
+
+- Fresh `--import`, `mode=play beast=cinder_jackal steps=24`, step 1 = Leap
+  (foot 2→6), the director's own repro. `hop_001_00..23.png` (the first 24
+  real-time samples of the flight — same cap the director's own "0 of 24"
+  finding used) show the Frog clearly on screen, near the beast's feet,
+  in **24/24** frames. Same command on unmodified `main`: **0/24** — the
+  Frog is never drawn, exactly the director's own report. Side-by-side
+  (7 of the 24 frames, before on top / after on bottom):
+
+  ![[frames/fixer/2026-09-25-camera-lock-leap-strip-before-after.png]]
+
+- The check itself, for the record: `mid-hop camera coverage` (the
+  rectangle-projection check, looser than pixels) went from **28% off**
+  (step 1) / **52-53% off** (step 16, the ticket's own original repro) on
+  `main` to **0% off** on every hop, every step, across two full regressions
+  (`steps=24` and `steps=80`).
+
+**Full regressions, both directions, same tree, same seed:**
+- `steps=24`: `main` → 4 failing categories (`beast-behind-stone`,
+  `intent-tag-vs-hunter`, `hop-position-pop`, `hunter-lost-mid-hop`). This
+  fix → 2 (`beast-behind-stone`, `hop-position-pop`) — `hunter-lost-mid-hop`
+  and `intent-tag-vs-hunter` both cleared, nothing new.
+- `steps=80`, fight played to a real ending (Pounce, step 30): `main` → 4
+  categories, `hop-position-pop` firing **3x** (steps 0, 1, 27). This fix →
+  2 categories, `hop-position-pop` firing **1x** (step 27, 0.72m/20.2x local
+  median 0.036 — same step, same shape, same magnitude as `main`'s own step-27
+  occurrence: 0.71m/19.6x/0.036). Confirmed pre-existing, not introduced by
+  this change — if anything this fix halved its count (3→1) by clearing the
+  two occurrences (steps 0, 1) that shared timing with the intent-tag/hunter
+  camera-lock path this ticket touches.
+- `beast-behind-stone` (8-9 occurrences either way) is the sibling director
+  ticket (`2026-09-25-0505`, stones under every landing) — untouched here,
+  on purpose, per "Do ONE thing."
+- `ALL TESTS PASSED` (2 new pure tests: `home_after_leg` moves x/z onto the
+  leg and leaves y alone).
+
+**One real mid-run accident, fixed, not shipped broken.** Cleaning up after
+`--import` I deleted `game/assets/3d/cast/goblin_mech_ai_Image_0.png` as what
+looked like stray untracked cache noise (only the `.jpg` source is tracked,
+same pattern the Frog/Jackal own extracted textures follow) — it is
+actually a real import-time dependency (Godot extracts embedded glTF
+textures to a lossless PNG next to the source, and the compiled `.scn`
+references it), and deleting it broke `location_3d.gd`'s goblin-hunter
+loading (2876 `script-error` fails on the very next `steps=80` run).
+Force-reimported `goblin_mech_ai.glb` alone (cleared its own `.godot/imported/*`
+entries, reran `--import`) to regenerate the identical file — confirmed by
+the clean `steps=80` rerun right after. Left it untracked, same as every
+other agent's fresh checkout leaves it — it is not part of this diff.
+
+Set `status: done` — the Done-when (`hunter-lost-mid-hop` 0 on a `steps=80`
+regression, no new failures, `ALL TESTS PASSED`) is a measured bar, not
+Nick's judgement, and it's met. `2026-09-25-0505` (stones under every
+landing) is next — the director's own note says take it right after this.

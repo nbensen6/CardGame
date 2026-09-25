@@ -990,6 +990,13 @@ func _init() -> void:
 	_test_hop_subpoints_splits_a_long_leg_into_even_legs_inside_the_band()
 	_test_hop_subpoints_last_point_is_always_the_destination()
 	_test_hop_subpoints_matches_the_live_20m_repro()
+	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
+	# climb's FINAL stop before the tween even started, so the camera's lock
+	# point (_lock_point reads home.x/.z) aimed at the destination for the
+	# whole flight. home_after_leg is what a tween_callback per sub-hop now
+	# feeds, advancing home leg by leg instead.
+	_test_home_after_leg_moves_x_and_z_to_the_leg()
+	_test_home_after_leg_leaves_y_alone()
 	# fixer, 2026-09-23: the hunter-display-path request
 	# (design/agents/requests/2026-09-23-1330-...) -- the toon-shaded, rigged
 	# path _shade_model gave AI_ART beasts was gated on `root == _beast`, so a
@@ -22158,6 +22165,30 @@ func _test_hop_subpoints_matches_the_live_20m_repro() -> void:
 	_expect(pts.size() == 3, "20.44m over a 9.15m ceiling needs exactly ceil(20.44/9.15) = 3 sub-hops -- got %d" % pts.size())
 	var leg: float = from.distance_to(pts[0])
 	_expect(leg > 2.4230769 and leg < 9.1538461, "each of the 3 sub-hops on the live repro should land comfortably inside the 2.42-9.15 band (playtest.gd's own HOP_MIN_WORLD/HOP_MAX_WORLD) -- got %.2fm" % leg)
+
+
+## #0420: home_after_leg is the pure step behind the per-sub-hop camera fix --
+## home used to move once, to the climb's FINAL stop, before the tween even
+## started, so a chained multi-leg climb spent most of its flight with the
+## camera already aimed at the destination and the hunter still near the
+## start (playtest hunter-lost-mid-hop, step 16, off screen 52-53% of a
+## 3-named-rung climb). A tween_callback fires this once per sub-hop, right
+## as that leg starts flying.
+func _test_home_after_leg_moves_x_and_z_to_the_leg() -> void:
+	var home := Vector3(0.0, 9.0, 0.0)
+	var leg := Vector3(6.8, 11.5, 3.2)
+	var after: Vector3 = Combat3D.home_after_leg(home, leg)
+	_expect(is_equal_approx(after.x, leg.x) and is_equal_approx(after.z, leg.z), "home's x/z must move onto the leg the hunter is actually flying to right now -- got (%.2f, %.2f), wanted (%.2f, %.2f)" % [after.x, after.z, leg.x, leg.z])
+
+
+func _test_home_after_leg_leaves_y_alone() -> void:
+	# home.y is the climb's real final height -- _pivot_target.y, _jump_lo and
+	# _jump_hi already handle the vertical camera for the WHOLE flight, not
+	# leg by leg, so retargeting y here would fight that, not help it.
+	var home := Vector3(0.0, 9.0, 0.0)
+	var leg := Vector3(6.8, 11.5, 3.2)
+	var after: Vector3 = Combat3D.home_after_leg(home, leg)
+	_expect(is_equal_approx(after.y, home.y), "home.y must stay the climb's final height, not the leg's -- got %.2f, wanted %.2f" % [after.y, home.y])
 
 
 ## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece

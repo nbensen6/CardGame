@@ -2,11 +2,84 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T04:20
-working_on: "#14 item 3 done: split long climb hops so no single hop crosses the whole gap. One new camera finding filed to myself."
+updated: 2026-09-25T05:55
+working_on: "#0420 done: camera now tracks each sub-hop leg instead of the climb's final stop. #0505 (stones under every landing) next."
 ---
 
 # fixer
+
+## This run — 2026-09-25 05:55 EDT
+
+- **Did:** fixed #0420 — mid-climb the camera aimed at the FINAL stop for
+  the whole flight, so the Frog was invisible for most of a chained hop.
+- **Worked?** Yes. Camera now advances with each sub-hop; the Frog is
+  visible in 24/24 sampled frames on the director's own repro (was 0/24).
+- **Next:** #0505 (director) — put a visible stone under every sub-hop
+  landing, not just the first and last.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-25-camera-lock-leap-strip-before-after.png]]
+
+## Now
+
+Took `2026-09-25-0420-fixer-to-fixer-camera-lock-stays-on-the-final-stop-through-a-chained-climb.md`
+(self-filed last run, raised to `high` and put ahead of `0405`/`0258` by
+the director's own 05:07 EDT note on the same ticket — "nothing about the
+climb can be seen until the hunter can"). The only other open `to: fixer`
+request, `2026-09-25-0505-...the-frog-hops-across-the-gap-on-nothing.md`,
+is this ticket's own explicit follow-on ("after your own camera-lock
+ticket") — left untouched this run, per "Do ONE thing."
+
+**The fix, option (a) from my own last note.** `_tick_grip`'s scrabble sway
+(`combat_3d.gd` ~1384) never checked whether a climb tween already owned
+that hunter's position — unlike the idle sway right above it, which has
+guarded on `_tween_is_live(_climb_tw.get(i))` since 2026-09-24. That gap is
+exactly why my first attempt at per-leg camera tracking (last run) produced
+a new pop: the moment `home.x` started moving mid-flight, `_tick_grip` raced
+the climb tween for the same axis. Added the same guard, then retried the
+per-leg tracking: new pure `home_after_leg(home, leg)` (moves `home.x/.z`
+onto the leg, leaves `home.y` — the climb's real final height — alone) fed
+by a `tw.tween_callback(_advance_climb_home.bind(i, sub))` once per sub-hop,
+right as that leg starts flying. `_lock_point()` (the camera's own
+horizontal aim) reads `home.x/.z`, so the camera now advances leg by leg
+with the climb instead of sitting at the destination for the whole thing.
+
+**Proof, not just the check.** The director's own note in `0420` warned the
+`mid-hop camera coverage` check (a rectangle projection) can read better
+than what a player actually sees, and asked for a frame strip instead. Ran
+the director's own exact repro (`steps=24`, step 1 = Leap, foot 2→6) on
+`main` and on this fix: `main` draws the Frog in **0 of 24** sampled
+frames (matches the director's report exactly); this fix draws it in
+**24 of 24**. Before/after strip above. The check itself also moved: mid-hop
+camera coverage 28-53% off on `main` → 0% off on every hop, both a `steps=24`
+and a full `steps=80` regression (fight played to a real ending, Pounce at
+step 30).
+
+**Two full before/after regressions, same seed.** `steps=24`: `main` → 4
+failing categories; this fix → 2 (`hunter-lost-mid-hop` and
+`intent-tag-vs-hunter` both cleared). `steps=80`: `main` → 4 categories with
+`hop-position-pop` firing 3x (steps 0, 1, 27); this fix → 2 categories,
+`hop-position-pop` down to 1x (step 27 only — same step, same shape/magnitude
+as `main`'s own step-27 occurrence, confirmed pre-existing, not introduced
+here). `beast-behind-stone` (8-9 either way) is `0505`'s own subject,
+untouched on purpose. `ALL TESTS PASSED` (2 new pure tests on
+`home_after_leg`).
+
+**One accident, caught and fixed before it shipped.** Mid-run I deleted
+`game/assets/3d/cast/goblin_mech_ai_Image_0.png`, mistaking it for import
+cache noise (only the `.jpg` source is tracked) — it is a real Godot
+import-time dependency, and deleting it broke the Goblin hunter's load path
+(2876 `script-error` fails on the next full regression). Force-reimported
+just that model to regenerate it, confirmed identical, confirmed the clean
+rerun. Not part of this diff — every fresh checkout regenerates it the same
+way.
+
+Full writeup, numbers and the frame strip on `0420`'s own `## Result`. Set
+it `status: done` — its Done-when is a measured bar (`hunter-lost-mid-hop`
+0 on a `steps=80` regression, no new failures, `ALL TESTS PASSED`), not
+Nick's judgement, and it's met.
+
+## Old: 2026-09-25 04:20 EDT — #14 item 3, the hop-animation split
 
 ## This run — 2026-09-25 04:20 EDT
 

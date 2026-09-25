@@ -1377,7 +1377,14 @@ func _tick_grip(delta: float) -> void:
 		var i := int(slot)
 		if i < _hunters.size():
 			var node: Node3D = (_hunters[i] as Dictionary)["node"]
-			if is_instance_valid(node):
+			# Same guard as the idle sway above (~line 1322): while a climb tween
+			# owns this hunter, `home.x` now moves leg by leg (home_after_leg,
+			# #0420) instead of sitting still at the final stop -- writing
+			# node.position.x from it here, unconditionally, raced that tween
+			# every frame and produced a same-frame snap the moment a leg
+			# boundary moved `home.x` (playtest's hop-position-pop, found live
+			# chasing the first version of this fix).
+			if is_instance_valid(node) and not _tween_is_live(_climb_tw.get(i) as Tween):
 				# steady at full grip, scrabbling as it runs out
 				var slip: float = 1.0 - clampf(float(st["g"]), 0.0, 1.0)
 				var amp: float = slip * slip * 0.075
@@ -3516,6 +3523,22 @@ static func hop_subpoints(from: Vector3, to: Vector3, max_leg: float) -> Array[V
 	return out
 
 
+## The new `home` once a climb has advanced onto `leg`, one sub-hop at a time.
+## X/Z only -- `_lock_point()` is the sole reader that needs to move mid-flight
+## (the camera's horizontal aim); `home.y` stays the climb's real final height,
+## which `_pivot_target.y`/`_jump_lo`/`_jump_hi` already handle for the whole
+## flight, not leg by leg, and retargeting it here would fight that.
+##
+## #0420: `home` used to move once, to the FINAL stop, before the climb's tween
+## even started (`_place_hunters`), so `_lock_point()` aimed at where the hop
+## was going to end for the entire flight -- on a chained multi-leg climb the
+## hunter was still near the START while the camera already sat at the finish.
+## This is what a tween_callback per sub-hop now feeds, so the camera advances
+## leg by leg instead of jumping straight to the destination.
+static func home_after_leg(home: Vector3, leg: Vector3) -> Vector3:
+	return Vector3(leg.x, home.y, leg.z)
+
+
 static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
 	# Higher than it was (0.18 / 2.5 cap): Nick, 2026-09-23 — the jump has to
 	# read as a jump at a glance, and a flat arc over a long climb reads as a
@@ -3634,6 +3657,16 @@ static func hunter_side_offset(players: Array, i: int, height: int) -> float:
 		if j != i and mini(int((players[j] as Dictionary).get("foothold", 0)), cap) == foot:
 			return -1.0 if i == 0 else 1.0
 	return 0.0
+
+
+## Tween-callback wrapper for home_after_leg(): fired once per sub-hop, right
+## as that leg's own flight starts, so the camera's lock point advances with
+## the climb instead of sitting at the destination for the whole chain.
+func _advance_climb_home(slot: int, leg: Vector3) -> void:
+	if slot < 0 or slot >= _hunters.size():
+		return
+	var h: Dictionary = _hunters[slot]
+	h["home"] = home_after_leg(h["home"] as Vector3, leg)
 
 
 func _place_hunters(s: Dictionary) -> void:
@@ -3767,6 +3800,9 @@ func _place_hunters(s: Dictionary) -> void:
 				var subs: Array[Vector3] = hop_subpoints(at, stop, HOP_MAX_LEG)
 				var sub_step: float = step / float(subs.size())
 				for sub in subs:
+					# Advance the camera's lock point onto THIS leg before it
+					# flies, not the climb's final stop -- see home_after_leg.
+					tw.tween_callback(_advance_climb_home.bind(i, sub))
 					_hop(tw, node, body, at, sub, sub_step)
 					lo_y = minf(lo_y, sub.y)
 					hi_y = maxf(hi_y, sub.y)
