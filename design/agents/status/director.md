@@ -2,18 +2,18 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T13:04
-working_on: "Fight verified better (feet on stone at every landing, #36 closed as fixed by #34); watching that the fixer takes #14 next, then #19."
+updated: 2026-09-25T13:16
+working_on: "Last director run: Nick stopped all four agents at 13:04; #14 (five stones, two sets) is handed to him with frames."
 ---
 
 # director
 
-## This run — 2026-09-25 13:04 EDT
+## This run — 2026-09-25 13:16 EDT
 
 - **Did:** better: in a fresh fight every landing has feet on stone, including the Leap to the sigil.
 - **Worked?** Yes; #36 was already fixed inside #34, so I closed it and nothing on the fixer's board is stale now.
-- **Next:** fixer takes your stones (#14), then your locked camera (#19), and the Frog shrinks toward your drawing.
-- **Need from you:** nothing, though #21 (faceted jackal) still waits on your look with the smoother free camera.
+- **Next:** nothing; you stopped the agents at 13:04, and the fixer's five-stone route (#14) is handed to you.
+- **Need from you:** your look at #14's two frames, then #21; the handoff note is stale on four lines, below.
 
 ## Now
 
@@ -79,6 +79,40 @@ unticked — Nick's word stands until the frame changes.
 frames, the shrink note on #19, the re-look note on the bar line. The
 board is in the right order and the fixer is mid-run; a fourth open ticket
 on it would be noise.
+
+**Handoff addendum, 13:16 EDT — written after your 13:04 stop.** While I
+was rendering, the fixer took #14 and pushed your stones at 13:00: exactly
+five per hunter, two sets, last one at the sigil, landing on each, multi-
+height jumps included, handed back `to: nick` with `ask:` filled and two
+frames. My read of those frames at play size, for whoever picks this up:
+
+- Foot 2 ("approach"): two enormous pale boxes with orange lids fill the
+  left foreground, the jackal is a third of the frame at the back, the Frog
+  a 30px speck on a stone at its collar, the Goblin not in shot. The
+  foreground boulders are the first thing in this game that looks like your
+  drawing; the beast is still half the size it is in it. That gap is #19.
+- Foot 6 ("at sigil"): the jackal whole and centred, the Frog a 20px speck
+  at its ear, two of the five stones visible. Feet are on stone; the camera
+  is still fitting both hunters. Also #19.
+
+**Four lines in `HANDOFF-TO-FABLE.md` are older than the repo** — worth
+correcting before anyone acts on it cold:
+
+- "The toggle he asked for does not exist" — it does, since 22:40
+  yesterday (#19 pass 2): Menu → Settings → **Camera: Player / Dev**,
+  Player by default in every build including debug; #21's 09:58 hand-back
+  tells you where it is.
+- "(3) hunters untouched" — #13 was closed at 12:11 on your own "Looks
+  good", with a 1:1 frame; the Goblin-darker residual is still real.
+- "Open decisions: #14 · #19 · #23 · #27" — you answered all four at
+  10:42–10:51; #23 (keep the flat top) and #27 (leave the jackal, camera
+  follows the frog) are closed on your words, #19 carries them, #14 is
+  built and waiting on your look.
+- "Stones: a straight, evenly spaced route" — replaced at 13:00 by the
+  five-per-hunter, two-set route above.
+
+What I would keep from this hour, in one line: the fixer found the second
+bug behind the first twice today and moved no threshold to do it.
 
 **What is working:** the fixer's habit of finding the second bug behind
 the first ("two real bugs here, not one") and saying which commit fixed
@@ -591,6 +625,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
+- 2026-09-25 13:16 EDT — last run: Nick stopped all four agents at 13:04 (`HANDOFF-TO-FABLE.md`); fixer landed #14 (five stones, two sets) at 13:00 and handed it to Nick; handoff note's stale lines (toggle exists, #13/#23/#27 closed on his answers) listed in Now; #36 closure kept the fixer's write-up, mine trimmed to a verification line.
 - 2026-09-25 13:04 EDT — fight better: fresh `steps=24` has feet on stone at every landing, 0 fails; Leap-to-sigil float (#36) was fixed inside #34, closed it with frames; shrink-is-expected note on #19 and the bar's readable line; no new requests, board in the right order (#14 then #19 for the fixer, #35 then #31 for the playtester).
 - 2026-09-25 12:10 EDT — Relayed Nick's five 10:42–10:51 answers: #14 and #19 back to the fixer, #23/#26/#27 closed; feet on rock at every rung verified in play; Leap-to-sigil float is inside #14.
 - 2026-09-25 11:12 EDT — fight worse in one place: the fixer's 10:22 follow-up (`64263f5`, stale-lease run onto closed #0802) pins the foot to its rock at the first hold only; Frog hangs beside its stone at feet 7 and 11 in a real `steps=24` fight, to keep `beast-behind-stone` under 15% on one far stone. Filed to fixer (feet on rocks at every hold, high, ahead of #0405) and playtester (calibrate `hunter-on-stone` on those frames, high). Free camera eased (#33) so #21 handed back to Nick with the toggle's location. Found #13/#14/#19 hidden from his board's Waiting list by stale `taken_by`; could not clear it from here, named in Need from you.
