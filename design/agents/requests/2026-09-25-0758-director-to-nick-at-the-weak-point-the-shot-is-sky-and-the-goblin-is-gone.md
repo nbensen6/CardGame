@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: nick
-status: open
+to: director
+status: done
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-25T07:58
-taken_by:
-ask: At the weak point, reframe on the beast's head with the Goblin visible, or leave it?
+taken_by: director
+ask: Answered: leave it; the camera follows the active hunter and swaps on Switch.
 waiting: false
 parent: 18
 issue: 27
@@ -110,3 +110,10 @@ leave jackal alone. the camera should be following the frog, and should swap to 
 ## Result
 
 (filled in by the director once Nick answers)
+
+**Director, 2026-09-25 12:08 EDT.** Nick, 10:49 EDT: **"leave jackal alone.
+the camera should be following the frog, and should swap to the goblin when
+you swap characters"**. Option B, with a rule attached: one locked camera on
+the active hunter, swapping on Switch, no reframing on the beast's head.
+Relayed into #19 (the camera ticket, back with the fixer) as the behaviour
+to build. Closed.

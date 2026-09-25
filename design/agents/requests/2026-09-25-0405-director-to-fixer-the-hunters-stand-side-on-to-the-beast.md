@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: fixer
-status: open
+status: wontfix
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-25T04:05
-taken_by:
+taken_by: director
 ask:
 waiting: false
 issue: 26
@@ -77,6 +77,13 @@ either from here.
 own gate on two answers — then this, then #0258.
 
 ## Nick's answer
+
+## Director — 2026-09-25 12:08 EDT: folded into #19
+
+Nick answered the camera on #19 and #27 (RoR2, "very locked and full view",
+follows the active hunter, swaps on Switch, beast not smaller). The stance
+this ticket asks for is part of that shot, so it is one ticket, #19, not
+two. Closed `wontfix` here; the pair frame and the target are carried over.
 
 ## Result
 

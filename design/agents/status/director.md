@@ -2,20 +2,107 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T11:12
-working_on: "The 10:22 stone follow-up put the Frog back on air above the first hold to hold a check line; filed to fixer and playtester. #21 back with Nick."
+updated: 2026-09-25T12:10
+working_on: "Relayed Nick's five answers (stones, camera, keep the stone shape, hunters look good) to the fixer and artist; #14 first, #19 after."
 ---
 
 # director
 
-## This run — 2026-09-25 11:12 EDT
+## This run — 2026-09-25 12:10 EDT
+
+- **Did:** better: the Frog stands on its stone at every rung now; your five answers, unseen since 10:51, are relayed.
+- **Worked?** Yes in play, feet are on rock; after a Leap to the weak point the Frog still hangs by the ear.
+- **Next:** fixer builds your stones (one per climb space, two sets, last at the sigil), then your locked camera.
+- **Need from you:** nothing; #13 closes on your "Looks good", #23 and #27 are closed on your answers.
+
+## Now
+
+**What a player sees, before I read anyone's note (11:52, on `9cec89b`).**
+Resting: the Frog big at bottom-left of centre in profile, the Goblin far
+right on an empty half, the black jackal small at upper-centre with
+"Attack 7" over its head, a chain of orange-lidded boxes from the Frog's
+head up to its chest, one big box off at far left — the same picture as
+10:52. Weak point (harness `3dclimb`): two thirds sky, a black hump behind
+the cards, the Frog a green dot on a box, no Goblin — unchanged, and now
+answered by Nick (below). Grip: the post-fall frame, same as 10:52, with
+the playtester on #0933.
+
+![[frames/director/2026-09-25-1152-director-resting.png]]
+
+**Then a real fight (`mode=play steps=24`) on the fixer's 11:29 fix.** The
+thing I filed at 11:09 is fixed: after Leapfrog (foot 4→7) and Hop (7→11)
+the Frog is on its stone at the jackal's cheek, feet on rock, the check
+reading 83% and 98% where it read air an hour ago. That is the fight
+getting better, and it was the fixer refusing the trade its own 10:22
+follow-up had made.
+
+![[frames/director/2026-09-25-1152-director-foot7-frog-on-the-stone-now.png]]
+
+**And the next one, found by the playtester's new check an hour before I
+ran it:** Leap straight from foot 2 to the weak point (foot 6) leaves the
+Frog a green dot hanging above the jackal's ear with nothing under it;
+Scramble to foot 8 keeps it there. Two of the eight landings in the run.
+
+![[frames/director/2026-09-25-1152-director-foot6-after-leap-frog-above-the-ear.png]]
+
+**The top line: Nick answered five tickets at 10:42–10:51 and nobody saw
+them.** The sync landed them in the repo at 11:26, after my 11:12 push;
+the artist (11:08) and fixer (11:06) notes both say "no answer" honestly.
+His words, and where each went:
+
+| ticket | his answer | now |
+|---|---|---|
+| #14 stones | one stone per climb space, last AT the sigil, the character lands on each, two sets — one per hunter, "reference how popular climbing games set up their objects" | fixer, high, first after #34. The 1142 sigil-float is this by name; do both on one check |
+| #19 camera | "do not accept smaller beasts. reference risk of rain 2 camera behavior. very locked and full view" | fixer, after #14. #26 (side-on stance) folded in |
+| #27 weak-point shot | "leave jackal alone. the camera should be following the frog, and should swap to the goblin when you swap characters" | closed; the rule is in #19 |
+| #23 stone shape | "keep" — flat top and orange rim | closed; nobody rebuilds the stones |
+| #13 hunters | "Looks good" | the artist's to close, next run |
+
+One reading I made and flagged as mine: "following the frog … swap to the
+goblin" means ONE camera on the active hunter, not a pull-back to fit
+both — today the weak-point shot is three different pictures depending on
+where the other hunter stands. The fixer is told to file a child to Nick
+if it reads him differently, not to pick.
+
+**Did the fight get better for Nick, or did a score go up?** Better, in one
+real place (feet on stones above the first hold), and a check that found a
+real bug on its first live run. Nothing this hour was score-chasing.
+
+**Closed since my last run:** #29/#0803 (playtester — a check, calibrated
+on real numbers, negative and positive both shown; fine). **Stuck:** none;
+#34 is `taken` and mid-run (fixer lease 11:20, commit 11:29, note not yet
+written). **A decision that was his, made without him:** none — but five
+he made sat unread for 65 minutes, which is the same failure from the
+other side; the sync timing did it, not an agent. **Requirement in the
+wrong note:** none.
+
+**Filed:** nothing new. Re-addressed #14 and #19 to the fixer with his
+words at the top, closed #23/#26/#27, notes on 1142 (inside #14) and #35
+(the negative tree moved; step 16's 12.5% Goblin fail looks false at play
+size — look, do not lower the threshold). #18's row table updated.
+
+**What is working:** the fixer's 11:29 commit named its own earlier trade
+as the wrong one and undid it; the playtester threw out two techniques on
+printed numbers before trusting the third, and its check found a real
+defect within the hour; the artist rendered nothing eleven runs running
+because nothing had changed. Keep all three.
+
+**Nick's column now:** #21 only. He was live at 11:35 fixing his board so an
+answered ticket leaves the column even if `to:` still says nick.
+
+**Not filed, kept:** the harness `3dclimb` frame (two-thirds sky) is now a
+symptom of the camera framing both hunters, which #19 replaces; the grip
+post-fall frame is #0933 with the playtester; the damage number over the
+Frog is #25, fourth in the fixer's order.
+
+## Old: 2026-09-25 11:12 EDT
 
 - **Did:** the fight got worse in one place: above the first hold the Frog hangs beside its stone again, to keep a check under its line.
 - **Worked?** The free camera is smooth now and #21 is back with you; the stone follow-up traded your frame for a number.
 - **Next:** fixer puts feet on rocks at every hold; playtester makes its new foot check fire on those exact frames.
 - **Need from you:** the jackal question on #21; the board hides #13, #14, #19 from your list because taken_by still names an agent.
 
-## Now
+## Now — superseded 12:10, see above
 
 **What a player sees, before I read anyone's note (10:52, on `be502da`).**
 Resting: the Frog big at bottom-left in profile, the Goblin far right on
@@ -417,6 +504,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
+- 2026-09-25 12:10 EDT — Relayed Nick's five 10:42–10:51 answers: #14 and #19 back to the fixer, #23/#26/#27 closed; feet on rock at every rung verified in play; Leap-to-sigil float is inside #14.
 - 2026-09-25 11:12 EDT — fight worse in one place: the fixer's 10:22 follow-up (`64263f5`, stale-lease run onto closed #0802) pins the foot to its rock at the first hold only; Frog hangs beside its stone at feet 7 and 11 in a real `steps=24` fight, to keep `beast-behind-stone` under 15% on one far stone. Filed to fixer (feet on rocks at every hold, high, ahead of #0405) and playtester (calibrate `hunter-on-stone` on those frames, high). Free camera eased (#33) so #21 handed back to Nick with the toggle's location. Found #13/#14/#19 hidden from his board's Waiting list by stale `taken_by`; could not clear it from here, named in Need from you.
 - 2026-09-25 09:58 EDT — frames unchanged since 09:05; found Nick's eleven-hour-old answer on #21 (free cam toggle unfound, wants it smoother, PNGs on GitHub) — toggle exists, ease filed to fixer (high), PNGs fixed by his own 09:50 commit, #21 taken back; #22 closed (RoR picture in, relayed to #0405 with a 1:1 pair); fixer and playtester both closed on real proof, no code moved, no scores moved.
 - 2026-09-25 09:05 EDT — fight better: Frog lands on stones again in play (fixer #0802, 08:39); found the `3dgrip` shot is taken after the Frog falls, so every grip proof — mine at 08:05 and the fixer's — judged a fallen Frog; fall pose filed to fixer (high), #0802/#0803 corrected, after-Leap frame added to the camera row for Nick.

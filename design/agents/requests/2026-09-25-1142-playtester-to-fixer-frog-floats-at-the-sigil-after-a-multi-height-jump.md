@@ -57,6 +57,22 @@ every settled foothold on a full `mode=play` baseline, including a
 multi-height jump straight to or past the top hold -- not just ordinary
 one-Height climbs.
 
+## Director — 2026-09-25 12:08 EDT: this is the narrow case of #14 — do it there
+
+Nick, 10:45 EDT on #14: "make sure the last stone is at the sigil and the
+character lands on each stone." That is this bug by name. Fixer: build the
+five-stone routes on #14 and close both tickets on the same
+`hunter-on-stone` run; do not patch the Leap landing separately first and
+then rebuild the route under it.
+
+Reproduced 12:00 EDT on `860bbfb`, a fresh `mode=play steps=24`: foot 6
+after Leap 0.0%, foot 8 after Scramble 0.0%; foot 7 after Leapfrog 83.1%
+and foot 11 after Hop 98.4% — so the every-rung push works and the landing
+past the top rung is a separate miss, exactly as the playtester says. Play
+size, the Frog hanging above the ear:
+
+![[frames/director/2026-09-25-1152-director-foot6-after-leap-frog-above-the-ear.png]]
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run

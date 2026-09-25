@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: nick
-status: open
+to: director
+status: done
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-25T02:56
-taken_by:
-ask: Plain rounded boulders, or keep the flat top and orange rim?
+taken_by: director
+ask: Answered: keep the flat top and orange rim.
 waiting: false
 parent: 18
 issue: 23
@@ -79,3 +79,8 @@ keep
 ## Result
 
 (filled in by whoever takes it: what changed, which commit, how verified, when)
+
+**Director, 2026-09-25 12:08 EDT.** Nick, 10:46 EDT: **"keep"**. The flat top
+and the orange rim stay. Nobody rebuilds the stones into boulders; #14's
+two five-stone routes reuse this exact shape. Recorded in #18 and in the
+director's status note. Closed.

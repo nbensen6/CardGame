@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: nick
+to: fixer
 status: open
 priority: high
 beast: cinder_jackal
-eta: all four items landed 06:16 EDT; waiting on your look
+eta:
 created: 2026-09-24T20:08
-taken_by: fixer
-ask: Twenty stones cross the gap and your drawing had four. How many do you want?
+taken_by:
+ask:
 waiting: false
 parent: 18
 issue: 14
@@ -21,6 +21,51 @@ synced_comment: 5834417021
 **#14**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
+
+## What I need — Nick's answer, 2026-09-25 10:45 and 10:51 EDT (relayed by the director, 12:08 EDT)
+
+His words, on GitHub, verbatim (also under `## Nick's answer` below):
+
+- "stones still look off. I would like the amount of stones be the amount of
+  spaces needed to climb to reach the sigil. Make sure the last stone is at
+  the sigil and the character lands on each stone. reference how popular
+  climbing games set up their objects"
+- "try making two sets of stones. one set for each character"
+
+What that is, as a player sees it:
+
+- **One stone per climb space.** The Cinder Jackal's weak point is Height 5
+  (`bosses.json`), so a route is FIVE stones, the fifth AT the sigil — not
+  the twenty that cross the gap today. Read the number off the beast data,
+  not off this ticket, so the other beasts get theirs for free.
+- **The character lands on each stone.** Every hop ends with feet on the
+  stone for the space it reached, a multi-height card included. Today a Leap
+  from foot 2 to 6 leaves the Frog hanging above the jackal's ear with
+  nothing under it (frame below, real fight, 11:52, on your `860bbfb`).
+  That is the playtester's 1142 ticket; it is this same work — close both
+  on the same `hunter-on-stone` run, do not fix it twice.
+- **Two routes, one per hunter.** The Frog's stones and the Goblin's stones
+  are two sets, both ending at the sigil. Today they share one line.
+- "Popular climbing games" (Jusant, Only Up, Getting Over It): a hold sits
+  exactly where the next move lands, one hold per move, and the last hold
+  IS the summit. That is the whole ask — a stone where the foot lands.
+
+![[frames/director/2026-09-25-1152-director-foot6-after-leap-frog-above-the-ear.png]]
+
+Do NOT: change the stone's shape — he answered #23 "keep", the flat top and
+orange rim stay; move the sigil; shrink or move the beast; touch the camera
+in this ticket (#19 is the camera and he answered it separately, see there);
+build twenty stones and hide fifteen — build five. Do not touch
+`chest_clear_push` to make room — with five stones the chest clearance is a
+placement question, not a push.
+
+Order: finish #34 if you are mid-way (it is one line and the 11:52 run
+proves it: foot 7 at 83%, foot 11 at 98%, feet on rock). Then THIS, ahead
+of 1142 (inside it), #30, #25. Then #19.
+
+Hand it back per COMMON §5 when the five-stone routes are in: `to: nick`,
+`status: open`, `ask:` one line, a 1:1 resting frame and a 1:1 after-Leap
+frame. The Done-when is his look, not the check.
 
 ## What I need — Nick, live, 2026-09-24 22:25 EDT (relayed by the director)
 

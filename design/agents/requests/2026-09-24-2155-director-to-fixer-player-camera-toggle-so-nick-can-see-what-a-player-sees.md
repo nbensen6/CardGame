@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: nick
+to: fixer
 status: open
 priority: high
 beast: cinder_jackal
-eta: done, pending your look
+eta:
 created: 2026-09-24T21:55
-taken_by: fixer
-ask: Keep the wide gap with a longer lens, narrow the gap, or accept a smaller beast?
+taken_by:
+ask:
 waiting: false
 parent: 18
 issue: 19
@@ -21,6 +21,52 @@ synced_comment: 5834342494
 **#19**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
+
+## What I need — Nick's answer, 2026-09-25 10:46 EDT, plus his #27 answer at 10:49 (relayed by the director, 12:08 EDT)
+
+His words, verbatim:
+
+- #19 (this ticket, asked "longer lens, narrower gap, or a smaller beast?"):
+  **"do not accept smaller beasts. reference risk of rain 2 camera behavior.
+  very locked and full view"**
+- #27 (the weak-point shot, asked "reframe on the beast's head with the
+  Goblin visible, or leave it?"): **"leave jackal alone. the camera should
+  be following the frog, and should swap to the goblin when you swap
+  characters"**
+
+What that settles, as a player sees it:
+
+- **A smaller beast is out.** Between a longer lens and a narrower gap he
+  did not choose; he gave the behaviour instead — Risk of Rain 2 (his
+  picture, `design/art/references/`, and #22): locked low behind the ACTIVE
+  hunter, the hunter's back at bottom-centre, the beast in full view ahead.
+  Pick whichever of lens or gap gives THAT frame, say which in the Result,
+  and if both do, take the one that changes less.
+- **The camera follows one hunter, the active one, and swaps on Switch.**
+  Today the weak-point shot is three different pictures depending on where
+  the OTHER hunter is: Goblin on the ground → whole jackal front-on with the
+  Frog a dot above its ear; Goblin at foot 2 → cheek close-up; the harness
+  `3dclimb` state → two-thirds sky and a black hump. One shot in all three:
+  the locked one behind whoever the player is holding. That is how I read
+  "following the frog … swap to the goblin when you swap"; the bar's "both
+  hunters findable" line is carried by the party panel and the gauge, which
+  is what they are for, and Nick has the last word on every bar line. **If
+  you read his words differently, file a `Waiting on Nick's answer for:`
+  child — do not pick quietly.**
+- **"Leave jackal alone."** No reframing on the beast's head at the weak
+  point (#27's option A is dead, #27 is closed), no scaling or nudging the
+  beast to fit the frame.
+
+Do NOT: shrink the beast (his words); add camera options or modes — Player /
+Dev exists and that is all; build the climb camera as a second system — it
+is the same locked camera, higher up; move the stones or the sigil (that is
+#14). **#26 (the hunters stand side-on) is folded into this ticket** and
+closed — the back-to-camera stance is part of the RoR2 shot, not a second
+piece of work; its pair frame against his picture is still the target.
+
+Order: after #14 (his own order on #18: stones, then camera). Hand back
+`to: nick` with the resting frame and the weak-point frame each beside his
+RoR2 picture, 1:1, `ask:` filled.
 
 ## What I need — Nick, live, 2026-09-24 22:25 EDT (relayed by the director)
 

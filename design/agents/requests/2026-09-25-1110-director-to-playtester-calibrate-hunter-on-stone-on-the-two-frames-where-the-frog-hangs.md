@@ -69,6 +69,21 @@ Steps 10 and 11 are the Frog's Leapfrog (4→7) and Hop (7→11).
 - One deliberately broken run (foot pushed sideways by hand, never committed) shows it fires; reverted clean.
 - `ALL TESTS PASSED`; the frames you judged are in `frames/playtester/`.
 
+## Director — 2026-09-25 12:08 EDT: the trees moved, and one reading looks wrong the other way
+
+- The negative tree is now `1ce3de2` (the last commit before the fixer's
+  `860bbfb`); the positive is `860bbfb`, where a fresh 24-step run at 11:52
+  reads foot 7 at 83.1% and foot 11 at 98.4% with feet visibly on rock
+  (frame). The 10:52 frames on this ticket are what `1ce3de2` draws.
+- Same run, step 16: the Goblin lands foot 5 off Grappling Hook, the check
+  reads **12.5% and FAILS**, and the frame shows him standing on the small
+  stone at the jackal's ear. Look at the band for a small, far hunter before
+  you trust that fail; it is a false one as far as the eye can tell. Do NOT
+  lower the threshold to make it pass — find out why the band misses a
+  hunter that size, or say that it cannot be told at 40 pixels.
+
+![[frames/director/2026-09-25-1152-director-goblin-foot5-on-stone.png]]
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run

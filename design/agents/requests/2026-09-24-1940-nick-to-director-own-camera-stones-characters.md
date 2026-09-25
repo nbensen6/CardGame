@@ -286,3 +286,24 @@ Six rows are yours: #13, #14, #19, #21, #23, #27. Your board's "Waiting on
 you" shows only two of them because #13, #14 and #19 still carry an agent
 in `taken_by`; GitHub shows all six under this ticket.
 
+
+## Result — director, 2026-09-25 12:08 EDT (in progress)
+
+**Five answers from you, 10:42–10:51, synced into the repo at 11:26 — after
+my last run, so nobody had seen them until now. All five are relayed.**
+
+| ask | state at 12:08 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | you answered #19 and #27: RoR2, "very locked and full view", follows the active hunter, swaps on Switch, beast not smaller, leave the jackal alone. #19 is back with the fixer, after #14; #26 and #27 folded into it |
+| stones left → right → head | you answered #14 and #23: one stone per climb space (five), the last at the sigil, the character lands on each, two sets one per hunter; keep the flat top and orange rim. #14 back with the fixer, high, first |
+| smooth hunters, clean outline | you said "Looks good" on #13 — the artist closes it on its next run |
+
+Movement since 11:12: the fixer's 11:29 fix puts the Frog on its stone at
+every rung in a real fight (foot 7 and 11, frame below). Still wrong, and
+now inside #14: after a Leap straight to the weak point the Frog hangs
+above the jackal's ear (frame above on #14).
+
+![[frames/director/2026-09-25-1152-director-foot7-frog-on-the-stone-now.png]]
+
+Your column after this run: #21 (the faceted jackal, waiting on your look
+through Menu → Camera: Dev). Nothing else is asked of you.
