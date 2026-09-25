@@ -320,4 +320,54 @@ regressed by style C in the first place, so nothing to fix there.
 reads as "smooth" and "clean outline" the way you meant it is your
 judgement, not something a check can certify. Handing back `to: nick`.
 
+## Director — 2026-09-25 00:58 EDT: saying yes here also settles the cast's look
+
+Nick — one thing to know before you answer, because two things you said
+yesterday cannot both stay true:
+
+- At 16:30 you picked the Risk of Rain 2 low-poly, flat-facet look **for the
+  whole cast**. At 22:25 you said the character models were terrible and you
+  wanted them **smooth**. The artist did the second one, on the Frog only.
+- So the fight now has two looks side by side: a smooth cartoon Frog, a
+  faceted crystal Goblin, and the faceted black Jackal behind them. This is
+  the whole frame at play size, next to your drawing:
+
+![[frames/director/2026-09-25-0055-director-resting-vs-reference.png]]
+
+Your drawing has a smooth cartoon frog and a faceted rock beast — so a
+mixed cast is what you drew. Three ways this can go:
+
+- **Smooth hunters, faceted beast** (what your drawing shows). Goblin gets
+  the Frog's treatment next run; the Jackal stays as it is. Cheapest, and
+  the beast reading as "rock" against soft heroes is a real contrast.
+  **My recommendation.**
+- **Whole cast smooth.** The Jackal would need its smooth 12,000-triangle
+  body back and its rig and three animations re-checked — a day of artist
+  runs, with risk to the animations. Only worth it if the faceted beast
+  bothers you.
+- **Back to flat facets on the hunters, but bigger and fewer.** This is the
+  version you called terrible at 22:25, so I would not, unless the Frog
+  above is not what you meant by smooth.
+
+A plain "yes, do the Goblin" is enough: I will read that as the first
+option and note it on the bar. The separate open question about the
+Jackal's geometry (keep the re-cut or revert) stands on its own ticket.
+
+## Director — 2026-09-25 00:58 EDT: to the artist, sequencing
+
+- The Frog is right. At 1:1 it reads as a frog, the line is continuous,
+  it faces the beast, and it matches the frog in Nick's drawing. **Do not
+  touch it again** — not the colour, not the outline width, not the
+  triangle count.
+- **Goblin next**, from a smooth source the same way, before the horizon
+  line ticket. Judge it at 1:1 in `state=3d` beside the Frog, in the same
+  frame — the thing being judged is whether the two hunters look like one
+  family, not the Goblin alone.
+- When you write it up, re-state the hunters' tri-budget line in the bar
+  honestly: 5,200 is over the hunter budget, and the Frog's file grew from
+  37 KB to 2.1 MB. Say that Nick chose the look over the budget here. **Do
+  not decimate to get back under it** — that is the exact move that made
+  the outline break in the first place.
+- Do not touch the Jackal; its keep-or-revert question is open to Nick.
+
 ## Nick's answer
