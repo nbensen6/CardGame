@@ -2446,6 +2446,9 @@ func _init() -> void:
 func _finish_with_deferred_tests() -> void:
 	_test_backlog86_merged_aabb_merges_meshes_through_their_global_transform()
 	_test_backlog86_merged_aabb_falls_back_to_a_default_box_with_no_meshes()
+	# builder, 2026-09-25: #26 second pass -- needs global_transform on a real
+	# mesh, same as the merged_aabb pair above, hence deferred alongside them.
+	_test_backlog26_stand_on_model_matches_its_stone_once_the_hull_is_real()
 	# backlog #86 duty 3: _height_of, the measurement that floats a hex tile's
 	# landmark label above its model, had zero coverage -- see the tests' own
 	# comment. Deferred for the same reason the merged_aabb pair above is: it
@@ -22381,6 +22384,41 @@ func _test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone() -> vo
 	_expect(foot.is_equal_approx(own_stone),
 		"a lone hunter at the sigil must land on ITS OWN route's top stone (route_side), not centred between both (the dynamic side, which is 0.0 when alone)")
 	get_root().remove_child(c3d)
+	c3d.free()
+
+
+## #26 second pass, measured live with `state=3dclimb slot=1`: a hunter's home
+## sat up to 2.62 units in front of its own stone, growing the closer the rung
+## sat to the top. The test above isolates the x-axis half of the original bug
+## with `_hull` left empty on purpose; this one covers the OTHER half, the
+## z-axis clearance `_top_hold` -> `_front_of_beast` reads off the real hull.
+## `_show_beast` used to call `_build_float_stones` (which calls `_top_hold`)
+## BEFORE `_build_hull`, so the decorative stone's z used `_front_of_beast`'s
+## empty-hull fallback (the box's raw front edge) while `_stand_on_model`,
+## always called later from `_place_hunters` once the hull is real, used the
+## true one -- proved live on this exact setup: 16.02 (empty hull) vs 6.70
+## (real hull). Deferred (root added in _finish_with_deferred_tests) because
+## `_build_hull` reads global_transform, which needs the mesh actually inside
+## the live tree, same reason merged_aabb's own tests above are deferred.
+func _test_backlog26_stand_on_model_matches_its_stone_once_the_hull_is_real() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	root.add_child(c3d)
+	c3d._climb_points = {1: Vector3(0.0, 10.0, 5.0), 2: Vector3(0.0, 14.0, 6.0)}
+	c3d._beast_box = AABB(Vector3(-5.0, 0.0, -5.0), Vector3(10.0, 20.0, 20.0))
+	var mi := _mesh_box(Vector3(10.0, 20.0, 20.0))
+	mi.position = c3d._beast_box.get_center()
+	c3d._beast = Node3D.new()
+	c3d.add_child(c3d._beast)
+	c3d._beast.add_child(mi)
+	# THE FIX, in this order: the hull before the stones.
+	c3d._build_hull()
+	c3d._build_float_stones()
+	var foot: Vector3 = c3d._stand_on_model(2, 0.0, -1.0)
+	var stone: Node3D = (c3d._float_stones as Array)[1]  # side=-1.0's top hold, n=2 rungs
+	_expect(foot.distance_to(stone.position) < 0.1,
+		"the top hunter must land within 0.1 of its own route's top stone once the hull is real -- got %.2f apart (%s vs %s)"
+			% [foot.distance_to(stone.position), foot, stone.position])
+	root.remove_child(c3d)
 	c3d.free()
 
 

@@ -1900,8 +1900,15 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
-	_build_float_stones()
+	# The hull BEFORE the stones: _build_float_stones' _top_hold() call reads
+	# _front_of_beast(), which falls back to the box's raw far edge whenever
+	# _hull is still empty (its own guard) -- built in the wrong order, the
+	# decorative stone got that crude fallback while the hunter's own
+	# _stand_on_model() (called later, in _place_hunters) got the real hull,
+	# so the two routes disagreed on the top hold's z by a growing amount the
+	# closer a rung sat to it. #26 "hops land on stones, not in the air".
 	_build_hull()
+	_build_float_stones()
 	_build_ledge_marks()   # needs the hull, so it goes after it
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of

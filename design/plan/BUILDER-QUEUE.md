@@ -97,7 +97,7 @@ run failed.
       reads like a yaw problem, out of this item's scope (clearance + pitch
       only); stopped rather than tune a third constant. See the proposed
       item below.
-- [ ] **Hops land on stones, not in the air — mid-route.** The builder's
+- [?] **Hops land on stones, not in the air — mid-route.** The builder's
       16:43 pass fixed the top hold only. Measured 2026-09-25 17:05 EDT with
       `state=3dclimb slot=1` (the harness now prints STONE/HUNTER/RUNGS lines):
       hunter1 at foot 4 has home z 30.71, its stone (STONE8) is at z 33.33:
@@ -110,6 +110,23 @@ run failed.
       Done-when: HUNTER home == its STONE world position within 0.1 on every
       rung, printed by the harness, and a `run_tests.gd` case on the shared
       rule. Shot: `state=3dclimb slot=1`, Goblin's feet on a stone.
+      **Builder, 2026-09-25 17:15 EDT:** both suspects were wrong; the real
+      cause was `_show_beast`'s own call order. It ran `_build_float_stones()`
+      BEFORE `_build_hull()`, so the stone's `_top_hold()` -> `_front_of_beast()`
+      call always saw an empty `_hull` and fell back to the box's raw far
+      edge, while `_stand_on_model` (called later, from `_place_hunters`, once
+      the hull is real) got the true value — two different numbers for the
+      same rung, growing with how close the rung sat to the top (matches the
+      measured 0.84 vs 2.62). Swapped the two calls. Live on `cinder_jackal`,
+      `state=3dclimb slot=1`: HUNTER0 home z=16.577120, its stone z=17.412895
+      -> now 16.577118 (was 0.84 off, now 0.00); HUNTER1 home z=30.710747, its
+      stone z=33.326931 -> now 30.710747 (was 2.62 off, now 0.00). Frame
+      confirmed changed (Goblin now stands ON the boulder, not floating past
+      it) with an md5 check against HEAD, not just eyeballed — see the Found
+      line below on why that check mattered this run. New `run_tests.gd` case
+      builds a fake mesh, calls `_build_hull()`/`_build_float_stones()` in the
+      wrong order to confirm it fails (9.31 apart), then the right order to
+      confirm it passes (0.00 apart).
 - [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
@@ -253,3 +270,25 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       before this run's fix, so this may be a real second bug or may just be
       a hard-to-read camera angle; worth a dedicated look with a render zoomed
       on that hunter before assuming either way.
+      **Builder, 2026-09-25 17:15 EDT:** with the hull-order fix, hunter1 in
+      `state=3dclimb slot=1` now stands visibly ON its own stone (the AFTER
+      frame on this same run's item, above) — looked resolved, but not
+      re-measured at THIS specific mid-route height, so leaving this open
+      rather than closing it myself.
+- [ ] (proposed) `tools/shot.cmd`, run with a RELATIVE `out=` path from a shell
+      whose working directory isn't the repo root (confirmed with the Bash
+      tool, which runs Git Bash under Windows), fails to save: Godot logs
+      `ERROR: Can't save PNG at path: '<relative path>'` from `img.save_png()`
+      at `screenshot.gd`'s `_capture()`, but the very next line unconditionally
+      prints `SHOT SAVED: <path> (WxH)` regardless of whether the save actually
+      happened — there is no check on `save_png`'s return value (`Error`, 0 on
+      success). This run's first before/after pair silently reused an already-
+      committed frame from an earlier commit (same path, save failed both
+      times, old bytes never touched) and only an `md5sum` against `git show
+      HEAD:<path>` caught it — eyeballing the "before"/"after" images looked
+      convincing because they WERE real images, just not from this run. An
+      absolute `out=` path (e.g. `G:/ts-builder/design/...`) saves correctly.
+      Fix: `_capture()` should check `img.save_png(_out)`'s return value and
+      print an actual error (or refuse to print "SHOT SAVED") on failure, so
+      a future run can't ship a stale frame as proof without an extra hash
+      check nobody is required to run.

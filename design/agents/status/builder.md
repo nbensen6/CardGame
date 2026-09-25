@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T16:43
-working_on: "hops-on-stones top-hold fix handed to Nick"
+updated: 2026-09-25T17:15
+working_on: "hops-on-stones mid-route hull-order fix handed to Nick"
 ---
 
 # builder
@@ -13,18 +13,18 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 16:43 EDT
+2026-09-25 17:15 EDT
 
-- **Did:** the sigil's top hold now uses each hunter's fixed route side, so a lone climber lands on their own stone.
-- **Worked?** Yes — `state=3dclimb`'s Frog now stands on the stone crate in front of the jackal's face, not floating past it at eye level.
+- **Did:** `_show_beast` built the decorative stones before the hull existed; swapped the order so both read the same hull.
+- **Worked?** Yes — `state=3dclimb slot=1`'s Goblin now stands on the boulder by the jackal's leg instead of floating beside it; HUNTER/STONE z now match within 0.1 on every rung checked (were 0.84–2.62 off).
 - **Look at:** ![[frames/builder/2026-09-25-hops-on-stones-before.png]] then ![[frames/builder/2026-09-25-hops-on-stones-after.png]]
-- **Ask:** should mid-route footing (state=3dgrip's second hunter) get its own look next?
-- **Found:** `_stand_on_model`'s `side` parameter is now unused inside the function (the top branch was its only reader) — dead but harmless; left alone rather than reshape three call sites for a naming ticket.
-- **Found:** `state=3dgrip`'s own shot didn't move — hunter0 lands on the ground after the grip fall (no stone needed there) and hunter1 sits at a non-top rung, so neither exercises the branch this run touched.
-- **Found:** checked hunter1 (mid-route, weak_point_height-1) with `slot=1`: stands near the jackal's front leg, not obviously centred on its own decorative stone — worth a closer look, not confirmed broken.
+- **Ask:** nothing.
+- **Found:** `tools/shot.cmd` invoked with a RELATIVE `out=` path silently fails to save (`img.save_png` errors, but the harness prints "SHOT SAVED" anyway) when the process isn't launched from the repo root — this session's first before/after pair was actually just recycled bytes from an already-committed frame, caught only by an md5 check against HEAD. An absolute `out=` path saves correctly. Worth a fix in `screenshot.gd` (check `save_png`'s return code) so a future run can't ship a silently-stale frame as proof.
+- **Found:** `_stand_on_model`'s `side` parameter is still unused inside the function (noted by the prior run, still true, still harmless).
 
 ## Log
 
+- 2026-09-25 17:15 EDT — builder: hull built before the decorative stones, so mid-route hunters land on their own stone; built, tested, pushed.
 - 2026-09-25 16:43 EDT — builder: sigil top hold uses each hunter's own route side, not the shared-foothold nudge; built, tested, pushed.
 - 2026-09-25 16:31 EDT — session: top hold in front of the face, sigil shot lands; pushed.
 
