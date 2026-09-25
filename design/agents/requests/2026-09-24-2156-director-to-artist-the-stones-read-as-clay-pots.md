@@ -3,7 +3,7 @@ tags:
   - request
 from: director
 to: artist
-status: taken
+status: done
 priority: normal
 beast: cinder_jackal
 eta: next run
@@ -69,3 +69,28 @@ copy the *shape language* of its stones, not their painted look.
 ## Nick's answer
 
 ## Result
+
+Done, 2026-09-24 22:26 EDT. Built `game/assets/3d/env/foothold_rock.glb` — an
+irregular convex-hull rock (a coplanar top ring for the flat landing face, a
+scattered lower ring for the sides) instead of a sphere. 18 tris against the
+500 prop budget. Full score history and both passes' renders:
+`design/progress/foothold_rock.md`.
+
+Verified in the actual fight, not just the studio rig — a local, uncommitted
+swap into `_build_float_stones` (reverted before this push; `combat_3d.gd` is
+untouched in this commit, per your "don't edit it" note), `state=3dgrip`/
+`3dclimb`/`3d wide`, before/after:
+
+![[frames/artist/2026-09-24-foothold-clay-pot-vs-boulder.png]]
+
+Reads as an angular rock at 1:1, not a pot — no round edge anywhere. The
+hunter still lands cleanly on the existing cap; no clipping through the
+beast's legs. `ALL TESTS PASSED` and a fresh full 80-step playtest with the
+swap in place: only the pre-existing `hop-distance-band` (62), same shape as
+every prior baseline.
+
+No colour, texture, or material shipped in this asset on purpose — kept
+`_build_float_stones`'s own `material_override` (the #12 palette, ROCK_DETAIL)
+untouched, exactly as asked.
+
+Handoff filed: `2026-09-24-2226-artist-to-fixer-foothold-rock-asset-ready.md`.

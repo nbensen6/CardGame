@@ -2,13 +2,82 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T21:26
-working_on: "Cut the jackal itself to 2,639 tris (style C's geometry half), verified rig/anims hold; not ticking the fidelity bar lines myself."
+updated: 2026-09-24T22:30
+working_on: "Closed #17 (footholds read as rock, not pots). Nick's now live in-session asking to redo the frog/goblin look — pivoting there next."
 ---
 
 # artist
 
-## This run — 2026-09-24 21:26 ET
+## This run — 2026-09-24 22:30 ET
+
+- **Did:** closed #17 — rebuilt the floating footholds as an irregular
+  low-poly rock (18 tris), not a sphere; reads as boulder, not a pot.
+- **Worked?** Yes, verified in the real fight camera, before/after below.
+- **Next:** handed the fixer the wiring (#14 owns `_build_float_stones`).
+  Nick messaged live mid-run: turn back to the frog/goblin, he doesn't like
+  the current look and #13 was closed once without his sign-off.
+- **Need from you:** nothing on #17. Talking to you directly now on the
+  hunters.
+
+![[frames/artist/2026-09-24-foothold-clay-pot-vs-boulder.png]]
+
+## Now
+
+Took #17 (director, "the footholds now read as clay pots with a lid, not
+boulders") — the only open `to: artist` request this run; #13 (hunters) stays
+open, `taken_by: artist`, still blocked on #14/#18 landing.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 (`apt-get install
+libegl1 libegl-mesa0` needed again for headless render, same as noted before).
+
+**Built `tools/blender/boulder_foothold.py`** — a convex hull of hand-placed
+points instead of a decimated sphere. A decimated sphere still reads as "a
+round thing with corners cut off" (every facet near-equal size, silhouette
+stays circular); a hull built from 4 coplanar points at the top (the flat
+landing face, for free) plus 7 scattered points below at irregular
+radius/angle/height gives a true rock silhouette on the first attempt.
+`bmesh.ops.dissolve_limit` at a 20° coplanar limit turns the hull's own
+triangle soup into the "few big flat faces" the request asked for.
+
+**Two passes.** Pass 1: 16 tris, already read as an irregular rock, but the
+bounding box was noticeably shorter than wide (1.73 x 1.75 x 1.54). Pass 2:
+raised the top ring's height, landed at 1.727 x 1.751 x 1.74 — genuinely
+cube-proportioned, matching #16/#17's "as tall as it is wide." Score history
+and both passes' renders: `design/progress/foothold_rock.md`.
+
+**Verified in the real fight, not just the studio rig.** Temporary,
+uncommitted swap into `_build_float_stones` (kept the CAP/RIM code and the
+#12 material logic untouched, per #17's own instruction not to edit that
+file) — `state=3dgrip`, `3dclimb`, `3d wide`. Reverted the code edit before
+this push; `combat_3d.gd` differs nowhere from `origin/main`.
+
+![[frames/artist/2026-09-24-foothold-clay-pot-vs-boulder.png]]
+
+**Proved no regression.** `run_tests.gd` — `ALL TESTS PASSED` with the swap in
+place. Fresh full 80-step `mode=play beast=cinder_jackal` playtest,
+foreground, 10-minute timeout: only the pre-existing `hop-distance-band`
+(62), identical shape to every prior baseline.
+
+**Closed the request** (`status: done`, `## Result` filled in) and filed the
+handoff (`2026-09-24-2226-artist-to-fixer-foothold-rock-asset-ready.md`) with
+the exact local-test math so the fixer isn't starting from zero when #14
+lands.
+
+`git status` before this push: `boulder_foothold.py`, the shipped
+`foothold_rock.glb` + its colormap, the progress note, the request, the
+handoff, this status note, and five new render/frame PNGs. `combat_3d.gd` is
+untouched.
+
+**Then Nick messaged directly, mid-run**, on the frog/goblin: he doesn't like
+the current look, and said a ticket on it was closed once without his
+sign-off. That's #13's own history — the 19:05 ET "done" close three runs ago
+was reopened by him at 19:40 ET for exactly that reason ("marking it done was
+your judgement, not his"); it's been correctly `status: open` since. Told him
+so directly and am pivoting to the hunters now, in conversation with him
+rather than guessing at another rebuild alone.
+
+## Old: 2026-09-24 21:26 ET
 
 - **Did:** cut the Cinder Jackal's own geometry to 2,639 tris (was 11,999),
   flat-shaded — style C's geometry half, the last thing pass 8 skipped.
