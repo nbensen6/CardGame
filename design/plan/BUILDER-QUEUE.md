@@ -20,7 +20,7 @@ run failed.
 - [x] **Nick judged the 2026-09-25 camera and stones** (2026-09-25 14:30 EDT).
       Verdict, drawn on the frame: `art/references/2026-09-25-nick-stones-and-zoom.webp`.
       Stones are wrong, camera is too close. The two items below are his answer.
-- [ ] **Stones: first one in front of the hunter, last one in front of the
+- [?] **Stones: first one in front of the hunter, last one in front of the
       beast's head.** Today the stones sit as a cluster beside the jackal's
       left flank, floating at chest height, and the ground between the Frog
       and the jackal is empty. Nick's arrows: the first stone lands just
@@ -30,6 +30,12 @@ run failed.
       position is between the Frog and the beast, low; last stone overlaps
       the head. Do not move the beast, do not shrink it. Shot: `state=3d`,
       then the same shot beside his drawing.
+      **Builder, 2026-09-25 15:31 EDT:** CHEST_CLEAR_PUSH zeroed — it was
+      throwing rung 0 to x=-545 on a 1280px frame, which is the actual cause
+      of the empty gap. First stone now sits big and low in front of the
+      Frog. Rungs 1-4 still bunch near the jackal (perspective, camera
+      almost on top of rung 0 while the route's far end is ~80 units away) —
+      may resolve once the queued zoom-out lands, may not.
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
@@ -103,3 +109,15 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The in-fight settings panel's own Camera button label goes
       stale if F8 is pressed while the panel is open (fixes itself on next
       open/close). Cosmetic; low priority.
+- [ ] (proposed) Rungs 1-4 of the stone route still collapse to nearly one
+      screen point near the jackal — the camera (dist=3) sits almost on top
+      of rung 0 while the route's far end (the sigil) is ~80 world units
+      away, so everything past the first rung reads as "far" in near-equal
+      measure. Re-check once the queued zoom-out item lands; if it's still
+      collapsed, the route's near end may need to stop anchoring to the
+      hunter's real (very distant) ground stance.
+- [ ] (proposed) CHEST_CLEAR_PUSH is zeroed (was throwing rung 0 off-screen
+      under the locked cam). The beast-chest-overlap problem it was added to
+      fix (#0658) was never re-measured under `state=3d` — worth checking
+      once the camera work settles, rather than assuming it's still needed
+      at its old value.

@@ -4205,8 +4205,20 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 ## this reopened it. The occluding stone was always free to move on its own
 ## (see NEAR_LEG_CLEAR below, next to `_build_float_stones`); the hunter's
 ## foot was never the thing that had to give.
+## Nick, 2026-09-25 (stones queue item): projecting rung 0 to screen under the
+## LOCKED third-person cam (`state=3d`, dist=3 -- the camera sits almost on
+## top of the near stone) showed it at x=-545 on a 1280-wide frame -- the
+## CHEST_CLEAR_PUSH of 8.0 above, stacked on STONE_SWEEP_WIDTH's own sweep,
+## threw the one stone that is supposed to read as "in front of the hunter"
+## clean out of frame, which is the actual cause of "stones cluster beside
+## the flank, ground between Frog and jackal empty": every rung this push
+## still reaches (t < CHEST_CLEAR_TAPER) was invisible, leaving only the
+## rungs past the taper on screen, all bunched near the sigil. Zeroed rather
+## than deleted -- the beast-overlap problem this push fixed (#0658) may
+## still be real once the queued zoom-out lands and the camera is no longer
+## sitting on the near stone; re-measure then, don't just restore the number.
 const CHEST_CLEAR_TAPER := 0.6
-const CHEST_CLEAR_PUSH := HUNTER_HEIGHT * 8.0
+const CHEST_CLEAR_PUSH := HUNTER_HEIGHT * 0.0
 static func chest_clear_push(t: float) -> float:
 	return CHEST_CLEAR_PUSH * clampf(1.0 - t / CHEST_CLEAR_TAPER, 0.0, 1.0)
 
