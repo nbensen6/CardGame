@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T17:15
-working_on: "hops-on-stones mid-route hull-order fix handed to Nick"
+updated: 2026-09-25T17:26
+working_on: "hunters face the beast fix handed to Nick"
 ---
 
 # builder
@@ -13,17 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 17:15 EDT
+2026-09-25 17:26 EDT
 
-- **Did:** `_show_beast` built the decorative stones before the hull existed; swapped the order so both read the same hull.
-- **Worked?** Yes — `state=3dclimb slot=1`'s Goblin now stands on the boulder by the jackal's leg instead of floating beside it; HUNTER/STONE z now match within 0.1 on every rung checked (were 0.84–2.62 off).
-- **Look at:** ![[frames/builder/2026-09-25-hops-on-stones-before.png]] then ![[frames/builder/2026-09-25-hops-on-stones-after.png]]
+- **Did:** Ground hunters now face the beast, backs to camera — the old rotation formula had them facing the camera instead.
+- **Worked?** Yes — Frog and Goblin now stand back/three-quarter to the camera at rest, matching Nick's Risk of Rain 2 reference.
+- **Look at:** ![[frames/builder/2026-09-25-hunters-face-beast-before.png]] then ![[frames/builder/2026-09-25-hunters-face-beast-after.png]]
 - **Ask:** nothing.
-- **Found:** `tools/shot.cmd` invoked with a RELATIVE `out=` path silently fails to save (`img.save_png` errors, but the harness prints "SHOT SAVED" anyway) when the process isn't launched from the repo root — this session's first before/after pair was actually just recycled bytes from an already-committed frame, caught only by an md5 check against HEAD. An absolute `out=` path saves correctly. Worth a fix in `screenshot.gd` (check `save_png`'s return code) so a future run can't ship a silently-stale frame as proof.
-- **Found:** `_stand_on_model`'s `side` parameter is still unused inside the function (noted by the prior run, still true, still harmless).
+- **Found:** the relative-`out=` save-failure bug (previously filed below) is now fixed upstream — `shot.cmd` correctly fails loud (`SHOT FAILED`, exit 2) on a relative path instead of silently reusing a stale frame; confirmed live this run.
 
 ## Log
 
+- 2026-09-25 17:26 EDT — builder: ground hunters face the beast, backs to camera, not the camera itself; built, tested, pushed.
 - 2026-09-25 17:15 EDT — builder: hull built before the decorative stones, so mid-route hunters land on their own stone; built, tested, pushed.
 - 2026-09-25 16:43 EDT — builder: sigil top hold uses each hunter's own route side, not the shared-foothold nudge; built, tested, pushed.
 - 2026-09-25 16:31 EDT — session: top hold in front of the face, sigil shot lands; pushed.

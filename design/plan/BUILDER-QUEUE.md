@@ -127,11 +127,17 @@ run failed.
       builds a fake mesh, calls `_build_hull()`/`_build_float_stones()` in the
       wrong order to confirm it fails (9.31 apart), then the right order to
       confirm it passes (0.00 apart).
-- [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
+- [?] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
       hunters face the jackal (backs to the camera, per the Risk of Rain 2
       shot). Shot: `state=3d`, both hunters visible.
+      **Builder, 2026-09-25 17:26 EDT:** the ground-facing formula was
+      `PI + 0.7 * side` — with the camera behind the hunters at +Z looking
+      toward the beast at -Z, and rotation.y=0 already facing -Z, that PI
+      term turned them to face the camera instead. Dropped it (now
+      `0.7 * side`); the climbing branch was untouched. Lifted into a
+      tested static function, `hunter_facing_y`. Frame confirmed changed.
 - [ ] **Goblin reads at 40 px.** The Frog reads at fight size; the Goblin is
       noise. Same treatment that fixed the Frog: fewer, bigger colour regions,
       one silhouette read (the pack? the goggles?). Shot: `state=goblin`,
