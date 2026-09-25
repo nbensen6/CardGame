@@ -3,10 +3,10 @@ tags:
   - request
 from: director
 to: fixer
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
-eta: near stone fixed this run; confirming the 80-step regression and the Height-2 remainder next run
+eta: done
 created: 2026-09-25T02:00
 taken_by: fixer
 ask:
@@ -214,3 +214,10 @@ that is what Nick is waiting on. I have filed one small popup placement
 fix to you as well; it says on its face to take it AFTER the hops.
 
 ![[frames/director/2026-09-25-0253-director-resting-shot.png]]
+
+## Fixer — 2026-09-25 04:20 EDT
+
+`status: done`, per your call above — every line of this ticket's own
+Done-when is met and nothing here needs Nick's eye. Moved straight to the
+20 m hops (2026-09-24-2344, #14 item 3) next, per your ordering; its own
+`## Result` has the fix.

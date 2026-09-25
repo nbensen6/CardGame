@@ -736,10 +736,23 @@ func _check(v: Node, when: String) -> void:
 	# own consecutive rung-to-rung distances instead, reusing check 8's own
 	# `route_top_hold`/`route_rungs`/`route_ground_z` (the same pure static
 	# pieces, the same reasoning) so both checks agree on where a rung
-	# actually is. Still the FULL 3D distance between consecutive rungs,
-	# still scoped to ordinary Height-apart hops only (ground-to-first-rung
-	# is a different hop, not what hop_arc()'s floor/ceiling were tuned for
-	# -- see the request this rule came from).
+	# actually is.
+	#
+	# 2026-09-25, fixer (#14 item 3, 2026-09-24-2344): that still measured
+	# named-rung-to-named-rung distance directly, and #14 widening the gap
+	# between the hunters and the beast made every one of those legs ~20m --
+	# 2-8x hop_arc()'s own ceiling, every run, since named rungs are still
+	# the only points on route_pos()'s line (route_rungs.size() is a
+	# property of the BEAST's own authored Heights, not of the animation).
+	# The real fix is in the hop animation now (combat_3d.gd's
+	# Combat3D.hop_subpoints, called from _place_hunters): a leg too long
+	# for one hop plays as several. So this check no longer measures
+	# named-rung-to-named-rung distance -- it measures the SAME sub-hop legs
+	# the game actually animates, calling the same pure function the
+	# animation calls, so the two can never disagree about what "the route"
+	# is. Still scoped to ordinary Height-apart hops only (ground-to-first-
+	# rung is a different hop, not what hop_arc()'s floor/ceiling were tuned
+	# for -- see the request this rule came from).
 	if route_ok:
 		var n2 := route_rungs.size()
 		var pts: Array = []
@@ -751,13 +764,21 @@ func _check(v: Node, when: String) -> void:
 		for i in range(pts.size() - 1):
 			var a3: Vector3 = pts[i]
 			var b3: Vector3 = pts[i + 1]
-			var d3 := a3.distance_to(b3)
-			if d3 < HOP_MIN_WORLD:
-				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (< %.2f floor) -- gets hop_arc()'s same minimum bounce regardless of how close the holds really are" \
-					% [when, route_rungs[i], route_rungs[i + 1], d3, HOP_MIN_WORLD])
-			elif d3 > HOP_MAX_WORLD:
-				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
-					% [when, route_rungs[i], route_rungs[i + 1], d3, HOP_MAX_WORLD])
+			var subs: Array = v.call("hop_subpoints", a3, b3, HOP_MAX_WORLD)
+			var at3: Vector3 = a3
+			for j in range(subs.size()):
+				var b3j: Vector3 = subs[j]
+				var d3 := at3.distance_to(b3j)
+				var leg := "%s->%s" % [route_rungs[i], route_rungs[i + 1]]
+				if subs.size() > 1:
+					leg = "%s (hop %d/%d)" % [leg, j + 1, subs.size()]
+				if d3 < HOP_MIN_WORLD:
+					_fail("hop-distance-band", "%s: ordinary hop Height %s measures %.2fm (< %.2f floor) -- gets hop_arc()'s same minimum bounce regardless of how close the holds really are" \
+						% [when, leg, d3, HOP_MIN_WORLD])
+				elif d3 > HOP_MAX_WORLD:
+					_fail("hop-distance-band", "%s: ordinary hop Height %s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
+						% [when, leg, d3, HOP_MAX_WORLD])
+				at3 = b3j
 
 	# 8d. JACKAL-BAR "the weak point is obvious... stays obvious as you climb
 	# toward it": the artist's fix (combat_3d.gd _place_sigil, 2026-09-24)

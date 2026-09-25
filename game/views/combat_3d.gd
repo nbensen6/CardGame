@@ -3473,6 +3473,49 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 ## with `hop_arc(Vector3(0,8.99,0), Vector3(0.3,18.17,-0.4), 0.34)`, which
 ## used to return apex.y=15.97 (below to.y=18.17) and now returns apex.y=
 ## 19.82 (above both endpoints).
+## The distance past which hop_arc()'s own clamp (HUNTER_HEIGHT * 3.4 above)
+## stops growing the arc with distance -- mirrors playtest.gd's HOP_MAX_WORLD
+## and route.py's own copy (neither file can import a .gd class, so both
+## carry the same number as a literal; see either one's own doc comment).
+## Derived from the SAME clamp rather than typed as a third literal, so this
+## copy at least can never drift from hop_arc() itself.
+const HOP_MAX_LEG := HUNTER_HEIGHT * 3.4 / 0.26
+
+
+## Splits one long hop into several, each inside hop_arc()'s own proportional
+## band, so a hunter crossing a wide gap plays as several readable jumps
+## instead of one the arc cannot keep up with.
+##
+## The fix for "every ordinary climb hop now measures ~20m, 2-8x hop_arc()'s
+## own ceiling" (2026-09-24-2344): b0648db's straight-line route_pos() spaced
+## its rungs evenly by COUNT, not by hop_arc()'s own reach, so widening the
+## gap between the hunters and the beast (#14) widened every leg right along
+## with it. hop_arc()'s arc height and duration are both fixed per hop
+## regardless of distance (its own doc comment: "the same jump should take
+## the same time however many of them there are") precisely so a long climb
+## reads as a CHAIN of hops, not one stretched-out one -- this is what turns
+## that chain into more than one hop when a single leg is too long to be one.
+##
+## A straight lerp only: the two points the caller passes in already decide
+## the ROUTE (on the route_pos() line, on the body, at the sigil) -- this
+## never bends it, only adds more stops along the same segment, at even
+## spacing so no sub-leg is shorter than the others (the same "one line, even
+## steps" reasoning route_pos()'s own tests already pin down). A leg already
+## inside the band is untouched: steps=1 and the single output point IS `to`,
+## so this is a no-op everywhere it was not needed, byte-for-byte.
+##
+## Pure and static, like hop_arc beside it, so run_tests.gd and playtest.gd's
+## own hop-distance-band check can both call it and agree on what the route
+## actually plays as -- the same reasoning that already keeps route_pos() and
+## STONE_SWEEP_WIDTH shared between the two files.
+static func hop_subpoints(from: Vector3, to: Vector3, max_leg: float) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	var steps: int = maxi(1, int(ceil(from.distance_to(to) / maxf(max_leg, 0.001))))
+	for k in range(1, steps + 1):
+		out.append(from.lerp(to, float(k) / float(steps)))
+	return out
+
+
 static func hop_arc(from: Vector3, to: Vector3, step: float) -> Dictionary:
 	# Higher than it was (0.18 / 2.5 cap): Nick, 2026-09-23 — the jump has to
 	# read as a jump at a glance, and a flat arc over a long climb reads as a
@@ -3695,13 +3738,39 @@ func _place_hunters(s: Dictionary) -> void:
 			node.position = from_pos
 			var lo_y: float = minf(from_pos.y, pos.y)
 			var hi_y: float = maxf(from_pos.y, pos.y)
+			# Every named stop along the way (the in-between ledges, then the
+			# final Height itself), THEN split each stop-to-stop leg with
+			# hop_subpoints -- so a leg the route already agrees is one stop
+			# (e.g. an ordinary Height N->N+1 on route_pos()'s line, now ~20m
+			# since #14 widened the gap) plays as however many hops
+			# hop_arc()'s own band asks for, not one stretched-out one. A leg
+			# already short enough is untouched (hop_subpoints is a no-op).
+			#
+			# The `step` BUDGET for that one named-rung leg is shared across
+			# however many sub-hops it got split into, not repeated for each
+			# -- "per HOP, not split across the whole route" (the comment
+			# above) already fixed this once for named-rung counts; splitting
+			# a leg further and still charging each piece the FULL 0.62s
+			# broke the same rule a second way; found live, first version of
+			# this fix: a 3-named-rung climb (e.g. foot 2->5) split into 9
+			# sub-hops at 0.62s each played for ~5.6s and lost the hunter off
+			# the top of the frame for 71% of it (playtest's own
+			# hunter-lost-mid-hop, step 16, 2026-09-25). Distance still
+			# decides the ARC HEIGHT (hop_arc reads `from`/`to`, not `step`),
+			# so a shared, smaller step keeps each piece reading as real
+			# effort -- only the total climb's own length stops ballooning.
+			var stops: Array[Vector3] = []
 			for wp in way:
-				var mid: Vector3 = _stand_on_model(int(wp), side)
-				_hop(tw, node, body, at, mid, step)
-				lo_y = minf(lo_y, mid.y)
-				hi_y = maxf(hi_y, mid.y)
-				at = mid
-			_hop(tw, node, body, at, pos, step)
+				stops.append(_stand_on_model(int(wp), side))
+			stops.append(pos)
+			for stop in stops:
+				var subs: Array[Vector3] = hop_subpoints(at, stop, HOP_MAX_LEG)
+				var sub_step: float = step / float(subs.size())
+				for sub in subs:
+					_hop(tw, node, body, at, sub, sub_step)
+					lo_y = minf(lo_y, sub.y)
+					hi_y = maxf(hi_y, sub.y)
+					at = sub
 			# Tell the camera the whole arc BEFORE it starts, so it can frame
 			# the jump as one shot instead of chasing it. Reacting per frame
 			# always arrives late: on this Titan a single Leap covers more

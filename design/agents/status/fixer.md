@@ -2,13 +2,75 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T02:55
-working_on: "Near stone off the beast's chest (widened STONE_SWEEP_WIDTH). A smaller Height-2 stone still touches the chest -- flagged, not fixed."
+updated: 2026-09-25T04:20
+working_on: "#14 item 3 done: split long climb hops so no single hop crosses the whole gap. One new camera finding filed to myself."
 ---
 
 # fixer
 
-## This run — 2026-09-25 02:55 EDT
+## This run — 2026-09-25 04:20 EDT
+
+- **Did:** fixed every ordinary climb hop measuring ~20m (2-8x the arc's own
+  ceiling) — split long hops into several short ones instead.
+- **Worked?** Yes. `hop-distance-band` check: 124 fails → 0, proven with
+  tests and a full regression. Also closed the near-stone ticket.
+- **Next:** found (didn't fix) a camera issue on one long climb — filed to
+  myself for next run.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-25-hop-distance-band-after.png]]
+
+## Now
+
+Took `2026-09-24-2344-playtester-to-fixer-ordinary-climb-hops-now-measure-20m.md`
+(#14 item 3, high priority, the top open `to: fixer` request — the near-stone
+ticket the director closed for me at 02:58 EDT was bookkeeping, not a new
+pick). Full writeup on the ticket's own `## Result`; short version:
+
+**Root cause.** `route_pos()` places one point per NAMED climb Height (5 on
+the Cinder Jackal), so #14's own wider gap stretched every leg between them
+to ~20m — 2-8x `hop_arc()`'s 2.42-9.15m band. Not a route-count problem (the
+stones stay exactly where Nick's line puts them); an ANIMATION problem: one
+`_hop()` call per Height change, however far that Height change actually is.
+
+**Fix.** New pure `Combat3D.hop_subpoints(from, to, max_leg)`
+(`combat_3d.gd`): splits one hop into several evenly-spaced sub-hops
+whenever the straight-line distance would exceed the band, a no-op
+everywhere it wasn't needed. `_place_hunters`' climb branch calls it for
+every leg and shares that leg's existing 0.62s `step` budget across however
+many sub-hops it takes (not repeating the full budget per sub-hop — that
+first version played a 3-Height climb for ~5.6s and broke a DIFFERENT check,
+`hunter-lost-mid-hop`, worse than baseline).
+
+**One real gap left, not hidden.** `hunter-lost-mid-hop` still fails on one
+step (a 3-named-rung climb, foot 2→5) — 52%, up from an ALREADY-borderline
+42% baseline on the same step. Root cause: the camera's horizontal lock
+(`_lock_point`, reads `home.x/.z`) aims at the climb's FINAL stop for the
+WHOLE flight, not the current leg — true before this fix too, just less
+visible when a leg was one short-lived (if too-flat) hop instead of several.
+Tried the obvious per-leg `home` update via `tween_callback`; it collided
+with `_tick_grip`'s ledge-cling sway (writes `node.position.x` from `home.x`
+every frame with no tween-liveness guard, unlike the idle-sway code right
+above it) and produced a NEW, worse pop (`hop-position-pop`, a 0.73m
+same-frame snap). Reverted that half. Filed the finding + the fix I'd try
+next (`2026-09-25-0420-fixer-to-fixer-camera-lock-stays-on-the-final-stop...`).
+
+**Proof.** 4 new pure tests (`run_tests.gd`, no scene tree) pin
+`hop_subpoints`' own shape (no-op inside the band, even sub-legs, last point
+is the real destination, the literal 20.44m repro splits into exactly 3).
+`ALL TESTS PASSED`. Full `mode=play beast=cinder_jackal steps=80`, fresh
+`--import`: before `PLAYTEST FAIL: 1 failing check(s) { "hop-distance-band":
+124 }`; after, `hop-distance-band` is 0 every run, one new-but-disclosed
+fail (`hunter-lost-mid-hop`, above). `mode=hands`: clean. Before/after
+motion strips (`hop_000`, same step, same tree otherwise) on the ticket and
+above — the Frog now leaps clearly into frame instead of appearing as a
+barely-visible speck then popping in already close to the beast.
+
+Set both `2026-09-24-2344-...` and the near-stone ticket
+(`2026-09-25-0200-...`) to `status: done` — both Done-whens are measured
+checks, not Nick's judgement, and both are met and proven.
+
+## Old: 2026-09-25 02:55 EDT — near stone off the beast's chest
 
 - **Did:** moved the near approach stone off the beast's chest/legs — it was
   covering ears-to-paws once the earlier sweep fix revealed it.
@@ -2100,6 +2162,19 @@ further either.
 
 ## Log
 
+- 2026-09-25 04:20 EDT — #14 item 3 (2026-09-24-2344, high): every ordinary
+  climb hop measured ~20m, 2-8x `hop_arc()`'s ceiling. New
+  `Combat3D.hop_subpoints` splits a too-long hop into several inside the
+  band, sharing the named-rung leg's existing 0.62s budget across them.
+  `hop-distance-band`: 124 → 0, `ALL TESTS PASSED`, full 80-step regression
+  clean except one new, disclosed finding (`hunter-lost-mid-hop`, one
+  3-Height climb — the camera's horizontal lock aims at the climb's final
+  stop for the whole flight, pre-existing, now more visible). A first
+  attempt at that fix collided with `_tick_grip`'s sway and caused a worse
+  pop; reverted. Filed to myself:
+  `2026-09-25-0420-fixer-to-fixer-camera-lock-stays-on-the-final-stop...`.
+  Also closed the near-stone ticket (`2026-09-25-0200-...`) — done, per the
+  director's 02:58 EDT call.
 - 2026-09-25 01:48 EDT — #14 items 1-2 (director, high): swept the approach
   stones left-to-right (`route_pos` new `half_width`/`STONE_SWEEP_WIDTH`,
   sized off the hunter after a beast-width version stretched at the frame

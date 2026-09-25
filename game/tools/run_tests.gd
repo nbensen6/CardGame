@@ -982,6 +982,14 @@ func _init() -> void:
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
 	_test_route_pos_zero_half_width_matches_a_centred_straight_line()
+	# fixer, 2026-09-25: #14 item 3 (2026-09-24-2344) -- widening the gap in
+	# #14 stretched every ordinary Height-to-Height hop to ~20m, 2-8x
+	# hop_arc()'s own ceiling. hop_subpoints splits one long leg into several
+	# inside that ceiling.
+	_test_hop_subpoints_is_a_no_op_inside_the_band()
+	_test_hop_subpoints_splits_a_long_leg_into_even_legs_inside_the_band()
+	_test_hop_subpoints_last_point_is_always_the_destination()
+	_test_hop_subpoints_matches_the_live_20m_repro()
 	# fixer, 2026-09-23: the hunter-display-path request
 	# (design/agents/requests/2026-09-23-1330-...) -- the toon-shaded, rigged
 	# path _shade_model gave AI_ART beasts was gated on `root == _beast`, so a
@@ -22102,6 +22110,54 @@ func _test_route_pos_zero_half_width_matches_a_centred_straight_line() -> void:
 	var top := Vector3(0.4, 12.0, 2.0)
 	var p: Vector3 = Combat3D.route_pos(top, -20.0, 0, 5, 0.0)
 	_expect(is_equal_approx(p.x, top.x), "half_width=0 must leave the near end's x exactly at the top hold's own x -- no sweep, same shape the ground_z/height math already had")
+
+
+## fixer, 2026-09-25 -- #14 item 3 (2026-09-24-2344): widening the gap between
+## the hunters and the beast made route_pos()'s own even rung spacing ~20m
+## per leg, 2-8x hop_arc()'s 2.42-9.15 band (HOP_MAX_LEG mirrors that
+## ceiling). hop_subpoints is the fix: split one long leg into several short
+## ones, reused by both the real hop animation (_place_hunters) and
+## playtest.gd's own hop-distance-band check, so the two can never disagree
+## about what the route plays as.
+func _test_hop_subpoints_is_a_no_op_inside_the_band() -> void:
+	var from := Vector3(0.0, 0.0, 0.0)
+	var to := Vector3(5.0, 0.0, 0.0)   # inside [2.42, 9.15]
+	var pts: Array[Vector3] = Combat3D.hop_subpoints(from, to, Combat3D.HOP_MAX_LEG)
+	_expect(pts.size() == 1 and pts[0] == to, "a leg already inside hop_arc()'s band must come back unchanged -- exactly one point, and it must be the destination, or this becomes a second, unwanted animation change for every hop that already worked")
+
+
+func _test_hop_subpoints_splits_a_long_leg_into_even_legs_inside_the_band() -> void:
+	var from := Vector3(0.0, 0.0, 0.0)
+	var to := Vector3(20.44, 0.0, 0.0)   # the live ~20m repro, flattened to one axis
+	var pts: Array[Vector3] = Combat3D.hop_subpoints(from, to, Combat3D.HOP_MAX_LEG)
+	_expect(pts.size() > 1, "a 20.44m leg is 2-8x hop_arc()'s own ceiling -- it must come back as more than one hop or nothing changed")
+	var at := from
+	for p in pts:
+		var d: float = at.distance_to(p)
+		_expect(d <= Combat3D.HOP_MAX_LEG + 0.0001, "every sub-leg must sit inside hop_arc()'s own ceiling (%.2f), or the split didn't fix the thing it exists to fix -- got %.2f" % [Combat3D.HOP_MAX_LEG, d])
+		at = p
+	var first: float = from.distance_to(pts[0])
+	var last: float = (pts[pts.size() - 2] if pts.size() > 1 else from).distance_to(pts[pts.size() - 1])
+	_expect(is_equal_approx(first, last), "even spacing, same reasoning as route_pos()'s own 'one line, even steps' -- an uneven split reads as one big hop and one small one, not a staircase")
+
+
+func _test_hop_subpoints_last_point_is_always_the_destination() -> void:
+	var from := Vector3(0.0, 0.0, 0.0)
+	var to := Vector3(37.0, 4.0, -12.0)
+	var pts: Array[Vector3] = Combat3D.hop_subpoints(from, to, Combat3D.HOP_MAX_LEG)
+	_expect(pts[pts.size() - 1] == to, "the last sub-hop must land exactly on the real destination -- a route that overshoots or falls short of the actual rung is its own new bug")
+
+
+## The literal numbers from the request (2026-09-24-2344): every ordinary
+## Height N->N+1 hop on the Cinder Jackal measured 20.44m on current main.
+func _test_hop_subpoints_matches_the_live_20m_repro() -> void:
+	var from := Vector3(0.0, 0.0, 0.0)
+	var to := Vector3(0.0, 0.0, 20.44)
+	var pts: Array[Vector3] = Combat3D.hop_subpoints(from, to, Combat3D.HOP_MAX_LEG)
+	# ceil(20.44 / 9.1538461) = 3
+	_expect(pts.size() == 3, "20.44m over a 9.15m ceiling needs exactly ceil(20.44/9.15) = 3 sub-hops -- got %d" % pts.size())
+	var leg: float = from.distance_to(pts[0])
+	_expect(leg > 2.4230769 and leg < 9.1538461, "each of the 3 sub-hops on the live repro should land comfortably inside the 2.42-9.15 band (playtest.gd's own HOP_MIN_WORLD/HOP_MAX_WORLD) -- got %.2fm" % leg)
 
 
 ## backlog #86 duty 3 (this turn) — hull_index_for is the last untested piece
