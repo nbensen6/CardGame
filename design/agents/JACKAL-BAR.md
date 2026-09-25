@@ -378,7 +378,17 @@ reading the fight at a glance, at play size, in motion.
       same new hard-band shading. "Matches the jackal's fidelity" cannot be
       true until the jackal gets the same treatment or Nick says the
       mismatch is fine.
-- [x] **Each is readable at fight distance** as itself, not a green blob.
+- [ ] **Each is readable at fight distance** as itself, not a green blob.
+      **Unticked, 2026-09-24 20:13 ET.** Was ticked 2026-09-23, before the
+      style-C low-poly switch and before #13's 09-24 re-open. Fresh
+      `state=3d wide` render, read at true 1:1 (no zoom) rather than trust
+      the earlier 4x-crop evidence that ticked this: both hunters are
+      ~15-20px tall at the camera this state actually uses, which reads as
+      a coloured speck regardless of model/colour quality. Same root cause
+      as `#18`'s own diagnosis (not enough space between the hunters and
+      the beast, so the wide camera has to sit ~74 units back to fit the
+      whole beast) — tracked there, not a separate defect. See `#13`'s
+      2026-09-24 20:13 follow-up for the frames.
       The Goblin Engineer's Meshy rebuild was wired in and unreadable at true
       size (a near-solid black blob) until the shared ink-outline width was
       given a per-model scale, 2026-09-23 — verified in the real fight and

@@ -166,3 +166,51 @@ without hunting" that call was never yours to make.
 
 Do not close this again. When you believe it is right, hand it back
 `to: nick` with a 1:1 wide shot and let him say so.
+
+## Follow-up — artist, 2026-09-24 20:13 EDT
+
+**Not closing this. Re-rendered the real `state=3d wide` camera fresh and
+looked at 1:1, no zoom, before writing anything.** The 09-24 19:05 fix (cut
+to ~260/310 tris, flat vertex colour) is still in the tree and still real —
+zoomed in, both hunters read as clean, distinct shapes with a few flat
+colours, not confetti. That was never the problem I was solving wrong. The
+problem is the size they render at:
+
+![[frames/artist/2026-09-24-hunters-13-still-tiny-wide-1to1.png]]
+
+Cropped, still no zoom — this is the actual pixels between the jackal's
+front legs:
+
+![[frames/artist/2026-09-24-hunters-13-still-tiny-crop-1to1.png]]
+
+Both hunters are ~15-20px tall at the camera this state actually uses. No
+amount of geometry or colour work inside that many pixels reads as
+anything but a coloured speck — I checked, this is the same camera/render
+pipeline as my own "fixed" evidence three hours ago, which used a 4x-zoomed
+crop and never looked at the un-zoomed frame. That was my mistake: I proved
+the model reads correctly up close and never checked it against the actual
+in-game distance, which is exactly the trap this ticket's own notes warned
+about.
+
+**This is the same root cause `#18` already names, independently.** The
+hunters stand ~10 units out from the beast's front face
+(`ground_standoff_for`, `game/views/combat_3d.gd`), and the wide camera has
+to pull back to ~74 units to fit the whole 33-unit-long, 20-unit-tall beast
+in frame from there — at that distance 0.7 world units (a hunter's full
+height) is a handful of pixels regardless of what's painted on them. `#18`
+already diagnoses this exactly ("there is not enough space between the
+hunters and the beast") and lays out the fix: open the gap, lay the stones
+across it, then bring the camera in close behind the hunter — camera and
+position code, not model or texture work, and `#18` already assigns owning
+that sequence to the director. Not touching camera/standoff code myself
+this run so two agents don't build competing fixes to the same problem —
+flagging the connection here so whoever picks up `#18` knows this ticket is
+the same defect, not a separate one.
+
+**Corrected `JACKAL-BAR.md`'s "each is readable at fight distance" line**
+back to unticked — it was proven true before this state existed and the
+fresh evidence above no longer supports it.
+
+Leaving `status: open`, `taken_by: artist` — per your instruction, not
+closing this until it is actually right, and it depends on `#18` landing
+first.

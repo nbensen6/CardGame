@@ -2,13 +2,79 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T19:19
-working_on: Closed #16 — the floating footholds were a squashed sphere reading as a saucer; now a true sphere, same width.
+updated: 2026-09-24T20:13
+working_on: "#13 reopened: root cause is camera/spacing (#18), not the hunter model. Not closing it, not touching camera code myself."
 ---
 
 # artist
 
-## This run — 2026-09-24 19:19 ET
+## This run — 2026-09-24 20:13 ET
+
+- **Did:** re-checked #13 at true 1:1 (no zoom) — hunters are ~15-20px at
+  the real wide-shot camera. Model/colour work can't fix that.
+- **Worked?** No, and that's the finding. Same cause as #18's own diagnosis
+  — beast/hunter spacing forces the camera back, not the model.
+- **Next:** #13 stays open, waiting on #18's gap/stone/camera work to land.
+- **Need from you:** nothing new — #18 already has your answer on order of
+  work.
+
+![[frames/artist/2026-09-24-hunters-13-still-tiny-wide-1to1.png]]
+
+## Now
+
+Took #13 again (`2026-09-24-1720-nick-to-artist-hunters-must-read-at-fight-
+size.md`) — the only open `to: artist` request, and Nick's own reopening
+note said do not close it again without proof he'd agree with.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. No Blender/Meshy — this run
+shipped no asset or code change.
+
+**Did not repeat my own mistake from three hours ago.** The 19:05 "done"
+close proved the hunter model with a 4x-zoomed crop and never looked at the
+actual in-game render distance — exactly the trap this ticket's own notes
+warn about, and exactly why Nick reopened it. Rendered `state=3d wide` at
+the real 1280x720 camera and read the PNG at native size, no resize, before
+concluding anything.
+
+**The model fix is real and still holds.** Cropped tight on both hunters
+and zoomed 4x to check: both are still clean, distinct low-poly shapes with
+flat colour, not confetti. That was never wrong. But the un-zoomed crop —
+the actual pixels — is ~15-20px per hunter. No geometry or colour choice
+reads as anything but a coloured speck in that many pixels.
+
+**Traced why, rather than just report the size.** `game/views/combat_3d.gd`:
+hunters stand `ground_standoff_for` (~10 units) out from the beast's front
+face; the beast is ~33 units long and ~20 tall, so the wide camera has to
+sit ~74 units back to fit the whole thing, and 0.7 world units (a hunter's
+full height) is a handful of pixels from there. This is the identical
+mechanism `#18` (Nick to director, open) already names — "there is not
+enough space between the hunters and the beast" — not a second, separate
+defect.
+
+**Deliberately did not touch camera or hunter-standoff code.** `#18`
+explicitly assigns owning the gap/stones/camera sequence to the director,
+across agents, in a specific order (open the gap, then stones, then camera
+in close). That's gameplay/camera code, not asset work, and it's already
+spoken for — building my own fix here risks landing a second, competing
+change the same day. Said so plainly on `#13` instead and left it for
+whoever the director hands the actual build to.
+
+**Corrected `JACKAL-BAR.md`.** "Each is readable at fight distance" was
+ticked 2026-09-23, before style C and before this reopening — unticked it
+with the fresh 1:1 evidence and a pointer to `#18`, so the bar doesn't
+claim something the real camera doesn't show.
+
+**Left `#13` open, `taken_by: artist`, not `to: nick`** — per Nick's own
+instruction not to close it again until it's actually right, and it can't
+be until `#18`'s work lands.
+
+`ALL TESTS PASSED` before this push (no code touched, confirmed clean
+rather than assumed). `git status`: `JACKAL-BAR.md`, the request, this
+status note, two new frames. No game code, shader, or asset file differs
+from `origin/main`.
+
+## Old: 2026-09-24 19:19 ET
 
 - **Did:** closed #16 — footholds were a squashed sphere (3 hunters wide, 1
   tall); made height match width, same one-line fix.
