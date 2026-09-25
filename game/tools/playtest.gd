@@ -101,22 +101,45 @@ const BEAST_STONE_COVER_MAX := 15.0
 ## happens to see.
 const FOOT_STONE_COVER_MIN := 25.0
 
-## `_check_hunter_on_stone`'s own foot-band, in WORLD units around the real
-## landing point -- not a slice of `hunter_screen_rect`. A first version used
-## the bottom slice of the hunter's own projected AABB rect and measured 19-
-## 20% at the sigil on a frame that plainly shows the Frog standing square on
-## its stone (crop_1_with.png, this run): `hunter_screen_rect`'s own doc
-## comment already warns its box is "always a bit looser than the real
-## silhouette", and at the sigil the Frog is tiny and distant enough that the
-## slice's FULL rect width -- not just its height -- pulled in a wide strip
-## of empty sky the tiny sprite never actually occupies. Projecting a small
-## WORLD footprint around `landed` itself sidesteps that: its on-screen size
-## naturally shrinks with distance the same way the real character does,
-## instead of inheriting the AABB's own looseness.
-const FOOT_WORLD_RADIUS := SIGIL_HUNTER_HEIGHT * 0.4
+## `_check_hunter_on_stone`'s own foot-band height, as a fraction of the
+## hunter's own projected screen rect (`hunter_screen_rect`) -- small enough
+## to sample the ground/stone line right at the feet, not the shins.
+##
+## TWO other approaches were tried and printed real numbers before being
+## dropped:
+## 1. The bare bottom slice at the rect's FULL width measured 19-20% at the
+##    sigil on a frame that plainly shows the Frog standing square on its
+##    stone (crop_1_with.png) -- `hunter_screen_rect`'s own doc comment
+##    already warns its box is "always a bit looser than the real
+##    silhouette", and at the sigil the Frog is tiny enough that the slice's
+##    full WIDTH pulled in a wide strip of empty sky the sprite never
+##    occupies. Fixed below by narrowing the band's width too, not just
+##    trusting the loose rect.
+## 2. Projecting a small WORLD-space footprint around `landed` (the hunter's
+##    own logical position) instead measured 0% at the sigil, on the SAME
+##    frame -- debug dump confirmed why: `landed`'s own z (13.92) sits ~13
+##    world units from the top stone's z (0.53), even though both project to
+##    nearly the same SCREEN x (639-640). This is the already-documented
+##    `_front_of_beast` hull inaccuracy (2026-09-24 sigil-cheek investigation:
+##    "picked up the Cinder Jackal's ear... pushing the hunter's z... well
+##    past the model") showing up again -- real, but already known, already
+##    disclosed, and explicitly out of THIS check's scope. A 2D character
+##    billboard still draws at the right SCREEN position even when its own
+##    logical z is this far off, so a check built on real z distance fails
+##    on a case that reads perfectly fine to a human eye. Screen-space only,
+##    from here on -- never trust `landed`'s own z for this.
+const FOOT_BAND_FRAC := 0.16
 
-## Floor on the foot band's own screen size (px) -- a landing far from camera
-## can project to a footprint only 1-2px across, too few samples for
+## Caps the foot band's WIDTH to this many multiples of its own (already
+## narrow) height, centred on the rect -- `hunter_screen_rect`'s own looseness
+## scales with distance/foreshortening (approach 1 above), so a fixed
+## fraction of the full rect width still over-widens for a small, distant
+## hunter. Tying width to the band's OWN height keeps the sampled patch
+## roughly foot-shaped regardless of how loose the source rect is.
+const FOOT_BAND_WIDTH_RATIO := 3.0
+
+## Floor on the foot band's own screen size (px), each axis -- a landing far
+## from camera can project to a rect only 1-2px across, too few samples for
 ## `_foot_pixels`' own stride-2 scan to say anything real. Grown around its
 ## own centre, never shifted, so this never pulls the band off the real
 ## landing point to hit the floor.
@@ -1745,7 +1768,7 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3, to_foot: int) -> void:
 	_check_hop_pop(flight)
 	_check_hop(flight, climb_from, landed, landed_scale)
 	if is_instance_valid(v):
-		await _check_hunter_on_stone(v, node, cam, to_foot, landed)
+		await _check_hunter_on_stone(v, node, cam, to_foot)
 
 
 ## Checklist item 4's mid-jump half, JACKAL-BAR's own "the camera never loses
@@ -2077,10 +2100,12 @@ func _foot_pixels(hunter_node: Node3D, footers: Array, band: Rect2) -> float:
 ## renderer actually draws under the settled foot line.
 ##
 ## Called once per hop, from `_watch_hop`, only after the landing has fully
-## settled (`landed` is the hunter's real post-hop position) -- never
-## mid-air, where being off every foothold is expected, not a bug. Skips
-## foot 0 (ground stance, never a stone) the same way checks 8/8c do.
-func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int, landed: Vector3) -> void:
+## settled -- never mid-air, where being off every foothold is expected, not
+## a bug. Reads `node`'s own current (settled) position/rect directly rather
+## than taking it as a parameter, screen-space only (FOOT_BAND_FRAC's own doc
+## comment on why not the hunter's logical 3D position). Skips foot 0 (ground
+## stance, never a stone) the same way checks 8/8c do.
+func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int) -> void:
 	if to_foot <= 0 or cam == null or not is_instance_valid(node):
 		return
 	var stones: Variant = v.get("_float_stones")
@@ -2112,25 +2137,20 @@ func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int, 
 	var footers: Array = (stones as Array).duplicate()
 	if is_top and beast_node is Node3D:
 		footers.append(beast_node as Node3D)
-	if cam.is_position_behind(landed):
-		return   # can't project a footprint for a point behind the camera
 	var vp := Rect2(Vector2.ZERO, Vector2(root.get_visible_rect().size))
-	# The footprint: `landed` itself plus 4 small world-space offsets around
-	# it (FOOT_WORLD_RADIUS's own doc comment on why not `hunter_screen_rect`
-	# instead), bounded into one screen rect the same way `hunter_screen_rect`
-	# bounds an AABB's corners -- just of a small foot-sized box instead of
-	# the whole body.
-	var band := Rect2(cam.unproject_position(landed), Vector2.ZERO)
-	for dx in [-FOOT_WORLD_RADIUS, FOOT_WORLD_RADIUS]:
-		for dz in [-FOOT_WORLD_RADIUS, FOOT_WORLD_RADIUS]:
-			var corner := landed + Vector3(dx, 0.0, dz)
-			if not cam.is_position_behind(corner):
-				band = band.expand(cam.unproject_position(corner))
-	if band.size.x < FOOT_BAND_MIN_PX:
-		band = Rect2(band.position.x - (FOOT_BAND_MIN_PX - band.size.x) * 0.5, band.position.y, FOOT_BAND_MIN_PX, band.size.y)
-	if band.size.y < FOOT_BAND_MIN_PX:
-		band = Rect2(band.position.x, band.position.y - (FOOT_BAND_MIN_PX - band.size.y) * 0.5, band.size.x, FOOT_BAND_MIN_PX)
-	band = band.intersection(vp)
+	# Screen-space only, deliberately never `landed`'s own z -- see
+	# FOOT_BAND_FRAC's own doc comment for the two approaches that were tried
+	# and printed real numbers before this one. The bottom slice of the
+	# hunter's own rendered rect is where the character visibly stands;
+	# narrowing its WIDTH (not just height) keeps the sample centred on the
+	# character's actual footprint instead of the full rect's own looseness.
+	var rect := Combat3D.hunter_screen_rect(cam, Combat3D._merged_aabb(node)).intersection(vp)
+	if rect.size.x < 2.0 or rect.size.y < 2.0:
+		return   # off screen entirely -- nothing to sample, not this check's problem
+	var band_h: float = maxf(FOOT_BAND_MIN_PX, rect.size.y * FOOT_BAND_FRAC)
+	var band_w: float = clampf(rect.size.x, FOOT_BAND_MIN_PX, band_h * FOOT_BAND_WIDTH_RATIO)
+	var cx: float = rect.position.x + rect.size.x * 0.5
+	var band := Rect2(cx - band_w * 0.5, rect.position.y + rect.size.y - band_h, band_w, band_h).intersection(vp)
 	var pct: float = await _foot_pixels(node, footers, band)
 	if pct < 0.0:
 		return   # couldn't measure (footers freed, band clipped to nothing) -- say nothing rather than guess
