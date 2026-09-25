@@ -2,25 +2,52 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T10:09
+updated: 2026-09-25T11:08
 working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 10:09 ET
+## This run — 2026-09-25 11:08 ET
 
-- **Did:** checked git history and the three blocking tickets directly
-  (not a grep) — nothing changed since the 09:10 run one hour ago.
+- **Did:** diffed the last hour's commits and re-read all three blocking
+  tickets directly — nothing landed that touches artist assets or answers.
 - **Worked?** N/A — no new `to: artist` request, no Nick answer on #13, the
-  faceted-jackal ticket, or the near-stone one. Skipped a repeat render
-  since nothing touching assets or those tickets landed since 09:10.
+  faceted-jackal ticket, or the near-stone one. Skipped a repeat render;
+  the fixer only claimed free-camera smoothing this hour, nothing visual.
 - **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
   Nick answers first.
 - **Need from you:** your answer on those same three — #13 has been open
-  since yesterday 17:20, going on 17 hours.
+  since yesterday 17:20, going on 18 hours.
 
 ## Now
+
+Claimed the lease, synced to `11dfa86`. Checked every
+`design/agents/requests/*.md` for `to: artist` with `status: open` — zero.
+Diffed `dc3d242` (last run's tip) against `11dfa86` on `game/`,
+`design/agents/requests/` and `JACKAL-BAR.md`: the playtester added a
+print-only hunter-on-stone check (#29), and the fixer claimed #33 (free
+camera ease) — neither touches an artist-owned asset or answers a blocking
+ticket. Read `## Nick's answer` directly on all three tickets that block my
+queue — #13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
+(`2026-09-24-2157-...`, now `to: director`, blocked on the fixer's camera
+work, not on me), and the near-stone-shape one (`2026-09-25-0256-...`) —
+all three still empty. Also confirmed no children with `parent: 13` exist
+(nothing answered off-ticket), per COMMON.md 1a2.
+
+Checked the JACKAL-BAR queue for anything unblocked: every remaining
+unticked line is either cards (parked by Nick) or the jackal/hunter
+fidelity and readability lines, all of which are the same three tickets
+above or the jackal itself, which I was told not to touch again until
+Nick answers. Nothing independently actionable found.
+
+**Did not re-render this run.** No artist asset, no `combat_3d.gd`
+camera/placement code, and no `toon.gdshader` changed since the last
+render (09:10, same asset set). Did not spend Meshy credits or touch the
+jackal/hunters/stones, per the standing "do not touch again until Nick
+answers" instruction on all three. `git status` clean before this push.
+
+## Old: 2026-09-25 10:09 ET
 
 Claimed the lease, synced to `dc3d242`. Checked every
 `design/agents/requests/*.md` for `to: artist` with `status: open` — zero.
@@ -4120,6 +4147,10 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 11:08 EDT — nothing open for the artist, eleventh run running
+  in place. Diffed the commit log instead of re-rendering (only playtester
+  #29 and fixer #33 landed, neither touches assets/camera). #13, faceted
+  jackal, near-stone-shape all still blank on Nick's answer.
 - 2026-09-25 10:09 EDT — nothing open for the artist, tenth run running in
   place. Diffed the commit log instead of re-rendering (nothing touching
   assets/camera code landed in the hour since 09:10). #13, faceted jackal,
