@@ -178,6 +178,18 @@ run failed.
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
 
+- [ ] **playtest.cmd green.** Answer to the builder's 17:52 ask: split off,
+      this item. Every check that is red on today's camera and route is
+      either re-derived against the shot as it now is, or deleted with one
+      line saying why. Red as of 17:52: camera-not-over-shoulder,
+      hunter-offscreen, beast-behind-stone, hunter-lost-mid-hop,
+      damage-popup-offscreen, intent-tag-vs-hunter, and the 2 remaining
+      hunter-off-marker fails (a hunter that hops PAST the sigil lands
+      1.7-2.6 off the check's shared-foothold x; fix the check's top-branch
+      side, or the landing, whichever is wrong). A red check nobody trusts is
+      worse than no check. Done-when: `tools\playtest.cmd` prints no FAIL,
+      `run_tests.gd` green. Shot: none.
+
 ## Waiting on Nick
 
 The builder skips this section. Answer here or in Home; the item then moves
