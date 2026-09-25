@@ -2,20 +2,133 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T01:00
-working_on: Frog reads and the beast's head is clear; named the smooth-vs-faceted cast contradiction for Nick on #13; #14 (stones) is the only blocker.
+updated: 2026-09-25T01:57
+working_on: Both hunters read now; #14 (stones) is live with the fixer and is the only blocker; asked the playtester to measure the hidden beast.
 ---
 
 # director
 
-## This run — 2026-09-25 01:00 EDT
+## This run — 2026-09-25 01:57 EDT
+
+- **Did:** the fight is better again — the Goblin reads beside the Frog; only the stones stand in the way.
+- **Worked?** Yes; both hunters now look like one family, and the fixer is rewriting the stones as I write.
+- **Next:** fixer lands the stones (#14); artist clears the red horizon line; playtester measures how much beast is hidden.
+- **Need from you:** answer #13 — one line settles both hunters; the Jackal is its own row.
+
+## Now
+
+**What a player sees, before I read anyone's note.** Resting shot: a big
+smooth green Frog bottom-left, and now, on the right, a small smooth green
+Goblin with a blue tank on its back, red shorts, goggles and a gold crown —
+a character, not a blue-and-orange crystal. For the first time the two
+hunters look like they came from the same game. Between them, still, the
+pale pot with the orange lid sitting exactly over the beast's chest and
+forelegs; the second pot with the gold ring at its throat; the black
+faceted jackal's head, ears and eyes clear above, "Attack 7" hung beside
+the crown. The hard red line still runs full width at the beast's ankles,
+through the Frog's marker and the Goblin's shins. Climb shot: unchanged —
+sky, a black lump bottom-left, the Frog tiny on a pot, "Attack 7" over
+nothing. Grip shot: unchanged — the Frog half behind a "3", only the
+beast's legs in frame.
+
+![[frames/director/2026-09-25-0152-director-resting-shot.png]]
+![[frames/director/2026-09-25-0152-director-at-the-sigil.png]]
+![[frames/director/2026-09-25-0152-director-grip.png]]
+
+**Against the drawing**, 1:1 beside it:
+
+![[frames/director/2026-09-25-0152-director-resting-vs-reference.png]]
+
+| his drawing | the frame now | verdict |
+|---|---|---|
+| whole beast, upper-middle, sky above its ears | head whole with sky above, torso behind the near pot | **half — torso is #14, live now** |
+| frog large, bottom-left, camera near it | quarter of the frame, bottom-left | yes |
+| the frog is a smooth cartoon frog | a smooth cartoon frog | yes (#13, 00:16) |
+| (no goblin in the drawing) | a smooth cartoon goblin, same treatment | **yes — artist, #13, 01:36** |
+| stones recede from frog to beast | big near, small far | order yes; still pots, rock waits on #14 |
+| path runs diagonally, left to right | diagonal | yes |
+| broad hot glow at the horizon | a 3 px red line | no — #19, artist, now unblocked |
+| cool sky, dark ground, pale stones | yes | yes |
+| beast black | black | settled (#17) |
+
+**Did the fight get better for Nick, or did three scores go up?** Better.
+One visible commit since 01:00 (the artist's Goblin) and it is the right
+one: judged at the real fight camera beside the Frog, at 1:1, no rubric
+score attached, no Meshy spend, handed back `to: nick` with `ask:` filled
+instead of closed. The playtester's commit (a hit-circle check) is
+invisible to a player and honest about it — it had no request and no
+regression, and it did not invent one. The fixer claimed its lease at
+01:20 and has pushed nothing yet, which on #14 is the right shape: its
+own 01:05 note says the stones are "a real rewrite, not a numbers
+tweak", and a rewrite that lands in one push beats three partial ones.
+**The single thing standing in the way is still #14.** Torso behind the
+pot, the climb shot, the "3" over the Frog, the 20 m hops — one cause.
+
+**My miss, at the top as the brief says:** none found. My held-back item
+from 01:00 (the 62-vs-124 `hop-distance-band` count) is not a discrepancy:
+the 20 m ticket itself says 124 on `steps=80`; 62 was a shorter run.
+Dropped.
+
+**Audit of what closed since 01:00.** Nothing changed status. **Stuck
+audit:** the 23:56 head ticket is `taken` with a finished Result — its
+Done-when is a measurement, not Nick's taste, and it rides #14's handback
+by its own wording; not limbo, but the fixer should close it when the
+stones land. #14 `taken`, 300 lines of investigation, live. #19 `open` to
+the artist, was queued behind #13 — #13 is now Nick's, so I have marked
+#19 unblocked and raised it to high. The rock handoff and the 20 m ticket
+`open` to the fixer, queued inside #14. **Nick's column:** four rows, every
+one with `ask:` filled — #13 (now covers both hunters), the camera shot,
+keep-or-revert the Jackal, the Risk of Rain picture. No new answers since
+23:48; he is asleep. **Judgement calls sitting elsewhere:** none. The
+artist's `Need from you` line ("does the Goblin also read as smooth") is a
+restatement of #13's `ask:`, not a stray question.
+
+**Filed (three):**
+
+1. `to: playtester` (new) — the beast's torso is behind a stone in the
+   resting shot and nothing in the baseline fires on it; build one check
+   that measures how much of the beast is covered by footholds, fail on the
+   current tree, report a percentage. NOT: move a stone, touch the camera,
+   pick a threshold the current frame passes. Filed now so it exists
+   before #14 lands, not after.
+2. `to: artist`, on #19 — unblocked, next, priority high; do not wait for
+   Nick's answer on #13. NOT: touch the Frog, the Goblin or the Jackal; do
+   not restyle the stones.
+3. Nothing to the fixer, on purpose: it is live on #14 and a ticket filed
+   now reaches its next run, where #14's own sequencing note already says
+   everything I would say. The one line I would add is below.
+
+**Held back (watch next run):**
+
+- Fixer: when the stones land, do not tilt or pull the camera to get the
+  torso out from behind a stone — move the stone. And re-render `state=3d`
+  for the head: a narrower gap makes the beast bigger and the tag fix has
+  to hold at the new size (its own note already says this).
+- Fixer: if #14 lands and the resting shot still has a pot on the chest,
+  that is not done, whatever `hop-distance-band` reads.
+- The Goblin's greens are a shade duller than the Frog's (the artist
+  measured it: 0.61/0.45 against 0.67/0.70). At 1:1 it reads fine and the
+  two look like a pair. Not a ticket; if Nick says "make them match" it is
+  one number.
+- The Frog is still the most saturated thing in the frame. Taste; Nick's.
+
+**What is working, so nobody optimises it away:** the artist fetching a
+result it had already paid for instead of generating again, measuring the
+colour gap before deciding it needed a boost, judging beside the Frog in
+the real fight, and handing #13 back with the `ask:` widened to both
+hunters so Nick answers once. The playtester running the full baseline
+before adding anything, and proving its new check fires when the code is
+broken on purpose. The fixer not starting the rewrite with a spent budget.
+Keep all of it.
+
+## Old: 2026-09-25 01:00 EDT
 
 - **Did:** the fight is better again — the Frog reads as a frog, and the beast's whole head is now clear of the HUD.
 - **Worked?** Yes, but the frame now mixes two looks: smooth Frog beside faceted Goblin and Jackal; your call.
 - **Next:** fixer lays the stones (#14, now the only blocker); artist does the Goblin; nothing else in the way.
 - **Need from you:** answer #13 — one line settles the Frog, the Goblin and the cast's look together.
 
-## Now
+### Now, as of 01:00 EDT
 
 **What a player sees, before I read anyone's note.** Resting shot: a big
 smooth cartoon Frog bottom-left, a quarter of the frame, bright green,
@@ -527,6 +640,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+- 2026-09-25 01:57 EDT — fight better again (Goblin reads, matches the Frog; artist handed #13 back to Nick correctly); no scores moved; fixer live on #14 with nothing pushed yet; filed the beast-occlusion check to the playtester, unblocked #19 for the artist; nothing to the fixer on purpose.
 - 2026-09-25 01:00 EDT — fight better again (Frog reads and matches the drawing; beast's head clear of the HUD, fixer 00:52); no scores moved; named the style-C vs smooth contradiction for Nick on #13 with options; artist sequenced (Goblin next, do not touch the Frog, do not decimate); #14 now the only blocker.
 - 2026-09-25 00:03 EDT — fight visibly better (close shot landed: Frog quarter-frame, diagonal); beast head behind the HUD filed to fixer; #13 told it is unblocked; #19 re-routed to artist with the artist's correct cause; #14 sequenced (head → stones → 20 m hop).
 - 2026-09-24 22:58 EDT — nothing visible moved; camera lock (fixer) and boulder mesh (artist) both landed correct-but-invisible by my own scoping. Advised the fixer on the over-the-shoulder framing, filed the horizon line to the artist, asked Nick for the RoR picture as a ticket.

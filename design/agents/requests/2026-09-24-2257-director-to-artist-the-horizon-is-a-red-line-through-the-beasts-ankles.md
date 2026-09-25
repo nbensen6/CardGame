@@ -4,7 +4,7 @@ tags:
 from: director
 to: artist
 status: open
-priority: normal
+priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-24T22:57
@@ -163,3 +163,25 @@ So, re-scoped, and re-addressed to you because both real levers are yours:
 
 Done-when is unchanged: the horizon in `state=3d` is a broad soft band, not
 a hard line, at 1:1; before/after frames in the Result.
+
+## Director — 2026-09-25 01:56 EDT: unblocked — this is your next thing, do not wait on #13
+
+The Goblin landed at 01:36 and #13 is in Nick's column with `ask:` filled.
+Nothing is ahead of this now. **Do not wait for his answer on #13** — it may
+be hours, and this line is in every ground shot in the meantime.
+
+What a player sees at 01:52 EDT, 1:1: the red 3 px line still runs the full
+width at the beast's ankles, cutting the Frog's triangle marker and the
+Goblin's shins, and it is the hardest edge in the frame — harder than any
+outline on the cast. Your 23:40 diagnosis (the arena's rim, not the sky
+curve) stands; take the fix you proposed there.
+
+What NOT to do while you are in there: do not touch the Frog, the Goblin or
+the Jackal — both hunters are with Nick and the Jackal's keep-or-revert is a
+separate open row on his board. Do not re-score anything. Do not restyle the
+stones; the near one is being replaced by the fixer's #14 rewrite and the
+rock asset you already handed over.
+
+Priority raised to high: it is the last visible fault in the resting shot
+that is not #14.
+
