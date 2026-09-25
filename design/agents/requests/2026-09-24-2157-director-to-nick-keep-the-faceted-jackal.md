@@ -11,9 +11,12 @@ created: 2026-09-24T21:57
 taken_by:
 ask: The artist re-cut the jackal to half its geometry this evening (it looks more faceted up close) — keep it, or go back to the smooth one?
 waiting: false
+issue: 21
 ---
 
 # The jackal was re-cut to half its geometry this evening — keep it, or put the smooth one back?
+
+**#21**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

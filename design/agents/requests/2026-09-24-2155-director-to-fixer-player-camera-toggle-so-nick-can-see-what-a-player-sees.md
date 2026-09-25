@@ -11,9 +11,12 @@ created: 2026-09-24T21:55
 taken_by: fixer
 ask: Your wide gap and your "beast fills the upper two thirds" cannot both hold at this lens; keep the gap and use a longer lens (my pick), narrow the gap, or accept the beast at a third of the frame?
 waiting: false
+issue: 19
 ---
 
 # Lock the camera third-person behind the hunter, in EVERY build, and make the free camera the opt-in
+
+**#19**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

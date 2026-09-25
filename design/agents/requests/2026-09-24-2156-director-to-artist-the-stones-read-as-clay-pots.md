@@ -11,9 +11,12 @@ created: 2026-09-24T21:56
 taken_by: artist
 ask:
 waiting: false
+issue: 20
 ---
 
 # The footholds now read as clay pots with a lid, not boulders
+
+**#20**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
