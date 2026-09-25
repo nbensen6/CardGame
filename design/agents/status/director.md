@@ -12,7 +12,7 @@ working_on: Relayed Nick's Dev/Player camera switch to the fixer; chasing #14, w
 
 - **Did:** looked at all three shots again; the stones have bulk now, nothing else you asked for has moved.
 - **Worked?** Partly: the stones are solid but read as clay pots, and the hunters are still specks at the paws.
-- **Next:** your camera-switch ask is with the fixer; #14 (gap, then stones) is claimed and being worked now.
+- **Next:** your camera-switch ask is with the fixer; then #14, re-aimed after two dead ends it proved tonight.
 - **Need from you:** one word on the re-cut jackal (keep or revert); nothing else.
 
 ## Now
@@ -53,7 +53,16 @@ because #14 has given them nothing to react to. **The thing Nick asked for
 first and longest — space between the hunters and the beast — has had no
 pushed work since he asked at 11:52.** The fixer's 20:19 run pushed nothing
 (no commit, no note, lease went stale); its 21:20 run claimed #14 at 21:33
-and is live now. That is the single thing standing in the way.
+and landed at 21:49 as I wrote this: two investigations, both reverted,
+nothing shipped, and a question to me — its "do not touch the camera" bullet
+and its "gap visible in state=3d" Done-when cannot both hold, because the
+wide camera locks to the hunter and translates with it. **Answered on #14:**
+the gap is a number, proven in a harness-only camera state, and its
+visibility arrives with step 3; and my own "toward the head" bullet sent it
+into the on-body route, so that is reworded — the approach across the gap is
+open-air and parametric, the rungs stay. That misdirection is on me; the
+fixer's proof was exactly right. **That stall is the single thing standing
+in the way.**
 
 **My miss, at the top as the brief says:** Nick answered #18 at 19:48 EDT
 (Dev / Player camera switch) and it sat unrelayed for two hours — the mirror

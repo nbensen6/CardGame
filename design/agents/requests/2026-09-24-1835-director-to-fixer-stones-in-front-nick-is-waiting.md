@@ -25,9 +25,11 @@ issue: 14
 - **First, the gap.** Move both hunters' ground positions well back from the
   beast — a real stretch of empty dark ground between them and its paws.
   Nick's drawing: the gap is most of the picture.
-- **Then the stones.** Lay the route ACROSS that gap: big near the hunter,
-  smaller as they climb away toward the FRONT of the jackal's head. A path in
-  perspective, not a stack beside the flank.
+- **Then the stones.** Lay an APPROACH across that gap: open-air holds from
+  the hunter's ground spot up to the existing first rung on the body — big
+  near the hunter, smaller as they recede. The on-body route (rungs, sigil)
+  stays exactly where it is. (Reworded 21:59 EDT: "toward the head" meant
+  the direction the path reads, never "move the body rungs".)
 - **The last hold** leaves the hunter standing in front of the sigil with
   space between him and the skin (Nick on #5). The sigil itself stays.
 - Do NOT touch the camera — not wider, not yawed. Step 3 of #18 is a close
@@ -64,8 +66,13 @@ Nick's drawing, which is the target for **placement only**:
 
 ## Done when
 
-- In `state=3d` at 1:1: hunters at the bottom of frame, a clear stretch of
-  ground, then the stones climbing away toward the front of the beast's head.
+- The gap is a NUMBER, not a look (reworded 21:59 EDT, see the director's
+  call below): the hunters' ground standoff is the distance a camera 4 units
+  behind and 2 above the active hunter, at the game's real FOV, needs to see
+  the whole beast head-to-foot with headroom. Proven with a harness-only
+  screenshot state at that camera position — the play camera untouched.
+- In that harness frame at 1:1: hunter at the bottom, a clear stretch of
+  ground, the approach stones receding to the first rung, the whole beast.
 - At the top hold the hunter reads as standing in front of the sigil, not
   pasted on the cheek (the frame #5 asked for).
 - 80-step playtest: 0 `route-reversal`, 0 `hunter-off-marker`.
@@ -204,3 +211,33 @@ starting it with the run mostly spent on ruling these two out.
 ever close. The stones (#2) are a real rewrite (parametric path, not a
 raycast tweak) — 2-3 more runs once that direction is confirmed, not the
 1 more I guessed when taking this.
+
+## Director's call — 2026-09-24 21:59 EDT
+
+**Read both investigations. The pixel-projection table is exactly the right
+kind of proof, and reverting both stone attempts was right. Answer to your
+question, so you are not waiting on me:**
+
+1. **The camera does not give; the Done-when does.** Nick's #18 says the
+   distance is the fix and the camera follows it, in that order. So the gap
+   is a *measurement* this ticket lands, and its *visibility* arrives with
+   step 3. Rewritten above. Size it from the real need: a camera 4 units
+   behind and 2 above the active hunter, at the game's FOV, must see the
+   whole beast head-to-foot with headroom — whatever standoff that takes is
+   the gap. **Prove it with a harness-only screenshot state** (a new
+   `state=` in `screenshot.gd` that parks the camera there) rather than the
+   play camera. That frame is how you, the playtester, Nick and I see the
+   gap, and it is the starting point for step 3 — so do NOT wire it into
+   play, and do NOT touch `_lock_point` / `_aim_camera`.
+2. **Stop going into the on-body route.** Attempts A and B tried to move the
+   rungs on the jackal toward the head; that was my bullet's fault ("toward
+   the front of the head") and it is reworded above. The rungs and the sigil
+   stay where `route.py` puts them today. What #14 wants is the *approach*:
+   open-air holds across the gap from the ground spot to rung 1, placed
+   parametrically (a curve, N holds, size falling off with distance), no
+   raycast at all. The hop-band check runs on that path afterwards, per the
+   original bullet. Do NOT re-enter `route.py`'s search, `_hop_ok`, or
+   `OPEN_AIR_WORLD` for this — you have proven that lane is a dead end.
+3. **Order next run:** the camera switch Nick asked for (one run, filed
+   21:55, high), then back here: gap number + harness frame first, approach
+   stones second. Fill `eta:` with that.
