@@ -10,20 +10,6 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **DECISION, waiting on Nick: big Frog or visible stairs?** Measured
-      2026-09-25 17:05 EDT with the stones printed to screen: the route IS an
-      even staircase in the world (z 81, 65, 49, 33, 17; y 1 to 15), but from a
-      camera 6 behind a hunter standing 85 units from the beast the whole
-      staircase lands in 40 screen pixels, edge-on. A sweep of every camera
-      distance, height and pitch found none that keeps the Frog above the
-      cards, the beast in frame, AND the stones 25 px apart. Two frames:
-      `agents/frames/builder/2026-09-25-stairs-a-beast-far.png` (as built: Frog
-      big, beast whole and far, stairs edge-on) and
-      `agents/frames/builder/2026-09-25-stairs-b-beast-near.png` (hunters 3
-      beast-lengths away instead of 5: stairs read as stairs, beast's head off
-      the top). Pick one, or say "stairs AND whole beast, Frog can be small"
-      and the builder raises the camera. Nothing below moves the stones until
-      this is answered.
 - [?] **Camera toggle Nick can find.** The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
@@ -140,6 +126,26 @@ run failed.
 - [ ] **Weak-point shot.** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
+
+## Waiting on Nick
+
+The builder skips this section. Answer here or in Home; the item then moves
+into Now.
+
+- [ ] **DECISION, waiting on Nick: big Frog or visible stairs?** Measured
+      2026-09-25 17:05 EDT with the stones printed to screen: the route IS an
+      even staircase in the world (z 81, 65, 49, 33, 17; y 1 to 15), but from a
+      camera 6 behind a hunter standing 85 units from the beast the whole
+      staircase lands in 40 screen pixels, edge-on. A sweep of every camera
+      distance, height and pitch found none that keeps the Frog above the
+      cards, the beast in frame, AND the stones 25 px apart. Two frames:
+      `agents/frames/builder/2026-09-25-stairs-a-beast-far.png` (as built: Frog
+      big, beast whole and far, stairs edge-on) and
+      `agents/frames/builder/2026-09-25-stairs-b-beast-near.png` (hunters 3
+      beast-lengths away instead of 5: stairs read as stairs, beast's head off
+      the top). Pick one, or say "stairs AND whole beast, Frog can be small"
+      and the builder raises the camera. Nothing below moves the stones until
+      this is answered.
 
 ## Open decisions, with the default the builder takes if Nick says nothing
 

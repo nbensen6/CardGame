@@ -20,9 +20,10 @@ stones climbing the gap between them, dark ground, cool sky.
 
    The import is not optional: without it every `class_name` fails to resolve.
 
-2. **Take the top unticked item in `design/plan/BUILDER-QUEUE.md`.** Not the
-   one you like. Not the one you think is more important. The top one. If it
-   says `waiting on Nick`, stop and say so in one line.
+2. **Take the top unticked item under `## Now` in
+   `design/plan/BUILDER-QUEUE.md`.** Not the one you like. Not the one you
+   think is more important. The top one. Never touch `## Waiting on Nick` or
+   `## Proposed`. If `## Now` has no unticked item, stop and say so.
 
 3. **Shoot the BEFORE frame** with the item's named shot (default below):
 
