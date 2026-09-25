@@ -12,9 +12,12 @@ taken_by:
 parent:
 ask:
 waiting: false
+issue: 36
 ---
 
 # The Frog hangs in open air at the sigil after a multi-height jump (Leap card)
+
+**#36**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
