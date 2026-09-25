@@ -1099,6 +1099,11 @@ func _init() -> void:
 	# with different raw footholds still overlapped.
 	_test_backlog86_hunter_side_offset_treats_footholds_past_the_sigil_as_shared()
 	_test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_footholds_match_above_it()
+	# queue item "Hunters face the beast" (Nick, 2026-09-25): hunter_facing_y,
+	# lifted out of _place_hunters -- the old ground-facing formula put hunters
+	# within a quarter turn of facing the CAMERA instead of the beast.
+	_test_hunter_facing_y_ground_hunters_face_away_from_camera()
+	_test_hunter_facing_y_climbing_hunters_turn_to_hug_the_body()
 	# fixer, 2026-09-22: gauge_dot_dx is the climb rail's own copy of the same
 	# job, for the flat 2D dots instead of the 3D hunter models. It shared the
 	# RAW-vs-clamped bug the fight above already fixed in hunter_side_offset:
@@ -22589,6 +22594,28 @@ func _test_backlog86_hunter_side_offset_is_zero_below_the_sigil_even_if_raw_foot
 	var players := [{"foothold": 5}, {"foothold": 13}]
 	_expect(Combat3D.hunter_side_offset(players, 0, 13) == 0.0,
 		"a hunter below the sigil is unaffected by a teammate clamped to the sigil above them")
+
+
+## Queue item "Hunters face the beast" (Nick, 2026-09-25): ground hunters must
+## stand backs to camera. The camera sits behind them at +Z looking toward the
+## beast at -Z, and rotation.y=0 already faces -Z, so a correct ground facing
+## must stay within a quarter turn of 0 -- the old `PI + 0.7 * side` formula
+## put them within a quarter turn of PI instead, facing the camera dead-on.
+func _test_hunter_facing_y_ground_hunters_face_away_from_camera() -> void:
+	_expect(absf(Combat3D.hunter_facing_y(0.0, -1.0)) < PI * 0.5,
+		"a grounded hunter (side -1) must face toward the beast (-Z), not the camera")
+	_expect(absf(Combat3D.hunter_facing_y(0.0, 1.0)) < PI * 0.5,
+		"a grounded hunter (side +1) must face toward the beast (-Z), not the camera")
+
+
+## Climbing hunters (t>0.01) turn perpendicular to hug the body they're on --
+## unrelated to the ground-facing bug above, pinned here so a future fix to
+## one branch can't silently break the other.
+func _test_hunter_facing_y_climbing_hunters_turn_to_hug_the_body() -> void:
+	_expect(is_equal_approx(Combat3D.hunter_facing_y(0.5, -1.0), PI * 0.5),
+		"a climbing hunter (side -1) turns +90 degrees to hug the body")
+	_expect(is_equal_approx(Combat3D.hunter_facing_y(0.5, 1.0), -PI * 0.5),
+		"a climbing hunter (side +1) turns -90 degrees to hug the body")
 
 
 ## gauge_dot_dx is _draw_gauge's own copy of hunter_side_offset's job for the
