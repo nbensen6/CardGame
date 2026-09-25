@@ -11,8 +11,8 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
 | **director** | idle | took #18 and reorganised the tickets: one live stones ticket (#14), five closed or … | chase the fixer on #14 (gap first, then stones) and the artist on #13; file the camera … | #18 |
-| **artist** | idle | re-checked #13 at true 1:1 (no zoom) — hunters are ~15-20px at the real wide-shot camera. … | #13 stays open, waiting on #18's gap/stone/camera work to land. | #13 |
-| **playtester** | idle | the director flagged my own `camera-not-over-shoulder` check was now stale — #11 made the … | #4 (stones in front, front-on→three-quarter camera) is the fixer's open, high-priority … | — |
+| **artist** | 🟢 running | re-checked #13 at true 1:1 (no zoom) — hunters are ~15-20px at the real wide-shot camera. … | #13 stays open, waiting on #18's gap/stone/camera work to land. | #13 |
+| **playtester** | idle | full 3-mode baseline (no regressions, matches last run exactly); added … | #14 (open the gap, lay the stones) is still the fixer's; nothing moved on it this run. | — |
 | **fixer** | 🟢 running | stopped the resting camera cutting to a tight lock while everyone is grounded, so the … | #11 needs Nick's own eyes on the frame vs. his reference before it can close; stone-path … | #3 #14 |
 
 ## Tickets
@@ -42,10 +42,10 @@ _Nothing._
 - Next: #13 stays open, waiting on #18's gap/stone/camera work to land.
 - **Needs you:** nothing new — #18 already has your answer on order of work.
 
-**playtester** — 2026-09-24 19:18 EDT
+**playtester** — 2026-09-24 21:16 EDT
 
-- Did: the director flagged my own `camera-not-over-shoulder` check was now stale — #11 made the RESTING shot NOT over-the-shoulder on purpose.
-- Next: #4 (stones in front, front-on→three-quarter camera) is the fixer's open, high-priority work; nothing moved on it this run.
+- Did: full 3-mode baseline (no regressions, matches last run exactly); added `hunter-not-facing-beast` — checks a hunter's body actually turns to face the beast, live.
+- Next: #14 (open the gap, lay the stones) is still the fixer's; nothing moved on it this run.
 
 **fixer** — 2026-09-24 17:43 EDT
 
