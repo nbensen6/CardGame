@@ -2,50 +2,56 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T11:08
-working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
+updated: 2026-09-25T12:10
+working_on: "Nothing to build — #13 closed; the faceted-jackal and near-stone-shape tickets are still with Nick (director's, not mine)."
 ---
 
 # artist
 
-## This run — 2026-09-25 11:08 ET
+## This run — 2026-09-25 12:10 ET
 
-- **Did:** diffed the last hour's commits and re-read all three blocking
-  tickets directly — nothing landed that touches artist assets or answers.
-- **Worked?** N/A — no new `to: artist` request, no Nick answer on #13, the
-  faceted-jackal ticket, or the near-stone one. Skipped a repeat render;
-  the fixer only claimed free-camera smoothing this hour, nothing visual.
-- **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
-  Nick answers first.
-- **Need from you:** your answer on those same three — #13 has been open
-  since yesterday 17:20, going on 18 hours.
+- **Did:** closed #13 — Nick answered "Looks good" on the hunters.
+- **Worked?** Yes. Re-rendered fresh: Frog and Goblin both read cleanly at
+  real fight size, ticked both matching bar lines.
+- **Next:** nothing open for the artist; faceted-jackal and near-stone are
+  the director's tickets to carry.
+- **Need from you:** nothing right now.
 
 ## Now
 
-Claimed the lease, synced to `11dfa86`. Checked every
+Claimed the lease, synced to `a0ab793`. Checked every
 `design/agents/requests/*.md` for `to: artist` with `status: open` — zero.
-Diffed `dc3d242` (last run's tip) against `11dfa86` on `game/`,
-`design/agents/requests/` and `JACKAL-BAR.md`: the playtester added a
-print-only hunter-on-stone check (#29), and the fixer claimed #33 (free
-camera ease) — neither touches an artist-owned asset or answers a blocking
-ticket. Read `## Nick's answer` directly on all three tickets that block my
-queue — #13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
-(`2026-09-24-2157-...`, now `to: director`, blocked on the fixer's camera
-work, not on me), and the near-stone-shape one (`2026-09-25-0256-...`) —
-all three still empty. Also confirmed no children with `parent: 13` exist
-(nothing answered off-ticket), per COMMON.md 1a2.
+Read `## Nick's answer` directly on all three tickets that had been
+blocking my queue: **#13 (hunters) finally has one** — "Looks good", synced
+2026-09-25 14:42 UTC (10:42 ET) into the request's *first* `## Nick's
+answer` heading rather than the fresh empty one at the bottom (a sync-tool
+quirk, not something in this repo to fix); the faceted-jackal ticket
+(`2026-09-24-2157-...`) and the near-stone-shape one
+(`2026-09-25-0256-...`) are both director's, still open, no new content for
+me. Also checked for children with `parent: 13` per COMMON.md 1a2 — none.
 
-Checked the JACKAL-BAR queue for anything unblocked: every remaining
-unticked line is either cards (parked by Nick) or the jackal/hunter
-fidelity and readability lines, all of which are the same three tickets
-above or the jackal itself, which I was told not to touch again until
-Nick answers. Nothing independently actionable found.
+**#13's `ask:` is exactly "Are the Frog and Goblin good enough at fight
+size?" and "Looks good" was posted after the 01:33 ET Goblin result, with
+nothing touching the hunters or the camera in between** (checked
+`git log` for that window) — so it answers the ticket as it currently
+stands, not a stale earlier round. Set up Godot 4.7.1 + Blender fresh
+(new sandbox), imported, rendered `state=3d` (the real resting camera, not
+`wide`) at 1:1 to confirm nothing drifted before closing anything: both
+hunters read as clean, distinct shapes with a few flat colours and one
+continuous outline at the size they actually play at — Frog large and in
+front (~330px), Goblin smaller behind (~180px), neither a coloured speck.
+`ALL TESTS PASSED` (no code touched).
 
-**Did not re-render this run.** No artist asset, no `combat_3d.gd`
-camera/placement code, and no `toon.gdshader` changed since the last
-render (09:10, same asset set). Did not spend Meshy credits or touch the
-jackal/hunters/stones, per the standing "do not touch again until Nick
-answers" instruction on all three. `git status` clean before this push.
+Closed #13 (`status: done`, `to: artist`, `## Result` with the frame).
+Ticked `JACKAL-BAR.md`'s two hunter lines ("match the jackal's fidelity"
+and "readable at fight distance") — both were blocked on exactly this
+answer. Left the Goblin-reads-darker-than-Frog residual noted in the bar
+as still open but not a readability blocker, per the artist's own earlier
+honest note on it.
+
+Did not touch the jackal, did not spend Meshy credits, did not touch the
+faceted-jackal or near-stone tickets — both are the director's. `git
+status` clean before this push.
 
 ## Old: 2026-09-25 10:09 ET
 
@@ -4147,6 +4153,8 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 12:10 EDT — Nick answered "Looks good" on #13. Closed it,
+  ticked both hunter lines on the bar, no code/asset touched this run.
 - 2026-09-25 11:08 EDT — nothing open for the artist, eleventh run running
   in place. Diffed the commit log instead of re-rendering (only playtester
   #29 and fixer #33 landed, neither touches assets/camera). #13, faceted

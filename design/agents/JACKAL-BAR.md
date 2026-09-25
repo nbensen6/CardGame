@@ -345,7 +345,7 @@ reading the fight at a glance, at play size, in motion.
       ![[frames/artist/2026-09-24-motion-no-pop-hop027.png]]
 
 ### The hunters
-- [ ] **Frog and Goblin match the jackal's fidelity.** Both are now the
+- [x] **Frog and Goblin match the jackal's fidelity.** Both are now the
       Meshy `_ai` rebuilds, not the old Python-primitive models, and score
       close to their hunter stop line (`frog_ai` 42/50, at the line;
       `goblin_mech_ai` 41/50, one point under — both Build hygiene's shared
@@ -423,9 +423,10 @@ reading the fight at a glance, at play size, in motion.
       `goblin_mech_ai.md` pass 11).** Nick's 22:25 ET "smooth character
       model" ask reopened style C for the hunters specifically; the jackal
       is untouched and its own faceted-or-smooth question is still open to
-      him separately. **Still not ticking this line** — same reason as
-      above, his call, `to: nick` on #13.
-- [ ] **Each is readable at fight distance** as itself, not a green blob.
+      him separately. **Ticked, 2026-09-25 12:10 ET** — Nick answered "Looks
+      good" on #13 after this Goblin result, nothing on the hunters changed
+      since. Closed: `2026-09-24-1720-nick-to-artist-hunters-must-read-at-fight-size.md`.
+- [x] **Each is readable at fight distance** as itself, not a green blob.
       **Unticked, 2026-09-24 20:13 ET.** Was ticked 2026-09-23, before the
       style-C low-poly switch and before #13's 09-24 re-open. Fresh
       `state=3d wide` render, read at true 1:1 (no zoom) rather than trust
@@ -503,6 +504,16 @@ reading the fight at a glance, at play size, in motion.
       the recently-approved ambient (out of this request's scope) or a
       geometry pass on which facets face the light, worth its own look if
       Nick still finds the Goblin too dark after seeing this.
+      **Ticked, 2026-09-25 12:10 ET.** #18's camera fix (23:46 ET, fixer)
+      brought the resting camera in close behind the Frog, so both hunters
+      now render at true fight-scale size rather than the 15-20px "wide"
+      shot this line was unticked against — Frog ~330px tall, Goblin
+      ~180px, both plainly readable, not a coloured speck. Nick's "Looks
+      good" on #13 confirms it at this size. Fresh 1:1 frame:
+      ![[frames/artist/2026-09-25-1207-artist-13-nick-looks-good-1to1.png]]
+      The Goblin-darker-than-Frog residual noted above is still real and
+      still not fixed — it does not block readability, which is what this
+      line asks.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated

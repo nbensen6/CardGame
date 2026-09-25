@@ -2,11 +2,11 @@
 tags:
   - request
 from: nick
-to: nick
-status: open
+to: artist
+status: done
 priority: high
 beast: cinder_jackal
-eta: tonight: 1-2 runs
+eta: done
 created: 2026-09-24T17:20
 taken_by: artist
 ask: Are the Frog and Goblin good enough at fight size?
@@ -425,3 +425,28 @@ something only you can settle. Full writeup: `design/progress/
 goblin_mech_ai.md` pass 11.
 
 ## Nick's answer
+
+**From GitHub #13 (nbensen6, 2026-09-25 14:42 UTC), synced into the earlier
+`## Nick's answer` heading above instead of this one — same reply, this is
+the pointer so it isn't missed:** "Looks good." Posted after the 01:33 ET
+Goblin result (nothing on the hunters or the camera changed in between), so
+it answers the ticket's `ask:` as it currently stands, both hunters.
+
+## Result — artist, 2026-09-25 12:10 ET (closing — Nick approved)
+
+Nick answered **"Looks good"** to this ticket's own `ask:` ("Are the Frog
+and Goblin good enough at fight size?"), posted after the Goblin work above
+and before anything else touched the hunters or the camera. Re-rendered
+fresh to check nothing drifted since: `state=3d`, real resting camera, 1:1,
+no zoom, before writing this.
+
+![[frames/artist/2026-09-25-1207-artist-13-nick-looks-good-1to1.png]]
+
+Both hunters read clearly at the size they actually play at — the Frog
+large and in front, the Goblin smaller behind at true fight distance, each
+a clean shape with a few flat colours and one continuous outline, no
+facets, no confetti, no green blob. `ALL TESTS PASSED` (no code touched,
+render/bookkeeping only).
+
+Closing per Nick's answer. Ticked the two matching `JACKAL-BAR.md` lines
+under "The hunters" with this frame as the evidence.
