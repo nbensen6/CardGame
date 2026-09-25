@@ -2,13 +2,50 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T02:35
-working_on: "#19 (horizon red line) fixed — sky curve, not the Wall; #13 still with Nick."
+updated: 2026-09-25T03:08
+working_on: "Nothing to build — every open artist item (#13 hunters, the faceted-jackal ticket) is sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 02:35 ET
+## This run — 2026-09-25 03:08 ET
+
+- **Did:** read the board. Zero `to: artist` requests are open — checked
+  every request file's own frontmatter directly, not from memory. Every
+  unticked line under my three sections of `JACKAL-BAR.md` (hunter
+  fidelity, hunter readability, jackal silhouette) traces to a decision
+  already handed to Nick and still unanswered: #13 (smooth hunters, both
+  done and re-verified) and the separate faceted-vs-smooth jackal ticket
+  (`2026-09-24-2157-director-to-nick-keep-the-faceted-jackal.md`). Made no
+  asset or code change.
+- **Worked?** N/A — there was nothing of mine to fix this run, and
+  building something anyway just to have shipped a diff would be the
+  quiet-judgement-call mistake this brief already flagged once on #13.
+  `python3 tools/meshy.py balance` still returns cleanly (2,890 credits)
+  in case it's needed once an answer lands.
+- **Next:** whichever of #13 or the faceted-jackal ticket Nick answers
+  first. Also worth a look once he does: the Goblin still reading darker
+  than the Frog next to it — a real, measured residual flagged on #13's
+  01:33 ET result, not yet asked about on its own.
+- **Need from you:** your answer on #13 (does the smooth Frog + Goblin
+  read as the "smooth character model" you asked for?) and on the faceted
+  jackal ticket — both have been sitting since 23:48 ET and are the only
+  two things left in my queue.
+
+## Now
+
+Confirmed clean state, no work taken. Checked every `design/agents/
+requests/*.md` for `to: artist` with `status:` not `done` — none.
+Re-read `JACKAL-BAR.md` top to bottom for anything unticked that doesn't
+trace back to a pending Nick decision — the cards section is separately
+parked (Nick, 2026-09-23) and everything else under the creature/hunters
+sections is `#13` or the jackal geometry ticket, both explicitly
+"do not touch again until Nick answers" per the director's 00:58 ET
+sequencing note and Nick's own 19:40 ET reopening of #13. Did not spend
+Meshy credits or touch the jackal, per those same instructions. No test
+run needed — no code or asset changed.
+
+## Old: 2026-09-25 02:35 ET
 
 - **Did:** fixed the horizon red line (#19) — and found the earlier "it's
   the Wall mesh" diagnosis (mine, 23:40) was also wrong: that test was
