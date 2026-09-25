@@ -891,6 +891,7 @@ func _check(v: Node, when: String) -> void:
 	# threshold came from.
 	var stone_cam: Camera3D = v.get("_cam")
 	var stones: Variant = v.get("_float_stones")
+	var beast_node: Variant = v.get("_beast")
 	if stone_cam != null and beast_box is AABB and stones is Array:
 		var vp := Rect2(Vector2.ZERO, screen)
 		var bbox: AABB = beast_box as AABB
@@ -922,10 +923,29 @@ func _check(v: Node, when: String) -> void:
 					# not route_pos) -- on the body by construction, never a failure.
 					on_body_desc.append("%s %.1f%%" % [label, pct])
 				else:
-					occluding_desc.append("%s %.1f%%" % [label, pct])
-					if pct > BEAST_STONE_COVER_MAX:
-						_fail("beast-behind-stone", "%s: %.1f%% of the beast's on-screen body is covered by %s (want <= %.0f%%)" \
-							% [when, pct, label, BEAST_STONE_COVER_MAX])
+					# #0257 (director, 05:57): the rect number above is real but
+					# loose -- hunter_screen_rect's own doc comment calls its
+					# boxes "always a bit looser than the real silhouette", and
+					# a quadruped's box is mostly air around the actual mesh,
+					# so a small pixel graze inflates into a double-digit rect
+					# percentage (the chest stone: 23-25% by rect, a corner
+					# graze by eye). #0506 built the real-render-diff
+					# primitive for exactly this shape of problem ("is the
+					# hunter actually drawn, not just inside its own loose
+					# rect"); applied here the other way round: not "is the
+					# beast drawn", but "of the beast's own drawn pixels, how
+					# many does the stone's presence actually change". Real
+					# per-pixel fact, not a rect guess -- printed alongside
+					# the rect number so the old figure can be seen dying
+					# honestly rather than silently swapped out.
+					var pixel_pct: float = await _stone_cover_pixels(beast_node as Node3D, \
+						(stones as Array)[si] as Node3D, overlap)
+					var judged_pct: float = pixel_pct if pixel_pct >= 0.0 else pct
+					occluding_desc.append("%s rect %.1f%% pixel %s" \
+						% [label, pct, ("%.1f%%" % pixel_pct if pixel_pct >= 0.0 else "n/a")])
+					if judged_pct > BEAST_STONE_COVER_MAX:
+						_fail("beast-behind-stone", "%s: %.1f%% (pixel; rect said %.1f%%) of the beast's on-screen body is covered by %s (want <= %.0f%%)" \
+							% [when, judged_pct, pct, label, BEAST_STONE_COVER_MAX])
 			if not occluding_desc.is_empty() or not on_body_desc.is_empty():
 				_note("%s: beast-stone cover -- occluding %d (%s), on-body (mesh-anchored) %d (%s, not a failure)" \
 					% [when, occluding_desc.size(), (", ".join(occluding_desc) if not occluding_desc.is_empty() else "none"), \
@@ -1099,7 +1119,7 @@ func _run() -> void:
 	await _frames(60)
 	var v := _view()
 	_note("playtest mode=%s beast=%s view=%s" % [_mode, _beast, v.name if v else "none"])
-	_check(v, "start")
+	await _check(v, "start")
 	if _mode == "hover":
 		await _hover_sweep()
 	elif _mode == "hands":
@@ -1298,7 +1318,7 @@ func _play() -> void:
 		if _step_popup_offscreen:
 			_fail("damage-popup-offscreen", "%s: a damage number %s"
 				% [action, _step_popup_offscreen_detail])
-		_check(v, action)
+		await _check(v, action)
 		await _shot()
 	_move(Vector2(screen.x * 0.5, screen.y * 0.3))
 
@@ -1837,6 +1857,66 @@ static func _rect_pixels_differ(with_img: Image, without_img: Image, rect: Rect2
 			x += 2
 		y += 2
 	return false
+
+
+## #0257 (director, 2026-09-25-0257-...-a-stone-on-the-body-is-not-a-failure):
+## the chest-stone half of beast-behind-stone. Renders the SAME instant three
+## times -- beast+stone as the scene actually stands (img_full), beast alone
+## with the stone hidden (img_no_stone), neither visible (img_neither) -- so
+## two real per-pixel facts fall out of plain colour diffs, same pixel-delta
+## rule #0506 already calibrated (HOP_VIS_PIXEL_DELTA, stepped 2px like
+## _rect_pixels_differ, same reason: a hunter/beast silhouette is never so
+## thin that halving the resolution could hide a real edge):
+##   - img_no_stone vs img_neither: is THIS pixel actually beast (not sky or
+##     ground that would have looked the same either way)?
+##   - img_full vs img_no_stone, for the pixels the first test called beast:
+##     did the stone's presence change what got drawn there?
+## covered / beast, over just the two boxes' own screen overlap (the only
+## region either render could possibly differ in). Returns -1.0 rather than
+## 0.0 when beast or stone is gone, or no beast pixel is found in the overlap
+## at all, so a caller can tell "genuinely 0% covered" from "couldn't
+## measure" and fall back to the rect number instead of silently reporting a
+## clean beast that was never actually checked.
+func _stone_cover_pixels(beast: Node3D, stone: Node3D, rect: Rect2) -> float:
+	if beast == null or not is_instance_valid(beast) or stone == null or not is_instance_valid(stone):
+		return -1.0
+	var beast_was_visible := beast.visible
+	var stone_was_visible := stone.visible
+	await RenderingServer.frame_post_draw
+	var img_full := root.get_viewport().get_texture().get_image()
+	stone.visible = false
+	await RenderingServer.frame_post_draw
+	var img_no_stone := root.get_viewport().get_texture().get_image()
+	beast.visible = false
+	await RenderingServer.frame_post_draw
+	var img_neither := root.get_viewport().get_texture().get_image()
+	beast.visible = beast_was_visible
+	stone.visible = stone_was_visible
+	var size := img_full.get_size()
+	var x0: int = clampi(int(rect.position.x), 0, size.x - 1)
+	var y0: int = clampi(int(rect.position.y), 0, size.y - 1)
+	var x1: int = clampi(int(rect.position.x + rect.size.x), 0, size.x)
+	var y1: int = clampi(int(rect.position.y + rect.size.y), 0, size.y)
+	var beast_px := 0
+	var covered_px := 0
+	var y := y0
+	while y < y1:
+		var x := x0
+		while x < x1:
+			var no_stone := img_no_stone.get_pixel(x, y)
+			var neither := img_neither.get_pixel(x, y)
+			var beast_delta := (absf(no_stone.r - neither.r) + absf(no_stone.g - neither.g) + absf(no_stone.b - neither.b)) * 255.0
+			if beast_delta > HOP_VIS_PIXEL_DELTA:
+				beast_px += 1
+				var full := img_full.get_pixel(x, y)
+				var cover_delta := (absf(full.r - no_stone.r) + absf(full.g - no_stone.g) + absf(full.b - no_stone.b)) * 255.0
+				if cover_delta > HOP_VIS_PIXEL_DELTA:
+					covered_px += 1
+			x += 2
+		y += 2
+	if beast_px == 0:
+		return -1.0
+	return 100.0 * float(covered_px) / float(beast_px)
 
 
 ## Check 5d, JACKAL-BAR's "the jump reads... at the size it plays" mid-air:
