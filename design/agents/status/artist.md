@@ -2,13 +2,119 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T20:13
-working_on: "#13 reopened: root cause is camera/spacing (#18), not the hunter model. Not closing it, not touching camera code myself."
+updated: 2026-09-24T21:26
+working_on: "Cut the jackal itself to 2,639 tris (style C's geometry half), verified rig/anims hold; not ticking the fidelity bar lines myself."
 ---
 
 # artist
 
-## This run — 2026-09-24 20:13 ET
+## This run — 2026-09-24 21:26 ET
+
+- **Did:** cut the Cinder Jackal's own geometry to 2,639 tris (was 11,999),
+  flat-shaded — style C's geometry half, the last thing pass 8 skipped.
+- **Worked?** Yes — rig, all 3 animation clips, idle loop and the death pose
+  all verified undamaged; frame below.
+- **Next:** #13 stays open (blocked on #18/#14, not touched this run); say
+  if the three cast members now read as one style together.
+- **Need from you:** nothing blocking — a look when you have a moment. This
+  is the same "does it actually match" question #13 already burned once, so
+  I did not tick either bar line myself; frames are in `JACKAL-BAR.md`.
+
+![[frames/artist/2026-09-24-jackal-lowpoly-wide-before-after.png]]
+
+## Now
+
+No open `to: artist` request moved this run — `#13` (the only one) is still
+correctly blocked on `#14`/`#18` (gap + stones + camera, owned by
+fixer/director), which had not landed yet (`#14` still `status: open`,
+`taken_by:` blank, checked fresh this run). Per my own last run's note, not
+touching camera/hunter-standoff code myself — that is spoken for.
+
+**Went back to `JACKAL-BAR.md`'s own queue instead of sitting idle.** Two
+unticked lines under "The creature" and "The hunters" both trace to the same
+named gap: pass 8 (16:30 ET) gave the jackal style C's shader half for free
+(shared `toon.gdshader`) but explicitly skipped the geometry half — "rigged
+and animated ... needs its own careful pass" — while both hunters got their
+geometry cut the same run. That "own careful pass" is squarely item 1 of my
+own brief (the Cinder Jackal itself) and was sitting unclaimed, so I took it.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1, `pip install
+pillow numpy`.
+
+**Inspected the model before deciding anything.** `Body` mesh: 11,999 tris,
+21 vertex groups, one `ARMATURE` modifier, 3 actions (`idle`, `attack`,
+`hit`). Also re-confirmed pass 6's own finding still holds: a plain re-import
+shows a phantom extra mesh object that isn't in the real file (Blender's own
+default-scene cube, or a background-mode glTF-reimport quirk) — wrote the
+new script to find `Body` by name, not "first mesh found", so it can't
+silently decimate the wrong object.
+
+**Wrote `tools/blender/ai/decimate_beast.py`** — same Decimate (Collapse)
+lever `lowpoly_facet.py` already proved on both hunters, generalised for a
+rigged mesh: moves the new Decimate modifier to run *before* the Armature
+modifier (collapses the rest pose, not a pose-deformed one), applies it, then
+re-exports the WHOLE scene (body, rig, every `climb_*`/`ledge_*` marker, all
+three actions) the way `ai_beast.py`'s own step-6 export does — not
+`use_selection` on just the body the way the two static hunters got away
+with, or the climb markers and animations would have silently dropped out of
+the shipped file.
+
+**Picked the ratio from the beast's own budget, not the hunters'.**
+`design/guide/adding-detail.md`: beasts get 2,600 tris, hunters 1,400 — the
+hunters' final ~260-310 was forced by their ~40px on-screen size (#13's own
+facet-noise finding), which doesn't apply here; the jackal is the largest
+thing in every camera state this fight uses. Ratio 0.22 on 11,999 landed at
+2,639 — on the beast's own budget line, not another forced-small style call.
+
+**Built both a smooth and a flat-shaded version before picking one,** rather
+than assume the hunters' flat treatment automatically transfers to a much
+bigger on-screen subject. Rendered both, cropped tight on the head/torso at
+1:1: neither showed the hunters' facet-noise/speckling — this beast's size
+was never that problem. Picked flat anyway, to actually close the "shares
+the shading but not the geometry" gap pass 8 named on purpose.
+
+**Verified the rig and all three clips survived, not just a still frame.**
+21 vertex groups in, 21 out — Blender interpolates skin weights across
+collapsed edges automatically. Rendered `anim=idle@1.5`, `anim=attack@0.5`,
+`anim=hit@0.3` before/after: every pose reads identically shaped, no
+exploded verts, no joint pinching, no missing limb — including `hit`'s own
+head-recoil, the most extreme pose of the three:
+
+![[frames/artist/2026-09-24-jackal-lowpoly-hit-anim-before-after.png]]
+
+Also checked the two things a bad decimation would most likely break outside
+the three combat clips: the idle loop's "no drift" guarantee (pass 4) —
+diffed `idle@0` vs `idle@40`, 0.17% of pixels changed, same bounded
+oscillation as before, not a growing one — and the reward-scene felled pose
+(`location_3d.gd`'s own proportion-tuned `_lay_out_the_felled`) — `state=
+3dreward` still reads as a fallen animal, snout/ears/four splayed legs/spine
+markings all present.
+
+**Proved no regression.** `run_tests.gd` — `ALL TESTS PASSED` (asset-only
+change, no logic touched). Fresh full 80-step `mode=play beast=cinder_jackal`
+playtest, foreground, 10-minute timeout per `COMMON.md` §4b: played to its
+own real ending (Pounce landed, screen changed to Location3D). Only failing
+check: the pre-existing, already-filed `hop-distance-band` (62) — identical
+shape to every prior baseline on record.
+
+**Deliberately did not tick either `JACKAL-BAR.md` line this touches**
+("Silhouette reads at 250px", "Frog and Goblin match the jackal's
+fidelity"). What this run proves objectively: the tri-budget gap is closed
+(2,639 vs. a 2,600 budget, next to the hunters' own 260/311) and nothing
+broke. Whether the three actually read as one style together is Nick's own
+call to make on the frames above — the identical fidelity question `#13`
+already burned once this fight, and per this brief's own strengthened rule
+(2026-09-24, "a judgement call must reach Nick") that call is not mine to
+make quietly in a checkbox. Wrote it up plainly here and in
+`design/progress/cinder_jackal_ai.md` ("Pass 9") instead of guessing.
+
+`git status` before this push: the shipped `cinder_jackal_ai.glb`, its
+resaved `.blend`, the new `decimate_beast.py`, the progress note,
+`JACKAL-BAR.md`, this status note, and three new frames. No game code,
+shader, or hunter asset differs from `origin/main`.
+
+## Old: 2026-09-24 20:13 ET
 
 - **Did:** re-checked #13 at true 1:1 (no zoom) — hunters are ~15-20px at
   the real wide-shot camera. Model/colour work can't fix that.

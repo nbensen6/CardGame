@@ -604,3 +604,86 @@ as the two hunter files: the rubric's Style consistency line and
 Kenney-smooth-shading hard constraint were written for the style this
 direction is deliberately leaving, and this pass didn't touch this asset's
 geometry (the rubric line most affected) at all.
+
+## Pass 9 — style C, geometry half (the beast finally gets it too), artist, 2026-09-24T21:26 EDT
+
+Pass 8 shared the shader half of style C with this beast but explicitly left
+the geometry half for "its own careful pass" — rigged (1 armature, 3 clips),
+unlike the two static hunters, so the hunters' straight copy-paste recipe
+wasn't safe to run unmodified. This pass is that dedicated pass.
+
+**Wrote `tools/blender/ai/decimate_beast.py`** — the same Decimate (Collapse)
+lever `lowpoly_facet.py` proved on the hunters, generalised for a rigged
+mesh: finds the `Body` object by name (not "first mesh found" — a factory-
+default Blender scene and a background-mode-only glTF-reimport quirk this
+file itself is known to produce, pass 6, can both add a phantom extra mesh
+object that isn't in the real file), moves the new Decimate modifier to run
+**before** the Armature modifier in the stack (so it collapses the rest-pose
+mesh, not a pose-deformed one), applies it, then re-exports the WHOLE scene
+(`Body`, `Rig`, all `climb_*`/`ledge_*` markers, all three actions) the same
+way `ai_beast.py`'s own step-6 export does — not `use_selection` on just the
+body the way the static-hunter script gets away with, or the climb markers
+and animations would have been dropped from the shipped file.
+
+**Chose the ratio from the real beast budget, not the hunters' number.**
+`design/guide/adding-detail.md`: beasts get 2600 tris, hunters 1400 — the
+hunters' final ~260-310 was an extreme forced by their ~40px on-screen size
+(#13's own facet-noise finding), which doesn't apply here; the jackal is the
+biggest thing in every camera state this fight uses. Ratio 0.22 on the
+current 11,999-tri `Body` lands at 2,639 tris — effectively on the beast's
+own budget line, not another forced-small style choice.
+
+**Built and rendered BOTH a smooth and a flat-shaded version before picking
+one**, rather than assume style C's flat treatment automatically transfers.
+Cropped tight on the head/torso at 1:1 for both: unlike the hunters at 40px,
+2,639 tris on a subject this large showed no facet-noise, no speckling, no
+broken silhouette in either version — the beast's own on-screen size was
+never the hunters' problem. Picked the flat-shaded one anyway, to actually
+close the "shares its shading but not its geometry" gap pass 8 named, and
+because a few real facets are now faintly visible on the snout/brow at close
+range, on purpose, matching what style C already did to both hunters.
+
+![[../agents/frames/artist/2026-09-24-jackal-lowpoly-closeup-before-after.png]]
+![[../agents/frames/artist/2026-09-24-jackal-lowpoly-wide-before-after.png]]
+
+**Verified the rig and all three clips survived, not just the still frame.**
+`21 vertex groups` in, `21` out (Blender interpolates skin weights across
+collapsed edges automatically — no groups dropped or renamed). Rendered
+`anim=idle@1.5`, `anim=attack@0.5`, `anim=hit@0.3` before/after: each pose
+reads identically shaped and identically posed to the pre-decimation frame,
+no exploded verts, no pinching at a joint, no missing limb. The `hit` clip's
+head-recoil pose (the most extreme deformation of the three) held up clean
+at both native wide-shot distance and a tight 1:1 crop:
+
+![[../agents/frames/artist/2026-09-24-jackal-lowpoly-hit-anim-before-after.png]]
+
+Also checked the two things a bad decimation would most likely break that
+aren't in the three combat clips: the idle loop's own "no drift" guarantee
+(pass 4) — diffed `idle@0` against `idle@40`, 1,546/921,600 pixels changed
+(0.17%), the same bounded oscillation shape as before, not a growing one —
+and the reward-scene felled pose (`location_3d.gd`'s `_lay_out_the_felled`,
+tuned to this beast's exact proportions) — `state=3dreward` still reads as a
+fallen animal, snout/ears/four splayed legs/spine markings all present, not
+distorted by the new vertex positions.
+
+**Proved no regression, not just "it still runs."** `run_tests.gd` — `ALL
+TESTS PASSED` (no logic touched, asset-only change). Fresh full 80-step
+`mode=play beast=cinder_jackal` playtest, foreground with a 10-minute
+timeout per `COMMON.md` §4b: played to its own real ending (Pounce landed,
+screen changed to Location3D). Only failing check: the pre-existing,
+already-filed `hop-distance-band` (62) — identical shape to every prior
+baseline on record, unrelated to this asset's own geometry.
+
+**Not re-scored against the asset-loop rubric, and not ticking either
+`JACKAL-BAR.md` line myself.** Both remaining unticked lines this pass
+touches ("Silhouette reads at 250px", "Frog and Goblin match the jackal's
+fidelity") are read-it-and-judge lines, and this exact fidelity question is
+the one Nick got burned on once already this fight (`#13`). What this pass
+proves objectively: the tri-budget gap is closed (2,639 vs. a 2,600 budget,
+next to the hunters' own 260/311) and nothing broke. Whether it actually
+*reads* as matching is his call to make looking at the frames above, not
+mine to declare — noted plainly in the status note rather than ticked here.
+
+`git status` before this push: the shipped `.glb`, its resaved `.blend`, the
+new `decimate_beast.py`, this progress file, `JACKAL-BAR.md`, the status
+note, and three new frames. No game code, shader, or hunter asset touched.

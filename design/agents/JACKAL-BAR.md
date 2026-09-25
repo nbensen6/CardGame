@@ -162,6 +162,17 @@ reading the fight at a glance, at play size, in motion.
       copy-paste the hunters got this run. Still unticked: this line's own
       Silhouette hasn't been re-scored under the new direction and the
       geometry itself is unchanged.
+
+      **2026-09-24 21:26 ET: the geometry half landed too.** Cut from 11,999
+      to 2,639 tris (the beast's own 2,600 budget, not the hunters' much
+      smaller number — this subject is far bigger on screen and showed no
+      facet-noise at either tri count), flat-shaded to match style C, rig
+      and all three animation clips verified undamaged.
+      `design/progress/cinder_jackal_ai.md` ("Pass 9"). **Not ticking this
+      line myself** — whether it actually *reads* as matching is Nick's call
+      on the frames below, the same fidelity question #13 already burned
+      once this fight:
+      ![[frames/artist/2026-09-24-jackal-lowpoly-closeup-before-after.png]]
 - [x] **The weak point is obvious** and stays obvious as you climb toward it.
       First look, 2026-09-24: the persistent 2D climb gauge already marks it
       clearly at all times (a distinct gold rail-cap and `✦ <N>` label, never
@@ -389,6 +400,16 @@ reading the fight at a glance, at play size, in motion.
       same new hard-band shading. "Matches the jackal's fidelity" cannot be
       true until the jackal gets the same treatment or Nick says the
       mismatch is fine.
+
+      **2026-09-24 21:26 ET: the jackal got the same treatment** — cut
+      11,999 → 2,639 tris, flat-shaded, rig and all three clips verified
+      intact (`design/progress/cinder_jackal_ai.md` pass 9). All three cast
+      members now share the same shading and the same "facets are the
+      style" geometry treatment, each within its own budget. **Still not
+      ticking this line** — whether the three actually read as one style
+      together, side by side, in the real fight, is a look only Nick's own
+      eyes settle, and this exact question is the one #13 already burned
+      once. His call on the frames in the Silhouette line above.
 - [ ] **Each is readable at fight distance** as itself, not a green blob.
       **Unticked, 2026-09-24 20:13 ET.** Was ticked 2026-09-23, before the
       style-C low-poly switch and before #13's 09-24 re-open. Fresh
