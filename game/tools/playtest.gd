@@ -1901,6 +1901,22 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, beast_rect: Rect2) -> flo
 		return -1.0
 	var beast_was_visible := beast.visible
 	var stone_was_visible := stone.visible
+	# Three renders need at least three processed frames between them, and
+	# the jackal is a fire beast -- CPUParticles3D embers/dust (Combat3D's
+	# _dust) keep animating across those frames regardless of which stone
+	# is being toggled. First version of this left them running: stones
+	# nowhere near the beast (rect overlap under 1%) still read 6-19%
+	# "covered" purely from ember drift between img_full/img_no_stone/
+	# img_neither, landing suspiciously close to BEAST_STONE_COVER_MAX
+	# itself. Freezing the tree for just this capture sequence stops
+	# everything process-driven (particles, tweens, idle sway) without
+	# touching rendering -- RenderingServer keeps drawing under pause, only
+	# _process/_physics_process stop -- so the three shots differ ONLY by
+	# the visibility toggles this function itself makes.
+	var tree := beast.get_tree()
+	var was_paused := tree != null and tree.paused
+	if tree != null:
+		tree.paused = true
 	await RenderingServer.frame_post_draw
 	var img_full := root.get_viewport().get_texture().get_image()
 	stone.visible = false
@@ -1911,6 +1927,8 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, beast_rect: Rect2) -> flo
 	var img_neither := root.get_viewport().get_texture().get_image()
 	beast.visible = beast_was_visible
 	stone.visible = stone_was_visible
+	if tree != null:
+		tree.paused = was_paused
 	var size := img_full.get_size()
 	var x0: int = clampi(int(beast_rect.position.x), 0, size.x - 1)
 	var y0: int = clampi(int(beast_rect.position.y), 0, size.y - 1)
