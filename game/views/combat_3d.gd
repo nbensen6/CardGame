@@ -4145,43 +4145,38 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 ## (#14/#0505/#0420), never about this push: #0802 asks for exactly this
 ## lever to move the real landing too, not a new one.
 ##
-## Moving the FOOT at every rung, not just the first, turned out to have a
-## real cost the rock alone never had: the resting camera locks onto
-## whichever hunter is active (`_lock_point`, reads `home.x/z`), so pushing
-## a MID-route rung's own foot moves the camera too -- measured live, a
-## hunter resting at rung 2 (t=0.25, push 3.27) swung `beast-behind-stone`
-## on a wholly UNRELATED, far-away stone from a clean 3/3 baseline to a
-## reproducible 21-23% fail, 3/3 runs. The rock's own push never had this
-## problem (nothing reads the rock's position for the camera). route_pos_cleared
-## (below) therefore only moves the FOOT at i=0 -- the exact point #0802's
-## own frame evidenced, an 8-hunter-height gap, the only one dramatic enough
-## to read as "standing on air" rather than "standing near the stone's own
-## edge." Rungs above it keep their pre-#0802 foot position (the rock still
-## moves, per chest_clear_push below); the residual gap there (0.93-3.27
-## units, #0802's own text never flagged it) is real but far smaller and
-## filed as a known follow-up rather than fixed here, since fixing it the
-## same way re-breaks the beast-behind-stone floor #0802 also requires.
+## 2026-09-25, director (#0802 follow-up): a version that moved the FOOT at
+## i=0 only shipped next, because moving every rung's own foot moves the
+## resting camera too (`_lock_point` reads `home.x/z`) and one run measured
+## that swinging `beast-behind-stone` on an unrelated, far-away stone. That
+## traded a visible defect (hunters hanging 1.3-4.7 hunter-heights off their
+## own stone at every rung above the first) for a check number on a stone
+## nobody was ever meant to be standing near -- backwards, per the ticket
+## this reopened it. The occluding stone was always free to move on its own
+## (see NEAR_LEG_CLEAR below, next to `_build_float_stones`); the hunter's
+## foot was never the thing that had to give.
 const CHEST_CLEAR_TAPER := 0.6
 const CHEST_CLEAR_PUSH := HUNTER_HEIGHT * 8.0
 static func chest_clear_push(t: float) -> float:
 	return CHEST_CLEAR_PUSH * clampf(1.0 - t / CHEST_CLEAR_TAPER, 0.0, 1.0)
 
 
-## route_pos(), with chest_clear_push's own push folded in at i=0 ONLY (see
-## the doc comment above for why not every rung) -- the point `_stand_on_model`
-## hands the hunter for the first hold, matching what `_build_float_stones`
-## hands the decorative rock there, so the two no longer disagree about
-## where the FIRST stone is. route_pos() itself stays pure and untouched
-## (its own "one line, even steps" tests keep pinning the un-pushed
-## geometry).
+## route_pos(), with chest_clear_push's own push folded in at EVERY rung, not
+## only the first -- the point `_stand_on_model` hands the hunter to stand on
+## must match what `_build_float_stones` hands the decorative rock at that
+## same landing (both read the same `t = i/(n-1)`), or the two disagree about
+## where a rung's stone actually is and the hunter stands on air beside it.
+## Past the taper (t >= CHEST_CLEAR_TAPER, i.e. the top hold too) the push is
+## already zero, so this changes nothing there. route_pos() itself stays
+## pure and untouched (its own "one line, even steps" tests keep pinning the
+## un-pushed geometry).
 static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 		half_width: float) -> Vector3:
 	var p := route_pos(top, ground_z, i, n, half_width)
-	if i != 0 or n <= 1:
+	if n <= 1:
 		return p
-	# i=0 is t=0 by route_pos's own convention -- chest_clear_push(0.0) is
-	# always its full CHEST_CLEAR_PUSH, so this is just that constant.
-	p.x += signf(-half_width) * chest_clear_push(0.0)
+	var t := clampf(float(i) / float(n - 1), 0.0, 1.0)
+	p.x += signf(-half_width) * chest_clear_push(t)
 	return p
 
 

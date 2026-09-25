@@ -997,15 +997,16 @@ func _init() -> void:
 	_test_chest_clear_push_fades_to_zero_at_the_taper_point()
 	_test_chest_clear_push_is_zero_past_the_taper()
 	_test_chest_clear_push_decreases_monotonically()
-	# fixer, 2026-09-25: #0802 -- #0658 applied chest_clear_push to the
-	# decorative rock only, leaving _stand_on_model's own route_pos point
-	# behind -- the Frog stood on air beside its own stone at the first hold.
-	# route_pos_cleared folds the same push into that ONE rung's own point;
-	# pushing every rung instead moved the resting camera enough to regress
-	# beast-behind-stone on an unrelated stone (measured live), so every
-	# other rung deliberately stays on route_pos's own un-pushed line.
-	_test_route_pos_cleared_matches_route_pos_off_the_first_rung()
-	_test_route_pos_cleared_matches_chest_clear_push_at_the_first_rung()
+	# fixer, 2026-09-25: #0802 (reopened) -- #0658 applied chest_clear_push
+	# to the decorative rock only, leaving _stand_on_model's own route_pos
+	# point behind -- the Frog stood on air beside its own stone at every
+	# rung above the first. route_pos_cleared now folds the same push into
+	# EVERY rung's own point, matching the decorative stone at every landing
+	# inside the taper; the far-stone occlusion that a first attempt at this
+	# traded for was fixed by moving that stone instead (near-leg clearance
+	# in _build_float_stones), not by leaving rungs unpushed.
+	_test_route_pos_cleared_matches_chest_clear_push_at_every_rung_inside_the_taper()
+	_test_route_pos_cleared_matches_route_pos_past_the_taper()
 	_test_route_pos_cleared_never_moves_the_top_hold()
 	_test_route_pos_cleared_single_rung_matches_route_pos()
 	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
@@ -22211,39 +22212,40 @@ func _test_chest_clear_push_decreases_monotonically() -> void:
 		prev = cur
 
 
-## #0802 (director): the Frog stood on air beside its own stone at the FIRST
-## hold because chest_clear_push moved the decorative rock (_build_float_stones)
-## without moving the hunter's own landing (_stand_on_model, plain route_pos).
-## route_pos_cleared folds the same push into the one point both now read,
-## but ONLY at i=0: pushing every rung's own foot moved the resting camera
-## (locked onto whichever hunter is active) enough to swing an unrelated
-## stone's own on-screen occlusion from a clean baseline to a reproducible
-## fail (measured live, rung index 1 of 5, push 3.27 -> beast-behind-stone
-## 21-23% against a 15% ceiling, 3/3 runs). i=0 is the one point #0802's own
-## frame evidenced (an 8-hunter-height gap) and the only rung this fix
-## touches. These pin its shape with no scene tree and no model loaded (#86
-## duty 3), the same way route_pos()'s own tests do.
-func _test_route_pos_cleared_matches_route_pos_off_the_first_rung() -> void:
-	var top := Vector3(0.4, 12.0, 2.0)
-	var n := 5
-	# i=1 sits well inside chest_clear_push's own taper (t=0.25 < 0.6) and
-	# would have been pushed by the pre-#0802-fix version of this function --
-	# it must not be any more, since that is exactly the camera-coupling
-	# regression this fix backs away from.
-	for i in [1, 2, n - 2]:
-		var raw: Vector3 = Combat3D.route_pos(top, -20.0, i, n, 6.0)
-		var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, i, n, 6.0)
-		_expect(cleared == raw, "only i=0 may move -- rung %d must come back exactly as route_pos gave it, or the resting camera (locked onto whichever hunter holds this rung) moves and beast-behind-stone regresses again" % i)
-
-
-func _test_route_pos_cleared_matches_chest_clear_push_at_the_first_rung() -> void:
+## #0802 (director, reopened 2026-09-25 11:09): the Frog stood on air beside
+## its own stone at every rung ABOVE the first, not only the first --
+## `_build_float_stones` applies `chest_clear_push` continuously by each
+## landing's own t, while this function only folded the same push in at
+## i=0. A version that fixed only i=0 (to dodge a `beast-behind-stone`
+## regression on an unrelated far stone) shipped and was reopened: the
+## stone was always free to move on its own (see `_build_float_stones`'s
+## own near-leg clearance), so the hunter's foot is not the thing that has
+## to give. Past the taper the push is zero anyway, so a rung already
+## beyond t=CHEST_CLEAR_TAPER is unaffected by construction, not by a special
+## case here -- these pin its shape with no scene tree and no model loaded
+## (#86 duty 3), the same way route_pos()'s own tests do.
+func _test_route_pos_cleared_matches_chest_clear_push_at_every_rung_inside_the_taper() -> void:
 	var top := Vector3(0.4, 12.0, 2.0)
 	var half_width := 6.0
 	var n := 5
-	var raw: Vector3 = Combat3D.route_pos(top, -20.0, 0, n, half_width)
-	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, 0, n, half_width)
-	_expect(is_equal_approx(cleared.x, raw.x - Combat3D.CHEST_CLEAR_PUSH), "i=0 (the sweep's own near end, rung 1 -- where the director's own frame showed the Frog standing on air) must push the SAME point the hunter lands on by the full CHEST_CLEAR_PUSH, further from the top hold's own x -- got %.2f, wanted %.2f" % [cleared.x, raw.x - Combat3D.CHEST_CLEAR_PUSH])
-	_expect(is_equal_approx(cleared.y, raw.y) and is_equal_approx(cleared.z, raw.z), "the push is sideways only -- y and z must stay exactly on route_pos's own line")
+	for i in [0, 1]:
+		var t: float = float(i) / float(n - 1)
+		var raw: Vector3 = Combat3D.route_pos(top, -20.0, i, n, half_width)
+		var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, i, n, half_width)
+		_expect(is_equal_approx(cleared.x, raw.x - Combat3D.chest_clear_push(t)), "rung %d (t=%.2f) must move by exactly chest_clear_push(t) -- the same push _build_float_stones applies to that landing's own decorative stone -- got %.2f, wanted %.2f" % [i, t, cleared.x, raw.x - Combat3D.chest_clear_push(t)])
+		_expect(is_equal_approx(cleared.y, raw.y) and is_equal_approx(cleared.z, raw.z), "the push is sideways only -- y and z must stay exactly on route_pos's own line")
+
+
+func _test_route_pos_cleared_matches_route_pos_past_the_taper() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	# i=2 of 5 is t=0.5, still inside the taper (< 0.6) -- i=3 (t=0.75) is
+	# the first rung clear of it, so it and the top hold (i=4, t=1.0) must
+	# come back exactly as route_pos gave them.
+	for i in [n - 2, n - 1]:
+		var raw: Vector3 = Combat3D.route_pos(top, -20.0, i, n, 6.0)
+		var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, i, n, 6.0)
+		_expect(cleared == raw, "rung %d sits past chest_clear_push's own taper -- it must come back exactly as route_pos gave it" % i)
 
 
 func _test_route_pos_cleared_never_moves_the_top_hold() -> void:
