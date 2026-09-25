@@ -94,12 +94,26 @@ const BEAST_STONE_COVER_MAX := 15.0
 ## stayed green". `_check_hunter_on_stone`'s own foot-band render-diff
 ## reports what fraction of the pixels directly under a settled hunter's
 ## feet are actually drawn by its own foothold stone (or, at the top/sigil
-## hold only, the beast). CALIBRATION PENDING -- see that function's own doc
-## comment: this is a print-only placeholder until a real run's numbers are
-## in hand, same discipline #0257's own "print the numbers before trusting
-## them" note used, so the threshold isn't picked to pass the first frame it
-## happens to see.
-const FOOT_STONE_COVER_MIN := 25.0
+## hold only, the beast).
+##
+## Calibrated off two real, confirmed readings on the current tree, not
+## picked to pass the first frame seen (same discipline #0257 used):
+##   - A REAL bug this check found live (not staged): after "Tongue Snap"
+##     (foot 0->2) then "Leap" (foot 2->6, past the top named rung), the
+##     settled Frog measures 0.0% at the sigil/top hold, TWICE (foot 6 and
+##     foot 8) -- and a live-frame capture at that exact instant
+##     (footdbg_001_live.png) shows why: the Frog hangs in open air with a
+##     visible gap above the nearest stone, not standing on anything. Real,
+##     not a check artifact -- filed separately to the fixer.
+##   - The one non-top reading on hand (foot 2, right after the first hop)
+##     measures 43.2% -- ambiguous (the Frog sits near the beast's own chest
+##     from this angle, ownership of the pixels isn't as clean as a stone
+##     square in frame), but plainly NOT the open-air gap the 0% case shows.
+## 15.0 sits well clear of the confirmed 0% bug and well under the
+## ambiguous-but-not-floating 43.2%, so it fires on the failure this check
+## exists to catch without guessing at the ambiguous case's own true
+## threshold from a single reading.
+const FOOT_STONE_COVER_MIN := 15.0
 
 ## `_check_hunter_on_stone`'s own foot-band height, as a fraction of the
 ## hunter's own projected screen rect (`hunter_screen_rect`) -- small enough
@@ -2155,10 +2169,12 @@ func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int) 
 	if pct < 0.0:
 		return   # couldn't measure (footers freed, band clipped to nothing) -- say nothing rather than guess
 	var label := "the sigil/top hold (any stone or the beast)" if is_top else "the route's stones"
-	# CALIBRATION PENDING (FOOT_STONE_COVER_MIN's own doc comment): print-only
-	# for now, no _fail, until a real run's numbers are in hand.
-	_note("step %d: hunter-on-stone -- foothold %d, %.1f%% of the foot band is %s (want >= %.0f%%)"
-		% [_step, to_foot, pct, label, FOOT_STONE_COVER_MIN])
+	if pct < FOOT_STONE_COVER_MIN:
+		_fail("hunter-on-stone", "step %d: at foothold %d, only %.1f%% of the pixels directly under the hunter's feet are %s (want >= %.0f%%) -- the hunter reads as floating, not standing on it"
+			% [_step, to_foot, pct, label, FOOT_STONE_COVER_MIN])
+	else:
+		_note("step %d: hunter-on-stone -- foothold %d, %.1f%% of the foot band is %s (want >= %.0f%%)"
+			% [_step, to_foot, pct, label, FOOT_STONE_COVER_MIN])
 
 
 ## Check 5d, JACKAL-BAR's "the jump reads... at the size it plays" mid-air:
