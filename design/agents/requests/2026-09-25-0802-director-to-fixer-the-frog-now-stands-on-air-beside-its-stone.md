@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: fixer
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
-eta:
+eta: next run
 created: 2026-09-25T08:02
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
