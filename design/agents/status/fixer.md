@@ -2,11 +2,89 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T05:55
-working_on: "#0420 done: camera now tracks each sub-hop leg instead of the climb's final stop. #0505 (stones under every landing) next."
+updated: 2026-09-25T06:16
+working_on: "#0505 done: a stone under every sub-hop landing, receding in size. Rides #14's own handback to Nick."
 ---
 
 # fixer
+
+## This run — 2026-09-25 06:16 EDT
+
+- **Did:** fixed #0505 — the Frog crossed the widened gap in three hops but
+  only the first and last had a stone under them.
+- **Worked?** Yes. A stone now sits under every sub-hop landing, shrinking
+  toward the beast; resting shot reads as one path, not two stones and air.
+- **Next:** rides #14's own handback to Nick — not mine to close.
+- **Need from you:** nothing.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]
+
+## Now
+
+Took `2026-09-25-0505-director-to-fixer-the-frog-hops-across-the-gap-on-nothing.md`
+(#0505, high priority, the only open high-priority `to: fixer` request —
+checked every request's frontmatter fresh this run, not from memory).
+
+**Note on this run's own start: a lease-staleness collision.** Claimed the
+`fixer` lease at 04:20 EDT and worked through a full, independent
+implementation of #2344 (the 20m-hop ticket) — route_stop_ts, real body-leg
+spacing, a floor stretch, tests, the works — over what turned out to be
+well past the 40-minute staleness window. Another fixer run claimed the
+lease from 04:23 onward and landed its OWN fix for the same ticket
+(`f0808f0`, `hop_subpoints` — a smaller, better-targeted change: splits the
+over-long ANIMATION leg into sub-hops without moving where any stone or
+rung sits at all) plus a follow-up camera fix (`a6f97ed`, `#0420`) for the
+exact `hunter-lost-mid-hop` gap my own version was going to leave open.
+Found this at push time — `git pull --rebase` conflicted on every file I'd
+touched. Read both diffs side by side rather than force mine through:
+theirs was live, tested, verified by the director, and simply better
+(mechanism-only, no route/stone changes, so no `beast-behind-stone` cost
+either). Discarded my entire local commit (`git checkout -B main
+origin/main` — never pushed, so nothing lost anywhere but this run's own
+time) and picked back up from the CURRENT board instead of trying to
+reconcile two competing fixes for the same bug. Flagging the staleness
+mechanism itself, not asking for anything: a run that stays alive and
+BUSY for this long — not dead, not idle, just slow (rendering, full
+playtests) — is exactly the case the 40-minute timeout doesn't distinguish
+from a wedged one, and it cost a real run's worth of duplicate work here.
+
+**The fix.** `_build_float_stones` (`combat_3d.gd`) used to place one
+stone per NAMED climb rung, using `_stand_on_model`. It now builds the
+SAME chain `_place_hunters`' climb branch already walks for a real climb —
+ground stance (`t<=0.01`'s own formula, side=0.0) through every named rung
+to the top, split leg by leg with the same `hop_subpoints`/`HOP_MAX_LEG`
+call — and drops a stone at every point that produces, not just the named
+ones. `route_pos()`, gameplay Heights, the sigil, the gap: all untouched.
+`rock_radius` (flat `HUNTER_HEIGHT * 1.5` before) now `lerp`s to `1.0x` by
+landing index, big near the hunter, smaller toward the beast — cap/rim/body
+scale already derive from `rock_radius`, so the whole stone shrinks, not
+just the boulder.
+
+**Proof.** `ALL TESTS PASSED` (nothing in `run_tests.gd` covers this —
+placement only, no logic touched, so the existing suite is the regression
+guard). `hop-distance-band`/`hop-position-pop` can't have moved: the
+animation (`hop_subpoints`, `_hop`, `_place_hunters`) is byte-for-byte
+unchanged. `state=3d` at 1:1: a real path of receding stones from the near
+box to the chest (frame above). `mode=play steps=24` step 1 (Leap, foot
+2→6) hop strip, 24 samples: the Frog stays visible throughout (`#0420`'s
+own fix, unaffected here) and reads as climbing real stones, not hopping
+on air.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-leap-strip.png]]
+
+**One second-order break found and fixed along the way.** `playtest.gd`'s
+`beast-behind-stone` check (9788216) assumed `_float_stones[route_rungs
+.size() - 1]` was always the mesh-anchored top hold — true only when there
+was exactly one stone per named rung. Now reads `(stones as Array).size()
+- 1` (the real last landing); the per-stone label in its own log line
+dropped the now-meaningless rung-number lookup for a plain index.
+
+Set #0505 `status: done` — its own Done-when is objective (stones under
+every landing, receding, hop-distance-band/tests/pop all clean) and its own
+text says explicitly not to hand it back to Nick from here; it rides #14's
+handback instead.
+
+## Old: 2026-09-25 05:55 EDT — camera tracks each climb leg instead of the final stop (#0420)
 
 ## This run — 2026-09-25 05:55 EDT
 

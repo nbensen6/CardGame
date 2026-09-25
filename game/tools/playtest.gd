@@ -889,7 +889,11 @@ func _check(v: Node, when: String) -> void:
 		var beast_rect: Rect2 = Combat3D.hunter_screen_rect(stone_cam, bbox).intersection(vp)
 		var beast_area: float = beast_rect.size.x * beast_rect.size.y
 		if beast_area > 0.0:
-			var top_hold_i: int = route_rungs.size() - 1
+			# #0505 (fixer): _float_stones is no longer one entry per named
+			# rung -- a stone now sits under every sub-hop landing
+			# (hop_subpoints) along the whole route, so the mesh-anchored
+			# top hold is always the LAST entry, not `route_rungs.size()-1`.
+			var top_hold_i: int = (stones as Array).size() - 1
 			var occluding_desc: Array = []
 			var on_body_desc: Array = []
 			for si in range((stones as Array).size()):
@@ -900,7 +904,11 @@ func _check(v: Node, when: String) -> void:
 				if overlap_area <= 0.0:
 					continue  # doesn't even land on the beast's own rect on screen
 				var pct: float = 100.0 * overlap_area / beast_area
-				var label: String = "stone %d" % (route_rungs[si] if si < route_rungs.size() else si)
+				# #0505: _float_stones no longer maps 1:1 to route_rungs (a
+				# stone per sub-hop landing now, not per named rung), so the
+				# rung-number label is meaningless for most indices -- plain
+				# landing index instead.
+				var label: String = "stone %d" % si
 				if si == top_hold_i:
 					# The one stone actually anchored to the mesh (foothold_anchor,
 					# not route_pos) -- on the body by construction, never a failure.

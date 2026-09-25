@@ -491,3 +491,23 @@ tune anything to make that number go to zero. Your next thing is still
 item 3, the 20 m hops. The 0200 near-stone ticket's Done-when is met; close
 it yourself.
 
+
+## Note from fixer — 2026-09-25 06:16 EDT
+
+Item 3 (the 20m hops) is done, by a different fixer run than the one that
+picked this ticket up earlier tonight — `f0808f0` (`hop_subpoints`, splits
+an over-long climb leg into several real hops without moving any stone or
+rung) plus a follow-up camera fix `a6f97ed`/`#0420` (the camera used to aim
+at a chained climb's FINAL stop for the whole flight; now advances leg by
+leg). `hop-distance-band` 124 -> 0, `hunter-lost-mid-hop` cleared (0/24 ->
+24/24 on the director's own repro), both full regressions clean.
+
+Then #0505 (this run): the split hops were visible but landed on air
+between the first and last stone. `_build_float_stones` now drops a stone
+under every sub-hop landing `hop_subpoints` produces, not just the named
+rungs, receding in size toward the beast. `state=3d` reads as one path now;
+full numbers and frames on #0505's own `## Result`.
+
+Both ride this ticket's own handback — set `status: done` on each rather
+than closing myself, per #0505's own instruction. Worth your own eyes on
+the resting shot before it goes to Nick: ![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]

@@ -4031,26 +4031,38 @@ func _build_float_stones() -> void:
 	_float_stones.clear()
 	if _beast == null:
 		return
-	# Every rung, in order, so a stone knows how far along the route it is and
-	# can be placed across the gap rather than all of them against the body.
+	# Every SUB-HOP LANDING along the whole route, ground to the top hold —
+	# not just the named rungs (#0505, director, 2026-09-25: "the Frog now
+	# crosses the gap in three hops and lands on air twice"). #14/#0420
+	# already split an over-long Height-to-Height leg into several real
+	# hops (hop_subpoints, HOP_MAX_LEG) so the ANIMATION reads as a chain of
+	# jumps; this is the other half named on #14 item 3 from the start --
+	# a stone under every one of those landings, not just the first and
+	# last. Chains the SAME hop_subpoints call `_place_hunters`' climb
+	# branch makes, leg by leg from the hunters' own ground stance (the
+	# `t<=0.01` formula in `_place_hunters`, side=0.0 to match the existing
+	# centred stone line) through every named rung to the top -- one rule,
+	# both places, the same reasoning `_stand_on_model` already leans on.
 	var rungs: Array[int] = []
 	for hh in _climb_points.keys():
 		if int(hh) > 0:
 			rungs.append(int(hh))
 	rungs.sort()
+	var at := Vector3(0.0, 0.0, minf(ground_standoff_for(_beast_box.end.z), _arena_r * 0.86))
+	var landings: Array[Vector3] = []
 	for h in rungs:
-		var height := int(h)
-		if height <= 0:
-			continue   # Height 0 is the ground; you are already standing on it
+		var stop: Vector3 = _stand_on_model(int(h), 0.0)
+		for sub in hop_subpoints(at, stop, HOP_MAX_LEG):
+			landings.append(sub)
+		at = stop
+	for index in range(landings.size()):
 		# A wrapper, not a mesh directly, so the bob/spin in _process (which
 		# reads/writes `st.position`/`st.rotation.y` by array index — see the
 		# loop over `_float_stones` above) still moves the whole shelf as one
 		# rigid piece, while the flat cap and rim below stay level and don't
 		# inherit the boulder's own random tilt/squash (see BODY below).
 		var stone := Node3D.new()
-		# _stand_on_model already walks the route (see route_pos there), so the
-		# stone simply goes where the hunter will stand. One rule, both places.
-		stone.position = _stand_on_model(height, 0.0)
+		stone.position = landings[index]
 		_rig.add_child(stone)
 
 		# BODY: an irregular convex-hull rock (FOOTHOLD_ROCK, the artist's
@@ -4062,10 +4074,13 @@ func _build_float_stones() -> void:
 		#
 		# Sized off the HUNTER — it is a place a person stands, so it must
 		# stay the same size under a Crag Pup and a Titan. About three
-		# hunters wide (Nick, 2026-09-23 — "make the stones bigger"), as
-		# tall as it is wide (#16: "a teacup and a saucer" was the old
-		# squashed-sphere complaint).
-		var rock_radius := HUNTER_HEIGHT * 1.5
+		# hunters wide at the near end (Nick, 2026-09-23 — "make the stones
+		# bigger"), as tall as it is wide (#16: "a teacup and a saucer" was
+		# the old squashed-sphere complaint). #0505: "big near the Frog,
+		# smaller as they recede -- the drawing's path" -- shrinks toward
+		# the beast, landing by landing, not a flat size for every stone.
+		var recede: float = float(index) / float(maxi(landings.size() - 1, 1))
+		var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
 		var rock_height := rock_radius * 2.0
 		# Sunk enough that the CAP below (not the bare rock) is what a
 		# hunter visually lands on, with no gap between the two.

@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: fixer
-status: open
+status: done
 priority: high
 beast: cinder_jackal
-eta:
+eta: done
 created: 2026-09-25T05:05
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
@@ -78,5 +78,49 @@ was exactly right. Keep doing that.
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
 
-## Result
+## Result — fixer, 2026-09-25 06:16 EDT
 
+**Placement only, exactly as scoped.** `_build_float_stones` (`combat_3d.gd`)
+used to place one stone per NAMED rung. It now chains the same
+`hop_subpoints`/`HOP_MAX_LEG` call `_place_hunters`' climb branch already
+makes — ground stance (the `t<=0.01` formula, side=0.0) through every named
+rung to the top — and drops a stone at every sub-hop landing that produces,
+not just the named ones. `route_pos()`, the gameplay Heights, the sigil and
+the gap are all untouched; `_stand_on_model` (where a hunter actually
+stands) is untouched too. One rule, one caller changed.
+
+**Recede in size.** `rock_radius` (previously a flat `HUNTER_HEIGHT * 1.5`
+for every stone) now `lerp`s from `1.5x` at the near end to `1.0x` at the
+beast, by landing index — cap/rim/body scale are already all derived from
+`rock_radius`, so the whole stone (not just the boulder) shrinks together.
+
+**Proof.**
+- `ALL TESTS PASSED` — this ticket touches no logic `run_tests.gd` covers
+  (decorative placement only), so the existing suite is the regression
+  guard; nothing new needed.
+- `hop-distance-band` unaffected: the animation (`hop_subpoints`, `_hop`,
+  `_place_hunters`) is byte-for-byte untouched, so the check that measures
+  it has nothing to newly pass or fail.
+- No new `hop-position-pop`: same reasoning — no tween, no `home` write, no
+  timing touched by this change.
+- `state=3d` at 1:1, fresh code: a real path of stones from the near box up
+  toward the chest, each one smaller than the last.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-resting.png]]
+
+- `mode=play steps=24`, step 1 (Leap, foot 2→6) hop strip, 24 evenly-spaced
+  samples: the Frog stays visible throughout (`#0420`'s own fix, unaffected
+  by this change) and reads as climbing a real staircase, not hopping on air.
+
+![[frames/fixer/2026-09-25-0505-stones-under-every-landing-leap-strip.png]]
+
+Also fixed a second-order break this surfaced: `playtest.gd`'s own
+`beast-behind-stone` check (9788216) assumed `_float_stones[route_rungs.size()
+- 1]` was always the mesh-anchored top hold — true when there was one stone
+per named rung, false the moment stones outnumber rungs. Now reads
+`(stones as Array).size() - 1` (the true last landing, always the top hold
+regardless of how many sub-hop stones came before it); its per-stone label
+dropped the now-meaningless rung-number lookup for a plain landing index.
+
+Per this ticket's own Done-when: not handing this back to Nick myself —
+rides #14's own handback.
