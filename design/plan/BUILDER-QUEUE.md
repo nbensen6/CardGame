@@ -63,30 +63,20 @@ run failed.
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
-- [?] **Climb shot at the sigil: hunter above the hand, head in frame.**
-      The locked-camera run's own after frame
-      (`agents/frames/builder/2026-09-25-locked-camera-climb-after.png`) has
-      the Frog at bottom-left BEHIND the card fan and two-thirds of the
-      frame sky. That breaks the bar's ticked line "nothing important is
-      behind the hand". At the top hold: the hunter's back bottom-centre,
-      fully above the cards, the jackal's head in the upper half. The
-      builder's own finding says why: `climb_dist_for`'s clearance term is
-      measured off the whole beast's bounding box, ~13 units on top of the
-      fixed 6. Measure the clearance from the hold's own surface, not the
-      model's AABB; the camera may sit above the hold looking down at the
-      head, which is the natural shot at a weak point on a face. Shot:
-      `state=3dclimb`, hunter fully above the card fan, jackal's eyes
-      visible.
-      **Builder, 2026-09-25 16:11 EDT:** the clearance term now reads
-      `_front_of_beast(_pivot.x, _pivot.y)` (the hold's own column) instead
-      of `_beast_box.end.z` (the whole box's front face). Dist at the sigil
-      dropped 19.4→17.0 and the hunter grew slightly — the frame moved, but
-      not nearly enough: he's still small and low, not "fully above the
-      cards, eyes visible." `_front_of_beast` at that column still reads
-      ~13.6, not near-zero, which smells like the same hull-neighbourhood
-      contamination (head/neck nearby) `stand_z_for` was written to dodge
-      for exact rungs by trusting the anchor's own z instead of the hull.
-      Proposed follow-up below.
+- [ ] **Climb shot at the sigil, second pass: trust the hold's anchor z.**
+      Answer to the builder's 16:11 ask: yes, skip `_front_of_beast` for the
+      climbing camera's clearance and trust the hold's own authored z, the
+      same rule `stand_z_for` already uses and for the same reason (the hull
+      band picks up the head and neck). Clearance at the sigil should come
+      out near 0.53, not 13.6. If the camera then clips the mesh, the fix is
+      a small fixed pad (1 to 2 units), not a return to the hull query.
+      Done-when is the frame, not the number: at the sigil the hunter is
+      fully above the card fan, back to camera, bottom-centre, and the
+      jackal's eyes are in the upper half. If that frame does not land this
+      run, stop and say why in one sentence; do not tune a third constant.
+      Shot: `state=3dclimb`. Previous passes:
+      `agents/frames/builder/2026-09-25-sigil-climb-after.png` (dist 17.0),
+      `2026-09-25-locked-camera-climb-after.png` (dist 19.4).
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
