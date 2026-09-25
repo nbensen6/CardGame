@@ -96,6 +96,20 @@ const SHOULDER_GROUNDED_MAX := 0.05
 ## really does clear the real hunter, live, on every sampled frame of a real
 ## hop -- something request 2026-09-24's fix only ever proved with a unit
 ## test on synthetic rects, never against a real camera/hop in motion.
+## For check 10 (hunter-not-facing-beast): how far a hunter's body yaw may sit
+## off "pointed straight at the beast's centre" once things have settled.
+## `_process`'s own per-frame rule (combat_3d.gd, "Hunters keep their eyes on
+## the boss") eases the body's rotation.y toward atan2(at_beast.x, at_beast.z)
+## at rate delta*9.0 -- 6+ time constants inside the 40+ frames (0.7s+)
+## `_check()` always waits after the action that could have moved anyone, so
+## by the time this runs the ease has fully converged, not just started. The
+## only real per-frame jitter left at that point is the idle sway/grip-slip
+## nudge on the hunter's own X/Y (combat_3d.gd _process, up to ~0.075 units
+## against a 10+ unit distance to the beast) -- under half a degree, nowhere
+## near this margin. Loose enough to absorb float/ease noise, tight enough
+## that a hunter actually facing sideways or away fails it.
+const FACING_TOL := deg_to_rad(5.0)
+
 const Combat3D := preload("res://views/combat_3d.gd")
 
 ## `hunter_screen_rect`'s box is the convex hull of a 3D AABB's projected
@@ -742,6 +756,37 @@ func _check(v: Node, when: String) -> void:
 		if focused or shoulder2 > SHOULDER_GROUNDED_MAX:
 			_fail("camera-ots-while-grounded", "%s: the resting shot engaged the over-the-shoulder truck (_focused=%s, _shoulder=%.3f) -- #11 calls this shot side-on/three-quarter, not over the hunter's shoulder" \
 				% [when, focused, shoulder2])
+
+	# 10. JACKAL-BAR / checklist item 3, "the jump animation... the hunter
+	# faces sensibly": combat_3d.gd's own `_process` turns every hunter's body
+	# to keep looking at the beast's centre every frame ("a body that never
+	# turns is the loudest 'this is a prop, not a character' tell"), but
+	# nothing had ever checked, in a real running fight, that a hunter
+	# actually ends up facing the thing it is meant to be looking at, as
+	# opposed to some stale angle left over from wherever it last turned or
+	# never turning at all. Recomputes the SAME atan2(at_beast.x, at_beast.z)
+	# `_process` uses, off the hunter's own real holder position and the
+	# beast's own real box centre (both already read for other checks above),
+	# and compares it against the body's own real rotation.y -- ground truth,
+	# not a trust of the branch that sets it. Every real `_check()` call
+	# happens 40+ frames (0.7s+) after whatever last moved anyone, 6+ time
+	# constants into the ease (see FACING_TOL's own doc comment), so a real
+	# miss here means the facing broke, not that it merely hasn't caught up.
+	if hunters is Array and beast_box is AABB:
+		for h3 in (hunters as Array):
+			var body3: Node3D = (h3 as Dictionary).get("body")
+			var holder3: Node3D = (h3 as Dictionary).get("node")
+			if body3 == null or not is_instance_valid(body3) \
+					or holder3 == null or not is_instance_valid(holder3):
+				continue
+			var at_beast3: Vector3 = (beast_box as AABB).get_center() - holder3.position
+			if Vector2(at_beast3.x, at_beast3.z).length() < 0.05:
+				continue
+			var want3 := atan2(at_beast3.x, at_beast3.z)
+			var diff3 := absf(wrapf(body3.rotation.y - want3, -PI, PI))
+			if diff3 > FACING_TOL:
+				_fail("hunter-not-facing-beast", "%s: a hunter's body yaw is %.1f deg off facing the beast (got %.3f, want %.3f) -- reads as staring past it, not at it" \
+					% [when, rad_to_deg(diff3), body3.rotation.y, want3])
 
 
 func _all_controls(n: Node) -> Array:

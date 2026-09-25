@@ -2,13 +2,84 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T19:18
-working_on: Fixed camera-not-over-shoulder -- #11 flipped the resting shot to NOT OTS; split the check so mid-climb OTS and grounded not-OTS are both proven live.
+updated: 2026-09-24T21:16
+working_on: Baseline unchanged (no code moved since last run); added a live hunter-not-facing-beast check for checklist item 3.
 ---
 
 # playtester
 
-## This run — 2026-09-24 19:18 EDT
+## This run — 2026-09-24 21:16 EDT
+
+- **Did:** full 3-mode baseline (no regressions, matches last run exactly);
+  added `hunter-not-facing-beast` — checks a hunter's body actually turns to
+  face the beast, live.
+- **Worked?** Yes. 0 fires on real code; 18/18 when I broke the facing math
+  on purpose, then reverted clean.
+- **Next:** #14 (open the gap, lay the stones) is still the fixer's; nothing
+  moved on it this run.
+- **Need from you:** nothing.
+
+![[frames/playtester/2026-09-24-facing-check-resting-shot.png]]
+The resting shot this run's baseline used: both hunters' bodies already turn
+to face the jackal, and the new check proves that live instead of trusting
+the code that does it.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter` |
+| 3 | jump animation (squash/arc/landing/facing) | **extended this run** — added `hunter-not-facing-beast`, 0 fires; anticipation/arc/landing closed a prior run |
+| 4 | camera | unchanged — mid-climb OTS and grounded not-OTS both still hold, 0 fails either direction |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+No request was open `to: playtester`, and #14 (the director's live "open the
+gap, lay the stones" ticket) hasn't shipped yet, so this run's own baseline
+is byte-for-byte the same shape as the last one: `play` (80 steps) 62
+`hop-distance-band` fails (the fixer's own pre-existing, already-`taken`
+thread, unrelated to anything here), `hover` 2, `hands` 1-10 22 — no new or
+missing failures anywhere, no regression.
+
+With nothing moved to react to, worked the brief's other standing
+instruction: extend the playtester where checklist item 3 ("the hunter faces
+sensibly") had no automatic check at all. `combat_3d.gd`'s own `_process`
+turns every hunter's body to keep looking at the beast's centre every frame
+(its own comment: "a body that never turns is the loudest 'this is a prop,
+not a character' tell") — a real, deliberate bit of life in the fight that
+nothing had ever verified actually holds in a running game, only trusted by
+reading the code.
+
+**Added (`game/tools/playtest.gd`), check 10, `hunter-not-facing-beast`:**
+recomputes the exact same `atan2(at_beast.x, at_beast.z)` `_process` uses,
+off the hunter's own real position and the beast's own real box centre (both
+already read for earlier checks), and compares it against the body's own
+real `rotation.y` — reading the actual transform, not trusting the branch
+that sets it. `_check()` always runs 40+ frames (0.7s+) after whatever last
+moved anyone — 6+ time constants into the easing `_process` uses — so a real
+miss means the facing broke, not that it merely hasn't caught up yet.
+`FACING_TOL` (5°) is loose enough to absorb the tiny idle-sway/grip-slip
+jitter on a hunter's own position (well under half a degree at real
+distances) and tight enough that a hunter actually facing sideways or away
+fails it.
+
+**Verified both directions:**
+- Real, current code, full three-mode baseline: 0 `hunter-not-facing-beast`
+  fires anywhere in `play` (80 steps), `hover`, or `hands` (1-10) — only the
+  pre-existing `hop-distance-band` failures, identical shape to every prior
+  run.
+- Broke `_process` on purpose (`want := atan2(...) + PI * 0.5`, a hard
+  90° offset) and ran `mode=play steps=8`: `hunter-not-facing-beast` fired
+  18/18, every sampled settle point, both hunters, off by exactly 90° each
+  time. Reverted; `git diff` on `combat_3d.gd` came back clean before
+  committing anything.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after, on the real committed
+code.
+
+## Old: 2026-09-24 19:18 EDT
 
 - **Did:** the director flagged my own `camera-not-over-shoulder` check was
   now stale — #11 made the RESTING shot NOT over-the-shoulder on purpose.
@@ -1966,6 +2037,9 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 21:16 EDT — baseline unchanged (no code moved since last run,
+  #14 still open); new check `hunter-not-facing-beast`. 0 fires on real
+  code, 18/18 when broken on purpose, reverted clean.
 - 2026-09-24 17:20 EDT — new check `camera-not-over-shoulder`, proves the
   resting shot is genuinely over-the-shoulder. 0 fires on real code, 16/16
   when broken on purpose. Baseline unchanged, no regression.

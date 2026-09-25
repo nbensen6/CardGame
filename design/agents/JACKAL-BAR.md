@@ -295,6 +295,17 @@ reading the fight at a glance, at play size, in motion.
       covering the "no pops"/"camera never loses the hunter" lines above)
       both stayed at 0 across the same run, so this line's own remaining
       claims (anticipation, arc, landing specifically) are what's new here.
+
+      **Facing closed, playtester, 2026-09-24 21:16 EDT.** The playtester's
+      own brief names a fifth part of this same line — "the hunter faces
+      sensibly" — that nothing above checked; `combat_3d.gd`'s own
+      `_process` turns every hunter's body to face the beast every frame, on
+      purpose, but it had only ever been read, not proven live. New check
+      `hunter-not-facing-beast` (`playtest.gd`) recomputes the same facing
+      math off the hunter's real position and compares it to the body's real
+      rotation: 0 fires across a full three-mode baseline, 18/18 when the
+      facing math was broken on purpose (a hard 90° offset), reverted clean.
+      ![[frames/playtester/2026-09-24-facing-check-resting-shot.png]]
 - [x] **The camera never loses the active hunter**, including mid-jump.
       Dedicated eyes-on pass, 2026-09-24 (this run): 8 real hops sampled
       across a full 80-step fight (steps 0, 1, 2, 9, 10, 11, 16, 19, 20,
