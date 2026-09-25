@@ -101,13 +101,26 @@ const BEAST_STONE_COVER_MAX := 15.0
 ## happens to see.
 const FOOT_STONE_COVER_MIN := 25.0
 
-## `_check_hunter_on_stone`'s own foot-band height, as a fraction of the
-## hunter's full projected screen rect (`hunter_screen_rect`) -- small enough
-## to sample only the ground/stone line right at the feet, not the shins or
-## the rock's own far side, large enough that at typical hop distances it is
-## still several real pixels tall (band_h itself has its own 4px floor for
-## when the rect is very small, a hunter far from camera).
-const FOOT_BAND_FRAC := 0.16
+## `_check_hunter_on_stone`'s own foot-band, in WORLD units around the real
+## landing point -- not a slice of `hunter_screen_rect`. A first version used
+## the bottom slice of the hunter's own projected AABB rect and measured 19-
+## 20% at the sigil on a frame that plainly shows the Frog standing square on
+## its stone (crop_1_with.png, this run): `hunter_screen_rect`'s own doc
+## comment already warns its box is "always a bit looser than the real
+## silhouette", and at the sigil the Frog is tiny and distant enough that the
+## slice's FULL rect width -- not just its height -- pulled in a wide strip
+## of empty sky the tiny sprite never actually occupies. Projecting a small
+## WORLD footprint around `landed` itself sidesteps that: its on-screen size
+## naturally shrinks with distance the same way the real character does,
+## instead of inheriting the AABB's own looseness.
+const FOOT_WORLD_RADIUS := SIGIL_HUNTER_HEIGHT * 0.4
+
+## Floor on the foot band's own screen size (px) -- a landing far from camera
+## can project to a footprint only 1-2px across, too few samples for
+## `_foot_pixels`' own stride-2 scan to say anything real. Grown around its
+## own centre, never shifted, so this never pulls the band off the real
+## landing point to hit the floor.
+const FOOT_BAND_MIN_PX := 6.0
 
 ## For check 9b (camera-not-over-shoulder): how close to fully engaged (1.0)
 ## `_shoulder` must sit once the fight has settled before this counts as a
@@ -2099,12 +2112,25 @@ func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int, 
 	var footers: Array = (stones as Array).duplicate()
 	if is_top and beast_node is Node3D:
 		footers.append(beast_node as Node3D)
+	if cam.is_position_behind(landed):
+		return   # can't project a footprint for a point behind the camera
 	var vp := Rect2(Vector2.ZERO, Vector2(root.get_visible_rect().size))
-	var rect := Combat3D.hunter_screen_rect(cam, Combat3D._merged_aabb(node)).intersection(vp)
-	if rect.size.x < 2.0 or rect.size.y < 2.0:
-		return   # off screen entirely -- nothing to sample, not this check's problem
-	var band_h: float = maxf(4.0, rect.size.y * FOOT_BAND_FRAC)
-	var band := Rect2(rect.position.x, rect.position.y + rect.size.y - band_h, rect.size.x, band_h).intersection(vp)
+	# The footprint: `landed` itself plus 4 small world-space offsets around
+	# it (FOOT_WORLD_RADIUS's own doc comment on why not `hunter_screen_rect`
+	# instead), bounded into one screen rect the same way `hunter_screen_rect`
+	# bounds an AABB's corners -- just of a small foot-sized box instead of
+	# the whole body.
+	var band := Rect2(cam.unproject_position(landed), Vector2.ZERO)
+	for dx in [-FOOT_WORLD_RADIUS, FOOT_WORLD_RADIUS]:
+		for dz in [-FOOT_WORLD_RADIUS, FOOT_WORLD_RADIUS]:
+			var corner := landed + Vector3(dx, 0.0, dz)
+			if not cam.is_position_behind(corner):
+				band = band.expand(cam.unproject_position(corner))
+	if band.size.x < FOOT_BAND_MIN_PX:
+		band = Rect2(band.position.x - (FOOT_BAND_MIN_PX - band.size.x) * 0.5, band.position.y, FOOT_BAND_MIN_PX, band.size.y)
+	if band.size.y < FOOT_BAND_MIN_PX:
+		band = Rect2(band.position.x, band.position.y - (FOOT_BAND_MIN_PX - band.size.y) * 0.5, band.size.x, FOOT_BAND_MIN_PX)
+	band = band.intersection(vp)
 	var pct: float = await _foot_pixels(node, footers, band)
 	if pct < 0.0:
 		return   # couldn't measure (footers freed, band clipped to nothing) -- say nothing rather than guess
