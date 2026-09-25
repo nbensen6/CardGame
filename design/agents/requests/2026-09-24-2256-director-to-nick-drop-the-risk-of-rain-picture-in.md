@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: nick
-status: open
+to: director
+status: done
 priority: normal
 beast: cinder_jackal
-eta:
+eta: done 2026-09-25 09:58 EDT
 created: 2026-09-24T22:56
-taken_by:
+taken_by: director
 ask: Add your Risk of Rain 2 camera picture to the repo so agents can use it.
 waiting: false
 issue: 22
@@ -59,3 +59,15 @@ take this off your board.
 i have dropped the reference. make sure the camera is fixed to the character. 
 
 ## Result
+
+## Result — director, 2026-09-25 09:58 EDT
+
+Done. The picture is in the repo at `design/art/references/hKsXNZ9zAbYXR7QxaDZBoY-1920-80.jpg`
+(landed 09:50 EDT). Our resting shot beside it, both 1:1, is on #0405 — the
+fixer's ticket for turning the hunters' backs to the camera, which is the
+visible gap between the two. His second line, "make sure the camera is fixed
+to the character", is relayed there and on the fixer's new free-camera ticket
+(`2026-09-25-0956-director-to-fixer-the-free-camera-jerks-…`); the locked
+Player camera has pivoted on the active hunter since #19 pass 2 (22:40 last
+night), so that line is a check, not a change. Off Nick's board.
+

@@ -2,20 +2,109 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T09:05
-working_on: "The Frog lands on stones again in play (fixer 08:39); the grip shot everyone judged is a post-fall frame — fall pose filed to fixer (high), proofs corrected on #0802/#0803."
+updated: 2026-09-25T09:58
+working_on: "Nick answered #21 and #22 (free cam must be smooth; RoR picture is in): free-cam ease filed to the fixer, both rows off his board."
 ---
 
 # director
 
-## This run — 2026-09-25 09:05 EDT
+## This run — 2026-09-25 09:58 EDT
+
+- **Did:** nothing on screen moved since 09:05; Nick answered two of my tickets, one eleven hours ago, unseen until now.
+- **Worked?** Yes for the fixer and playtester: both closed on real proof and changed no gameplay code; the frames are unchanged.
+- **Next:** fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the camera.
+- **Need from you:** nothing new; #21 and #22 are off your board, five rows left.
+
+## Now
+
+**What a player sees, before I read anyone's note (09:52, on `e91e308`).**
+Resting: the Frog big at bottom-left in profile, facing right; the Goblin
+far right on an empty half; the black jackal small at upper-left of centre,
+"Attack 7" beside it, head clear of the bar; a chain of orange-lidded boxes
+from the Frog's left up to the chest, two big ones apart at far left.
+Sigil: two thirds sky, a black hump behind the cards, the Frog a green dot
+on a box, no Goblin. Grip: the Frog a body-height above bare ground, shadow
+far below, a red "3" beside it — the post-fall frame, as established at
+09:05. All three frames are the 08:55 frames; nothing visible changed this
+hour, and nobody claimed it had.
+
+![[frames/director/2026-09-25-0952-director-resting.png]]
+
+**Against the two targets.** His drawing: beast at a third where it is two
+thirds; twenty lidded boxes for four round boulders; the frog the beast's
+height where it is an eighth. His Risk of Rain picture, in the repo since
+09:50: the character's back bottom-centre with the beast ahead — ours shows
+the Frog's flank and the Goblin's face. Pair below, ours on top, both 1:1.
+Every gap is already a row: #14, #19, #23 with Nick; #0405 with the fixer.
+
+![[frames/director/2026-09-25-0952-director-resting-over-nicks-ror-picture.png]]
+
+**Did the fight get better for Nick, or did a score go up?** Neither, and
+both agents were right not to make it. The fixer instrumented the grip
+shot, proved the fall lands where an ordinary hunter stands and that the
+harness saves 6-15 frames early, touched no gameplay code, and filed the
+harness half to the playtester (#0933) as its ticket told it to; #0802
+closed on the landing frames, its wrong Done-when line struck. The
+playtester made `beast-behind-stone` read drawn pixels, found three bugs in
+its own check by printing the numbers first, and closed #0257 on that. The
+artist rendered, found nothing unblocked, built nothing. All correct.
+
+**The top line: a Nick answer sat unread for eleven hours.** His comment on
+#21 (22:30 EDT last night, mirrored into the repo only at 09:35 today) says
+he cannot look at the jackal without a free-cam toggle, wants the free cam
+smoother, and wants to know why he cannot see PNGs in git. The toggle has
+existed since 22:28 last night — Menu → Settings → "Camera: Dev" — two
+minutes before he wrote; nobody told him where. The snapping is real: in
+Dev the view follows the mouse the same frame with no easing (`_unhandled_input`,
+where the follow camera eases everything else). Filed to the fixer, high,
+ahead of #0258 and #0405, with what not to do (no momentum, no touch on the
+locked or climb cameras). The PNGs are fixed on his own PC at 09:50
+(`212c725`, embeds rendered on the mirror). #21 is `taken` by me, back to
+him when the ease lands. No agent missed it: the answer arrived in the
+repo during their runs and was addressed to me.
+
+**#22: his picture is in; "make sure the camera is fixed to the character."**
+Closed. The camera has pivoted on the active hunter since #19 pass 2; what
+is not fixed is the hunters' stance, so the line is relayed onto #0405 with
+the pair frame and put second in the fixer's order. #19's lens question
+(longer lens, narrower gap, or a small beast) is still his; his 09:47 line
+does not answer it and I have not read it as if it did.
+
+**Closed since my last run:** #0257 (playtester, pixel test — fine), #0802
+(fixer, landing frames and tests — fine; its Done-when was mine, not
+Nick's). **Stuck:** none. #0905 is `taken` with a Result that says it rides
+#0933 — parked honestly, not limbo. **A decision that was his, made without
+him:** none. **Requirement in the wrong note:** #21's answer, above — moved.
+
+**Nick's column now:** #13, #14, #19, #23, #27. He was live at 09:44-09:50
+rewriting every ask to one line and making frames render on GitHub; his
+own words in that commit: "its really difficult to tell what they are
+asking of me." Nothing new asked of him this run.
+
+**Filed:** one — fixer (free-camera ease, high). Notes on #0405 (picture,
+order), #21 (taken back), #22 (done). Nothing to the playtester: #0803 and
+#0933 are its next two and it says so. Nothing to the artist: idle on
+Nick, correctly.
+
+**What is working:** the fixer instrumenting before fixing and reverting
+the probe before the push; the playtester breaking its own check on purpose
+before trusting it; two tickets closed this hour on the right proof. Do not
+optimise any of that away.
+
+**Not filed, kept:** the sigil and grip frames are unchanged and both live
+with Nick (#27) or the playtester (#0933); the settled-after-first-climb
+frame with the Goblin in the right third (found 08:12, still unfiled)
+waits behind the fixer's three tickets — a fourth camera ticket this hour
+is the oscillation this role exists to stop.
+
+## Old: 2026-09-25 09:05 EDT
 
 - **Did:** the fight is better: the Frog lands on stones again in play; the grip shot everyone judged is a fall.
 - **Worked?** Partly: the fixer's landing fix is real, but its proof frame shows a fallen Frog on air.
 - **Next:** fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on landings.
 - **Need from you:** one word each on #14 and the camera row; the after-Leap frame is now on that row.
 
-## Now
+## Now — superseded 09:58, see above
 
 **What a player sees, before I read anyone's note (08:52, on `a90615c`).**
 Resting: the Frog big at bottom-left, the Goblin far right on an empty
@@ -241,6 +330,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
+- 2026-09-25 09:58 EDT — frames unchanged since 09:05; found Nick's eleven-hour-old answer on #21 (free cam toggle unfound, wants it smoother, PNGs on GitHub) — toggle exists, ease filed to fixer (high), PNGs fixed by his own 09:50 commit, #21 taken back; #22 closed (RoR picture in, relayed to #0405 with a 1:1 pair); fixer and playtester both closed on real proof, no code moved, no scores moved.
 - 2026-09-25 09:05 EDT — fight better: Frog lands on stones again in play (fixer #0802, 08:39); found the `3dgrip` shot is taken after the Frog falls, so every grip proof — mine at 08:05 and the fixer's — judged a fallen Frog; fall pose filed to fixer (high), #0802/#0803 corrected, after-Leap frame added to the camera row for Nick.
 - 2026-09-25 08:08 EDT — the 07:51 chest fix (#0658) cleared the chest by moving rocks and not feet: Frog on air at the first hold, path in four pieces, every check green — filed to fixer (high) and a hunter-on-stone check to playtester (high); before that: frames matched 06:55, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
 

@@ -58,6 +58,24 @@ say which you picked and why on this ticket.
 - In `state=3d` at 1:1 both hunters face the beast: the Frog's back or back-quarter to the camera, the Goblin likewise, with the beast where they look.
 - `state=3dclimb` and `state=3dgrip` CAM/HUNTER lines unchanged; `ALL TESTS PASSED`; a full playtest with no new fail category.
 
+## Director — 2026-09-25 09:58 EDT: Nick's Risk of Rain picture is in, and it is this ticket's target
+
+`design/art/references/hKsXNZ9zAbYXR7QxaDZBoY-1920-80.jpg`, landed 09:50.
+Our resting shot over it, both at 1:1 (ours 1280x720 on top):
+
+![[frames/director/2026-09-25-0952-director-resting-over-nicks-ror-picture.png]]
+
+The one thing his picture has that ours does not, from the player's seat: the
+character's BACK, bottom-centre, eyes on the beast. Ours has the Frog's flank
+and the Goblin's face. Nick again at 09:47 today: "make sure the camera is
+fixed to the character." The camera already pivots on the active hunter
+(#19 pass 2); it is the bodies that do not face the beast — this ticket. Beast
+size is #19's lens row, with him; stones are #14, with him. Do not reach for
+either from here.
+
+**Order:** the free-camera ease (`2026-09-25-0956-…`) first — it is Nick's
+own gate on two answers — then this, then #0258.
+
 ## Nick's answer
 
 ## Result
