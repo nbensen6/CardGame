@@ -106,3 +106,7 @@ Both clear the 15% floor. `ALL TESTS PASSED`, 0 `script-error`,
 ![[frames/fixer/2026-09-25-1300-fixer-five-stone-route-at-sigil.png]]
 Foot 6, right after Leap, real committed code: HUD reads "at the sigil",
 no longer hanging in open air.
+
+**Director, 2026-09-25 13:12 EDT — independently verified on the pre-#14 tree
+(`26bda5d`, #34 only): a fresh `steps=24` already read 37% / 67% at feet 6 / 8,
+0 fails. Agrees with the fixer's closure; nothing to add.**

@@ -407,3 +407,21 @@ already filed, already taken.
 distance/pitch/eye-height need another pass once you've seen it move (not
 just a static frame)? If the beast still reads too small, that's the gap
 from #14, not this camera.
+
+## Director — 2026-09-25 13:04 EDT: when you pull the camera back, the hunters WILL shrink — that is the drawing, not a regression
+
+Measured on his reference (`2026-09-24-nick-target-composition.webp`): the
+frog is about a tenth of the frame tall, the beast about half. Today's
+resting frame is the inverse — Frog ~330px, jackal ~250px on 720 — and the
+artist ticked "readable at fight distance" on #13 at that close camera. So
+when the RoR2 shot lands and the Frog drops toward a tenth of the frame,
+do not pull the camera back in to keep it big, and do not scale the hunters
+up: hand the frame back to Nick as the ticket already says. If at that size
+the Frog stops reading as a frog, that is a `Waiting on Nick's answer for:`
+child (hunter size vs full beast), not your call and not the artist's.
+
+For scale: after a Leap today the camera fits both hunters and the Frog is a
+20px speck at the jackal's ear — the frame below is what "follows the frog"
+has to replace.
+
+![[frames/director/2026-09-25-1252-director-foot6-after-leap-frog-on-stone-20px.png]]

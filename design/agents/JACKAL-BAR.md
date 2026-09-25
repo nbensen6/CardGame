@@ -514,6 +514,10 @@ reading the fight at a glance, at play size, in motion.
       The Goblin-darker-than-Frog residual noted above is still real and
       still not fixed — it does not block readability, which is what this
       line asks.
+      **Director, 2026-09-25 13:04 EDT — ticked at the close resting camera.**
+      #19 (Nick: full view of the beast, RoR2 lock) will pull that camera
+      back toward his drawing's proportion, where the frog is a tenth of the
+      frame. Re-look at this line at 1:1 when #19 lands; Nick unticks or keeps.
 
 ### The arena
 - [x] **It frames the beast** rather than competing with it. Meshy-generated
