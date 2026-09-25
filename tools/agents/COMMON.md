@@ -58,6 +58,20 @@ a reply he does not know you want (Nick, 2026-09-24).
 One question per request, with `ask:` filled in — that sentence IS the row he
 sees, on a phone, among several others.
 
+**Never flip a ticket you are working to `to: nick` just to ask him
+something.** File a SEPARATE request instead, and title it exactly:
+
+    Waiting on Nick's answer for: <the thing>
+
+with `to: nick`, `parent:` set to the number of the ticket it came out of, and
+`ask:` filled in. It appears on GitHub as a sub-issue of that ticket, so the
+parent stays yours at `status: taken` and the child is his.
+
+Why: a ticket that starts life addressed to an agent and is later flipped to
+Nick reuses its own `## What I need` for two different asks, and nobody can
+tell any more who is asking whom (Nick, 2026-09-25). The only requests that
+are born `to: nick` are the ones whose whole purpose is a decision.
+
 **`ask:` rules, and they are hard** (Nick, 2026-09-25: "it's really difficult
 to tell what they are asking of me"):
 

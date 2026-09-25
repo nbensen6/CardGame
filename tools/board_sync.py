@@ -351,6 +351,16 @@ def push(dry):
             if not made:
                 continue
             num = str(made["number"])
+            # A decision request hangs off the ticket it came out of, as a real
+            # GitHub sub-issue. Nick, 2026-09-25: a ticket that starts life
+            # addressed to an agent and is later flipped to him reuses the same
+            # "What I need" section for two different asks, and it stops being
+            # clear who is asking whom. A separate child fixes that -- the
+            # parent stays the agent's, the child is his.
+            parent = fm.get("parent", "").strip()
+            if parent.lstrip("#").isdigit():
+                gh_json("POST", "repos/%s/issues/%s/sub_issues" % (
+                    REPO, parent.lstrip("#")), {"sub_issue_id": made["id"]})
             with open(path, "w", encoding="utf-8", newline="") as f:
                 f.write(stamp_ticket(set_field(text, "issue", num), num))
             print("  #%s opened for %s" % (num, name))

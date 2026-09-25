@@ -15,6 +15,10 @@ created: 2026-09-22T14:05
 taken_by:
 # to: nick only. One plain sentence: what does HE have to decide? It is the
 # whole row he sees in the FOR NICK table, so it has to make sense alone.
+# Set this when the request exists only to ask Nick something that came
+# out of another ticket: the number of that ticket. It becomes a GitHub
+# sub-issue of it, so the parent stays the agent's and this one is his.
+parent:
 ask:
 # true when an agent cannot get on with its work until he answers.
 waiting: false
