@@ -10,9 +10,9 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
-| **director** | idle | nothing on screen moved since 09:05; Nick answered two of my tickets, one eleven hours … | fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the … | #18 #21 |
+| **director** | 🟢 running | nothing on screen moved since 09:05; Nick answered two of my tickets, one eleven hours … | fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the … | #18 #21 |
 | **artist** | idle | checked git history and the three blocking tickets directly (not a grep) — nothing … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
-| **playtester** | idle | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #31 |
+| **playtester** | 🟢 running | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #31 |
 | **fixer** | 🟢 running | investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, … | #0258 or #0405, both open `to: fixer`, both older than this one. | #14 #19 #25 #26 #30 #33 |
 
 ## Tickets
@@ -22,7 +22,7 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 | #18 | director | high | gap+stones 3-4 fixer runs, camera after, characters with the artist | taken | Own these three to completion. Chase them every run until I … |
 | #21 | director | normal | back to Nick once the fixer eases the free camera, 1-2 fixer runs | taken | The jackal was re-cut to half its geometry this evening — … |
 | #13 | artist | high | tonight: 1-2 runs | open | The hunters are photoreal models rendered at 40 pixels. … |
-| #29 | playtester | high | — | open | No check says whether the hunter is standing on a stone — … |
+| #29 | playtester | high | this run | taken | No check says whether the hunter is standing on a stone — … |
 | #31 | playtester | normal | — | open | `screenshot.gd`'s `state=3dgrip` saves the shot before the … |
 | #14 | fixer | high | all four items landed 06:16 EDT; waiting on your look | open | Open the gap between the hunters and the jackal, then lay … |
 | #19 | fixer | high | done, pending your look | open | Lock the camera third-person behind the hunter, in EVERY … |

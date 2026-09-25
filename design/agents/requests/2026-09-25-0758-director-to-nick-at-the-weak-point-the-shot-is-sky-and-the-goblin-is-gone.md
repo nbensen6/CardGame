@@ -13,6 +13,7 @@ ask: At the weak point, reframe on the beast's head with the Goblin visible, or 
 waiting: false
 parent: 18
 issue: 27
+synced_comment: 5834383119
 ---
 
 # At the weak point the shot is sky, the beast is behind the cards, and the Goblin is gone
@@ -101,6 +102,10 @@ from turn one, not only at the payoff.
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
+
+**From GitHub #27 (nbensen6, 2026-09-25 14:49 UTC):**
+
+leave jackal alone. the camera should be following the frog, and should swap to the goblin when you swap characters
 
 ## Result
 

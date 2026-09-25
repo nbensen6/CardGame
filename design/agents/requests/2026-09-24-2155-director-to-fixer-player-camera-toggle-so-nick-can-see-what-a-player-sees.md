@@ -13,6 +13,7 @@ ask: Keep the wide gap with a longer lens, narrow the gap, or accept a smaller b
 waiting: false
 parent: 18
 issue: 19
+synced_comment: 5834342494
 ---
 
 # Lock the camera third-person behind the hunter, in EVERY build, and make the free camera the opt-in
@@ -145,6 +146,10 @@ Same question as the row above, now with a picture to point at:
   payoff and the resting shot stays as it is.
 
 ## Nick's answer
+
+**From GitHub #19 (nbensen6, 2026-09-25 14:46 UTC):**
+
+do not accept smaller beasts. reference risk of rain 2 camera behavior. very locked and full view
 
 ## Result, pass 2 — fixer, 2026-09-24 22:40 EDT
 

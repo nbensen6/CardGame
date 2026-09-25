@@ -13,6 +13,7 @@ ask: Plain rounded boulders, or keep the flat top and orange rim?
 waiting: false
 parent: 18
 issue: 23
+synced_comment: 5834348182
 ---
 
 # The near stone is a box with an orange lid; your drawing has plain boulders
@@ -70,6 +71,10 @@ answer.
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run
      tools\board_push.cmd. Leave the rest of the file alone — the agents read
      this section and do the bookkeeping themselves. -->
+
+**From GitHub #23 (nbensen6, 2026-09-25 14:46 UTC):**
+
+keep
 
 ## Result
 

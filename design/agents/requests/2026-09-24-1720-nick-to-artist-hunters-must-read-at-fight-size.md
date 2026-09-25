@@ -1,5 +1,4 @@
 ---
-
 tags:
   - request
 from: nick
@@ -14,9 +13,8 @@ ask: Are the Frog and Goblin good enough at fight size?
 waiting: false
 parent: 18
 issue: 13
+synced_comment: 5834276582
 ---
-
-
 
 # The hunters are photoreal models rendered at 40 pixels. Simpler, not more detailed.
 
@@ -106,6 +104,10 @@ the pixels do, not the size to design for.
   direction that caused this.
 
 ## Nick's answer
+
+**From GitHub #13 (nbensen6, 2026-09-25 14:42 UTC):**
+
+Looks good
 
 ## Result
 

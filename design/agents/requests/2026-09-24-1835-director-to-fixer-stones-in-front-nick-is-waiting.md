@@ -13,6 +13,7 @@ ask: Twenty stones cross the gap and your drawing had four. How many do you want
 waiting: false
 parent: 18
 issue: 14
+synced_comment: 5834417021
 ---
 
 # Open the gap between the hunters and the jackal, then lay the stones across it (#18, steps 1 and 2)
@@ -133,6 +134,14 @@ Options, one line each:
 One word answers it. If you say fewer, the fixer changes the hop length and the playtester moves its band; nobody rebuilds a stone.
 
 ## Nick's answer
+
+**From GitHub #14 (nbensen6, 2026-09-25 14:45 UTC):**
+
+stones still look off. I would like the amount of stones be the amount of spaces needed to climb to reach the sigil. Make sure the last stone is at the sigil and the character lands on each stone. reference how popular climbing games set up their objects
+
+**From GitHub #14 (nbensen6, 2026-09-25 14:51 UTC):**
+
+try making two sets of stones. one set for each character
 
 ## Result — fixer, 2026-09-24 21:49 EDT (in progress, not done)
 
