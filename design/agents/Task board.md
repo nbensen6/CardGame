@@ -10,9 +10,9 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
-| **director** | idle | the fight is better: the Frog lands on stones again in play; the grip shot everyone … | fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on … | #18 |
+| **director** | 🟢 running | the fight is better: the Frog lands on stones again in play; the grip shot everyone … | fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on … | #18 |
 | **artist** | idle | re-verified fresh again (import, tests, two renders) — all three Nick tickets still … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
-| **playtester** | idle | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #? |
+| **playtester** | idle | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #31 |
 | **fixer** | idle | investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, … | #0258 or #0405, both open `to: fixer`, both older than this one. | #14 #19 #25 #26 #30 |
 
 ## Tickets
@@ -22,7 +22,7 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 | #18 | director | high | gap+stones 3-4 fixer runs, camera after, characters with the artist | taken | Own these three to completion. Chase them every run until I … |
 | #13 | artist | high | tonight: 1-2 runs | open | The hunters are photoreal models rendered at 40 pixels. … |
 | #29 | playtester | high | — | open | No check says whether the hunter is standing on a stone — … |
-| #- | playtester | normal | — | open | `screenshot.gd`'s `state=3dgrip` saves the shot before the … |
+| #31 | playtester | normal | — | open | `screenshot.gd`'s `state=3dgrip` saves the shot before the … |
 | #14 | fixer | high | all four items landed 06:16 EDT; waiting on your look | open | Open the gap between the hunters and the jackal, then lay … |
 | #19 | fixer | high | done, pending your look | open | Lock the camera third-person behind the hunter, in EVERY … |
 | #25 | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
