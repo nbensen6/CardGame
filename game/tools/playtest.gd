@@ -75,16 +75,30 @@ const SIGIL_CLEAR_MARGIN := 0.05
 ## finished easing in yet.
 const SHOULDER_ENGAGED_MIN := 0.95
 
-## For check 9c (camera-ots-while-grounded): how far `_shoulder` may drift
-## above 0 before the resting shot counts as trucking toward
-## over-the-shoulder rather than sitting on the plain ground follow cam
-## (2026-09-24, #11). Small on purpose -- while nobody has climbed,
-## `_aim_camera`'s own `want_ots` is false (gated on `_focused`, which
-## `_focus_camera` never sets true until `anyone_off_ground` is true), so
-## `_shoulder` should read exactly 0.0 the whole time the fight is grounded;
-## this only exists so float noise, not a real truck, can never be mistaken
-## for one.
-const SHOULDER_GROUNDED_MAX := 0.05
+## For check 9c (camera-not-behind-hunter, was camera-ots-while-grounded):
+## NICK'S DECISION, LIVE, 2026-09-24 22:25 EDT (relayed by the director,
+## 2026-09-24-2233-director-to-playtester-checks-measure-the-old-route-and-
+## the-old-camera.md) -- "The camera should be locked to 3rd person on the
+## character," held "the whole fight... at rest" too, superseding #11's
+## "side-on/three-quarter, not over the shoulder" from the same evening. THE
+## NEXT FLIP OF THIS CHECK NEEDS HIS WORD, NOT A TICKET: it went
+## OTS-required (2026-09-23) -> OTS-forbidden (#11, 2026-09-24 19:18) ->
+## OTS-on-the-active-hunter-required again the same day, and an agent
+## "fixing" it back without asking is the exact flip-flop the director's
+## 18:40 note warned about.
+##
+## Minimum dot product between (camera - hunter, normalised) and (hunter -
+## beast-centre, normalised): 1.0 is dead-behind the hunter on the
+## hunter-to-beast axis, 0.0 is a pure side-on shot, negative means the
+## camera has swung past the hunter or in front of them. Measured on the
+## real, current resting shot (b0648db, GROUND_VIEW_DIST/GROUND_VIEW_EYE):
+## 0.98. Measured on a deliberately broken lock (`_lock_point` forced to
+## Vector2.ZERO, simulating the camera losing track of the active hunter
+## entirely): -0.99. 0.5 sits far below the real shot and far above the
+## broken one -- loose enough that pitch/height/establishing-ease jitter
+## never trips it, tight enough that a camera actually beside or in front of
+## the hunter still fails.
+const BEHIND_HUNTER_MIN := 0.5
 
 ## For check 5d (intent-tag-hides-jumping-hunter): reuses combat_3d.gd's own
 ## pure `hunter_screen_rect`/`_merged_aabb` to measure where the hop's hunter
@@ -506,44 +520,107 @@ func _check(v: Node, when: String) -> void:
 				_fail("party-roster-incomplete", "%s: party panel shows %d hunter row(s), model has %d"
 					% [when, rows, expect])
 
-	# 8. A hunter mid-climb stands ON the model's own climb marker
-	# (combat_3d._stand_on_model), not floating off beside the body or fallen
-	# back to the bounding-box guess that runs when a beast ships with no
-	# climb_N anchors (checklist item 2; this is the "hunters land within
-	# reach of a climb marker after a climb" check the baseline request asked
-	# for). Ground (t<=0.01) is the only branch skipped: _place_hunters'
-	# OWN branch order (combat_3d.gd _place_hunters) checks
-	# "not _climb_points.is_empty()" BEFORE "t >= 0.92", so on any beast this
-	# check even runs for -- the whole block above is gated on climb_points
-	# being non-empty -- the "stand directly on the sigil" branch the old
-	# comment here described is unreachable dead code; every non-ground foot,
-	# sigil included, actually goes through _stand_on_model/foothold_anchor.
-	# Used to skip t>=0.92 too, on the belief the sigil used a different,
-	# unrelated branch -- which silently exempted the Cinder Jackal's own
-	# sigil position (its loudest, most-climbed-to foothold) from ever being
-	# checked. Height matches _stand_on_model exactly (h.y = anchor.y,
-	# untouched by the side/clearance offsets), so any drift there means the
-	# wrong branch ran. x tolerance is exactly _stand_on_model's own side
-	# offset (stand_offset_x), so a hunter genuinely on the model's near/far
-	# side still passes and only a real miss (wrong anchor, stale
-	# climb_points, a fallback position) fails.
+	# 8. A hunter mid-climb stands ON the LIVE route (combat_3d._stand_on_model),
+	# not floating off beside the body or on a stale anchor (checklist item 2).
+	# Ground (t<=0.01) is the only branch skipped -- same as always, since
+	# every other foot goes through _stand_on_model regardless of whether it
+	# lands exactly on a named rung.
+	#
+	# Nick's 22:12 EDT commit (b0648db) rebuilt _stand_on_model: only the TOP
+	# hold (the sigil) still lands on the body at its own authored anchor --
+	# every rung below it now sits on route_pos()'s straight line from the
+	# ground to that top hold, evenly spaced by index (the whole point of the
+	# stone-path rewrite: a route that reads as steps, not a ladder bolted to
+	# the skin). This check used to compare `home` straight against the raw
+	# beast anchor, which was exactly right back when every rung WAS the
+	# anchor -- now that measures where a hunter USED to stand, unrelated to
+	# where route_pos actually puts a middle rung, and fired on all 8 real
+	# hunter placements in a full baseline the moment b0648db landed. Filed
+	# for exactly this (2026-09-24-2233-director-to-playtester-checks-
+	# measure-the-old-route-and-the-old-camera.md): point it at the live
+	# route instead of silencing it.
+	#
+	# Recomputes the SAME composition _stand_on_model uses, from its own
+	# already-exposed, already-pure static pieces (foothold_anchor,
+	# stand_offset_x, stone_point, ground_standoff_for, route_pos -- the same
+	# discipline 8b/8c already use for route.py's build-time rule), rather
+	# than calling _stand_on_model itself, so a wiring bug (the wrong
+	# foot/index/count reaching it) still has something independent to be
+	# measured against.
+	#
+	# The TOP branch (i>=n-1, including every foot beyond the highest named
+	# rung -- foothold_anchor clamps there, same as production) only checks
+	# x/y, real side included, never z: for a foot with no exact anchor,
+	# production's own z comes from `stand_z_for`'s hull query
+	# (`_front_of_beast`), which this file has no independent way to
+	# recompute (see stand_z_for's own doc comment on why the hull can pick
+	# up an unrelated part of the mesh) -- and the ORIGINAL version of this
+	# check never verified z either, for exactly that reason. y is always
+	# the raw anchor's own y, hull or no hull, so it still gets the same
+	# tight check it always had.
+	#
+	# The MIDDLE branch (i<n-1) is fully independent and exact: route_pos
+	# ignores side completely (see its own call inside _stand_on_model), so
+	# there is nothing left to absorb in a tolerance -- home should land on
+	# the computed point to well under a centimetre of float noise.
 	var climb_points: Variant = v.get("_climb_points")
 	var beast_box: Variant = v.get("_beast_box")
-	if c != null and hunters is Array and c.boss != null and climb_points is Dictionary \
-			and not (climb_points as Dictionary).is_empty() and beast_box is AABB:
-		var height: int = maxi(int(c.boss.weak_point_height), 1)
+	var route_ok: bool = c != null and hunters is Array and c.boss != null \
+		and climb_points is Dictionary and not (climb_points as Dictionary).is_empty() \
+		and beast_box is AABB
+	var route_top_hold := Vector3.ZERO
+	var route_rungs: Array = []
+	var route_ground_z := 0.0
+	var route_height := 1
+	if route_ok:
+		route_height = maxi(int(c.boss.weak_point_height), 1)
+		var box: AABB = beast_box
+		var top_h := 0
+		for hk in (climb_points as Dictionary).keys():
+			top_h = maxi(top_h, int(hk))
+		var top_p: Vector3 = v.call("foothold_anchor", climb_points, top_h)
+		var top_x: float = v.call("stand_offset_x", top_p.x, 0.0, box.size.x)
+		route_top_hold = v.call("stone_point", Vector3(top_x, top_p.y, top_p.z))
+		for hk2 in (climb_points as Dictionary).keys():
+			if int(hk2) > 0:
+				route_rungs.append(int(hk2))
+		route_rungs.sort()
+		route_ground_z = v.call("ground_standoff_for", box.end.z)
+	if route_ok:
 		var width: float = (beast_box as AABB).size.x
-		var tol: float = width * 0.055 + 0.30 + 0.05
-		for h in (hunters as Array):
-			var foot := int((h as Dictionary).get("foot", 0))
-			var t := clampf(float(foot) / float(height), 0.0, 1.0)
+		var tol_x: float = width * 0.055 + 0.30 + 0.05  # stand_offset_x's own max side swing, +slack
+		var n := route_rungs.size()
+		var cap: int = maxi(route_height, 1)
+		for idx in range((hunters as Array).size()):
+			var h: Dictionary = (hunters as Array)[idx]
+			var foot := int(h.get("foot", 0))
+			var t := clampf(float(foot) / float(route_height), 0.0, 1.0)
 			if t <= 0.01:
 				continue
-			var home: Vector3 = (h as Dictionary).get("home", Vector3.ZERO)
-			var anchor: Vector3 = v.call("foothold_anchor", climb_points, foot)
-			if absf(home.y - anchor.y) > 0.05 or absf(home.x - anchor.x) > tol:
-				_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its climb marker (home %v, anchor %v, x-tol %.2f)" \
-					% [when, foot, home.distance_to(anchor), home, anchor, tol])
+			var home: Vector3 = h.get("home", Vector3.ZERO)
+			var i := 0
+			for k in range(n):
+				if route_rungs[k] <= foot:
+					i = k
+			if n <= 1 or i >= n - 1:
+				# hunter_side_offset(players, i, height)'s own rule, read off
+				# the view's own _hunters instead of the model's players --
+				# same foothold values, same clamp, same -1/0/+1 result.
+				var side := 0.0
+				for j in range((hunters as Array).size()):
+					if j != idx and mini(int(((hunters as Array)[j] as Dictionary).get("foot", 0)), cap) == mini(foot, cap):
+						side = -1.0 if idx == 0 else 1.0
+				var anchor: Vector3 = v.call("foothold_anchor", climb_points, foot)
+				var x_expected: float = v.call("stand_offset_x", anchor.x, side, width)
+				if absf(home.y - anchor.y) > 0.05 or absf(home.x - x_expected) > tol_x:
+					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected x=%.2f y=%.2f, x-tol %.2f)" \
+						% [when, foot, home.distance_to(Vector3(x_expected, anchor.y, home.z)), home, x_expected, anchor.y, tol_x])
+			else:
+				var expected: Vector3 = v.call("route_pos", route_top_hold, route_ground_z, i, n)
+				var miss := home.distance_to(expected)
+				if miss > 0.10:
+					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected %v, tol 0.10)" \
+						% [when, foot, miss, home, expected])
 
 	# 8b. "A route only ever goes one way" -- Nick's approved rule from the
 	# stone-route design question (2026-09-23-1434, "How should the floating
@@ -606,30 +683,43 @@ func _check(v: Node, when: String) -> void:
 	# anchors can legally skip several Heights in a single hop, and that
 	# multi-Height jump has its own, much longer real distance and isn't what
 	# hop_arc()'s floor/ceiling were tuned for (route.py's own comment). That
-	# build-time gate is real, but exactly like 8b before this check existed,
-	# nothing re-checks it against what a player's own camera actually loads
-	# -- and the fixer's own 2026-09-24 status note already found, on the
-	# real shipped asset, that two of five hops (the ones nearest the sigil)
-	# still measure short after its partial fix. `_climb_points` is already
-	# in the SAME world units hop_arc() clamps against (combat_3d.gd:
-	# `next.origin * _beast_scale`, the literal Vector3s hop_arc() itself
-	# receives as `from`/`to`) -- so this reads the live rungs directly, no
-	# mesh-to-world conversion needed, and -- unlike 8b, which projects onto
-	# the horizontal sweep plane and deliberately ignores climb height --
-	# uses the FULL 3D distance, matching `from.distance_to(to)` exactly.
-	if climb_points is Dictionary and (climb_points as Dictionary).size() > 1:
-		var rungs3: Array = (climb_points as Dictionary).keys()
-		rungs3.sort()
-		for i in range(rungs3.size() - 1):
-			var a3: Vector3 = climb_points[rungs3[i]]
-			var b3: Vector3 = climb_points[rungs3[i + 1]]
+	# build-time gate is real, but nothing re-checks it against what a
+	# player's own camera actually loads -- and it measured the wrong thing
+	# the moment b0648db landed, same as check 8 above: `_climb_points` are
+	# the beast's own authored anchors, and every rung below the top hold no
+	# longer stands there at all -- it stands on route_pos()'s straight line
+	# from the ground to the top hold instead (see check 8's own comment for
+	# the full story). Measuring raw anchor-to-anchor distance after that
+	# change reported the SAME two hops short on every single run regardless
+	# of what route_pos actually built (2.38m/1.51m, unchanged across every
+	# baseline since 01:13 EDT on the 24th) -- a red baseline nobody trusts,
+	# describing a route that no longer exists. Filed for exactly this
+	# (2026-09-24-2233-director-to-playtester-...): measure the LIVE route's
+	# own consecutive rung-to-rung distances instead, reusing check 8's own
+	# `route_top_hold`/`route_rungs`/`route_ground_z` (the same pure static
+	# pieces, the same reasoning) so both checks agree on where a rung
+	# actually is. Still the FULL 3D distance between consecutive rungs,
+	# still scoped to ordinary Height-apart hops only (ground-to-first-rung
+	# is a different hop, not what hop_arc()'s floor/ceiling were tuned for
+	# -- see the request this rule came from).
+	if route_ok:
+		var n2 := route_rungs.size()
+		var pts: Array = []
+		for i in range(n2):
+			if i >= n2 - 1:
+				pts.append(route_top_hold)
+			else:
+				pts.append(v.call("route_pos", route_top_hold, route_ground_z, i, n2))
+		for i in range(pts.size() - 1):
+			var a3: Vector3 = pts[i]
+			var b3: Vector3 = pts[i + 1]
 			var d3 := a3.distance_to(b3)
 			if d3 < HOP_MIN_WORLD:
 				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (< %.2f floor) -- gets hop_arc()'s same minimum bounce regardless of how close the holds really are" \
-					% [when, rungs3[i], rungs3[i + 1], d3, HOP_MIN_WORLD])
+					% [when, route_rungs[i], route_rungs[i + 1], d3, HOP_MIN_WORLD])
 			elif d3 > HOP_MAX_WORLD:
 				_fail("hop-distance-band", "%s: ordinary hop Height %s->%s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
-					% [when, rungs3[i], rungs3[i + 1], d3, HOP_MAX_WORLD])
+					% [when, route_rungs[i], route_rungs[i + 1], d3, HOP_MAX_WORLD])
 
 	# 8d. JACKAL-BAR "the weak point is obvious... stays obvious as you climb
 	# toward it": the artist's fix (combat_3d.gd _place_sigil, 2026-09-24)
@@ -737,25 +827,43 @@ func _check(v: Node, when: String) -> void:
 			_fail("camera-not-over-shoulder", "%s: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f) -- reads as a plain follow cam, not third-person over the shoulder" \
 				% [when, shoulder, SHOULDER_ENGAGED_MIN])
 
-	# 9c. The other half of the same #11 split, checked explicitly rather
-	# than left to fall out of 9b's `climbing` gate by omission: while nobody
-	# has left the ground, the resting shot must NOT engage the
-	# over-the-shoulder truck -- #11's own bullet 4, "you are looking AT the
-	# fight, not down the hunter's neck." This is a real regression risk, not
-	# a hypothetical one: the director's 2026-09-24 18:40 note flags that
-	# this exact camera is being tuned from two directions at once (this
-	# playtester's own 2026-09-23 check enshrined OTS-at-rest; #11 asks for
-	# the opposite the very next day), and warns that if either agent "fixes"
-	# the other, the camera flips back. Gating 9b on `climbing` alone already
-	# makes it silent while grounded, but silence proves nothing happened,
-	# not that nothing broke -- so this checks the actual invariant
-	# `_focus_camera` now encodes (`anyone_off_ground` gates `_focused`)
-	# directly, live, every settled ground step.
-	if not airborne and not climbing and not establishing and cam != null:
-		var shoulder2: float = float(v.get("_shoulder"))
-		if focused or shoulder2 > SHOULDER_GROUNDED_MAX:
-			_fail("camera-ots-while-grounded", "%s: the resting shot engaged the over-the-shoulder truck (_focused=%s, _shoulder=%.3f) -- #11 calls this shot side-on/three-quarter, not over the hunter's shoulder" \
-				% [when, focused, shoulder2])
+	# 9c. FLIPPED, 2026-09-24 (2026-09-24-2233-director-to-playtester-checks-
+	# measure-the-old-route-and-the-old-camera.md) -- see BEHIND_HUNTER_MIN's
+	# own doc comment for the full timeline. This check went OTS-required
+	# (2026-09-23) -> OTS-FORBIDDEN (#11, 19:18 the next day, "you are looking
+	# AT the fight, not down the hunter's neck") -> OTS-on-the-active-hunter-
+	# required again, live, 22:25 EDT the same night: Nick's own words, "The
+	# camera should be locked to 3rd person on the character," held "the whole
+	# fight... at rest" too. THE NEXT FLIP NEEDS HIS WORD, NOT A TICKET -- an
+	# agent "fixing" this back to #11's shot without asking is exactly the
+	# flip-flop the director's 18:40 note warned about.
+	#
+	# Not the `_shoulder`/`_focused` TRUCK check 9b uses: that specific
+	# lateral peek is still mid-climb-only per Nick's own message in the same
+	# breath ("mid-climb the existing climb framing stays as it is"), and the
+	# fixer's own rebuild of the resting shot to also engage it is still open
+	# tonight (2026-09-24-2155-...) -- demanding `_shoulder` here would fail
+	# on the fixer's own not-yet-built code for no reason, and would directly
+	# contradict this ticket's own Done-when ("does not fire on b0648db's
+	# resting shot"). What b0648db's own 22:12 EDT commit ALREADY does, right
+	# now, is pivot the resting camera on the ACTIVE hunter's own position
+	# and stand it behind them (GROUND_VIEW_DIST/GROUND_VIEW_EYE) rather than
+	# off to the side framing the whole beast the way #11 asked for -- so
+	# that weaker, already-true invariant is what this checks: from the
+	# hunter's own eye level, does the camera sit roughly opposite the beast
+	# (a third-person chase angle) rather than beside or in front of them.
+	if not airborne and not climbing and not establishing and cam != null \
+			and hunters is Array and watched >= 0 and watched < (hunters as Array).size() \
+			and beast_box is AABB:
+		var mine3: Vector3 = ((hunters as Array)[watched] as Dictionary).get("home", Vector3.ZERO)
+		var eye3: Vector3 = mine3 + Vector3(0.0, SIGIL_HUNTER_HEIGHT, 0.0)
+		var to_beast3: Vector3 = (beast_box as AABB).get_center() - eye3
+		var to_cam3: Vector3 = cam.global_position - eye3
+		if to_beast3.length_squared() > 0.01 and to_cam3.length_squared() > 0.01:
+			var behind: float = to_cam3.normalized().dot(-to_beast3.normalized())
+			if behind < BEHIND_HUNTER_MIN:
+				_fail("camera-not-behind-hunter", "%s: the resting camera sits at %.2f on the behind-the-hunter axis (want >= %.2f) -- not a third-person shot on the active hunter (eye %v, cam %v, beast-centre %v)" \
+					% [when, behind, BEHIND_HUNTER_MIN, eye3, cam.global_position, (beast_box as AABB).get_center()])
 
 	# 10. JACKAL-BAR / checklist item 3, "the jump animation... the hunter
 	# faces sensibly": combat_3d.gd's own `_process` turns every hunter's body

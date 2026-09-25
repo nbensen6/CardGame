@@ -2,13 +2,102 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T21:16
-working_on: Baseline unchanged (no code moved since last run); added a live hunter-not-facing-beast check for checklist item 3.
+updated: 2026-09-24T23:44
+working_on: Retargeted hunter-off-marker/hop-distance-band/camera checks at the live route; filed a new 20m-hop finding.
 ---
 
 # playtester
 
-## This run — 2026-09-24 21:16 EDT
+## This run — 2026-09-24 23:44 EDT
+
+- **Did:** took #director's ticket — pointed 3 stale checks at the LIVE
+  route/camera instead of the pre-b0648db anchors.
+- **Worked?** Yes, and found a new bug: ordinary climb hops now measure
+  ~20m, 2-8x the intended ceiling.
+- **Next:** filed the 20m-hop finding to the fixer, high priority; not mine
+  to tune.
+- **Need from you:** nothing.
+
+![[frames/playtester/2026-09-24-hop-distance-20m-pop-in-strip.png]]
+One ordinary climb hop, 8 evenly-spaced frames: the frog is off-frame for 6
+of 8, then pops in already close to the beast — reads as a teleport.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | unchanged — closed several runs ago (Play feedback) |
+| 2 | hunters land on the beast correctly | `hunter-off-marker` re-pointed at the live route, 0 false fires; new finding on hop DISTANCE, filed to fixer |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged this run — the new 20m-hop finding is about distance/pacing, not the arc shape itself |
+| 4 | camera | `camera-ots-while-grounded` flipped to `camera-not-behind-hunter` per Nick's 22:25 EDT decision; 0 false fires |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+The director's ticket (`2026-09-24-2233-...`) named the exact problem: Nick's
+22:12 EDT commit (`b0648db`) rewrote the climb route (`route_pos()`, a
+straight line from the ground to the sigil) and the resting camera (parked
+behind the active hunter), but `hop-distance-band` and `hunter-off-marker`
+still read `_climb_points`, the beast's own authored anchors — measuring
+where a hunter USED to stand, not the live route. 62 stale
+`hop-distance-band` fails and a newly-broken `hunter-off-marker` (8 real
+fires, home up to 55m from its own anchor) were hiding whatever regression
+comes next behind noise nobody could trust. Landed before the fixer's own
+route/camera work tonight, per the ticket's own ask, so their playtests
+read honest results.
+
+**`hunter-off-marker`:** now checks a hunter's real `home` against the LIVE
+route instead of the raw anchor — `foothold_anchor`/`stand_offset_x` (real
+side) for the top hold, `route_pos()` (exact, side-independent) for every
+rung below it. Recomputed from the same pure static pieces `_stand_on_model`
+itself calls (not by calling it), so a wiring bug still has something
+independent to fail against. z is skipped for the one case this file has no
+way to verify independently — an off-anchor foot at the top hold, where
+production's own z comes from a hull query (`_front_of_beast`) this check
+can't recompute, same as the ORIGINAL version of this check. 0 fires across
+a full three-mode baseline; fires 2/2 when I reverted `_stand_on_model` to
+always return the old anchor-based position (temporary, reverted, never
+committed).
+
+**`hop-distance-band`:** now measures the live route's own consecutive-rung
+distances instead of raw anchor-to-anchor distance — and this is where the
+real find is. Every ordinary hop (Height 1→2 through 4→5) now measures
+**exactly 20.44m**, 2-8x `hop_arc()`'s 9.15m ceiling, on every single call
+(124 fails on a full 80-step baseline). This isn't the old, already-known
+"two hops too short" bug — it's new, bigger, and in the opposite direction.
+b0648db's route divides the gap it just widened (`GROUND_STANDOFF` 0.62 →
+4.2) into `n-1` EVEN steps regardless of the beast's own anchor spacing, so
+for the Cinder Jackal's 5 named rungs, a ~82-unit straight-line span becomes
+~20m per leg. Checked this is real three ways: hand-derived the same 20.44m
+independently from the beast's own printed numbers; temporarily shrank
+`GROUND_STANDOFF` back to its old value and got 0 fails, proving the check
+tracks real geometry both ways; and looked at the actual frames (above) —
+the hunter is invisible for most of an ordinary climb hop, then pops in
+close to the beast. Filed
+`2026-09-24-2344-playtester-to-fixer-ordinary-climb-hops-now-measure-20m.md`,
+high priority, with the frame — not mine to tune per the director's own
+ticket.
+
+**Camera (`camera-ots-while-grounded` → `camera-not-behind-hunter`):**
+flipped per Nick's live 22:25 EDT decision ("The camera should be locked to
+3rd person on the character," held "at rest" too) — the comment names the
+decision so the next flip needs his word, not a ticket. Deliberately NOT the
+`_shoulder`/`_focused` truck check 9b already owns (still mid-climb-only per
+Nick's own words in the same message, and the fixer's own rebuild of the
+resting shot to engage it there too is still open tonight) — checks the
+weaker, already-true thing b0648db's own commit already provides: from the
+active hunter's eye level, does the camera sit roughly opposite the beast
+(dot product ≥ 0.5) rather than beside or in front of them. Measured 0.98 on
+the real resting shot, -1.00 when I forced the camera's hunter-lock to fall
+back to the origin (temporary, reverted, never committed). 0 false fires
+across a full three-mode baseline.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after. Full baseline all
+three modes: `play` (80 steps) 124 `hop-distance-band`/0 everything else,
+`hover` 4/0, `hands` (1-10) 44/0 — the ONLY open item now is the new 20m-hop
+finding, filed above.
+
+## Old: 2026-09-24 21:16 EDT
 
 - **Did:** full 3-mode baseline (no regressions, matches last run exactly);
   added `hunter-not-facing-beast` — checks a hunter's body actually turns to
@@ -2037,6 +2126,13 @@ remain the backstop for that; keep saving them.
 
 ## Log
 
+- 2026-09-24 23:44 EDT — took #director's checks-measure-the-old-route
+  ticket: `hunter-off-marker`/`hop-distance-band` now read the live route
+  (`route_pos`/`_stand_on_model`), camera check flipped to
+  `camera-not-behind-hunter` per Nick's 22:25 EDT decision. 0 false fires,
+  both directions proven for all three checks. Found a new bug in the
+  process: ordinary climb hops now measure 20.44m, 2-8x the ceiling — filed
+  to the fixer, high priority, with a frame.
 - 2026-09-24 21:16 EDT — baseline unchanged (no code moved since last run,
   #14 still open); new check `hunter-not-facing-beast`. 0 fires on real
   code, 18/18 when broken on purpose, reverted clean.
