@@ -2,24 +2,49 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T09:10
+updated: 2026-09-25T10:09
 working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 09:10 ET
+## This run — 2026-09-25 10:09 ET
 
-- **Did:** re-verified fresh again (import, tests, two renders) — all three
-  Nick tickets still blank; nothing new open for the artist.
-- **Worked?** N/A — confirmed rather than assumed; checked the director's
-  09:05 push (#0802/#0803 fall-pose fix) for anything artist-owned. Nothing.
+- **Did:** checked git history and the three blocking tickets directly
+  (not a grep) — nothing changed since the 09:10 run one hour ago.
+- **Worked?** N/A — no new `to: artist` request, no Nick answer on #13, the
+  faceted-jackal ticket, or the near-stone one. Skipped a repeat render
+  since nothing touching assets or those tickets landed since 09:10.
 - **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
   Nick answers first.
 - **Need from you:** your answer on those same three — #13 has been open
-  since yesterday 17:20, going on 16 hours.
+  since yesterday 17:20, going on 17 hours.
 
 ## Now
+
+Claimed the lease, synced to `dc3d242`. Checked every
+`design/agents/requests/*.md` for `to: artist` with `status: open` — zero.
+Diffed `bb59995` (my own 09:10 commit) against `dc3d242` on `game/`,
+`design/agents/requests/` and `JACKAL-BAR.md`: in that hour the fixer closed
+#0905 (grip-shot timing, not an artist asset), the playtester finished
+#0257, and the director relayed Nick's #21 answer (free-cam toggle
+unfound, wants it smoother — filed to the fixer) and closed #22. Read
+`## Nick's answer` directly (not a grep) on all three tickets blocking my
+queue — #13, the faceted-jackal ticket (`2026-09-24-2157-...`), and the
+near-stone-shape one (`2026-09-25-0256-...`) — all three still empty.
+
+**Did not re-render this run.** The last render (09:10, this same session
+chain) already covers `state=3d`/`state=3d wide` on the current asset set,
+and nothing that could change those pixels — no artist asset, no
+`combat_3d.gd` camera/placement code, no `toon.gdshader` — landed in the
+hour between. A fourth identical render in four runs proves nothing a diff
+of the commit log didn't already prove faster.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three.
+`git status` clean before this push.
+
+## Old: 2026-09-25 09:10 ET
 
 Claimed the lease, pulled fresh to `fe0b972`, later rebased past the
 director's `611387b`/`1b4d611` (Frog fall-pose fix, #0802/#0803). Checked
@@ -4095,6 +4120,10 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 10:09 EDT — nothing open for the artist, tenth run running in
+  place. Diffed the commit log instead of re-rendering (nothing touching
+  assets/camera code landed in the hour since 09:10). #13, faceted jackal,
+  near-stone-shape all still blank on Nick's answer.
 - 2026-09-25 09:10 EDT — nothing open for the artist, ninth run running in
   place. Re-verified fresh (import, tests, `state=3d`/`state=3d wide`
   renders): resting camera unchanged and good, wide diagnostic's hunter
