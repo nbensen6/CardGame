@@ -19,6 +19,8 @@
 ##   hand=leap,hop,brace (deal exactly these cards, instead of trusting the shuffle)
 ##   console="hand crescendo;foil on" (run dev-console commands, semicolon separated)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
+##   press=F8 (feed one real key press before the shot — for a live-toggle key
+##     whose only visible effect is a HUD note, not a layout change)
 extends SceneTree
 
 var _out := "shot.png"
@@ -49,6 +51,11 @@ var _console := ""
 ## there without letting go. A screenshot cannot drag, so without this the
 ## whole drag-to-play gesture could only ever be claimed to work.
 var _drag := ""
+## press=F8 — feed one real key press through Input.parse_input_event before
+## the shot, same path a keyboard does. For a live-toggle key (a HUD note that
+## appears and fades, not a layout change) this is the only way a screenshot
+## can show it took effect at all.
+var _press_key := ""
 
 
 ## Take the shot without stealing the screen.
@@ -107,6 +114,8 @@ func _initialize() -> void:
 			_console = a.substr(8)
 		if a.begins_with("drag="):
 			_drag = a.substr(5)
+		if a.begins_with("press="):
+			_press_key = a.substr(6)
 		if a.begins_with("out="):
 			_out = a.substr(4)
 		elif a.begins_with("state="):
@@ -800,6 +809,15 @@ func _capture() -> void:
 			for _i in 3:
 				await process_frame
 			print("HOVER card %d lifted" % _hover)
+	if _press_key != "":
+		var code := OS.find_keycode_from_string(_press_key)
+		if code == KEY_NONE:
+			print("PRESS unknown key '%s'" % _press_key)
+		else:
+			_press(code)
+			for _i in 3:   # let the key reach _unhandled_input and its note draw
+				await process_frame
+			print("PRESS %s" % _press_key)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
 	if _state in ["3dosu", "3dbar", "3dslide"]:  # open a timed card's window and hold it there

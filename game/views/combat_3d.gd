@@ -2765,7 +2765,7 @@ func _cycle_beast(step: int) -> void:
 ## A line of text at the top of the screen that goes away on its own. Deliberately
 ## built here rather than added to the scene: it is a tool, and a tool that only
 ## exists when you press its key cannot be left switched on by accident.
-func _dev_note(text: String) -> void:
+func _dev_note(text: String, seconds: float = 2.6) -> void:
 	var old := get_node_or_null("DevNote")
 	if old != null:
 		old.queue_free()
@@ -2780,7 +2780,7 @@ func _dev_note(text: String) -> void:
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(l)
 	var tw := create_tween()
-	tw.tween_interval(2.6)
+	tw.tween_interval(seconds)
 	tw.tween_property(l, "modulate:a", 0.0, 0.8)
 	tw.tween_callback(l.queue_free)
 
@@ -2799,6 +2799,16 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key != null and key.pressed and key.keycode == KEY_F9:
 		print("DEV cards: %s" % Dev.cycle())
 		_render_hand()
+		return
+	# F8 flips the Menu's own Camera: Player/Dev toggle live. Nick, 22:25 EDT:
+	# "I still cannot find the toggle" -- it is three taps deep in the settings
+	# panel, so give it a key too, the same way F9 saves a trip to the console
+	# for the thing IT flips. Not gated on free_camera_allowed: the whole point
+	# is turning Dev ON when the free camera is currently off.
+	if key != null and key.pressed and key.keycode == KEY_F8:
+		var next := not Progress.dev_camera_enabled()
+		Progress.set_dev_camera_enabled(next)
+		_dev_note("Camera:  %s" % ("Dev" if next else "Player"), 1.0)
 		return
 	# The free camera (drag to orbit, right/middle-drag to pan, wheel to zoom,
 	## WASD/QE to fly — see _fly()) is a LOCAL DEV TOOL, not something normal

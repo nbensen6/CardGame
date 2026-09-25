@@ -2608,6 +2608,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_dev_camera_enabled_defaults_to_player_with_no_config()
 	_test_backlog_dev_camera_enabled_round_trips_dev()
 	_test_backlog_dev_camera_enabled_round_trips_back_to_player()
+	_test_backlog_f8_flips_dev_camera_enabled_live()
 
 	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
 	# HP bar, clear of the hand) never accounted for the top-left party panel,
@@ -27077,6 +27078,35 @@ func _test_backlog_dev_camera_enabled_round_trips_back_to_player() -> void:
 	Progress.set_dev_camera_enabled(false)
 	_expect(Progress.dev_camera_enabled() == false,
 		"switching back to Player must stick too, not just leave the non-default value behind")
+
+
+## Nick, live, 22:25 EDT: "I still cannot find the toggle" -- it is three taps
+## deep in the settings panel. F8 flips the same Progress.dev_camera_enabled
+## the Menu button does, through the real _unhandled_input path (a bare
+## Combat3D, same idiom as the _switch_to tests above), and drops a HUD note
+## saying which state it landed in.
+func _test_backlog_f8_flips_dev_camera_enabled_live() -> void:
+	Progress.use_scratch_slot("run_tests_backlog_f8_camera_toggle")
+	Progress.set_dev_camera_enabled(false)
+	# create_tween() (inside _dev_note, the same HUD-note mechanism F9 already
+	# uses) needs a live tree, hence the real scene + get_root() idiom above
+	# rather than a bare Combat3D.new().
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	var f8 := InputEventKey.new()
+	f8.keycode = KEY_F8
+	f8.pressed = true
+	c3d._unhandled_input(f8)
+	_expect(Progress.dev_camera_enabled() == true,
+		"F8 must flip Player to Dev, the same value the Menu button writes")
+	var note := c3d.get_node_or_null("DevNote") as Label
+	_expect(note != null and note.text == "Camera:  Dev",
+		"F8 must show which state it landed in, or the flip is invisible until you open the Menu to check")
+	c3d._unhandled_input(f8)
+	_expect(Progress.dev_camera_enabled() == false,
+		"a second F8 must flip it back to Player, not get stuck on Dev")
+	get_root().remove_child(c3d)
+	c3d.free()
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never

@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Camera toggle Nick can find.** The Player/Dev button exists in the
+- [?] **Camera toggle Nick can find.** The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
       config slot and it sticks). Make Player the state he lands in, and bind
@@ -58,3 +58,14 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 
 ## Proposed (found by the builder, not yet ordered by Nick)
 
+- [ ] (proposed) The "screenshot.gd sets Dev on the real config slot and it
+      sticks" suspicion from the camera-toggle item didn't hold up: it
+      redirects to a scratch config before ever touching dev_camera_enabled,
+      and the real user://progress.cfg on this machine has no such key. The
+      Player-by-default fix already landed 2026-09-24 (fixer); nothing to do
+      here unless it resurfaces.
+- [ ] (proposed) F8's new HUD note (top-centre, shared with F9's) can overlap
+      the boss intent badge when one is showing. Cosmetic; low priority.
+- [ ] (proposed) The in-fight settings panel's own Camera button label goes
+      stale if F8 is pressed while the panel is open (fixes itself on next
+      open/close). Cosmetic; low priority.
