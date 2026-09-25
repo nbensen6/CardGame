@@ -6,68 +6,75 @@ to: fixer
 status: open
 priority: high
 beast: cinder_jackal
-eta:
+eta: tonight, first: 1 run
 created: 2026-09-24T21:55
 taken_by:
 ask:
 waiting: false
 ---
 
-# A Dev / Player camera switch in the menu, so Nick can see the camera a player gets
+# Lock the camera third-person behind the hunter, in EVERY build, and make the free camera the opt-in
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
-## What I need
+## What I need — Nick, live, 2026-09-24 22:25 EDT (relayed by the director)
 
-- Relayed from Nick, #18, 2026-09-24 19:48 EDT: *"have an agent create a dev
-  mode vs player mode option so I can see the camera angle the player will
-  see. I would like to be able to toggle this in the settings."*
-- Add one toggle to the in-fight Menu, beside the keybinds: **Camera: Dev /
-  Player**. On Player, the free camera (drag-orbit, pan, wheel, WASD) is off
-  even in a debug build, exactly as it is in a release export. Nothing else
-  changes.
-- Persist it the way the keybinds are persisted, so it survives a relaunch.
-  Default: Dev in a debug build, Player in a release build — so every harness
-  screenshot and playtest is byte-identical to today with nothing set.
-- **Order:** finish the #14 pass you are on now, then take this as your ONE
-  thing next run — it is a run's work — then back to #14.
-- Do NOT build the close third-person camera in this ticket. That is step 3
-  of #18 and comes after #14. This switch only makes today's *player* camera
-  visible to Nick; it does not change what that camera does.
-- Do NOT remove the free camera from dev builds, and do NOT touch the
-  screenshot/playtest states.
+- **"The camera should be locked to 3rd person on the character. I still
+  cannot find the toggle."** Before he wakes up tomorrow. The toggle does not
+  exist yet — this ticket was filed at 21:55 and nothing has been built.
+- **Flip the default.** Normal play, in a debug build too, is the locked
+  third-person camera: drag, pan, wheel and WASD do nothing. The free camera
+  is an opt-in in the Menu — **Camera: Player / Dev** — Player by default
+  everywhere, persisted next to the keybinds. Nick must not have to find
+  anything to get the locked camera.
+- **The shot he wants is Risk of Rain 2's** (his picture, 22:30 EDT): the
+  camera low and just behind the active hunter, a touch above, looking
+  slightly down. The hunter's BACK at bottom-centre, about a quarter of the
+  frame tall. The beast ahead, filling most of the upper two thirds, a
+  little off-centre. His 22:12 commit already parks the ground camera 9 units
+  behind the hunter — tune from there: lower, closer, pitched down a little,
+  pivot on the ACTIVE hunter (not the midpoint of the pair), the other
+  hunter off to one side, never dead centre in front.
+- Held the whole fight: after End Turn, after Switch, at rest. Mid-climb the
+  existing climb framing stays as it is (his commit left it untouched).
+- Do NOT rebuild the climbing camera. Do NOT remove the free camera from
+  the Dev setting. Do NOT touch the screenshot/playtest states beyond what
+  the new default forces; re-baseline them and say so.
+- Then hand it back per COMMON §5: `to: nick`, `status: open`, `ask:`
+  "Is this the Risk of Rain shot you wanted?", a 1:1 `state=3d` frame.
 
 ## What
 
-What Nick sees today: he plays through `tools/dev.cmd`, a debug build, so
-`free_camera_allowed()` is always true for him and the lock shipped on #3 has
-never once applied to him. He has no way to look at the fight the way a
-player will, which is why every camera ticket ends with him unable to say
-whether it is right. Until this exists he cannot judge #18 step 3 at all, so
-it goes in before that camera work, not after.
+What he sees tonight, 1:1, on his own commit — close, but the pivot is the
+pair's midpoint so a stone sits dead centre between the two hunters, and it
+is not yet locked for him because his build is a debug build:
 
-The cheapest shape: `free_camera_allowed(is_debug_build)` gains the setting
-as a second input (`false` wins), the menu gets one two-state button, the
-value lives next to the keybinds in the same config file. The existing
-`free_camera_allowed` tests get a third case.
+![[frames/director/2026-09-24-2232-director-after-nicks-camera-commit.png]]
+
+The cheapest shape: `free_camera_allowed(is_debug_build, player_mode)` with
+`player_mode` true by default from the same config the keybinds use; one
+two-state button in the Menu beside them; the existing gate tests get the
+new default case. The framing numbers live where his commit put the 9-unit
+standoff.
 
 ## How to see it
 
-Open the fight, Menu, flip Camera to Player, close the menu, drag on the
-arena: the view must not move. Flip back to Dev: it orbits again.
+Open the fight through `tools/dev.cmd`, do nothing: the camera is behind
+the Frog, low, the jackal ahead. Drag: nothing moves. Menu → Camera: Dev →
+drag: it orbits.
 
 ## Done when
 
-- The toggle is in the Menu and Nick can flip it in play without restarting.
-- With Player set, none of drag-orbit / pan / wheel / WASD moves the camera in
-  a debug build; with Dev set, all of them still work.
-- It survives a relaunch.
-- `run_tests.gd`: `ALL TESTS PASSED`, including a case that Player forces the
-  gate false even when `is_debug_build` is true.
-- `state=3d`, `3dclimb`, `3dgrip` screenshots pixel-identical to before with
-  nothing set; frames in `## Result`.
-- Then set `to: nick`, `status: open`, `ask:` "Flip Camera to Player in the
-  menu — is that the view you wanted to check?" and let him close it.
+- Fresh launch of a debug build: locked third-person, nothing in the Menu
+  touched. Drag / pan / wheel / WASD move nothing.
+- Menu → Camera: Dev restores the free camera; it survives a relaunch.
+- `run_tests.gd`: `ALL TESTS PASSED`, including "Player forces the gate false
+  even when `is_debug_build` is true" and "Dev restores it".
+- `state=3d` at 1:1: hunter's back bottom-centre ~1/4 frame tall, beast in
+  the upper two thirds. Frame in `## Result`, beside Nick's Risk of Rain
+  picture (ask him to drop it in `design/art/references/` — it arrived in
+  chat).
+- Handed back to Nick, never `done`.
 
 ## Nick's answer
 

@@ -2,11 +2,11 @@
 tags:
   - request
 from: director
-to: director
-status: open
+to: fixer
+status: taken
 priority: high
 beast: cinder_jackal
-eta: stones need a parametric-path rewrite (2-3 runs) once the camera question below is settled
+eta: tonight, after the camera ticket: 2-3 runs
 created: 2026-09-24T20:08
 taken_by: fixer
 ask: item 1's Done-when (a visible ground gap in state=3d) can't be met without touching the camera you told fixer not to touch — which one gives?
@@ -20,7 +20,32 @@ issue: 14
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 
-## What I need
+## What I need — Nick, live, 2026-09-24 22:25 EDT (relayed by the director)
+
+- **"The stones should be in a pattern from left to right to the head of the
+  jackal."** Before he wakes up tomorrow.
+- **His own commit at 22:12 (`b0648db`) is the base. Do not revert it.** It
+  opened the gap, put the ground camera 9 units behind the hunter, and laid
+  the route as one straight line ahead. Build on `route_pos()`.
+- The line is straight AHEAD, so from behind the hunter the stones stack one
+  over the other (frame below). Sweep it sideways: first stone low and to
+  the LEFT of the hunter, each next one further RIGHT and higher, the last
+  at the head. In his drawing the path is a diagonal across the picture.
+- Keep the even spacing he measured (his commit: one line, even steps — five
+  destinations gave five step lengths and broke the hop band). A lateral
+  sweep with even arc length keeps that.
+- Do NOT re-enter `route.py`'s raycast search (proven dead end, 21:49). Do
+  NOT move the sigil. Do NOT widen the camera to show the path — the camera
+  is the other ticket.
+- While you are in the stone code: load the artist's new
+  `game/assets/3d/env/foothold_rock.glb` for the hold body (it landed at
+  22:28 but is not wired in; the frame still shows the pot).
+- Then hand it back per COMMON §5: `to: nick`, `status: open`, `ask:`, a
+  1:1 `state=3d` frame. Never `done`.
+
+![[frames/director/2026-09-24-2232-director-after-nicks-camera-commit.png]]
+
+## What I need (director, 20:08 EDT — still the shape of the work)
 
 - **First, the gap.** Move both hunters' ground positions well back from the
   beast — a real stretch of empty dark ground between them and its paws.
@@ -241,3 +266,12 @@ question, so you are not waiting on me:**
 3. **Order next run:** the camera switch Nick asked for (one run, filed
    21:55, high), then back here: gap number + harness frame first, approach
    stones second. Fill `eta:` with that.
+
+## Director — 2026-09-24 22:32 EDT
+
+Back to `to: fixer`, `status: taken`. The camera question you handed me at
+21:49 is answered by Nick himself: his 22:12 commit stops the ground camera
+fitting the beast and parks it 9 units behind the hunter. The 21:59 call
+above (harness-only state, "camera does not give") is superseded by that;
+the camera work is now the 21:55 ticket, rewritten tonight. Order tonight:
+the camera ticket first (one run), then this.

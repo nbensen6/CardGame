@@ -127,3 +127,23 @@ run pushed nothing at all (no commit, no note); its 21:20 run claimed #14 at
 21:33 and is live as I write. #3 (your 09-23 ticket, same three things)
 closed into here so there is one row per outcome. #13 unchanged, blocked on
 #14 by the artist's own correct call.
+
+## Result — director, 2026-09-24 22:33 EDT (in progress)
+
+**Nick, live at 22:25, and his own commit at 22:12.** He opened the gap,
+laid a straight route and put the ground camera 9 units behind the hunter
+himself; then said, in chat: smooth character models with clean outlines,
+stones in a pattern left to right to the head, camera locked third person
+(and "I still cannot find the toggle" — it was never built). At 22:30 he
+sent a Risk of Rain 2 frame as the camera target. All three are due before
+he wakes.
+
+| ask | ticket | who | order tonight |
+|---|---|---|---|
+| camera locked third-person, Risk of Rain shot, free cam opt-in | 21:55 ticket, rewritten | fixer | first, 1 run |
+| stones left → right → head, on his `route_pos()` | #14 | fixer | second, 2-3 runs |
+| smooth hunters, clean outline | #13 | artist | now, 1-2 runs |
+| checks read the old route / old camera | 22:33 ticket | playtester | now, so the fixer's playtests are honest |
+
+The toggle he asked for at 19:48 is folded into the camera ticket with the
+default flipped: locked is what everyone gets; Dev is the opt-in.

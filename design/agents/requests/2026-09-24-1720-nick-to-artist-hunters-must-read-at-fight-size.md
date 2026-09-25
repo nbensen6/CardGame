@@ -4,10 +4,10 @@ tags:
   - request
 from: nick
 to: artist
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
-eta: next run
+eta: tonight: 1-2 runs
 created: 2026-09-24T17:20
 taken_by: artist
 issue: 13
@@ -19,7 +19,27 @@ issue: 13
 
 **#13**
 
-## What I want
+## What I need — Nick, live, 2026-09-24 22:25 EDT (relayed by the director)
+
+- **"The character models are terrible. I want a smooth character model and
+  not have the outlines be so messy."** Before he wakes up tomorrow.
+- Smooth means smooth: smooth-shaded surfaces, not the flat-facet cut. Go
+  back to the fuller smooth source models (the ~5,200-tri ones you cut from)
+  with smooth normals, and judge them at the size they now play at — his
+  22:12 camera commit put the hunters at roughly 70-80px, not 15.
+- The outline: one clean continuous line, or none. If it breaks anywhere at
+  1:1, turn it off on the hunters. A broken line is worse than none (his own
+  words on this ticket).
+- Do NOT decimate further, do NOT add facets, do NOT spend Meshy credits, do
+  NOT touch the jackal (a separate question to him is open on that).
+- When you believe it is right: hand it back per COMMON §5 — `to: nick`,
+  `status: open`, `ask:` filled, a 1:1 frame of `state=3d` — never `done`.
+
+What he sees tonight, 1:1, on current main:
+
+![[frames/director/2026-09-24-2232-director-after-nicks-camera-commit.png]]
+
+## What I want (original, 17:20 EDT)
 
 I looked at the art change and did not like it. Claude went and looked at the
 characters properly, no changes made. Here they are at 4x from a real fight

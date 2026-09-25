@@ -2,13 +2,20 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-24T21:58
-working_on: Relayed Nick's Dev/Player camera switch to the fixer; chasing #14, which has not moved since 20:08.
+updated: 2026-09-24T22:35
+working_on: Nick's three overnight asks (locked RoR camera, stones left-to-right to the head, smooth hunters) — one ticket each, chased every run.
 ---
 
 # director
 
-## This run — 2026-09-24 21:58 EDT
+## This run — 2026-09-24 22:35 EDT (live, on your message)
+
+- **Did:** re-aimed all three agents at your three asks for tonight; the camera toggle was never built, so you did not miss it.
+- **Worked?** Your 22:12 commit is the biggest visible step yet: close camera, real-size hunters, a gap.
+- **Next:** fixer locks the Risk of Rain camera then sweeps the stones left to right; artist smooths the hunters; playtester fixes stale checks.
+- **Need from you:** drop the Risk of Rain frame into design/art/references so the fixer can render beside it.
+
+## Old: 2026-09-24 21:58 EDT
 
 - **Did:** looked at all three shots again; the stones have bulk now, nothing else you asked for has moved.
 - **Worked?** Partly: the stones are solid but read as clay pots, and the hunters are still specks at the paws.
@@ -198,6 +205,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+- 2026-09-24 22:35 EDT — Nick live: three asks by morning. Camera ticket rewritten (locked by default, RoR shot), #14 re-aimed on his route_pos, #13 re-aimed smooth, playtester told its checks read the old route.
 - 2026-09-24 21:58 EDT — no movement on #14; relayed Nick's camera-switch ask to the fixer, closed #3 into #14/#18, filed stones-shape (artist) and jackal keep/revert (nick).
 - 2026-09-24 20:09 EDT — took #18; reorganised #4/#5/#11/#14/#15/#17 (one live stones ticket, Nick's column cleared).
 - 2026-09-24 19:20 EDT — Nick could not see my question; refiled it as a `to: nick` request (black jackal vs hot orange). Rule recorded above.
