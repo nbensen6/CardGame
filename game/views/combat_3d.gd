@@ -399,7 +399,11 @@ const GROUND_VIEW_PITCH := 0.08
 ## smallest tilt that puts the sigil's own screen y (VIS OK sigil, printed by
 ## screenshot.gd) in the frame's upper half at the harness's own weak-point
 ## scenario -- tune against that printout, not against algebra.
-const CLIMB_FOCUS_PITCH_MAX := 0.55
+const CLIMB_FOCUS_PITCH_MAX := 0.2
+## Stand-off at the top hold. The hunter stands in front of the face there
+## (top_hold_z_for), so the shot is of the face: further back than the
+## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.
+const SIGIL_VIEW_DIST := 14.0
 ## A trusted anchor's clearance term comes out at (or near) zero -- the anchor
 ## IS the surface, and `climb_dist_for` no longer pads it with a hull guess.
 ## At exactly zero the lens sits on the mesh itself, which reads as clipping
@@ -1264,7 +1268,10 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	# the screen with beast and left the hunter under the cards, which answers the
 	# wrong question — the whole point is showing you WHO you are holding.
 	var slot: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
-	_focus_lift = window * lift
+	# Less lift the higher the hold: the top shot stands back to SIGIL_VIEW_DIST,
+	# where the same world-unit lift is fewer pixels of headroom over the card
+	# fan and the hunter's feet landed on its top edge (2026-09-25, 16:50).
+	_focus_lift = window * lift * lerpf(1.0, 0.5, clampf(_climb_t, 0.0, 1.0))
 	var foot := 0
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
@@ -2540,7 +2547,22 @@ func _top_hold(side: float = 0.0) -> Vector3:
 		top = maxi(top, int(h))
 	var p: Vector3 = foothold_anchor(_climb_points, top)
 	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
-	return stone_point(Vector3(x, p.y, p.z))
+	# The last stone stands IN FRONT of the head (Nick's drawing, 2026-09-25),
+	# not on the sigil's anchor. The anchor is a point on the skin where the
+	# sigil is painted; on a face that is behind the muzzle, and on the Cinder
+	# Jackal the muzzle reaches ~13 units further forward at that height. A
+	# stone at the anchor put the hunter, and the camera pivot with it, inside
+	# the head -- the 16:24 frame was the ear from the inside. Same clearance
+	# rule a between-rung hold already uses.
+	var z: float = top_hold_z_for(p.z, _front_of_beast(x, p.y))
+	return stone_point(Vector3(x, p.y, z))
+
+
+## The top stone's z: the sigil's own anchor, or the local face plus a hunter's
+## worth of standing room, whichever is further forward. Static so the one
+## rule is provable headless.
+static func top_hold_z_for(anchor_z: float, hull_front: float) -> float:
+	return maxf(anchor_z, hull_front + HUNTER_HEIGHT * 0.45)
 
 
 func _rung_index(foot: int) -> int:
@@ -2635,6 +2657,12 @@ static func climb_focus_for(anchors: Dictionary, foot: int, hull_front: float,
 	var front_z := foothold_anchor(anchors, foot).z if trust_anchor else hull_front
 	var pad := EXACT_RUNG_CLEARANCE_PAD if trust_anchor else 0.0
 	var dist := climb_dist_for(front_z, pivot_z) + pad
+	if climb_t >= 1.0:
+		# At the top the subject is the FACE the hunter stands in front of, and
+		# a face 20 units tall from 8 units back is a black wall (2026-09-25,
+		# 16:40 frame). Stand back far enough that the hunter clears the card
+		# fan and the eyes are in the upper half.
+		dist = maxf(dist, SIGIL_VIEW_DIST)
 	var pitch := lerpf(GROUND_VIEW_PITCH, CLIMB_FOCUS_PITCH_MAX, clampf(climb_t, 0.0, 1.0))
 	return Vector2(dist, pitch)
 
@@ -3531,25 +3559,6 @@ static func stand_needs_hull_clearance(anchors: Dictionary, foot: int) -> bool:
 ## Defaults to 0.0 (centred, today's behaviour) for callers that don't climb
 ## the gap -- the ledge-ring marker below is the one that leans on that.
 func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3:
-	var p: Vector3 = foothold_anchor(_climb_points, foot)
-	# Two hunters on one ledge stand apart rather than inside each other.
-	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
-	# Only a lerped, off-anchor foothold needs the hull's guess — see
-	# stand_z_for above. Skip the hull query on an exact rung AND on any foot
-	# past the model's highest climb marker (stand_needs_hull_clearance,
-	# #0802 reopened): both land on a clamped, already-correct anchor with
-	# nothing for the hull to add, and asking it anyway is what put a hunter
-	# 13+ units from the sigil's own stone on every Height past the weak point.
-	var z: float = p.z
-	if stand_needs_hull_clearance(_climb_points, foot):
-		# And OUT to the body's real surface at that spot, not a fraction of
-		# the bounding box. The anchors are authored on the surface in
-		# Blender, but a point ON a surface is still half a hunter inside it,
-		# and the old nudge (0.025 of the box depth) was a box-sized guess
-		# about a shape that is not a box — too small on a deep chest, far
-		# too large beside a thin limb.
-		var clear: float = _front_of_beast(x, p.y) + HUNTER_HEIGHT * 0.45
-		z = stand_z_for(_climb_points, foot, p.z, clear)
 	# Out onto the floating stone (Nick, 2026-09-23: "make sure the characters
 	# actually land on the stones"). The stone hangs at stone_point() and the
 	# hunter has to stand on it, so one rule places both.
@@ -3561,14 +3570,16 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	# is deliberately inside _stand_on_model rather than only on the decorative
 	# rock, because the stone and the hunter standing on it have to be one rule
 	# -- move only the rock and hunters hop onto empty air beside it.
-	var on_body := stone_point(Vector3(x, p.y, z))
+	# The top rung IS the top stone: one position for the stone and the hunter
+	# on it, so nobody can hang beside it (Nick, 2026-09-25: "hopping in air,
+	# not stones").
 	var n := _rung_count()
 	var i := _rung_index(foot)
 	# The TOP hold is the one place the route must still touch the beast -- it
 	# is the sigil, the thing you are climbing to. Every rung below it is a step
 	# on the line leading there, so the top is what that line is drawn to.
 	if n <= 1 or i >= n - 1:
-		return on_body
+		return _top_hold(side)
 	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z), i, n,
 		STONE_SWEEP_WIDTH)
 

@@ -971,6 +971,8 @@ func _init() -> void:
 	# gate that was missing: the hull earns a look only when foothold_anchor
 	# truly interpolates, never when it clamps to an edge.
 	_test_stand_needs_hull_clearance_is_false_on_an_exact_rung()
+	_test_top_hold_z_for_clears_the_face_when_the_anchor_is_behind_it()
+	_test_top_hold_z_for_keeps_the_anchor_when_it_is_already_in_front()
 	_test_stand_needs_hull_clearance_is_true_strictly_between_two_rungs()
 	_test_stand_needs_hull_clearance_is_false_below_the_lowest_rung()
 	_test_stand_needs_hull_clearance_is_false_above_the_highest_rung()
@@ -1856,6 +1858,7 @@ func _init() -> void:
 	_test_climb_focus_for_pads_the_trusted_anchor_so_the_lens_clears_the_surface()
 	_test_climb_focus_for_falls_back_to_the_hull_between_rungs()
 	_test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all()
+	_test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top()
 	_test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t()
 
 	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
@@ -22086,6 +22089,18 @@ func _test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads
 ## found a stray cell and put the hunter at z=13.92 against the sigil
 ## stone's own z=0.53. These pin the gate with no scene tree and no model
 ## loaded (#86 duty 3), the same way foothold_anchor's own tests do.
+## The top stone stands in front of the face, never on the sigil's own skin
+## point (Nick's drawing, 2026-09-25). Measured live on the Cinder Jackal: the
+## sigil anchor sits at z=0.53, the muzzle at that height reaches ~13.6.
+func _test_top_hold_z_for_clears_the_face_when_the_anchor_is_behind_it() -> void:
+	var z := Combat3D.top_hold_z_for(0.53, 13.6)
+	_expect(is_equal_approx(z, 13.6 + Combat3D.HUNTER_HEIGHT * 0.45), "anchor behind the muzzle: stand a hunter's clearance in front of the face, got %s" % z)
+
+
+func _test_top_hold_z_for_keeps_the_anchor_when_it_is_already_in_front() -> void:
+	_expect(is_equal_approx(Combat3D.top_hold_z_for(9.0, 8.0), 9.0), "an anchor already proud of the local face is kept as authored")
+
+
 func _test_stand_needs_hull_clearance_is_false_on_an_exact_rung() -> void:
 	var anchors := {0: Vector3.ZERO, 4: Vector3.ZERO, 5: Vector3.ZERO}
 	_expect(not Combat3D.stand_needs_hull_clearance(anchors, 4), "an exact rung already has a raycast-true anchor -- the hull has nothing to add")
@@ -29298,7 +29313,7 @@ func _test_climb_dist_for_adds_exactly_the_uncovered_clearance() -> void:
 func _test_climb_focus_for_trusts_the_anchor_on_an_exact_rung() -> void:
 	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
 	var hull_lie := 13.6  # what _front_of_beast would say if asked
-	var out := Combat3D.climb_focus_for(anchors, 4, hull_lie, 0.53, 1.0)
+	var out := Combat3D.climb_focus_for(anchors, 4, hull_lie, 0.53, 0.5)  # below the top: the sigil stand-off is not in play
 	var expected_dist := Combat3D.climb_dist_for(0.53, 0.53) + Combat3D.EXACT_RUNG_CLEARANCE_PAD
 	_expect(is_equal_approx(out.x, expected_dist),
 		"an exact rung's clearance must come from its own anchor z (0.53), not the hull's contaminated 13.6 [got=%.2f want=%.2f]"
@@ -29344,6 +29359,13 @@ func _test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all() -> vo
 ## Clamped past [0, 1] the same way every other climb_t consumer in this file
 ## already is -- a stale or not-yet-refreshed climb_t must not throw the
 ## pitch outside its own designed range.
+func _test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top() -> void:
+	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
+	var out := Combat3D.climb_focus_for(anchors, 4, 13.6, 14.4, 1.0)
+	_expect(is_equal_approx(out.x, Combat3D.SIGIL_VIEW_DIST),
+		"at the top the shot is of the face: the fixed stand-off gives way to SIGIL_VIEW_DIST [got=%.2f]" % out.x)
+
+
 func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:
 	var at_ground := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 0.0)
 	_expect(is_equal_approx(at_ground.y, Combat3D.GROUND_VIEW_PITCH),
