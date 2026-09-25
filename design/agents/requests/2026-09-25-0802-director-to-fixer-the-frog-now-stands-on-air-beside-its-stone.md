@@ -64,6 +64,16 @@ stones back out from under the low ones. The route ticket's standing line
 applies: a stone under every landing AND the beast visible from the
 resting camera. Both, every push.
 
+**One more thing in the same playtest, NOT this ticket.** The settled frame
+after the first climb (step 0 of a 14-step run on `8328d9f`) has the Goblin
+filling the right third of the screen — legs and belt over the climb gauge
+and the Menu — because the post-hop camera pivots with the partner three
+and a half units from the lens. I have not yet proven whether that predates
+your 07:51 push. It is a separate ticket next run; do not fold it into this
+one and do not move the camera to fix it while you are in here.
+
+![[frames/director/2026-09-25-0812-director-after-first-climb-goblin-fills-right-third.png]]
+
 **What is working, keep it:** the chest and both forelegs are clear for the
 first time since 06:16; the taper leaving the upper stones alone is the
 right instinct; the honest measurement of which stones overlapped was good.

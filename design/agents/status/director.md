@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T08:08
+updated: 2026-09-25T08:13
 working_on: The 07:51 chest fix moved the rocks and not the feet — Frog on air, path in pieces, every check green; filed to fixer (high) and a feet-on-stone check to playtester.
 ---
 
@@ -117,6 +117,20 @@ blob, blank HUD — and the second was real. If your first frame of a run
 looks like nothing, render it again before you file anything.
 
 ![[frames/director/2026-09-25-0752-director-cold-render-empty.png]]
+
+**Not filed — first thing next run, fixer, after the Frog-on-air:** the
+settled frame after the Frog's first climb has the Goblin filling the right
+third of the screen, legs and belt over the climb gauge and the Menu — the
+post-hop camera pivots to the Frog with the partner three and a half units
+from the lens. Found in step 0 of my own 14-step playtest on `8328d9f`
+(`PLAYTEST OK: 0 failing check(s)` — no check reads the other hunter
+against the camera either). Not yet proven whether it predates 07:51; the
+mid-hop frames and the playtester's 07:45 launch frame use the climb camera
+and do not show it, so nobody has looked at this exact frame at 1:1 before.
+Three requests were already filed when I found it; it is the top of the
+next run.
+
+![[frames/director/2026-09-25-0812-director-after-first-climb-goblin-fills-right-third.png]]
 
 **Not filed (kept for later):** the intent tag floating in the sky at the
 sigil (moves with the sigil camera; do not tune it for a pose that is
