@@ -2,15 +2,15 @@
 tags:
   - request
 from: director
-to: fixer
-status: taken
+to: director
+status: open
 priority: high
 beast: cinder_jackal
-eta: this run: gap investigation + first pass on the stone path; likely 2 more runs after
+eta: stones need a parametric-path rewrite (2-3 runs) once the camera question below is settled
 created: 2026-09-24T20:08
 taken_by: fixer
-ask:
-waiting: false
+ask: item 1's Done-when (a visible ground gap in state=3d) can't be met without touching the camera you told fixer not to touch — which one gives?
+waiting: true
 issue: 14
 ---
 
@@ -73,4 +73,134 @@ Nick's drawing, which is the target for **placement only**:
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-24 21:49 EDT (in progress, not done)
+
+Two investigations this run, both real findings, neither shippable yet.
+Nothing pushed to `combat_3d.gd`, `ai_beast.py` or `route.py` — every
+experiment below was proven, then reverted rather than left half-working.
+Leaving `status: taken`; the "no direction" and "the stones" pieces both
+need more work than one run.
+
+### 1. Moving the hunters back alone cannot open the gap — the resting camera cancels it
+
+Tested directly: cranked `GROUND_STANDOFF` (the hunter's ground standoff,
+`combat_3d.gd`) from its shipped `0.62` up to `32.0` — pushing the hunter's
+own world Z from 26.7 to 544 (20x further from the beast) — and rendered
+`state=3d` at every step, projecting both the hunter and the beast's own
+front-paw point to screen pixels each time:
+
+| GROUND_STANDOFF | hunter world Z | hunter screen (x,y) | paw screen (x,y) |
+|---|---|---|---|
+| 0.62 (shipped) | 26.7 | (640, 448) | (677, 443) |
+| 2.5 | 57.7 | (640, 448) | (661, 436) |
+| 8.0 | 179.7 | (640, 448) | (649, 431) |
+| 32.0 | 575.5 | (640, 448) | (642, 428) |
+
+The hunter's own screen position never moves — not by one pixel, at any
+standoff — because the resting camera's pivot locks onto the ACTIVE
+HUNTER's exact (x, z) (`_lock_point()`, unconditional, `CAMERA_LOCK = 1.0`)
+and `dist_for_window_for`'s own "beast standoff" term is already `0`
+once the hunter is this far out (`maxf(beast_front_z*0.85 - pivot_z, 0)` —
+negative once `pivot_z` passes ~14, clamped to 0). So the camera doesn't
+just follow the hunter, it moves BY EXACTLY the hunter's own displacement,
+every time — a pure translation of the whole rig, which is why the hunter
+is pixel-identical across a 20x change in real distance. The paw only
+crawls from 443 to 428 (15px, converging — the last 4x of standoff only
+moved it 3px more), because the beast's OWN world position never changes
+and it's just receding from an ever-more-distant camera. **There is a hard
+ceiling on how much "gap" this camera can ever show, and it is reached
+almost immediately — no realistic hunter placement gets meaningfully past
+what 0.62 already shows.**
+
+This means item 1 of this ticket ("a clear stretch of ground... visible in
+`state=3d`") cannot be satisfied by moving hunters, full stop, under the
+current resting camera — regardless of how far back they stand. The
+camera's own pivot-tracking is the blocker, not the world placement. #14
+says "do not touch the camera," and I've respected that and reverted
+everything (`combat_3d.gd` is byte-for-byte unchanged in this push) — but
+that instruction and this Done-when item are in direct conflict as
+written. Nick's own #18 sequencing (open the gap, THEN lay the stones,
+THEN bring the camera in close) may already assume this is fine — the
+dramatic "gap" reveal might only ever have been meant to arrive with
+step 3's close third-person camera, not the current wide establishing
+shot. If so, item 1's Done-when bullet needs rewording (drop "clear
+stretch of ground visible in state=3d," since no non-camera change can
+produce it) rather than staying an open bar nothing can clear. Flagging
+back to you rather than guessing which reading is right.
+
+### 2. The stones: tried moving the route toward the head, reverted — real, reproducible reasons
+
+Rebuilt the shipped Cinder Jackal AI model (`ai_beast.py`, reusing its own
+already-exported `.glb` as the source — no Meshy spend) with the middle
+climb rungs biased toward the head instead of a fixed window near the
+front leg. Two different versions, both reverted:
+
+**Attempt A — blend the search window toward the head as climb height
+rises** (`climb_lane_center`, new pure function in `route.py`, unit
+tested). Landed inside a real anatomical trap: swept the model at every
+climb height first (a standalone diagnostic, not part of the build) and
+the body's own cross-section is NOT monotonic front-to-back as height
+rises — at the first rung's own height (32% up, leg/shoulder level) there
+is a big gap of open air between the front leg and the belly (nothing for
+a raycast to hit between y=-0.96 and y=0.74 at all), and the leg itself
+slants BACKWARD as it rises from paw to shoulder (confirmed: rung 1
+naturally lands further toward the tail than the foot below it, just from
+following the real leg surface). The body only opens up toward the head
+much higher — by 69% up (climb height 2.10 of 3.06) a horizontal sweep
+finds continuous surface almost to the nose. A per-rung target Y that
+assumes steady, even progress toward the head either finds nothing to
+raycast onto at the low rungs (hard `FAIL`, reproduced live) or, once
+loosened, gets dragged straight back toward the tail anyway by the
+existing one-directional enforcement (`route_progress`'s own "keep going
+the same way" rule locks onto whatever direction the first two rungs
+established — and the first middle rung's own real pick, forced by the
+leg's backward slant, sets a tail-ward direction no later per-rung target
+can undo without re-litigating the anti-reversal rule itself).
+
+**Attempt B — keep the search exactly as it ships, only raise the
+floating-off-the-skin standoff** (`OPEN_AIR_WORLD`, `route.py`). Smaller,
+safer-looking change; still made things visibly worse. The standoff isn't
+just a final cosmetic push — it's baked into the SAME distance math that
+decides which candidate is "in the hop-distance band" (`_hop_ok`) and
+which one "continues the route" (`route_progress` is called on `c[1] + r`,
+not the raw candidate), so raising it changes which real surface point
+gets picked, not just how far the final stone sits from whatever got
+picked. Rendered before/after at 1:1 (`state=3d`, cropped on the stones):
+before, 2 stones read as clearly separate from the flank; after, 4 stones
+(now individually visible, which IS real progress) but stacked tight
+against the leg, partly in its own shadow — closer-looking, not
+further-looking, than before. Not shippable as a net improvement.
+
+Frames from this run's own experiments (not committed as final assets,
+kept here for the record):
+
+![[frames/fixer/2026-09-24-open-air-standoff-before.png]]
+![[frames/fixer/2026-09-24-open-air-standoff-after.png]]
+
+**Recommendation for whoever (or whichever future run) picks this back
+up:** the raycast-onto-the-mesh-surface approach is very likely the wrong
+architecture for "open air" stones — you noted this yourself ("once the
+stones sit in open air... they are no longer raycast onto the mesh").
+Every attempt above still asks "where does the body's surface happen to
+be" and then pushes off it, which means the route is still fundamentally
+shaped by the body's own silhouette (why Attempt A hit a wall the body's
+own anatomy set, not a bug). A parametric path instead — a curve (even a
+straight line, or a simple 2-point Bezier) authored from a point near the
+hunter's own ground position to a point near the sigil, sampled at N
+evenly-spaced holds, each one only checked for CLEARANCE against the body
+(nudged outward if it happens to clip, never anchored TO the surface) —
+would let the path go wherever reads well in front of the beast,
+independent of what the mesh silhouette does at any given height. That's
+a bigger rewrite than either attempt above, which is why I'm not
+starting it with the run mostly spent on ruling these two out.
+
+**Verification of the revert:** `python3 tools/blender/test_route.py` and
+`run_tests.gd` both `ALL TESTS PASSED` on the tree as pushed;
+`git status` shows zero diff against `combat_3d.gd`, `ai_beast.py`,
+`route.py`, `test_route.py`, or the shipped `cinder_jackal_ai.glb`/`.blend`
+— this push changes nothing about the live game, only this write-up.
+
+**eta:** the camera question (#1 above) needs your call before item 1 can
+ever close. The stones (#2) are a real rewrite (parametric path, not a
+raycast tweak) — 2-3 more runs once that direction is confirmed, not the
+1 more I guessed when taking this.

@@ -2,11 +2,97 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T17:43
-working_on: Fixed #11's camera (whole beast + both hunters, wide, no over-the-shoulder while grounded); handed to Nick for the visual sign-off.
+updated: 2026-09-24T21:49
+working_on: Ruled out two dead ends on #14 (camera can't reveal the gap; raycast-onto-surface can't give open-air stones); wrote both up, shipped no code.
 ---
 
 # fixer
+
+## This run — 2026-09-24 21:49 EDT
+
+- **Did:** took #14 (open the gap, lay the stones). Proved hunter placement
+  alone can't open a visible gap — the camera cancels it. Tried moving the
+  stones toward the head, reverted twice.
+- **Worked?** No net change shipped — both attempts made things worse or
+  hit a real anatomical/architecture wall. Wrote up why, with numbers, on
+  #14 so the next run doesn't re-try either dead end.
+- **Next:** #14 needs the director's call on the camera conflict, then a
+  real rewrite (a parametric path, not a raycast-onto-surface tweak) for
+  the stones. 2-3 runs once that's confirmed.
+- **Need from you:** director, please read #14's `## Result` — item 1's
+  Done-when ("gap visible in state=3d") looks unsatisfiable without
+  touching the camera; need your call on which one gives.
+
+## Now
+
+Claimed the only open `to: fixer` request this run,
+`2026-09-24-1835-director-to-fixer-stones-in-front-nick-is-waiting.md`
+(#14), high priority, the sole open item addressed to fixer.
+
+**Investigation 1 — the resting camera cancels any hunter-placement change.**
+`_lock_point()` locks the resting camera's pivot to the active hunter's own
+(x, z), unconditionally, at `CAMERA_LOCK = 1.0`, and `dist_for_window_for`'s
+"stand off from the beast's front" term is already clamped to 0 once the
+hunter is this far out. Pushed `GROUND_STANDOFF` from 0.62 to 32.0 (hunter
+world Z from 26.7 to 544, a 20x change) and projected both the hunter and
+the beast's own front-paw point to screen pixels at each step: the hunter's
+screen position (640, 448) never moved by even one pixel at ANY standoff
+tested, because the whole camera rig translates by exactly the hunter's own
+displacement every time. The paw only crept from 443 to 428 (asymptotic,
+converging hard by 8x). Conclusion, with numbers: no hunter placement, at
+any distance, can satisfy "a clear stretch of ground visible in `state=3d`"
+under the current resting camera. That's a direct conflict with #14's own
+"do not touch the camera" — flagged back to the director rather than
+guessed at.
+
+**Investigation 2 — the stones, two attempts, both reverted.**
+Rebuilt the shipped Cinder Jackal AI model twice (`ai_beast.py`, reusing its
+own already-exported `.glb` as the source, no Meshy spend):
+
+- Attempt A: bias the middle-rung search window toward the head as climb
+  height rises (new `climb_lane_center` in `route.py`, unit tested).
+  Diagnosed the real anatomy first (a standalone horizontal sweep at every
+  climb height, not part of the build): the front leg slants BACKWARD as it
+  rises (a real leg shape, not a bug), and the belly directly above the paw
+  is open air at low climb heights — nothing to raycast onto near the head
+  until much higher up the body. A target that assumes steady progress
+  toward the head either fails outright at the low rungs or gets dragged
+  back toward the tail anyway by the existing one-directional rule, which
+  locks onto whatever direction the (anatomically backward-slanting) first
+  rung sets.
+- Attempt B: leave the search alone, just raise the floating standoff off
+  the skin (`OPEN_AIR_WORLD` in `route.py`, from an effective ~1.16 world
+  units to 1.4). The standoff isn't purely cosmetic — it's baked into the
+  SAME distance math that decides which candidate is "in the hop-distance
+  band," so raising it changes WHICH surface point gets picked, not just
+  how far the final stone sits from it. Rendered before/after at 1:1: 4
+  stones now read individually (real progress) but ended up stacked tight
+  against the leg, in its own shadow — closer-looking than the 2-stone
+  original, not further.
+
+Both reverted in full — `git status` showed zero diff against
+`combat_3d.gd`, `ai_beast.py`, `route.py`, `test_route.py`, or the shipped
+`cinder_jackal_ai.glb`/`.blend` before this push. `python3
+tools/blender/test_route.py` and `run_tests.gd` both `ALL TESTS PASSED` on
+the unchanged tree.
+
+**Recommendation, written into #14:** the raycast-onto-surface approach is
+very likely the wrong architecture for open-air stones — every attempt
+still asks "where is the body's surface" and pushes off it, so the route
+stays shaped by the mesh silhouette no matter what. A parametric path
+(2-point curve from near the hunter to near the sigil, sampled at N holds,
+each checked only for CLEARANCE against the body rather than anchored to
+it) is the real fix, and a bigger rewrite than either attempt above.
+
+Frames (this run's own before/after on Attempt B, kept for the record):
+![[frames/fixer/2026-09-24-open-air-standoff-before.png]]
+![[frames/fixer/2026-09-24-open-air-standoff-after.png]]
+
+Left `#14` at `status: taken`, not `done` — nothing of it is finished, and
+the camera question needs the director's answer before item 1 can even be
+attempted again.
+
+## Old: 2026-09-24 17:43 EDT — camera composition (#11)
 
 ## This run — 2026-09-24 17:43 EDT
 
