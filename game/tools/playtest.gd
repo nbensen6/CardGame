@@ -89,6 +89,26 @@ const SIGIL_CLEAR_MARGIN := 0.05
 ## or behind the body.
 const BEAST_STONE_COVER_MAX := 15.0
 
+## #0803 (director, high priority): "no check says whether the hunter is
+## standing on a stone -- the 07:51 push put the Frog on air and every check
+## stayed green". `_check_hunter_on_stone`'s own foot-band render-diff
+## reports what fraction of the pixels directly under a settled hunter's
+## feet are actually drawn by its own foothold stone (or, at the top/sigil
+## hold only, the beast). CALIBRATION PENDING -- see that function's own doc
+## comment: this is a print-only placeholder until a real run's numbers are
+## in hand, same discipline #0257's own "print the numbers before trusting
+## them" note used, so the threshold isn't picked to pass the first frame it
+## happens to see.
+const FOOT_STONE_COVER_MIN := 25.0
+
+## `_check_hunter_on_stone`'s own foot-band height, as a fraction of the
+## hunter's full projected screen rect (`hunter_screen_rect`) -- small enough
+## to sample only the ground/stone line right at the feet, not the shins or
+## the rock's own far side, large enough that at typical hop distances it is
+## still several real pixels tall (band_h itself has its own 4px floor for
+## when the rect is very small, a hunter far from camera).
+const FOOT_BAND_FRAC := 0.16
+
 ## For check 9b (camera-not-over-shoulder): how close to fully engaged (1.0)
 ## `_shoulder` must sit once the fight has settled before this counts as a
 ## real over-the-shoulder shot rather than the plain dead-centre follow cam
@@ -1275,7 +1295,8 @@ func _play() -> void:
 			await _frames(2)
 			var cm := _combat()
 			if cm != null and me < cm.players.size() and int(cm.players[me].foothold) != int(before.get("foot", -999)):
-				await _watch_hop(_view(), me, climb_from)
+				var to_foot := int(cm.players[me].foothold)
+				await _watch_hop(_view(), me, climb_from, to_foot)
 				watched = true
 		# `v` can already be freed by the time we get here -- a scene change
 		# (the boss dying) during `_drive_timing`/`_watch_hop` above, which
@@ -1580,7 +1601,7 @@ func _check_hop_pop(flight: Array) -> void:
 ## would never catch the hunter failing to actually GET there), saves a frame
 ## every sampled tick as a strip, and checks the shape of the hop once it
 ## lands. Checklist item 3.
-func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
+func _watch_hop(v: Node, me: int, climb_from: Vector3, to_foot: int) -> void:
 	if not is_instance_valid(v):
 		return
 	var hunters: Variant = v.get("_hunters")
@@ -1710,6 +1731,8 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3) -> void:
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
 	_check_hop_pop(flight)
 	_check_hop(flight, climb_from, landed, landed_scale)
+	if is_instance_valid(v):
+		await _check_hunter_on_stone(v, node, cam, to_foot, landed)
 
 
 ## Checklist item 4's mid-jump half, JACKAL-BAR's own "the camera never loses
@@ -1959,6 +1982,144 @@ func _stone_cover_pixels(beast: Node3D, stone: Node3D, beast_rect: Rect2) -> flo
 	if beast_px == 0:
 		return -1.0
 	return 100.0 * float(covered_px) / float(beast_px)
+
+
+## The render-diff primitive `_check_hunter_on_stone` uses -- same shape as
+## `_stone_cover_pixels` above (paused tree, HOP_VIS_PIXEL_DELTA, two renders
+## of the same instant differing only by a visibility toggle) but asking the
+## opposite question: not "does X cover the beast", but "of `band`'s own
+## pixels, how many does `footers` itself actually draw". The hunter is
+## always hidden in both renders -- its own body is not what this measures,
+## and a visible hunter would sit ON TOP of the exact band being sampled.
+func _foot_pixels(hunter_node: Node3D, footers: Array, band: Rect2) -> float:
+	if band.size.x < 1.0 or band.size.y < 1.0:
+		return -1.0
+	var valid: Array = []
+	var was_vis: Array = []
+	for f in footers:
+		if f is Node3D and is_instance_valid(f):
+			valid.append(f)
+			was_vis.append((f as Node3D).visible)
+	if valid.is_empty():
+		return -1.0
+	var hunter_was_visible := hunter_node.visible
+	var tree := hunter_node.get_tree()
+	var was_paused := tree != null and tree.paused
+	if tree != null:
+		tree.paused = true
+	hunter_node.visible = false
+	await RenderingServer.frame_post_draw
+	var img_with := root.get_viewport().get_texture().get_image()
+	for f in valid:
+		(f as Node3D).visible = false
+	await RenderingServer.frame_post_draw
+	var img_without := root.get_viewport().get_texture().get_image()
+	for i in range(valid.size()):
+		(valid[i] as Node3D).visible = was_vis[i]
+	hunter_node.visible = hunter_was_visible
+	if tree != null:
+		tree.paused = was_paused
+	var size := img_with.get_size()
+	var x0: int = clampi(int(band.position.x), 0, size.x - 1)
+	var y0: int = clampi(int(band.position.y), 0, size.y - 1)
+	var x1: int = clampi(int(band.position.x + band.size.x), 0, size.x)
+	var y1: int = clampi(int(band.position.y + band.size.y), 0, size.y)
+	var w := x1 - x0
+	var h := y1 - y0
+	if w <= 0 or h <= 0:
+		return -1.0
+	var total := 0
+	var drawn := 0
+	var y := y0
+	while y < y1:
+		var x := x0
+		while x < x1:
+			total += 1
+			var a := img_with.get_pixel(x, y)
+			var b := img_without.get_pixel(x, y)
+			var d := (absf(a.r - b.r) + absf(a.g - b.g) + absf(a.b - b.b)) * 255.0
+			if d > HOP_VIS_PIXEL_DELTA:
+				drawn += 1
+			x += 2
+		y += 2
+	if total == 0:
+		return -1.0
+	return 100.0 * float(drawn) / float(total)
+
+
+## #0803 (director, high priority): "no check says whether the hunter is
+## standing on a stone -- the 07:51 push put the Frog on air and every check
+## stayed green". Every existing placement check asks about POSITIONS --
+## `hunter-off-marker` asks whether `home` lands on the route's own computed
+## point, `beast-behind-stone` asks whether a stone's projected box covers
+## the beast's -- and none of them ever asks whether the pixels actually
+## drawn under a hunter's own feet are the stone it is supposed to be
+## standing on. The fixer's #0658 sweep (5640b3f) moved the decorative rocks
+## sideways while leaving the landing points alone: `home` still matched its
+## own route target exactly (hunter-off-marker stayed green), the beast's
+## silhouette was still clear (beast-behind-stone stayed green), and the
+## Frog stood in mid-air next to its own rock the whole time. This is the
+## one thing that cannot lie: with the hunter hidden, is a real stone (or,
+## only at the top/sigil hold, the beast's own mesh -- see below) what the
+## renderer actually draws under the settled foot line.
+##
+## Called once per hop, from `_watch_hop`, only after the landing has fully
+## settled (`landed` is the hunter's real post-hop position) -- never
+## mid-air, where being off every foothold is expected, not a bug. Skips
+## foot 0 (ground stance, never a stone) the same way checks 8/8c do.
+func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int, landed: Vector3) -> void:
+	if to_foot <= 0 or cam == null or not is_instance_valid(node):
+		return
+	var stones: Variant = v.get("_float_stones")
+	var beast_node: Variant = v.get("_beast")
+	if not (stones is Array) or (stones as Array).is_empty():
+		return
+	# Which stone this landing is actually ON: the nearest `_float_stones`
+	# entry to the hunter's own settled position. `_build_float_stones`
+	# places one stone per sub-hop landing along the WHOLE route (ground to
+	# top), the same chain `_stand_on_model`/`route_pos_cleared` compute --
+	# so a genuinely correct landing sits within centimetres of its own
+	# stone by construction, and nearest-by-distance finds it without having
+	# to re-derive which sub-hop index this foot corresponds to.
+	var nearest_i := -1
+	var nearest_d := INF
+	for si in range((stones as Array).size()):
+		var st := (stones as Array)[si] as Node3D
+		if st == null or not is_instance_valid(st):
+			continue
+		var d := st.position.distance_to(landed)
+		if d < nearest_d:
+			nearest_d = d
+			nearest_i = si
+	if nearest_i < 0:
+		return
+	# The LAST landing in the chain is always the top/sigil hold -- placed by
+	# `foothold_anchor`, on the mesh, not a floating route waypoint (the same
+	# structural split check 8e already uses for `beast-behind-stone`, and
+	# for the same reason: that stone's own real depth sits at or behind the
+	# beast's near face by construction, not by camera-angle coincidence).
+	# Only there does beast geometry count as real footing -- the director's
+	# own instruction: "do NOT exempt the sigil hold... treat beast pixels
+	# as valid footing at the top hold only."
+	var is_top := nearest_i == (stones as Array).size() - 1
+	var target_stone := (stones as Array)[nearest_i] as Node3D
+	var vp := Rect2(Vector2.ZERO, Vector2(root.get_visible_rect().size))
+	var rect := Combat3D.hunter_screen_rect(cam, Combat3D._merged_aabb(node)).intersection(vp)
+	if rect.size.x < 2.0 or rect.size.y < 2.0:
+		return   # off screen entirely -- nothing to sample, not this check's problem
+	var band_h: float = maxf(4.0, rect.size.y * FOOT_BAND_FRAC)
+	var band := Rect2(rect.position.x, rect.position.y + rect.size.y - band_h, rect.size.x, band_h).intersection(vp)
+	var footers: Array = [target_stone]
+	if is_top and beast_node is Node3D:
+		footers.append(beast_node as Node3D)
+	var pct: float = await _foot_pixels(node, footers, band)
+	if pct < 0.0:
+		return   # couldn't measure (footer freed, band clipped to nothing) -- say nothing rather than guess
+	var label := "the sigil/top hold (stone or beast both count as footing)" if is_top else ("stone %d (dist %.2f)" % [nearest_i, nearest_d])
+	# CALIBRATION PENDING (FOOT_STONE_COVER_MIN's own doc comment): print-only
+	# for now, no _fail, until a real run's numbers are in hand.
+	_note("step %d: hunter-on-stone -- foothold %d, %.1f%% of the foot band is %s (want >= %.0f%%)"
+		% [_step, to_foot, pct, label, FOOT_STONE_COVER_MIN])
 
 
 ## Check 5d, JACKAL-BAR's "the jump reads... at the size it plays" mid-air:
