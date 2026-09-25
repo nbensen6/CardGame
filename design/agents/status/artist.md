@@ -2,13 +2,65 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T06:07
-working_on: "Nothing to build — #13, the faceted-jackal ticket, and the new stone-shape ticket are all still sitting with Nick."
+updated: 2026-09-25T07:09
+working_on: "Nothing to build — #13, the faceted-jackal ticket, and the near-stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 06:07 ET
+## This run — 2026-09-25 07:09 ET
+
+- **Did:** re-verified fresh (import, tests, two new renders) — all three
+  Nick tickets still blank; nothing new open for the artist.
+- **Worked?** N/A — confirmed rather than assumed; even rendered the current
+  fight to look for anything unblocked by last hour's fixer/director work.
+- **Next:** whichever of #13, the faceted jackal, or the near-stone ticket
+  Nick answers first.
+- **Need from you:** your answer on those same three — #13 has been open
+  since yesterday 17:20, going on 14 hours.
+
+## Now
+
+Claimed the lease, pulled fresh to `3aa369a`. Checked every
+`design/agents/requests/*.md` for `to: artist` with `status: open` — zero,
+same as every run since 2026-09-25 00:16. Read the full `## Nick's answer`
+section directly (not a grep snippet) on all three tickets blocking my
+queue — #13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
+(`2026-09-24-2157-...`), and the near-stone-shape one
+(`2026-09-25-0256-...the-near-stone-is-a-box-with-an-orange-lid.md`) — all
+three still empty.
+
+**Did not just trust the last run's conclusion — set up fresh and looked.**
+Godot 4.7.1 + `--import`, `ALL TESTS PASSED`. Rendered both `state=3d`
+(the real resting camera) and `state=3d wide` (the diagnostic full-body
+shot #13's own evidence trail uses) to see whether last hour's fixer/
+director camera and stone work (`8a57f40` #14, `748b3f8` #0505) changed
+anything unblocked.
+
+**The resting camera looks genuinely good** — both hunters read
+immediately as a frog and a goblin, smooth shapes, clean outlines, no
+confetti. That's #13's own already-shipped fix (00:16/01:33 ET), already
+handed back `to: nick`, nothing new to do there.
+
+**The `wide` diagnostic shot is unchanged**: `VIS FAIL hunter0: (638,
+1462)`, `VIS FAIL hunter1: (849, 1462)` — same off-the-bottom numbers as
+every run since 05:12. The camera/stone work that landed this window
+(`#14`, `#0505`) fixed climb spacing and stone placement, not the wide
+shot's own pull-back distance — same root cause `#18` already named, still
+tracked there, still not artist code to touch.
+
+**One live find, not mine to act on:** the resting shot now shows the
+fixer's new stone staircase (`#0505`) covering a real chunk of the beast's
+chest and front legs — visibly matches the director's just-filed
+`2026-09-25-0658-...the-stone-path-stands-in-front-of-the-beasts-chest.md`,
+already `to: fixer`. Confirms the ticket's own read; not filing a duplicate.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three.
+`git status` clean before this push — no stray Godot re-import artifacts
+this time either.
+
+## Old: 2026-09-25 06:07 ET
 
 - **Did:** re-checked every request's frontmatter fresh and read the actual
   `## Nick's answer` text on all three blocking tickets — still blank.
@@ -3956,6 +4008,13 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 07:09 EDT — nothing open for the artist. Re-verified fresh
+  (import, tests, `state=3d`/`state=3d wide` renders) rather than trust the
+  last run: resting camera reads well (already #13's shipped fix, still
+  with Nick), wide diagnostic shot's hunter pixel size unchanged, `#18`'s
+  own thread. Noticed the fixer's new stone staircase covers the beast's
+  chest — matches the director's just-filed `#0658` to fixer, no duplicate
+  filed. #13, faceted jackal, near-stone-shape all still blank.
 - 2026-09-25 02:35 EDT — #19 (horizon red line): fixed. Both my own 23:40
   "it's the Wall" diagnosis and the original sky-curve attempt were
   chasing symptoms of a stale import cache / too-narrow curve range; the
