@@ -2,11 +2,66 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T06:29
-working_on: "#14 handed to Nick — all four items landed, waiting on his look at the frame."
+updated: 2026-09-25T07:56
+working_on: "#0258 or #0405 next (both open, to: fixer) once Nick answers #14."
 ---
 
 # fixer
+
+## This run — 2026-09-25 07:56 EDT
+
+- **Did:** fixed #0658 — the approach stones' straight sweep stood in
+  front of the beast's chest and near foreleg from the resting camera.
+- **Worked?** Yes. Chest and both forelegs now clear; full steps=24
+  regression went from 13 fails to 0, every check.
+- **Next:** #0258 (damage number on the Frog) or #0405 (hunters side-on),
+  both open, both older than this one.
+- **Need from you:** nothing.
+
+## Now
+
+Took `2026-09-25-0658-director-to-fixer-the-stone-path-stands-in-front-of-the-beasts-chest.md`
+(#0658, director, high priority, explicitly ahead of the two other open
+`to: fixer` requests, #0258 and #0405, per its own text).
+
+**The fix.** `route_pos()`'s straight sweep from the gap to the sigil has
+to land exactly on the gap's own near point (t=0) and exactly on the
+sigil (t=1) — #14/#0505/the camera all depend on those two ends staying
+put — but nothing requires the line's own middle to stay dead straight.
+Measured the live route directly rather than guessing: the worst overlap
+sat low and early (t≈0.05-0.35, stones 7-11, up to 43%), with a small
+second dip further along (t≈0.58, stone 14). New `chest_clear_push(t)`
+(`combat_3d.gd`) — full strength at t=0, fading linearly to zero by
+t=0.6 — adds a sideways nudge on top of `route_pos()`'s own point, in the
+sweep's own existing direction. Wired into `_build_float_stones` only, as
+an offset on the decorative rock's render position — never into
+`_stand_on_model`, `route_pos`, or `hop_subpoints` themselves, so the
+hunter's actual foot target and every check built on it
+(`hunter-off-marker`, `hop-distance-band`) stay byte-for-byte unchanged,
+and the rock never strays outside the hunter's own footing radius of its
+real landing.
+
+**Proof.** `state=3d` at 1:1: the jackal's full chest and both forelegs
+are clear, no stone in front of them (frame below); `CAM`/`HUNTER0`/
+`HUNTER1` numbers identical to the pre-fix baseline. Fresh
+`mode=play beast=cinder_jackal steps=24`: before, `PLAYTEST FAIL: 1
+failing check(s) { "beast-behind-stone": 13 }`; after, `PLAYTEST OK: 0
+failing check(s) {  }` — every category clean, not just this one. 4 new
+pure tests pin `chest_clear_push`'s own shape. `ALL TESTS PASSED`.
+
+No case needed the ticket's own "say so if you can't without touching the
+gap" escape hatch — the decorative-only lever cleared every offender,
+including the t=0 stone, without moving the gap or the sigil.
+
+![[frames/fixer/2026-09-25-0658-chest-clear-resting-after.png]]
+![[frames/fixer/2026-09-25-0658-chest-clear-grip-after.png]]
+
+Set #0658 `status: done` — its own Done-when is a measured check plus a
+frame, not Nick's judgement, and both are met. Left #0258 and #0405
+(both older, both open, both explicitly deferred behind #0258/#0405's own
+"after the 20m-hops ticket" and now behind this one too) for next run.
+
+## Old: 2026-09-25 06:29 EDT — #14 handback verification
 
 ## This run — 2026-09-25 06:29 EDT
 

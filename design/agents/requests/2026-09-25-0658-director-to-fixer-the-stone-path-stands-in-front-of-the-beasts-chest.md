@@ -3,10 +3,10 @@ tags:
   - request
 from: director
 to: fixer
-status: taken
+status: done
 priority: high
 beast: cinder_jackal
-eta: next run
+eta:
 created: 2026-09-25T06:58
 taken_by: fixer
 ask:
@@ -76,6 +76,52 @@ ticket from here on carries that line.
 - Both frames (resting, grip) embedded in `## Result`, then `status: done` — this one closes on the check and the frame, not on Nick's taste.
 
 ## Result
+
+**fixer, 2026-09-25 07:56 EDT.** `route_pos()`'s straight sweep from the
+gap to the sigil has to land exactly on both ends — the gap's own near
+point (t=0, #14/#0505) and the sigil (t=1, off this function entirely) —
+but nothing requires its own middle to stay dead straight. Measured the
+live route directly (not guessed): the worst overlap sat low and early,
+roughly a sixth to a third of the way along (t≈0.05-0.35, stones 7-11),
+with a small second dip further up (t≈0.58, stone 14) — everything else
+(t>0.42 or so) was already comfortably clear.
+
+**The fix.** New `chest_clear_push(t)` (`combat_3d.gd`) — a pure function,
+full strength at t=0, fading LINEARLY to zero by `CHEST_CLEAR_TAPER`
+(0.6). Applied once, in `_build_float_stones` only, as an extra sideways
+offset on top of `route_pos()`'s own point, in the same direction the
+sweep already leans. Nowhere near `_stand_on_model`, `route_pos` itself,
+or `hop_subpoints` — the hunter's actual foot target, `hop-distance-band`,
+`hunter-off-marker`, the gap, and the sigil are all byte-for-byte
+untouched; only the decorative rock's own render position moves, and only
+for landings past rung 1's own stop and before the mesh-anchored top hold.
+Stone count, size and shape: unchanged (only `stone.position` in the loop
+that used to be a straight `landings[index]` assignment).
+
+**Proof, not just the check.**
+- `state=3d` (below): the jackal's full chest and both forelegs are clear
+  of every stone — no staircase in front of the body. `CAM`/`HUNTER0`/
+  `HUNTER1` lines identical to the pre-fix baseline (camera/gap/hunters
+  untouched); the pre-existing `state=3dgrip` `VIS FAIL hunter1` reproduces
+  at the exact same pixel value (569,81) as the already-known baseline —
+  not a new failure.
+- `mode=play beast=cinder_jackal steps=24`, fresh `--import`: before this
+  fix, `PLAYTEST FAIL: 1 failing check(s) { "beast-behind-stone": 13 }`
+  (stones 7,8,9,10,11,14 all firing at various points, up to 43.3%). After:
+  `PLAYTEST OK: 0 failing check(s) {  }` — every category clean on the
+  same 24-step run, not just this one check.
+- 4 new pure tests (`run_tests.gd`) pin `chest_clear_push`'s own shape
+  (full at t=0, exactly zero at and past the taper, monotonically easing
+  off in between). `ALL TESTS PASSED`.
+
+No case needed punting to "can't fix without touching the gap" — the
+decorative-only lever cleared every offender, including rung 1's own stop
+(t=0), without moving the gap or the sigil.
+
+![[frames/fixer/2026-09-25-0658-chest-clear-resting-after.png]]
+![[frames/fixer/2026-09-25-0658-chest-clear-grip-after.png]]
+
+Commit: `54f13ce` (fix + tests), pushed via `5640b3f`.
 
 ## Nick's answer
 
