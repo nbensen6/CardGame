@@ -5,8 +5,8 @@ REM   tools\builder\run.cmd            do a build now
 REM   tools\builder\run.cmd --dry      plan it, change nothing
 REM
 REM Reads tools\builder\BRIEF.md, takes one item from design\plan\BUILDER-QUEUE.md,
-REM and changes a PIPELINE rather than an asset - a shader, a build step, a
-REM layout rule, a tool. Pushes a BRANCH for Nick to look at. Never main.
+REM shoots the named frame before and after, tests, and pushes to MAIN.
+REM Nick ticks the item; the builder never does.
 REM
 REM Why this lane exists, 2026-09-08. Nick, after a week of the other two:
 REM "it does not feel like the cloud/fixer are making good progress."
@@ -120,14 +120,18 @@ echo === launching, mode: %MODE% >> "%LOG%"
 REM acceptEdits, not bypassPermissions: this lane touches shaders, build scripts
 REM and shared tooling with nobody watching. It gets to write files without a
 REM prompt; it does not get to run arbitrary commands.
-"%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly for ONE queue item. %MODE%" ^
+"%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly for the TOP unticked item in design/plan/BUILDER-QUEUE.md. %MODE%" ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
 set "RC=%ERRORLEVEL%"
 echo exit code: %RC% >> "%LOG%"
 
 echo.
-echo === builder done. Check: git branch -a, then git log origin/main..^<branch^>
+echo === builder done. Check: git log origin/main -3
+
+REM Bring the push into the checkout Nick plays from, so dev.cmd shows it.
+REM --autostash: the session may be mid-edit there; set it aside and put it back.
+git -C "%ROOT%" pull --rebase --autostash --quiet origin main >> "%LOG%" 2>&1
 
 REM KEEP GOING, if the panel asked for it.
 REM
