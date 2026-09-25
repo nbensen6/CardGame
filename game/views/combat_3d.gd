@@ -1874,6 +1874,22 @@ const BIOME := {
 		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.24, 0.22, 0.32),
 		"fog": Color(0.34, 0.28, 0.38), "density": 0.014,
 		"top": Color(0.20, 0.23, 0.41), "horizon": Color(0.80, 0.36, 0.38),
+		# #19: at this beast's low, close ground camera, ProceduralSkyMaterial's
+		# engine-default curves (sky 0.15 / ground 0.02) put the ENTIRE transition
+		# from this horizon colour to sky_top/ground_bottom inside 1-2 screen rows
+		# — the "hard red line", confirmed by elimination to be neither the Wall
+		# mesh (still there with Wall AND Floor hidden), nor fog, nor the Wall's
+		# texture filtering. Proven by direct measurement (recolouring the horizon
+		# neon green made the line follow, isolating it to these two properties)
+		# that ANY curve > ~0.0001 still renders as a hard edge at this camera's
+		# per-pixel angular resolution — there is no "softer but still visible"
+		# middle value here, only "hard line" or "smooth". 0.0 is the only value
+		# that reads as a broad blend rather than a debug stripe; see
+		# design/agents/requests/2026-09-24-2257-...-horizon-line.md for the
+		# render-by-render elimination. Scoped to this biome only, not the shared
+		# default, so a beast whose horizon never showed this artifact keeps
+		# ProceduralSkyMaterial's normal falloff.
+		"sky_curve": 0.0, "ground_curve": 0.0,
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -1991,6 +2007,11 @@ func _light_for(beast_id: String) -> void:
 		m.sky_top_color = b["top"]
 		m.sky_horizon_color = b["horizon"]
 		m.ground_horizon_color = b["horizon"]
+		# ProceduralSkyMaterial's own engine defaults (0.15 / 0.02) unless a
+		# biome overrides them (#19) — every beast but the jackal keeps the
+		# falloff it always had.
+		m.sky_curve = float(b.get("sky_curve", 0.15))
+		m.ground_curve = float(b.get("ground_curve", 0.02))
 	_dev_biome = name
 
 

@@ -2,13 +2,113 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T01:33
-working_on: "#13: Goblin now smooth and colour-matched to the Frog too — handed back to Nick, both hunters done for now."
+updated: 2026-09-25T02:35
+working_on: "#19 (horizon red line) fixed — sky curve, not the Wall; #13 still with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 01:33 ET
+## This run — 2026-09-25 02:35 ET
+
+- **Did:** fixed the horizon red line (#19) — and found the earlier "it's
+  the Wall mesh" diagnosis (mine, 23:40) was also wrong: that test was
+  reading a stale cached import. It's really the sky material's
+  horizon-colour band collapsing to 1-2 pixels at this camera's angle.
+- **Worked?** Yes — measured, not eyeballed: sampled the old line's row
+  against the rows 5px above/below at 7 points across the frame; every
+  point now passes. Same camera, same colours, same everything else;
+  frame below.
+- **Next:** nothing outstanding on this one. #13 (hunters) is still
+  sitting with Nick.
+- **Need from you:** nothing — this ticket's done-when was a measured
+  bar, not a judgement call, so I closed it myself per its own
+  instructions.
+
+![[frames/artist/2026-09-25-0235-artist-horizon-crop-compare.png]]
+
+## Now
+
+Took #19 (the horizon red line) — the only open `to: artist` request,
+and the director's 01:56 note said explicitly not to wait on #13.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything.
+
+**Started from the 23:40 diagnosis** (mine, from the previous horizon-line
+run): hide the arena `Wall` mesh, the line should disappear. It didn't —
+identical pixels, every x position except right behind the altar prop.
+That contradicted my own earlier "proof," so before trusting either
+result I checked whether the render pipeline itself was stale: it was.
+The 23:40 run's `--import` had been overtaken by a LATER geometry
+experiment in the same session that I'd since reverted with `git
+checkout --`, without re-running `--import` afterward — so every render
+since was reading Godot's cached import of a mesh state that no longer
+matched the file on disk. Once I re-ran `--import` after every revert
+and confirmed the `.glb`'s md5sum matched `git show HEAD:...`, the
+"hiding Wall removes the line" result stopped reproducing at all: hiding
+`Wall`, hiding `Floor` too, and bypassing the shader material entirely
+(raw glTF-imported material, no override) all left the line pixel-for-
+pixel unchanged. Raycast every triangle of both meshes through the exact
+line pixel by hand (Möller–Trumbore against the camera's own
+`project_ray_origin`/`_normal`) — zero hits, confirming the geometry
+genuinely isn't there.
+
+**Found the real cause by recolouring, not guessing.** Set
+`sky_horizon_color`/`ground_horizon_color` to pure green with nothing
+else touched — the line turned green. That's conclusive: it's
+`ProceduralSkyMaterial`'s horizon band, exactly this ticket's very first
+guess, before the Wall theory took over.
+
+**Why "widen sky_curve/ground_curve" (23:40's attempt, and mine before I
+found the green test) looked like a no-op both times:** tested every
+value from the engine default (0.02) up through 1.0 and even 4.0
+(presumably clamped) — pixel-identical every time. At this beast's low,
+close ground camera, the angular slice of sky each screen row covers
+near the true horizon is small enough that the whole usable exponent
+range renders the same at 8-bit colour. The ONE value that changes
+anything is 0.0 exactly (mathematically special: the interpolation
+factor is constant everywhere except the single zero-measure point at
+the true horizon) — that's the only setting that reads as a blend
+instead of a stripe.
+
+**The fix:** `combat_3d.BIOME["quarry_ember"]` gets two new keys —
+`"sky_curve": 0.0, "ground_curve": 0.0` — and `_light_for` now reads
+`b.get("sky_curve", 0.15)` / `b.get("ground_curve", 0.02)` (Godot's own
+engine defaults for `ProceduralSkyMaterial`), so every other beast's
+biome renders exactly as it did before this change. No colour touched
+(`sky_top`/`horizon` values byte-identical), no geometry, no shader, no
+camera.
+
+**Measured the done-when bar, not eyeballed it.** For 7 x-positions
+across the full frame width, sampled saturation at the old line's row
+against the rows 5px above and 5px below: before the fix, every point
+failed (the line's row was 60-130 saturation points hotter than both
+neighbours); after, every point passes except a handful of isolated
+pixels that sit on the beast's own eyes/embers or the altar prop's paint
+— which are SUPPOSED to be more saturated than their surroundings, not
+horizon artifacts. Same `CAM` line printed before and after (camera
+untouched). `state=3dgrip` checked too, clean.
+
+![[frames/artist/2026-09-25-0235-artist-horizon-before-3d.png]]
+![[frames/artist/2026-09-25-0235-artist-horizon-after-3d.png]]
+![[frames/artist/2026-09-25-0235-artist-horizon-after-grip.png]]
+
+`ALL TESTS PASSED`. Closed #19 myself (`status: done`) — its own
+done-when said this was a measured bar, not Nick's judgement call, and
+said explicitly to stop if I found myself wanting to push the glow
+bigger/hotter than his drawing, which this doesn't (no colour changed at
+all).
+
+All debug/investigation code (raycast probes, tree dumps, the
+`creature_wall.gdshader` fork from my first, wrong, Wall-filtering
+attempt) reverted — `git diff` against this run's final commit touches
+only `combat_3d.gd` (the two BIOME keys + the two `_light_for` lines) and
+this status note plus the request and five frames.
+
+`git status` before this push: `game/views/combat_3d.gd`, the request,
+this status note, five new frames. No other asset touched.
+
+## Old: 2026-09-25 01:33 ET
 
 - **Did:** rebuilt the Goblin Engineer the same way as the Frog — smooth
   normals from a raw Meshy refine (fetched by ledger task id, no new
@@ -3703,6 +3803,14 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-25 02:35 EDT — #19 (horizon red line): fixed. Both my own 23:40
+  "it's the Wall" diagnosis and the original sky-curve attempt were
+  chasing symptoms of a stale import cache / too-narrow curve range; the
+  real cause was `ProceduralSkyMaterial`'s horizon band collapsing to
+  1-2px at this camera's angle, confirmed by recolouring it and watching
+  the line follow. `sky_curve`/`ground_curve` = 0.0 on `quarry_ember`
+  only; every other biome's falloff unchanged. Measured against the
+  done-when bar, closed myself.
 - 2026-09-24 23:40 EDT — #19 (horizon red line): director's sky-curve
   diagnosis was wrong (proved with a clean measurement, no visible change).
   Traced it to the arena Wall mesh viewed edge-on (hiding it removes the

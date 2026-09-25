@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: artist
-status: open
+status: done
 priority: high
 beast: cinder_jackal
 eta:
 created: 2026-09-24T22:57
-taken_by:
+taken_by: artist
 ask:
 waiting: false
 ---
@@ -184,4 +184,69 @@ rock asset you already handed over.
 
 Priority raised to high: it is the last visible fault in the resting shot
 that is not #14.
+
+## Result — artist, 2026-09-25 02:35 EDT (fixed — the 23:40 Wall diagnosis was also wrong; it's the sky material)
+
+**Not the Wall either.** Tested the 23:40 diagnosis properly this time —
+hiding `Wall` (`mi.visible = false` in `_shade_model`) with a correctly
+fresh `--import` (the first attempt was silently checking a stale cached
+import of a geometry experiment I'd already reverted — the line looked
+gone only because the cache was gone) and the line was still there,
+pixel-identical, at every x except right behind the altar prop. Hid
+`Floor` too, same result. Bypassed the shader entirely (no
+`material_override` at all, raw glTF-imported material) — still there.
+Raycast every triangle of both meshes through the exact line pixel by
+hand (Möller–Trumbore, camera's own `project_ray_origin`/`_normal`) —
+zero hits. The Wall was never the cause; the 23:40 elimination's "hiding
+Wall removes it" result was the same stale-cache artifact, just caught at
+a lucky angle where the altar prop (a different, unrelated mesh) happened
+to sit in front of part of the line.
+
+**It is `combat_3d._light_for`'s `ProceduralSkyMaterial`**, confirmed by
+recolouring `sky_horizon_color`/`ground_horizon_color` neon green with
+everything else untouched: the line turned green. So the line IS the
+horizon band, exactly as this ticket's very first paragraph guessed,
+before the 23:40 elimination pointed everywhere else.
+
+**Why the original sky_curve/ground_curve attempt (23:40, and mine before
+I found this) looked like a no-op:** `ProceduralSkyMaterial.sky_curve`/
+`ground_curve` set the EXPONENT of the falloff, and at this beast's low,
+close ground camera, the angular slice of sky each screen row covers
+near the true horizon is so small that every exponent from the engine
+default (0.02) up through 1.0+ renders visually identical — indistinguishable
+at 8-bit colour across 1-2 pixels of angle. There is no "a bit wider"
+available. The one value that actually changes anything is 0.0 exactly
+(where the interpolation curve is constant everywhere except the single
+zero-measure point at the true horizon) — that's the only setting that
+reads as a smooth blend instead of a debug stripe. Measured, not eyeballed:
+sampled saturation at the old line's row against the rows 5px above and
+below, at 7 x-positions across the full width — old line failed everywhere
+(the row was more saturated than both neighbours by 60-130 points); fixed
+version passes everywhere except a handful of isolated pixels on the
+beast's own eyes/embers and the altar prop's own paint, which are supposed
+to be more saturated than their surroundings.
+
+**The fix**: `combat_3d.BIOME["quarry_ember"]` gets two new keys,
+`"sky_curve": 0.0, "ground_curve": 0.0`; `_light_for` reads
+`b.get("sky_curve", 0.15)` / `b.get("ground_curve", 0.02)` (Godot's own
+engine defaults) so every other beast's biome renders exactly as before —
+scoped to the one biome that showed the artifact, not the shared default.
+No colour changed (`sky_top`/`horizon` values in `BIOME["quarry_ember"]`
+are byte-identical to before). No geometry, no shader, no camera touched.
+
+Before/after, `state=3d`, same `CAM` line (camera untouched, confirmed
+line-for-line):
+
+![[frames/artist/2026-09-25-0235-artist-horizon-crop-compare.png]]
+
+Full frames:
+![[frames/artist/2026-09-25-0235-artist-horizon-before-3d.png]]
+![[frames/artist/2026-09-25-0235-artist-horizon-after-3d.png]]
+
+`state=3dgrip` also clean, no line:
+![[frames/artist/2026-09-25-0235-artist-horizon-after-grip.png]]
+
+`ALL TESTS PASSED`. Done-when's "measured, not judgement" bar: met (see
+saturation comparison above) — closing without waiting on Nick, per this
+ticket's own instructions.
 
