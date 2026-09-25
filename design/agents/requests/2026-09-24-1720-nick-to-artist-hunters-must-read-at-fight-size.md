@@ -3,13 +3,15 @@
 tags:
   - request
 from: nick
-to: artist
-status: taken
+to: nick
+status: open
 priority: high
 beast: cinder_jackal
 eta: tonight: 1-2 runs
 created: 2026-09-24T17:20
 taken_by: artist
+ask: The Frog is smooth again with a clean outline at fight size — is this the "smooth character model" you wanted, and should the Goblin get the same treatment next?
+waiting: false
 issue: 13
 ---
 
@@ -260,3 +262,62 @@ characters look really bad". So:
   touch the jackal (black, faceted-or-smooth is a separate open question to
   Nick). Smoothing normals / subdividing the worst edges and a clean single
   outline weight at this size is the whole ask.
+
+## Result — artist, 2026-09-25 00:16 EDT (Frog only — smooth normals, no Meshy spend)
+
+**No Meshy spend, no rebuild from scratch — used a file already sitting in
+the tree.** `tools/blender/ai/frog_ai_refined.glb` is the untouched Meshy
+`refine` output from pass 2 (2026-09-23, before style C's low-poly cut ever
+happened) — 27,291 raw tris, fully painted, never decimated or flat-shaded.
+Re-ran `frog_ai_clean.py` (the same weld/scale/decimate-to-5200/smooth
+script pass 2 used originally, untouched) straight off that file. This is a
+revert to the pre-style-C smooth model, not a new build.
+
+**Did not touch the outline shader or `OUTLINE_WIDTH_SCALE`.** At the
+5,200-tri welded mesh, the fixed 0.0045 screen-space line (the same
+default the jackal uses) draws as one continuous black line — no dots, no
+gaps — at the real `state=3d` camera size (~200px tall). Checked at 2x
+crop, not just the full frame. The "broken, speckled" outline was a
+symptom of the 1,560/260-tri flat-shaded cuts (each triangle its own flat
+facet, duplicated vertices, hard normal breaks everywhere the line could
+catch on); it goes away with the mesh itself, so nothing in code needed to
+change.
+
+**Verified against your own "Done when" list, `state=3d` 1:1, real camera:**
+
+![[frames/artist/2026-09-25-0016-artist-frog-smooth-before-after-1to1.png]]
+
+![[frames/artist/2026-09-25-0016-artist-frog-smooth-crop2x.png]]
+
+- Face, eyes and markings read immediately — no facets sticking off the
+  head, shoulder or thigh, no saw-toothed legs.
+- The outline is one clean continuous line at this size.
+- Did not touch the jackal, did not decimate further, did not spend Meshy
+  credits — the file was already there from pass 2.
+
+**Goblin not touched this run** — per the director's own sequencing
+("Take the Frog first ... the Goblin can follow next run"), and this ticket
+was already large for one pass. The Goblin is still the 260-tri flat-vertex-
+colour cut from the "40px" pass; same fix (its own `_refined`-generation
+source doesn't exist yet — `goblin_ai_*` tools operate on the flat-shaded
+file, so building its smooth equivalent needs its own pass, not a rename).
+
+**Checked for regressions.** `ALL TESTS PASSED` before and after (no code
+touched, asset-only change). Fresh full 80-step `mode=play
+beast=cinder_jackal` playtest, foreground: 124 `hop-distance-band` fails,
+0 anything else — exactly the count the playtester's own open
+`...ordinary-climb-hops-now-measure-20m.md` ticket already reports on
+current main (fixer/director's own thread, the widened ground-gap route,
+nothing to do with the hunter model). No new fail anywhere, no
+hunter-visibility or hop-position regression. `state=3dgrip`, `3dclimb`,
+`3dselect` and `3dreward` all checked by eye too: no clipping, no missing
+texture, no change to hunter position/camera. The party-rail portrait
+(`game/assets/portraits/frog.png`) was already rendered from this same
+smooth source (pixel-identical to a fresh re-render) — it was never
+regressed by style C in the first place, so nothing to fix there.
+
+**Not closing this — your call, not mine**, per COMMON.md: whether this
+reads as "smooth" and "clean outline" the way you meant it is your
+judgement, not something a check can certify. Handing back `to: nick`.
+
+## Nick's answer

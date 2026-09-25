@@ -2,13 +2,93 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T23:40
-working_on: "Investigated #19 (horizon red line), found it's the Wall mesh at a grazing angle, not the sky — handed back to director; #13 still blocked on #18."
+updated: 2026-09-25T00:16
+working_on: "#13 unblocked by the camera fix — rebuilt the Frog from the smooth pre-style-C source, handed back to Nick; Goblin next."
 ---
 
 # artist
 
-## This run — 2026-09-24 23:40 ET
+## This run — 2026-09-25 00:16 ET
+
+- **Did:** rebuilt the Frog from the smooth ~5,200-tri source (no Meshy
+  spend, no rebuild) — the spiky low-poly look is gone.
+- **Worked?** Yes — clean outline, no facets, verified at the real 1:1
+  fight camera; frame below.
+- **Next:** same treatment for the Goblin, next run.
+- **Need from you:** does this read as "smooth" the way you meant? #13.
+
+![[frames/artist/2026-09-25-0016-artist-frog-smooth-before-after-1to1.png]]
+
+## Now
+
+The director's 23:58 ET note unblocked #13 (Nick's live camera fix landed,
+`ef52a75`) and re-scoped it to the Frog only this pass: "smoothing normals
+... and a clean single outline weight ... is the whole ask."
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything. Blender 4.1.1 (`apt-get install
+libegl1 libegl-mesa0` again for headless render).
+
+**Found the fix was already sitting in the tree, unused.**
+`tools/blender/ai/frog_ai_refined.glb` — the raw Meshy `refine` output from
+pass 2 (2026-09-23), 27,291 tris, fully painted, never touched by style C's
+later decimation passes — and `frog_ai_clean.py`, the exact script pass 2
+used to turn it into the shipped model (weld, centre, scale to 1.15, decimate
+to 5,200, `use_smooth = True`). Neither file had been touched since
+2026-09-23; style C's low-poly cuts operated on the already-shipped `.glb`
+in place, so the smooth source was never overwritten, just abandoned. Re-ran
+the same script, no changes to it — this is a revert, not a new build, and
+spends zero Meshy credits, per Nick's explicit "do NOT spend Meshy credits"
+on this ticket.
+
+**Did not touch the outline shader.** The "broken, dotted" outline Nick's
+original note complained about was a symptom of the later 1,560/260-tri
+flat-shaded cuts — each triangle exported as its own facet with duplicated,
+non-shared vertices, so the fixed screen-space outline stroke had nowhere
+continuous to sit. At 5,200 tris with real shared/welded topology and smooth
+normals, the same unmodified `outline.gdshader` (0.0045 default width, same
+as the jackal — `OUTLINE_WIDTH_SCALE` has no Frog entry and none was added)
+draws one continuous line. Checked at 2x crop specifically for gaps — none
+found.
+
+**Verified at the real fight camera, not a zoomed studio shot** — the exact
+trap this ticket already caught the artist in once before (2026-09-24
+20:13 ET). `state=3d` 1:1, before (today's shipped low-poly Frog) vs. after:
+
+![[frames/artist/2026-09-25-0016-artist-frog-smooth-before-after-1to1.png]]
+![[frames/artist/2026-09-25-0016-artist-frog-smooth-crop2x.png]]
+
+Also rendered `state=3dgrip`, `3dclimb`, `3dselect`, `3dreward` — no
+clipping, correct scale, same camera/hunter positions as before the asset
+swap (`CAM`/`HUNTER` lines unchanged). Regenerated the party-rail portrait
+(`portraits.py -- frog`) to check it against the new model — pixel-identical
+to what was already shipping, so the portrait was never affected by style
+C's in-fight cuts and needed no change.
+
+**Proved no regression.** `ALL TESTS PASSED` (asset-only change, no code
+touched). Fresh full 80-step `mode=play beast=cinder_jackal` playtest,
+foreground: 124 `hop-distance-band` fails, nothing else — the exact count
+the playtester's own open ticket (`...climb-hops-now-measure-20m`, fixer's
+thread, the widened ground-gap route) already reports on current main.
+Nothing hunter-model-related regressed.
+
+**Goblin not touched.** Per the director's own sequencing on #13 ("Take the
+Frog first ... the Goblin can follow next run") — it is smaller on screen and
+this pass was already a full rebuild. It has no `_refined`/pre-decimation
+source staged the way the Frog did (its own tooling — `goblin_ai_*.py` —
+all operates on the already-flat-shaded shipped file), so its smooth rebuild
+needs its own pass, not a copy of this one.
+
+**Handed back to Nick, not closed** (`to: nick`, `status: open`, `ask:`
+filled) — per COMMON.md, whether this reads as "smooth" the way he meant is
+his call, not a check's. Left #19 (horizon red line) alone — the director's
+own note said "after #13", and this ticket alone was a full run.
+
+`git status` before this push: the shipped `frog_ai.glb` + its resaved
+`.blend`, the request, this status note, and two new frames. No game code,
+shader, or the Goblin's asset touched.
+
+## Old: 2026-09-24 23:40 ET
 
 - **Did:** dug into the horizon red-line ticket (#19). The director's fix
   (widen the sky curve) doesn't touch it — proved that, then proved it's
