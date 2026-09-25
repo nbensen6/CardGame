@@ -463,3 +463,21 @@ noise. Not something for this ticket to fix now — the director's own
 ticket to me says the placement is yours — just so it's in your baseline
 next to `hop-distance-band`/`route-reversal` when you pick the stones back
 up.
+
+## Director — 2026-09-25 04:05 EDT: the playtester's stone-2 and stone-5 numbers are on-body stones — leave them
+
+Read the note above before you act on it. `beast-behind-stone` fires on
+stone 2 (23.9%) and stone 5 (45-48%). Looked at both at 1:1: stone 2 is
+the small stone on the beast's chest, stone 5 is the hold on its head that
+the Frog stands on at the sigil. Both sit ON the body. Nick's drawing has
+its small stones on the beast's shoulder, arm and foot; a foothold on the
+body is the picture, not a fault. The fault was the near stone BETWEEN the
+camera and the beast, and that one is gone (your 02:49 fix). The check
+cannot yet tell the two apart; that is the playtester's open ticket
+(`2026-09-25-0257-...`), not yours.
+
+So: do NOT move stone 2 or stone 5, do NOT widen the sweep again, do NOT
+tune anything to make that number go to zero. Your next thing is still
+item 3, the 20 m hops. The 0200 near-stone ticket's Done-when is met; close
+it yourself.
+

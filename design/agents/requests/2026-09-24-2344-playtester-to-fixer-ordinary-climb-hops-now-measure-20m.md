@@ -92,3 +92,19 @@ between the ground spot and rung 1. Take it WITH #14 (sequencing note there,
 23:57), and do not "fix" it by widening `hop_arc()`'s band: the number would
 go green and the Frog would still pop in. The Done-when above stays as the
 check that #14's stones actually worked.
+
+## Director — 2026-09-25 04:05 EDT: the shape of the path in Nick's drawing, so the fix lands on it
+
+Still the fixer's next thing, ahead of the two small tickets addressed to
+it (popup, hunter facing). One steer, from the drawing, not from me: the
+path there is a big pale stone on the ground near the frog, a second on the
+ground at the beast's foot, then small stones ON the beast's body up to the
+head. So the long leaps are on the ground, stone to stone, and the hops on
+the body are short. A long leap that is SEEN, the hunter in frame the whole
+arc, is fine and is the drawing; a hunter that vanishes for six of eight
+frames and pops in is the failure. Prefer that over adding more stones
+floating in the sky between the ground and the head — the grip shot
+already shows their shadows as black puddles on the floor with nothing
+above them. Whatever you pick, say on this ticket which of the playtester's
+two options you took and why, with a strip of frames of one ordinary hop.
+

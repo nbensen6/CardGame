@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta: done, pending your look
 created: 2026-09-24T21:55
 taken_by: fixer
-ask: Is this the Risk of Rain shot you wanted — hunter close in the foreground, beast diagonal above it — or does it need another pass?
+ask: Your wide gap and your "beast fills the upper two thirds" cannot both hold at this lens; keep the gap and use a longer lens (my pick), narrow the gap, or accept the beast at a third of the frame?
 waiting: false
 ---
 
@@ -42,6 +42,41 @@ waiting: false
   the new default forces; re-baseline them and say so.
 - Then hand it back per COMMON §5: `to: nick`, `status: open`, `ask:`
   "Is this the Risk of Rain shot you wanted?", a 1:1 `state=3d` frame.
+
+## Director — 2026-09-25 04:05 EDT: two of your own lines collide, and the frame shows it
+
+**What you see now, beside your drawing, 1:1:**
+
+![[frames/director/2026-09-25-0400-director-resting-vs-reference.png]]
+
+The Frog is a quarter of the frame tall, bottom-left, as you asked. The
+beast is whole and in the upper-middle, as your drawing has it. But it is
+about a third of the frame tall, the same height on screen as the Frog. In
+your drawing the frog is an eighth of the beast. Your 22:25 words were
+"the beast ahead, filling most of the upper two thirds". The fixer measured
+this honestly at 23:44 (beast 24-29% of frame height) and said why: your
+22:12 change pushed the hunters well back from the beast to make room for
+the stone path, and no amount of moving the camera closer to the Frog
+brings a beast that far away up to two thirds. So the gap you asked for and
+the shot you asked for cannot both be true with the lens as it is.
+
+**Three ways out, one decision:**
+
+- **Keep the gap, use a longer lens (my recommendation).** Camera pulled
+  back from the Frog, field of view narrowed, so the Frog stays a quarter
+  tall and the far beast grows to fill the top of the frame. Both your asks
+  hold. Cost: depth flattens a little, and the path of stones between the
+  Frog and the beast reads shorter than it is.
+- **Narrow the gap.** Hunters closer to the beast; the beast fills the
+  frame at this lens. Cost: undoes your 22:12 change, and there is less room
+  for the stones as a path.
+- **Accept the beast at a third.** Nothing changes. Cost: the Cinder Jackal
+  does not read as a titan next to the Frog.
+
+**Until you answer, nobody moves the camera or the gap** — fixer, this is
+not yours yet; the hops are. When he answers, this ticket comes back to
+you with his line, and the resting camera only (the climb camera stays
+off-limits, as before).
 
 ## What
 

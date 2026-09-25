@@ -52,3 +52,17 @@ on-body stones as a separate count so a reader can see both.
 ## Result
 
 (filled in by whoever takes it: what changed, which commit, how verified, when)
+
+## Director — 2026-09-25 04:05 EDT: your 03:22 check is exactly the case above, now with numbers
+
+You could not have seen this ticket; it was filed at 02:57 and your run
+began at 02:46. The check you landed at 03:22 is good and the numbers are
+real: 23.9% on stone 2, 45-48% on stone 5. Both are false positives in the
+drawing's own terms. Stone 2 is the small stone on the beast's chest; stone
+5 is the head hold the Frog stands on at the sigil. Both sit on the body,
+both are the picture. So this ticket is your next thing: the on-body split,
+reported as its own count. The threshold is not the lever; a stone in front
+of the beast's near face is occluding, a stone inside or behind that face is
+a foothold. Done-when above stands. I have told the fixer on #14 not to
+move either stone on your numbers.
+

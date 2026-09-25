@@ -2,20 +2,138 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T02:58
-working_on: Whole beast back in the resting shot; the near stone's box-with-a-lid look is with Nick; fixer's next is the 20 m hops.
+updated: 2026-09-25T04:08
+working_on: Nothing shipped to the game since 02:49; the beast-fills-the-frame collision is with Nick; fixer's next is still the hops.
 ---
 
 # director
 
-## This run — 2026-09-25 02:58 EDT
+## This run — 2026-09-25 04:08 EDT
+
+- **Did:** the fight is unchanged since 02:49; the one thing in the way is your gap and your "beast fills two thirds" colliding.
+- **Worked?** No score moved and no frame moved; the playtester's new check is real but fires on the drawing's own stones.
+- **Next:** you pick lens, gap or a small beast; fixer rewrites the hops, then turns the hunters to face the beast.
+- **Need from you:** one line on the camera ask, one on the stone shape, one on #13; nothing else is yours tonight.
+
+## Now
+
+**My miss first.** Last run I wrote "frog large, bottom-left, camera near
+it: yes" against the drawing and moved on. The drawing has the frog an
+eighth of the beast; the frame has them the same height. Nick wrote the
+line himself at 22:25 ("the beast ahead, filling most of the upper two
+thirds"), the fixer measured the shortfall honestly at 23:44 (beast 24-29%
+of frame height) and named the cause (the 22:12 gap), and I let it go to
+Nick's column under an `ask:` that did not mention it. He would have opened
+a frame that fails his own spec and had to work out why. Fixed this run:
+the `ask:` on that ticket now names the collision and the three ways out.
+
+**What a player sees, before I read anyone's note (03:52, on the 03:22
+tree; game code unchanged since the 02:49 fix — only `playtest.gd`
+moved).** Resting shot: the whole Cinder Jackal, upper-middle, black with
+ember cracks, ears against the sky, "Attack 7" beside the head, but a third
+of the frame tall, the same height on screen as the Frog. The Frog in full
+profile facing screen-right, looking at nothing; the Goblin on the right
+facing the camera. Left of the beast the big pale box with the orange lid;
+on the beast's chest a small pale cone with an orange rim and a gold ring.
+Climb shot: unchanged, four-fifths sky, the beast a black lump bottom-left,
+the Frog tiny on a rock, "Attack 7" over nothing. Grip shot: unchanged,
+the Frog behind a red "3", only the beast's legs in frame, and three black
+shadow puddles on the floor between them with nothing above them (the
+floating stones, out of frame).
+
+![[frames/director/2026-09-25-0400-director-resting-shot.png]]
+![[frames/director/2026-09-25-0400-director-at-the-sigil.png]]
+![[frames/director/2026-09-25-0400-director-grip.png]]
+
+**Against the drawing**, 1:1 beside it:
+
+![[frames/director/2026-09-25-0400-director-resting-vs-reference.png]]
+
+| his drawing / his words | the frame now | verdict |
+|---|---|---|
+| whole beast, upper-middle, sky above its ears | yes | yes (fixer, 02:49) |
+| **beast fills most of the upper two thirds (his 22:25 line)** | **a third of the frame, same height as the Frog** | **no — collides with his own gap; `to: nick` with options** |
+| frog a quarter tall, bottom-left, its back to us (22:25) | a quarter tall, bottom-left, in profile facing right | half — facing filed to fixer, after the hops |
+| smooth cartoon frog and goblin | yes | with Nick (#13) |
+| stones plain pale boulders, big near, small on the body | box with a lid; a cone on the chest | with Nick (stone shape) |
+| path runs diagonally, ground onto the beast | near stone left, chest stone right and up; hops between are 20 m and unseen | half — hops, fixer's next |
+| cool sky, dark ground, pale stones; beast black | yes | yes |
+
+**Did the fight get better for Nick, or did three scores go up?** Neither.
+Nothing reached the game this hour: the artist read the board, found every
+item of its own sitting with Nick, and built nothing rather than something
+(right call — card art is parked by Nick himself, 09-23, and the hunters
+and jackal are his to answer); the fixer's 03:20 run is still live with
+nothing pushed; the playtester shipped one check. That check is the one
+number that moved, and it moved in the wrong direction as evidence:
+`beast-behind-stone` fires 8-11 times a mode on stone 2 (the chest stone)
+and stone 5 (the head hold), both of which sit ON the beast, both of which
+are in the drawing. The playtester could not have known — my ticket saying
+so was filed eleven minutes after its run began — but the number is now on
+#14 where the fixer reads it, and the fixer's last note already called the
+chest stone "the one open remainder". That is a stone about to be moved off
+the body on a false positive. Told the fixer on #14 not to; told the
+playtester on its open ticket that the on-body split is its next thing.
+
+**Audit of what closed since 02:58.** One: the beast-behind-stone check
+ticket, closed by the playtester on a real check that fires and goes quiet
+when the geometry moves, with a negative test. Correct close. **Stuck
+audit:** the 0200 near-stone ticket is still `taken` with a finished Result
+and my "close it yourself" from 02:58 unanswered — the fixer has not run
+since; not limbo yet. #14 `taken`, eta honest. The head-behind-tag ticket
+rides #14. **Nick's column:** five rows, all with `ask:`, the camera one
+now sharpened. No answers since 23:48.
+
+**Judgement calls sitting elsewhere:** the fixer's 23:44 "if the beast
+still reads too small, that's the gap from #14" — a decision of Nick's,
+sitting in a Result paragraph he would not read. Moved into the `ask:`.
+Nothing else.
+
+**Filed:**
+
+1. `to: fixer` (new, normal) — at rest the Frog stands in profile looking
+   off the right edge and the Goblin faces the camera; turn the bodies to
+   the beast. Where to look first: the eyes-on-the-boss yaw is computed in
+   world and applied under a holder that is itself turned. NOT the camera,
+   NOT the models. After the hops.
+2. `to: nick` (existing camera ticket, ask rewritten) — gap and "two
+   thirds" cannot both hold at this lens: longer lens (my pick), narrow the
+   gap, or accept a small beast. Nobody moves the camera until he answers.
+3. Notes, not requests: #14 (stone 2 and 5 are on-body, leave them; hops
+   next); the hops ticket (the drawing's path is long seen leaps on the
+   ground and short hops on the body; not more floating stones); the
+   playtester's open ticket (the on-body split, with its own numbers); the
+   stone-shape ticket (the chest cone is the same decision).
+
+**Held back (watch next run):**
+
+- The climb shot, four-fifths sky. Still held on Nick's own order (camera
+  after #14). Two runs held now; it is the worst frame a player sees and it
+  is the fight's climax. If the hops land next run, the sigil camera is the
+  run after.
+- The gold "next rung" ring is on the chest stone while both hunters stand
+  on the ground and the near stone has no ring at all. A player looking
+  for "where do I jump" is pointed past the first stone. Not verified in
+  the rules yet; a playtester item after the on-body split.
+- The floating stones' shadows as black puddles in the grip shot. Tied to
+  where the stones end up after the hops; not filed.
+- The playtester's `Did:` and `Worked?` bullets are two sentences each
+  again. The board truncates. Reminder, not a ticket.
+
+**What is working, so nobody optimises it away:** the artist choosing to
+build nothing when everything of its own was with Nick, and saying so in
+one bullet; the fixer measuring the two-thirds shortfall and naming the
+cause instead of hiding it; the playtester's negative test on its own
+check. Keep all of that.
+
+## Old: 2026-09-25 02:58 EDT
 
 - **Did:** the fight is better — whole beast back in the resting shot, red horizon line gone; both real, both visible.
 - **Worked?** Yes; all that still stands between the frame and your drawing is the near stone, a box with a lid.
 - **Next:** you pick boulders or shelves; fixer rewrites the 20 m hops; playtester re-measures on the fixed tree.
 - **Need from you:** one line on the stone shape, and #13 — nothing else new tonight.
 
-## Now
+### Now (02:58)
 
 **What a player sees, before I read anyone's note (02:53, on the 02:49
 tree).** Resting shot: the Cinder Jackal whole, upper-middle, black with
@@ -790,6 +908,8 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+
+- 2026-09-25 04:08 EDT — nothing reached the game this hour; camera ask to Nick rewritten to name the gap-vs-two-thirds collision; hunters-face-the-beast filed to fixer after the hops; fixer told stone 2/5 are on-body; playtester pointed at the on-body split.
 - 2026-09-25 02:58 EDT — fight better (whole beast back, fixer 02:49; red horizon line gone, artist 02:35), no scores moved; the near stone's box-with-a-lid shape is two of Nick's own inputs in conflict — filed to him with options; playtester told the tree moved under it and a stone on the body is not a failure; fixer told Height 2 stays, close the ticket, hops next; popup-on-the-Frog filed to fixer for after the hops.
 - 2026-09-25 02:05 EDT — Goblin reads beside the Frog (artist, #13 handed back right); the fixer's stone sweep landed mid-run and the near rock now hides the beast chest-to-paws — filed the placement fix to the fixer, the occlusion check to the playtester, unblocked #19 for the artist. My miss: #14's visible half ("beast stays visible") was never stated.
 - 2026-09-25 01:00 EDT — fight better again (Frog reads and matches the drawing; beast's head clear of the HUD, fixer 00:52); no scores moved; named the style-C vs smooth contradiction for Nick on #13 with options; artist sequenced (Goblin next, do not touch the Frog, do not decimate); #14 now the only blocker.

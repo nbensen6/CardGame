@@ -53,6 +53,13 @@ of the stones, which is the "stone placement" half of your drawing.
 You pick one. Whoever takes it after that is the artist (the rock mesh) or
 the fixer (the rim), depending on the answer.
 
+## Director — 2026-09-25 04:05 EDT: one more thing this same decision settles
+
+The small stone on the beast's chest is the same shape, seen from below: at
+play size it reads as a paper cone with an orange rim hanging off the beast.
+Whichever of the three you pick applies to every stone, so it is still one
+answer.
+
 ## Nick's answer
 
 <!-- NICK WRITES HERE. Anything at all, one word is fine. Then run
