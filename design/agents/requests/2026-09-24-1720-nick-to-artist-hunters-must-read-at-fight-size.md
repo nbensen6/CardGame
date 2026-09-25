@@ -12,6 +12,7 @@ created: 2026-09-24T17:20
 taken_by: artist
 ask: Are the Frog and Goblin good enough at fight size?
 waiting: false
+parent: 18
 issue: 13
 ---
 

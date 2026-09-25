@@ -11,9 +11,12 @@ created: 2026-09-25T09:56
 taken_by:
 ask:
 waiting: false
+issue: 33
 ---
 
 # The Dev camera jerks under the mouse, so Nick cannot look the jackal over — ease it, touch nothing else
+
+**#33**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

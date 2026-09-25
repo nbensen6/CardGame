@@ -11,6 +11,7 @@ created: 2026-09-25T07:58
 taken_by:
 ask: At the weak point, reframe on the beast's head with the Goblin visible, or leave it?
 waiting: false
+parent: 18
 issue: 27
 ---
 

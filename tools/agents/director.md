@@ -93,6 +93,14 @@ while it is still addressed to an agent?** If so it is in limbo. Hand it back
 yourself — `to: nick`, `ask:` filled in, the frame attached — and say in your
 status note which agent left it there.
 
+## Answered children nobody acted on
+
+A `Waiting on Nick's answer for: ...` request hangs off the ticket that raised
+it, and his reply lands on the CHILD. The agent holding the parent is supposed
+to look there. If one has an answer and the parent has not moved by your next
+run, say so in your status note and tell that agent directly -- an answer he
+gave that nobody read is the same as never asking him.
+
 ## Make sure a judgement call actually reaches him
 
 Any decision that is Nick's to make must arrive as a request `to: nick` with

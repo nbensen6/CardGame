@@ -11,6 +11,7 @@ created: 2026-09-25T02:56
 taken_by:
 ask: Plain rounded boulders, or keep the flat top and orange rim?
 waiting: false
+parent: 18
 issue: 23
 ---
 

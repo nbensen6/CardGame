@@ -11,6 +11,7 @@ created: 2026-09-24T20:08
 taken_by: fixer
 ask: Twenty stones cross the gap and your drawing had four. How many do you want?
 waiting: false
+parent: 18
 issue: 14
 ---
 

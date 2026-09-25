@@ -100,6 +100,22 @@ a request out of his column the moment he replies, whatever `to:` still says.
 But the request is now YOURS, and leaving it addressed to him after he has
 answered is how something ends up belonging to nobody.
 
+## 1a2. His answer arrives on the CHILD, not on your ticket
+
+If a request you hold has a `Waiting on Nick's answer for: ...` child -- any
+request whose `parent:` is your ticket's number -- **his reply lands there, in
+that note's `## Nick's answer`, and nowhere near the ticket you are reading.**
+
+So every run, before you carry on with a ticket: look for a request whose
+`parent:` is your ticket number and check it for an answer. Grep is enough:
+
+    grep -l "^parent: <your ticket number>$" design/agents/requests/*.md
+
+An answered child is the top of your queue, same as any answered request. Act
+on it, then set the child `status: done` -- it has served its purpose -- and
+carry on with the parent. Do not leave a child answered and open; it sits on
+Nick's board looking like he still owes you something.
+
 ## 1b. Answered requests come first of all
 
 Nick answers in the request's own `## Nick's answer` section, in whatever words

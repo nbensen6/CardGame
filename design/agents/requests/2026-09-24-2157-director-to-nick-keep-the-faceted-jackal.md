@@ -11,6 +11,7 @@ created: 2026-09-24T21:57
 taken_by: director
 ask: Keep the jackal at half geometry, or go back to the smooth one?
 waiting: false
+parent: 18
 issue: 21
 synced_comment: 5825707284
 ---

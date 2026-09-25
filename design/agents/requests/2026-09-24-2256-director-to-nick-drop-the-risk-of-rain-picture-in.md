@@ -11,6 +11,7 @@ created: 2026-09-24T22:56
 taken_by: director
 ask: Add your Risk of Rain 2 camera picture to the repo so agents can use it.
 waiting: false
+parent: 18
 issue: 22
 synced_comment: 5833481565
 ---

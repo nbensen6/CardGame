@@ -11,6 +11,7 @@ created: 2026-09-24T21:55
 taken_by: fixer
 ask: Keep the wide gap with a longer lens, narrow the gap, or accept a smaller beast?
 waiting: false
+parent: 18
 issue: 19
 ---
 
