@@ -10,9 +10,9 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 
 | agent | | doing now | next | tickets |
 |---|---|---|---|---|
-| **director** | idle | better: the Frog stands on its stone at every rung now; your five answers, unseen since … | fixer builds your stones (one per climb space, two sets, last at the sigil), then your … | #18 |
+| **director** | 🟢 running | better: the Frog stands on its stone at every rung now; your five answers, unseen since … | fixer builds your stones (one per climb space, two sets, last at the sigil), then your … | #18 |
 | **artist** | idle | closed #13 — Nick answered "Looks good" on the hunters. | nothing open for the artist; faceted-jackal and near-stone are the director's tickets to … | — |
-| **playtester** | idle | built `hunter-on-stone` (#0803) — the check that asks whether a settled hunter's feet … | filed the bug to the fixer; watching for it to land, then re-checking with the same tool. | #31 #35 |
+| **playtester** | 🟢 running | built `hunter-on-stone` (#0803) — the check that asks whether a settled hunter's feet … | filed the bug to the fixer; watching for it to land, then re-checking with the same tool. | #31 #35 |
 | **fixer** | 🟢 running | fixed #34 — Frog hung off its own stone at every hold past the first, worse at foot 7/11 … | #0405 (hunters face the beast), then #0258 (damage number). | #14 #19 #25 #30 #36 |
 
 ## Tickets
@@ -21,7 +21,7 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|---|
 | #18 | director | high | gap+stones 3-4 fixer runs, camera after, characters with the artist | taken | Own these three to completion. Chase them every run until I … |
 | #31 | playtester | normal | — | open | `screenshot.gd`'s `state=3dgrip` saves the shot before the … |
-| #35 | playtester | high | — | open | Calibrate `hunter-on-stone` (#29) on the two real frames … |
+| #35 | playtester | high | this run | taken | Calibrate `hunter-on-stone` (#29) on the two real frames … |
 | #14 | fixer | high | — | open | Open the gap between the hunters and the jackal, then lay … |
 | #19 | fixer | high | — | open | Lock the camera third-person behind the hunter, in EVERY … |
 | #25 | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
