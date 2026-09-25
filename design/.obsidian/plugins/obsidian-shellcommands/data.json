@@ -138,7 +138,7 @@
       },
       "shells": {},
       "alias": "Run the builder on the top queue item",
-      "icon": "hammer",
+      "icon": "lucide-hammer",
       "confirm_execution": false,
       "ignore_error_codes": [],
       "input_contents": {
