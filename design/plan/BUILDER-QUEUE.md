@@ -174,7 +174,8 @@ run failed.
       shoulder/hunter-offscreen/hunter-lost-mid-hop/damage-popup-offscreen/
       intent-tag-vs-hunter were already red before this change, unrelated,
       and already tracked by the open camera items above.
-- [ ] **Weak-point shot.** Camera stays locked behind the active hunter at
+- [?] **Weak-point shot.** *Session, 18:05 EDT: covered by the sigil item above; the builder's 18:02 investigation confirmed the shot holds on Switch. Judge it on the sigil frame. One tick covers both.*
+      **Original:** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
       **Builder, 2026-09-25 18:02 EDT:** no `hold=` value named "top" exists
