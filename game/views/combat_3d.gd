@@ -3578,8 +3578,17 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	# The TOP hold is the one place the route must still touch the beast -- it
 	# is the sigil, the thing you are climbing to. Every rung below it is a step
 	# on the line leading there, so the top is what that line is drawn to.
+	#
+	# `route_side`, not `side`: the top stone is only ever built at the two
+	# FIXED route offsets (`_build_float_stones`'s `for side in [-1.0, 1.0]`,
+	# same convention as every rung below it). `side` is the dynamic
+	# shared-foothold nudge, 0.0 whenever a hunter reaches the top alone --
+	# which put a lone climber centred between both top stones, standing on
+	# neither, and `_front_of_beast` at that centred x reads the muzzle
+	# instead of clear space (see `_top_hold`'s own doc comment), so the z
+	# came out wrong too. #26 "hops land on stones, not in the air".
 	if n <= 1 or i >= n - 1:
-		return _top_hold(side)
+		return _top_hold(route_side)
 	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z), i, n,
 		STONE_SWEEP_WIDTH)
 

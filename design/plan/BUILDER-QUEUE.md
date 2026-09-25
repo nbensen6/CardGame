@@ -97,7 +97,7 @@ run failed.
       reads like a yaw problem, out of this item's scope (clearance + pitch
       only); stopped rather than tune a third constant. See the proposed
       item below.
-- [ ] **Hops land on stones, not in the air.** Nick's frame
+- [?] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
       ground behind it. Every climb hop ends with the hunter's feet on a
@@ -105,6 +105,21 @@ run failed.
       `hunter-on-stone` check and the floating-Frog tickets (#34, #36, the
       2026-09-25 one) are the same bug seen from the tool side. Shot:
       `state=3dclimb` and `state=3dgrip`, feet on stone in both.
+      **Builder, 2026-09-25 16:43 EDT:** root cause at the TOP hold only:
+      `_stand_on_model` returned `_top_hold(side)` — the dynamic
+      shared-foothold nudge, 0.0 whenever a hunter reaches the sigil alone —
+      instead of `_top_hold(route_side)`, the fixed per-hunter line
+      `_build_float_stones` actually plants a stone on. A lone climber stood
+      centred between both top stones, on neither. Fixed (one line), tested
+      (`_test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone`).
+      `state=3dclimb`'s Frog now lands on the stone crate at the jackal's
+      face — see the before/after in `status/builder.md`. `state=3dgrip`'s
+      own frame did not move: hunter0 ends the shot on the ground (foot 0,
+      no stone needed) and hunter1 sits at a non-top rung, so neither hunter
+      in that particular scripted state touches the branch this fix changed.
+      Mid-route footing (any rung strictly between the ground and the top)
+      was already using the correct `route_side` before this run and is
+      unverified rather than fixed — see the two Found items below.
 - [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
@@ -213,3 +228,18 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       whether `_yaw` needs its own rule at the top hold (facing the actual
       front of the head) rather than just carrying over whatever yaw the
       climb was already at.
+- [ ] (proposed) `_stand_on_model`'s `side` parameter is now unused inside
+      the function — the top-hold branch (its only reader) was switched to
+      `route_side` this run (#26). Harmless (every call site still compiles,
+      the two callers that pass a real `side` just no longer have it read),
+      but a future cleanup could drop it from the signature and its three
+      call sites, or fold it into a doc note explaining why it is still
+      passed.
+- [ ] (proposed) Mid-route footing on the "hops land on stones" item (#26):
+      checked hunter1 (weak_point_height-1, not the top) with
+      `state=3dclimb slot=1` — it stands near the jackal's front leg, not
+      obviously centred on its own decorative stone. The lateral math for
+      that branch (`route_pos_cleared` via `route_side`) was already correct
+      before this run's fix, so this may be a real second bug or may just be
+      a hard-to-read camera angle; worth a dedicated look with a render zoomed
+      on that hunter before assuming either way.

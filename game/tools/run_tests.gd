@@ -1023,6 +1023,13 @@ func _init() -> void:
 	_test_route_pos_cleared_matches_route_pos_past_the_taper()
 	_test_route_pos_cleared_never_moves_the_top_hold()
 	_test_route_pos_cleared_single_rung_matches_route_pos()
+	# builder, 2026-09-25: #26 "hops land on stones, not in the air" --
+	# _stand_on_model's top-hold branch returned _top_hold(side) (the dynamic
+	# shared-foothold nudge, 0.0 for a lone hunter) instead of
+	# _top_hold(route_side) (the fixed per-hunter line _build_float_stones
+	# actually builds a stone on), so a lone climber at the sigil stood
+	# centred between both top stones, on neither.
+	_test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone()
 	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
 	# climb's FINAL stop before the tween even started, so the camera's lock
 	# point (_lock_point reads home.x/.z) aimed at the destination for the
@@ -22351,6 +22358,30 @@ func _test_route_pos_cleared_single_rung_matches_route_pos() -> void:
 	var top := Vector3(1.0, 2.0, 3.0)
 	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -5.0, 0, 1, 4.0)
 	_expect(cleared == top, "a beast with only one climb rung has no approach to sweep or clear across -- route_pos_cleared must hand back the top hold unchanged, same as route_pos itself")
+
+
+## #26 "hops land on stones, not in the air": _stand_on_model's top-hold
+## branch used to return _top_hold(side) -- the dynamic shared-foothold
+## nudge, 0.0 whenever a hunter reaches the sigil alone -- instead of
+## _top_hold(route_side), the fixed per-hunter line _build_float_stones
+## actually plants a stone on (its own `for side in [-1.0, 1.0]`). A lone
+## climber stood centred between both top stones, on neither, with the
+## off-centre `_front_of_beast` hull read (on a real beast) pushing the z
+## wrong too. No hull built here (`_hull` stays empty), so `_front_of_beast`
+## falls back to the box's own front face regardless of x -- this isolates
+## the x-axis half of the bug, which is all `route_side` vs `side` changes.
+func _test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._climb_points = {1: Vector3(0.0, 10.0, 5.0), 2: Vector3(0.0, 14.0, 6.0)}
+	c3d._beast_box = AABB(Vector3(-5.0, 0.0, -5.0), Vector3(10.0, 20.0, 20.0))
+	# A lone hunter (side=0.0, nobody else sharing Height 2) climbing route -1.0.
+	var foot: Vector3 = c3d._stand_on_model(2, 0.0, -1.0)
+	var own_stone: Vector3 = c3d._top_hold(-1.0)  # where _build_float_stones puts that line's top stone
+	_expect(foot.is_equal_approx(own_stone),
+		"a lone hunter at the sigil must land on ITS OWN route's top stone (route_side), not centred between both (the dynamic side, which is 0.0 when alone)")
+	get_root().remove_child(c3d)
+	c3d.free()
 
 
 ## #0420: home_after_leg is the pure step behind the per-sub-hop camera fix --
