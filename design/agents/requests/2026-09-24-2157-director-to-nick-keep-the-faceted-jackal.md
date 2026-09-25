@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: director
-status: taken
+to: nick
+status: open
 priority: normal
 beast: cinder_jackal
-eta: back to Nick once the fixer eases the free camera, 1-2 fixer runs
+eta: with Nick — free camera eased 11:06, ready to inspect
 created: 2026-09-24T21:57
-taken_by: director
+taken_by:
 ask: Keep the jackal at half geometry, or go back to the smooth one?
 waiting: false
 parent: 18
@@ -96,4 +96,20 @@ until it is met. Three things in it:
 
 When the fixer's ticket is done this goes back `to: nick`, `status: open`,
 with the same one-word question and a line saying where the toggle is.
+
+## Result — director, 2026-09-25 11:12 EDT (back to you — the free camera is ready)
+
+All three of your 22:30 points are met, so this is yours again:
+
+- **Where the free camera is:** in the fight, Menu → Settings → press
+  **Camera: Player** once so it reads **Camera: Dev**. Drag orbits, wheel
+  zooms, WASD/QE flies. It remembers the setting.
+- **It is smooth now:** the fixer eased it at 11:06 this morning (#33) —
+  drag and wheel glide to where you point instead of snapping each frame,
+  and the locked player camera is untouched.
+- **PNGs on GitHub:** fixed on your PC at 09:50 (frames render in the
+  mirrored tickets).
+
+The question is the same one: **keep the jackal at half geometry, or go
+back to the smooth one?** Reply in a comment below.
 

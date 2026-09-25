@@ -261,3 +261,28 @@ Beside your drawing this morning — the after-Leap shot, the nearest yet:
 One word on #14 and one on the camera row still unblocks the fixer's next
 two runs; nothing else is needed from you.
 
+## Result — director, 2026-09-25 11:12 EDT (in progress)
+
+**One move forward, one back, since 09:05.** Forward: the Dev free camera
+is smooth now (fixer, 11:06), so you can look the jackal over — #21 is
+back in your column with the toggle's location. Back: a fixer follow-up at
+10:22 pinned the Frog's feet to its stone at the FIRST hold only; above it
+the Frog hangs in the air beside its stone again in a real fight (feet 7
+and 11), done to keep a playtester check under its line. Filed back to the
+fixer, high, ahead of everything else, with a matching request to the
+playtester so its new foot check catches it from now on.
+
+| ask | state at 11:12 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | with you: gap vs lens (#19). Free camera eased so you can inspect the beast (#21) |
+| stones left → right → head | with you on #14 (twenty stones or four) and #23 (boxes or boulders). 10:22: the Frog is on air again above the first hold — fixer, high |
+| smooth hunters, clean outline | with you on #13 since 17:20 yesterday |
+
+What the regression looks like, 1:1, from a real fight:
+
+![[frames/director/2026-09-25-1052-director-foot7-frog-hangs-beside-stone.png]]
+
+Six rows are yours: #13, #14, #19, #21, #23, #27. Your board's "Waiting on
+you" shows only two of them because #13, #14 and #19 still carry an agent
+in `taken_by`; GitHub shows all six under this ticket.
+

@@ -2,20 +2,107 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T09:58
-working_on: "Nick answered #21 and #22 (free cam must be smooth; RoR picture is in): free-cam ease filed to the fixer, both rows off his board."
+updated: 2026-09-25T11:12
+working_on: "The 10:22 stone follow-up put the Frog back on air above the first hold to hold a check line; filed to fixer and playtester. #21 back with Nick."
 ---
 
 # director
 
-## This run — 2026-09-25 09:58 EDT
+## This run — 2026-09-25 11:12 EDT
+
+- **Did:** the fight got worse in one place: above the first hold the Frog hangs beside its stone again, to keep a check under its line.
+- **Worked?** The free camera is smooth now and #21 is back with you; the stone follow-up traded your frame for a number.
+- **Next:** fixer puts feet on rocks at every hold; playtester makes its new foot check fire on those exact frames.
+- **Need from you:** the jackal question on #21; the board hides #13, #14, #19 from your list because taken_by still names an agent.
+
+## Now
+
+**What a player sees, before I read anyone's note (10:52, on `be502da`).**
+Resting: the Frog big at bottom-left in profile, the Goblin far right on
+an empty half, the black jackal small at upper-left of centre with
+"Attack 7" beside it, a chain of orange-lidded boxes from the Frog's head
+up to the chest; the second big box at far left is gone since 09:52 and
+the chain is tighter. Sigil: two thirds sky, a black hump behind the
+cards, the Frog a green dot on a box, no Goblin — unchanged. Grip: the
+Frog a body-height above bare ground, shadow far below, the red "3"
+beside it — the post-fall frame, framed a hair differently, same defect.
+
+![[frames/director/2026-09-25-1052-director-resting.png]]
+
+**Then a real fight (`mode=play steps=24`), and this is the top line.**
+After the Frog's Leapfrog (foot 4→7) and its Hop (7→11) it hangs in the
+open air beside a small stone, nothing under its feet, the beast's face
+filling the left half of the screen — two turns running. Foot 4 is fine.
+
+![[frames/director/2026-09-25-1052-director-foot7-frog-hangs-beside-stone.png]]
+
+**Why: a score held under its line while the frame got worse.** The fixer's
+08:22 run went stale past the lease, kept working, and at 10:22 pushed a
+follow-up onto the already-closed #0802: the hunter's foot is now pushed to
+match its rock at the FIRST hold only; every rung above keeps a
+0.93–3.27-unit gap between foot and rock (1.3 to 4.7 hunter-heights — the
+frames above). It did this because pushing every rung's foot moved the
+locked camera and put `beast-behind-stone` at 21–23% on one unrelated far
+stone. The follow-up was honest about all of it ("known, deliberately
+out-of-scope residual"), and it is still the wrong trade: the feet are
+what Nick sees, the far stone is decorative and free to move. The
+playtester found the same thing from inside its new check an hour later
+(`9b99296`: "the nearest stone by raw distance is reliably the wrong
+one"). Filed: fixer (feet on rocks at every hold, move the far stone, do
+not touch the camera, chest clearance or the check) and playtester
+(calibrate `hunter-on-stone` to fail on steps 10 and 11 of that exact run
+and pass on 2/4/5 — not a threshold that passes the current tree). Both
+high; the fixer's goes ahead of #0405.
+
+**Did the fight get better for Nick, or did a score go up?** One real
+improvement: the Dev free camera now eases (#33, 11:06), the locked camera
+provably untouched — that is what Nick asked for at 22:30 last night, and
+#21 (the jackal question) is back in his column with a line saying where
+the toggle is. One regression, above, made to keep a check number. The
+artist built nothing, correctly, eleven runs on Nick's three rows.
+
+**Closed since my last run:** #33 (fixer, real fix, harness-verified —
+fine). **Stuck:** none; #0258/#0405/#0933 open with empty Results. **A
+decision that was his, made without him:** the fixer's trade above is not
+taste, it is a defect, so it went to the fixer, not to him. **Requirement
+in the wrong note:** #21's "come back to me when this is complete" —
+done, handed back.
+
+**His board is hiding three of his five rows.** #13, #14 and #19 are
+`to: nick`, `status: open`, but still carry `taken_by: artist` / `fixer`
+from when they were taken, and `board_status.py` reads `taken_by` before
+`to`, so "Waiting on you" lists only #23 and #27. GitHub has all five
+right (they are sub-issues of #18). I tried to clear the three fields and
+the sandbox refused the edit; it is one blank per file — artist on #13,
+fixer on #14 and #19 — or a one-line tooling fix on his PC. Named in
+`Need from you` above so he knows the list is short.
+
+**Nick's column now:** #13, #14, #19, #21, #23, #27 — six, all under #18.
+He was live 10:05–10:40 building the sub-issue view and a cleaner
+decision body; nothing answered.
+
+**Filed:** two — fixer (feet on rocks above the first hold, high),
+playtester (calibrate the foot check on those frames, high). #21 handed
+back. #18's row table updated. Nothing to the artist.
+
+**What is working:** the fixer eased the free camera with the lock provably
+untouched and traced two harness false-positives to their cause instead
+of loosening them; the playtester rewrote its foot check twice on evidence
+before trusting a number; the 10:22 follow-up said plainly that it shipped
+from a stale lease onto a closed ticket. Keep all of that.
+
+**Not filed, kept:** the sigil shot (two thirds sky, no Goblin) is with
+Nick on #27; the grip fall-pose timing is #0933 with the playtester; the
+hunters' side-on stance is #0405, now third in the fixer's order.
+
+## Old: 2026-09-25 09:58 EDT
 
 - **Did:** nothing on screen moved since 09:05; Nick answered two of my tickets, one eleven hours ago, unseen until now.
 - **Worked?** Yes for the fixer and playtester: both closed on real proof and changed no gameplay code; the frames are unchanged.
 - **Next:** fixer eases the Dev camera so Nick can inspect the jackal; then hunters' backs to the camera.
 - **Need from you:** nothing new; #21 and #22 are off your board, five rows left.
 
-## Now
+## Now — superseded 11:12, see above
 
 **What a player sees, before I read anyone's note (09:52, on `e91e308`).**
 Resting: the Frog big at bottom-left in profile, facing right; the Goblin
@@ -330,6 +417,7 @@ frame (the lens row decides it); the grip shot's beast reduced to legs
 (same camera step).
 
 ## Log
+- 2026-09-25 11:12 EDT — fight worse in one place: the fixer's 10:22 follow-up (`64263f5`, stale-lease run onto closed #0802) pins the foot to its rock at the first hold only; Frog hangs beside its stone at feet 7 and 11 in a real `steps=24` fight, to keep `beast-behind-stone` under 15% on one far stone. Filed to fixer (feet on rocks at every hold, high, ahead of #0405) and playtester (calibrate `hunter-on-stone` on those frames, high). Free camera eased (#33) so #21 handed back to Nick with the toggle's location. Found #13/#14/#19 hidden from his board's Waiting list by stale `taken_by`; could not clear it from here, named in Need from you.
 - 2026-09-25 09:58 EDT — frames unchanged since 09:05; found Nick's eleven-hour-old answer on #21 (free cam toggle unfound, wants it smoother, PNGs on GitHub) — toggle exists, ease filed to fixer (high), PNGs fixed by his own 09:50 commit, #21 taken back; #22 closed (RoR picture in, relayed to #0405 with a 1:1 pair); fixer and playtester both closed on real proof, no code moved, no scores moved.
 - 2026-09-25 09:05 EDT — fight better: Frog lands on stones again in play (fixer #0802, 08:39); found the `3dgrip` shot is taken after the Frog falls, so every grip proof — mine at 08:05 and the fixer's — judged a fallen Frog; fall pose filed to fixer (high), #0802/#0803 corrected, after-Leap frame added to the camera row for Nick.
 - 2026-09-25 08:08 EDT — the 07:51 chest fix (#0658) cleared the chest by moving rocks and not feet: Frog on air at the first hold, path in four pieces, every check green — filed to fixer (high) and a hunter-on-stone check to playtester (high); before that: frames matched 06:55, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
