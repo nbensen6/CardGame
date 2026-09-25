@@ -124,6 +124,19 @@ const BEHIND_HUNTER_MIN := 0.5
 ## that a hunter actually facing sideways or away fails it.
 const FACING_TOL := deg_to_rad(5.0)
 
+## For the new check in _drive_timing (playtester checklist item 1: "timed
+## cards' hit circle appears where you look"). hit_circle.gd's own _screen()
+## clamps a note PAD px from every screen edge so a note whose true position
+## is off-camera stays clickable (its own comment: "a note you cannot see is
+## not a timing test, it is a guaranteed miss") -- but nothing has ever
+## measured how far that clamp can pull the drawn circle from where the hold
+## actually renders. TARGET_RADIUS*START_SCALE (hit_circle.gd: 40*2.9=116) is
+## the note's own full approach-ring width at spawn -- pulled further than
+## its own width and the circle no longer reads as sitting "on the hold
+## you're reaching for" (hit_circle.gd's stated purpose), it reads as a UI
+## element stuck to the screen edge, disconnected from the beast.
+const HIT_CIRCLE_CLAMP_MAX := 116.0
+
 const Combat3D := preload("res://views/combat_3d.gd")
 
 ## `hunter_screen_rect`'s box is the convex hull of a 3D AABB's projected
@@ -1145,11 +1158,28 @@ func _drive_timing(v: Node) -> void:
 		return
 	var circle: Control = v.get("_circle")
 	var guard := 0
+	var clamp_worst := 0.0
+	var clamp_worst_note := -1
 	Engine.time_scale = HOP_TIME_SCALE
 	while is_instance_valid(v) and is_instance_valid(circle) and circle.visible and bool(circle.call("is_live")) and guard < 3600:
 		guard += 1
 		var off: float = circle.call("_offset")
 		var hit := int(circle.get("_hits_done"))
+		# Ground truth from Camera3D itself (unproject_position), independent
+		# of hit_circle.gd's own _screen() -- measures what its edge clamp
+		# actually costs, on the note the bot (and a real player) is aiming
+		# at right now. Only while that note is genuinely in front of the
+		# camera; one behind it has no true on-screen position to compare
+		# against at all (a separate, already-known "guaranteed miss" case).
+		var notes: PackedVector3Array = circle.get("_notes")
+		var cam: Camera3D = circle.get("_cam")
+		if hit < notes.size() and cam != null and is_instance_valid(cam) and not cam.is_position_behind(notes[hit]):
+			var raw: Vector2 = cam.unproject_position(notes[hit])
+			var clamped: Vector2 = circle.call("_screen", hit)
+			var d := raw.distance_to(clamped)
+			if d > clamp_worst:
+				clamp_worst = d
+				clamp_worst_note = hit
 		if absf(off) < 0.02 and hit < (circle.get("_notes") as Array).size():
 			await _click(circle.call("_screen", hit))
 		await process_frame
@@ -1167,6 +1197,9 @@ func _drive_timing(v: Node) -> void:
 		if is_instance_valid(v):
 			_poll_popup(v)
 	Engine.time_scale = 1.0
+	if clamp_worst > HIT_CIRCLE_CLAMP_MAX:
+		_fail("hit-circle-off-target", "note %d rendered %.0fpx from its true screen position after hit_circle.gd's own edge clamp -- reads as pinned to the screen edge, not on the hold" \
+			% [clamp_worst_note, clamp_worst])
 	if not is_instance_valid(v):
 		return   # the fight ended on that hit and its screen is gone
 	var tc: Variant = v.get("_timing_card")

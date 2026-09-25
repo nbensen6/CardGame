@@ -2,13 +2,97 @@
 tags:
   - agent-status
 agent: playtester
-updated: 2026-09-24T23:44
-working_on: Retargeted hunter-off-marker/hop-distance-band/camera checks at the live route; filed a new 20m-hop finding.
+updated: 2026-09-25T01:26
+working_on: Added a live check that timed cards' hit circle doesn't get clamped far from its true on-screen target.
 ---
 
 # playtester
 
-## This run — 2026-09-24 23:44 EDT
+## This run — 2026-09-25 01:26 EDT
+
+- **Did:** no request open `to: playtester`. Full 3-mode baseline first (no
+  regression), then added `hit-circle-off-target` — checklist item 1's own
+  "hit circle appears where you look" had no automatic check at all.
+- **Worked?** Yes. 0 fires on real code across a full 80-step fight, 3/3
+  fires when I broke `_screen()`'s clamp on purpose, reverted clean.
+- **Next:** watching for the fixer's #14 (stones/gap) to land — it's what
+  the still-open 124-fail `hop-distance-band` baseline is waiting on.
+- **Need from you:** nothing.
+
+Checklist snapshot:
+
+| # | item | state |
+|---|---|---|
+| 1 | card plays read | **extended this run** — `hit-circle-off-target` closes the one sub-claim ("hit circle appears where you look") that had no live check; 0 fires on real code |
+| 2 | hunters land on the beast correctly | unchanged — 0 `hunter-off-marker`, 0 `hunters-overlap`, 0 `route-reversal`, 0 `sigil-behind-hunter`; `hop-distance-band` still the fixer's own open #14 thread (124/4/44 across the three modes, byte-for-byte last run's numbers) |
+| 3 | jump animation (squash/arc/landing/facing) | unchanged — clean |
+| 4 | camera | unchanged — 0 `camera-not-behind-hunter`, 0 `camera-not-over-shoulder` |
+| 5 | nothing errors | clean — 0 `script-error` across all three modes |
+
+### Why this run
+
+No request was open `to: playtester`, and #14 (the fixer's live "open the
+gap, lay the stones" work, plus the just-landed head-clearance fix,
+`3c8249e`) hasn't touched the route/hop-distance geometry yet — the fixer's
+own commit message says so, and this run's full baseline confirms it:
+`play` (80 steps) 124 `hop-distance-band` fails, `hover` 4, `hands` (1-10)
+44 — exactly the shape every run has shown since the 20m-hop finding was
+filed (`2026-09-24-2344-...`), now folded into #14. Nothing else fired
+anywhere (0 `script-error`, 0 camera/hunter-placement checks) — the head-
+clearance fix that landed mid-run didn't disturb anything this file watches.
+
+With the regression check clean and nothing to react to, worked the
+playtester's own standing instruction: extend coverage where a checklist
+item has a real, unchecked sub-claim. Item 1 ("timed cards' hit circle
+appears where you look and resolves") has never had a check for the
+"where you look" half. `hit_circle.gd`'s own `_screen()` clamps a note's
+drawn position `pad` px from every screen edge so a note whose true world
+position is off-camera stays clickable (its own comment: "a note you
+cannot see is not a timing test, it is a guaranteed miss") — a real,
+deliberate feature. But nothing had ever measured how far that clamp can
+pull the drawn circle from where the hold actually renders; pulled far
+enough, the circle stops reading as "on the hold you're reaching for"
+(`hit_circle.gd`'s own stated purpose) and starts reading as a UI element
+stuck to the screen edge.
+
+**Real risk, not hypothetical:** `screenshot.gd`'s own `state=3dosu`
+diagnostic, run fresh this scenario (camera cut in on the active hunter,
+Satchel Charge's 3 windows reaching far up the beast) — **all three notes
+would be off-screen without the clamp** ("unclamped would lose: 1, 2, 3").
+![[frames/playtester/2026-09-25-hit-circle-clamp-risk-satchel-charge.png]]
+That's the exact scenario `_screen()`'s clamp exists for; my new check
+measures whether the clamp is quietly doing its job (small correction) or
+pinning the note somewhere disconnected from the hold (large correction).
+
+**Added (`game/tools/playtest.gd`), `_drive_timing`, check
+`hit-circle-off-target`:** for the note a real player is looking at right
+now, compares `Camera3D.unproject_position()` (independent ground truth)
+against `hit_circle.gd`'s own clamped `_screen()` result, only while the
+note is genuinely in front of the camera (a note behind it is a separate,
+already-known "guaranteed miss" case). Fails if any note in a played timed
+card is clamped more than 116px (`TARGET_RADIUS*START_SCALE`, the note's
+own full approach-ring width at spawn — displaced further than its own
+size and it no longer reads as "at" anything).
+
+**Verified both directions:**
+- Real, current code, full `mode=play steps=80`: every timed card played
+  this run (Tongue Snap, Tongue Flick, Pounce, Hop, Scramble, Grappling
+  Hook) — 0 `hit-circle-off-target` fires. The clamp is real and doing
+  real work (per the diagnostic above) but isn't currently pulling any
+  note far from its target in actual gameplay.
+- Broke it on purpose: temporarily made `hit_circle.gd`'s `_screen()`
+  always return a fixed corner point regardless of the note's true
+  position, ran `mode=play steps=10` — 3/3 timed cards played fired
+  `hit-circle-off-target` (439px, 724px, 433px off). Reverted;
+  `git diff` on `hit_circle.gd` came back clean before committing
+  anything.
+
+`run_tests.gd`: `ALL TESTS PASSED`, before and after. Full baseline all
+three modes, real committed code: `play` (80 steps) 124 `hop-distance-band`
+only, `hover` 4, `hands` 44 — identical to the pre-edit baseline, no
+regression anywhere.
+
+## Old: 2026-09-24 23:44 EDT
 
 - **Did:** took #director's ticket — pointed 3 stale checks at the LIVE
   route/camera instead of the pre-b0648db anchors.
