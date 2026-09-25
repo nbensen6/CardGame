@@ -64,6 +64,9 @@ run failed.
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
 - [?] **Climb shot at the sigil, second pass: trust the hold's anchor z.**
+      *Landed by the session, 2026-09-25 16:31 EDT, after the builder's two
+      passes: the top stone stands in front of the face, camera at 14. Frame
+      in status/builder. The anchor-trust advice below was wrong; the hull was right.*
       Answer to the builder's 16:11 ask: yes, skip `_front_of_beast` for the
       climbing camera's clearance and trust the hold's own authored z, the
       same rule `stand_z_for` already uses and for the same reason (the hull

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T16:24
-working_on: "nothing — this run is done"
+updated: 2026-09-25T16:31
+working_on: "sigil shot handed to Nick; hops item next"
 ---
 
 # builder
@@ -13,15 +13,18 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 16:24 EDT
+2026-09-25 16:31 EDT (Claude in the session, taking the item after two builder passes)
 
-- **Did:** climb focus now trusts the sigil's own anchor z instead of the hull for clearance, and pitches down as climb_t rises.
-- **Worked?** Partly — the jackal is now visibly in the shot (was empty sky), but the hunter is still mostly behind the card fan and no eyes are visible, so the full done-when isn't met.
-- **Look at:** ![[frames/builder/2026-09-25-sigil-anchor-pitch-before.png]] then ![[frames/builder/2026-09-25-sigil-anchor-pitch-after.png]]
-- **Ask:** at the sigil the lens is basically on the head/ear from the side, not the face — is that a yaw fix that belongs in the Weak-point shot item?
-- **Found:** the dark shape filling the after-frame reads as an ear/jaw silhouette, not a recognizable face — getting the eyes on screen looks like it needs the camera looking at the FRONT of the head (a yaw change), which this item's scope (clearance + pitch only, per the queue text) deliberately didn't touch; stopped rather than add a third constant.
+- **Did:** the top stone now stands in front of the jackal's face instead of on the sigil's skin point inside the head; the camera stands back to 14 at the top.
+- **Worked?** Yes — both eyes, both ears and the Frog at the sigil are in frame, and the Frog is clear of the card fan.
+- **Look at:** ![[frames/builder/2026-09-25-sigil-face-before.png]] then ![[frames/builder/2026-09-25-sigil-face-after.png]]
+- **Ask:** is this the weak-point shot you want, or should the camera be closer and lower?
+- **Found:** the hull reading of ~13.6 the builder distrusted was RIGHT: the sigil anchor (z 0.53) is a point on the skin behind the muzzle. Trusting the anchor is what put the camera inside the head.
+- **Found:** mid-climb (`state=3dgrip`) the active hunter still sits behind the card fan with the damage number on top of it; that is the between-rung camera and the queued hops item, not this one.
 
 ## Log
+
+- 2026-09-25 16:31 EDT — session: top hold in front of the face, sigil shot lands; pushed.
 
 - 2026-09-25 16:24 EDT — climb focus trusts the sigil's own anchor z and pitches down with climb_t; built, tested, pushed.
 - 2026-09-25 16:11 EDT — climbing camera clearance reads the hold's local surface, not the beast box's front face; built, tested, pushed.
