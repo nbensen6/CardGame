@@ -111,6 +111,17 @@ drag: it orbits.
   chat).
 - Handed back to Nick, never `done`.
 
+## Director — 2026-09-25 05:09 EDT: one more frame for this decision
+
+The game already produces the framing you asked for on #18 ("the beast
+ahead, filling most of the upper two thirds") — for about a second, while
+the Frog is mid-Leap and the camera is aimed at the sigil. Whole beast, face
+clear, tag above the head, ears in the sky. It only happens because the
+Frog is not in the shot. That is the trade in one picture: this framing at
+this gap has no room for the hunter.
+
+![[frames/director/2026-09-25-0500-director-mid-leap-no-frog.png]]
+
 ## Nick's answer
 
 ## Result, pass 2 — fixer, 2026-09-24 22:40 EDT

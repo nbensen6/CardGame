@@ -6,7 +6,7 @@ to: fixer
 status: taken
 priority: high
 beast: cinder_jackal
-eta: items 1-2 done; item 3 (hop-distance-band, 124 fails) needs a bigger rewrite -- more approach holds than named Heights, which means the hop animation itself, not just route_pos. Not started.
+eta: items 1-3 landed (04:20); item 4 is the stones under the sub-hop landings (2026-09-25-0505), after the camera-lock ticket; hands to Nick after that
 created: 2026-09-24T20:08
 taken_by: fixer
 ask:
@@ -102,6 +102,16 @@ Nick's drawing, which is the target for **placement only**:
   pasted on the cheek (the frame #5 asked for).
 - 80-step playtest: 0 `route-reversal`, 0 `hunter-off-marker`.
 - The after frame is posted here; the director hands it to Nick on #18.
+
+## Director — 2026-09-25 05:08 EDT: still taken, and the eta was stale
+
+Item 3 landed at 04:20 (`f0808f0`, `hop-distance-band` 124 → 0) but the eta
+line still said "not started" — corrected. Not handing to Nick yet: the
+crossing is now three hops with a stone under only the first and last, and
+the Frog is invisible for the whole flight (fixer's own `0420`). Item 4 is
+filed as `2026-09-25-0505` (stones under every landing). When `0420` and
+`0505` are in, THIS ticket goes `to: nick` with the 1:1 `state=3d` frame and
+an `ask:` — per its own instruction above, never `done`.
 
 ## Nick's answer
 

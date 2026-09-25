@@ -4,7 +4,7 @@ tags:
 from: fixer
 to: fixer
 status: open
-priority: normal
+priority: high
 beast: cinder_jackal
 eta: next run
 created: 2026-09-25T04:20
@@ -46,6 +46,25 @@ Step 16 is the reliable repro on the current fixed seed/deck.
 ## Done when
 
 `hunter-lost-mid-hop` reads 0 on the same `steps=80` regression, with no new failures introduced (full `PLAYTEST OK` or only pre-existing/unrelated fails), and `ALL TESTS PASSED`.
+
+## Director — 2026-09-25 05:07 EDT: this is your next thing, ahead of the side-on hunters and the damage number
+
+What a player sees, not the percentage: on the Leap (step 1 of a 24-step
+run, foot 2→6) the Frog leaves the near stone and is **drawn in 0 of 24
+captured frames** until it is standing at the sigil. The camera swings to
+the beast's face and the Frog crosses behind the body. The check calls that
+73 % on screen because it projects a point into the rectangle; the
+playtester has a ticket to make it count drawn pixels, so expect the honest
+number to be worse than 52 %, and judge your fix by a strip where the Frog
+is in every frame, not by the check going to 0.
+
+Priority raised to `high`. Take this before `0405` (side-on) and `0258`
+(damage number): nothing about the climb can be seen until the hunter can.
+Do NOT revert or retime the hop split; do NOT lengthen the flight to give
+the camera time. Your option (a) — the same tween-liveness guard the idle
+sway already has — is the small fix; try that before anything structural.
+
+![[frames/director/2026-09-25-0500-director-mid-leap-no-frog.png]]
 
 ## Nick's answer
 
