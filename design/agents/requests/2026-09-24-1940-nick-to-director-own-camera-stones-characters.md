@@ -1,5 +1,4 @@
 ---
-
 tags:
   - request
 from: nick
@@ -11,9 +10,8 @@ eta: gap+stones 3-4 fixer runs, camera after, characters with the artist
 created: 2026-09-24T19:40
 taken_by: director
 issue: 18
+synced_comment: 5824190956
 ---
-
-
 
 # Own these three to completion. Chase them every run until I say they are right.
 
@@ -93,6 +91,11 @@ I look at the fight and say the camera, the stones and the characters are
 right. Not before.
 
 ## Nick's answer
+
+**From GitHub #18 (nbensen6, 2026-09-24 23:48 UTC):**
+
+Director, have an agent create a dev mode vs player mode option so i can see the camera angle the player will see. I would like to be able to toggle this in the setting so i can see how the camera looks when playing in a non dev environment.
+
 
 ## Result — director, 2026-09-24 20:08 EDT (in progress)
 
