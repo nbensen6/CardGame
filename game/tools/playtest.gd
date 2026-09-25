@@ -56,13 +56,15 @@ const HOP_MAX_WORLD := 9.1538461
 ## point, or it reads as part of their sprite instead of a separate thing.
 const SIGIL_HUNTER_HEIGHT := 0.7
 
-## combat_3d.gd's own STONE_SWEEP_WIDTH (HUNTER_HEIGHT * 3.0) -- mirrored here
-## for the same reason as SIGIL_HUNTER_HEIGHT above: this file can't import a
-## .gd script's private consts. route_pos() now takes a half_width argument
-## (#14, the left-to-right stone sweep) -- checks 8 and 8c below call it
-## exactly the way _stand_on_model does, or they'd measure a route that no
-## longer exists, the same trap check 8's own comment already tells once.
-const STONE_SWEEP_WIDTH := SIGIL_HUNTER_HEIGHT * 3.0
+## combat_3d.gd's own STONE_SWEEP_WIDTH (HUNTER_HEIGHT * 6.5, widened
+## 2026-09-25 to clear the beast, see that file's own note) -- mirrored here
+## for the same reason as SIGIL_HUNTER_HEIGHT
+## above: this file can't import a .gd script's private consts. route_pos()
+## now takes a half_width argument (#14, the left-to-right stone sweep) --
+## checks 8 and 8c below call it exactly the way _stand_on_model does, or
+## they'd measure a route that no longer exists, the same trap check 8's own
+## comment already tells once.
+const STONE_SWEEP_WIDTH := SIGIL_HUNTER_HEIGHT * 6.5
 
 ## How far above a standing hunter's own head the sigil mark must sit before
 ## it counts as "clear" rather than "borderline" -- small on purpose, the

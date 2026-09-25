@@ -2,11 +2,75 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-25T01:48
-working_on: "#14 items 1-2 done (head clearance, stone sweep + rock). Item 3 (hop-distance-band) needs a hop-animation rewrite, not started."
+updated: 2026-09-25T02:55
+working_on: "Near stone off the beast's chest (widened STONE_SWEEP_WIDTH). A smaller Height-2 stone still touches the chest -- flagged, not fixed."
 ---
 
 # fixer
+
+## This run — 2026-09-25 02:55 EDT
+
+- **Did:** moved the near approach stone off the beast's chest/legs — it was
+  covering ears-to-paws once the earlier sweep fix revealed it.
+- **Worked?** Yes for the big stone; whole beast now reads. Found a smaller,
+  pre-existing stone (Height 2) also touching the chest, previously hidden
+  behind the big one — flagged on the ticket, not fixed this run.
+- **Next:** director to decide if the Height-2 remainder needs its own
+  ticket; item 3 (hop-animation rewrite) still not started.
+- **Need from you:** nothing blocking.
+
+![[frames/fixer/2026-09-25-near-stone-after.png]]
+
+## Now
+
+Took `2026-09-25-0200-director-to-fixer-the-near-stone-now-hides-the-beast-from-chest-to-paws.md`
+(director, high priority, the only genuinely `open` `to: fixer` request this
+run — `2026-09-24-2344-...ordinary-climb-hops-now-measure-20m.md` is also
+open but is the director's own item 3 of #14, already folded into #14 rather
+than a separate pick per last run's own note; the two other `taken` #14
+threads are mid-flight work already `taken_by: fixer`, not fresh picks).
+
+**The fix.** One constant: `STONE_SWEEP_WIDTH` (`combat_3d.gd`),
+`HUNTER_HEIGHT * 3.0` (2.1) -> `HUNTER_HEIGHT * 6.5` (4.55). Mirrored the
+same value into `playtest.gd`'s own copy (checks 8/8c call `route_pos`
+directly and would otherwise measure a route that no longer exists).
+
+Rendered `state=3d` at eight widths (3.0/3.5/4.0/4.5/5.0/5.5/6.0/7.0) plus
+the full beast-half-width offset (5.4, the exact value already tried once
+and reverted before this ticket) and looked at each at 1:1 before picking:
+below 4.5 the stone still grazes or sits on the beast's front leg; at 6.0 it
+already clips the LEFT edge of a 1280-wide frame; at 5.4 (full beast width)
+it stretches into the exact "clay pot" silhouette the artist's rock mesh
+(#16) was built to fix. 6.5 is comfortably inside the clear window: real
+margin past the 4.5 threshold, well short of the 6.0 edge-clip.
+
+**Honest finding, not swept under the rug.** Pulling the near stone (Height
+1) out from directly in front of the camera revealed a SECOND, much
+smaller stone (Height 2) was always sitting on the beast's chest too — it
+used to be invisible, hidden behind the big one along the same camera ray.
+Same `route_pos` line Nick's own commit set up; this ticket's own "what NOT
+to do" says don't touch that line's point count or the hop tween, so I
+didn't. Checked whether more width would also clear it: no single
+`STONE_SWEEP_WIDTH` clears both, since Height 2 sits too close to the
+sigil's own x to move without pushing Height 1 off-frame first. Wrote up
+the finding and a crop on the ticket rather than silently calling it done
+or silently trying to fix it out of scope.
+
+**Proof.** `ALL TESTS PASSED`. `state=3d` VIS lines for both hunters
+unchanged from the shipped tree (only the stone's x moved). `state=3dgrip`'s
+pre-existing `VIS FAIL hunter1` reproduces at the same shape, x shifted by
+the same sweep (546,81) -> (569,81), confirmed against `git stash`. Full
+fresh `mode=play beast=cinder_jackal steps=80`: fight played to a real
+ending (Pounce, step 30), only failing check is `hop-distance-band` at
+**124** — the exact pre-existing baseline this ticket's own Done-when
+names. Zero new failure categories.
+
+Left the ticket `status: taken`, not `done` — the Height-2 remainder is a
+real, open gap against its literal "no stone in the beast's rect" bar, even
+though the regression and everything else it asked for came back clean.
+Left one line on #14 pointing at it.
+
+## Old: 2026-09-25 01:48 EDT — #14 items 1-2 (head clearance, stone sweep + rock)
 
 ## This run — 2026-09-25 01:48 EDT
 

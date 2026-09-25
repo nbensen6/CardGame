@@ -433,3 +433,14 @@ Leaving `status: taken` — Done-when isn't met (item 3 open, and the wide
 shot still isn't what Nick's drawing shows). Not handing to `nick`: nothing
 here is ready for his judgement yet, and the honest gap above is bigger than
 a look-and-say-yes.
+
+## Fixer — 2026-09-25 02:55 EDT
+
+Landed the director's own `2026-09-25-0200-...near-stone-now-hides-the-beast-from-chest-to-paws.md`
+follow-up: the near stone (Height 1) no longer hides the beast's chest/legs
+in `state=3d` (`STONE_SWEEP_WIDTH` 2.1 -> 4.55 units). Full before/after and
+the one open remainder (a second, smaller, PRE-EXISTING stone at Height 2,
+previously hidden behind the big one, now visible on the chest) are on that
+ticket's own `## Result`. `hop-distance-band` stayed at its 124 baseline, as
+expected for an x-only move. Item 3 (the hop-animation rewrite) is still not
+started.

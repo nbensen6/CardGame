@@ -343,12 +343,23 @@ const GROUND_STANDOFF := 4.2
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
-## dimension here, not the beast's own width: the near stone sits close to
-## the camera (route_pos's `start.z`), and a beast-width offset that far
-## forward reads as a wide-angle-lens stretch at the frame's edge rather than
-## a stone off to the side -- measured live on the Cinder Jackal at
-## `_beast_box.size.x * 0.5` (5.4 units) before landing on this.
-const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 3.0
+## dimension here, not the beast's own width.
+##
+## 2026-09-25 02:00 (director, near-stone-hides-beast-from-chest-to-paws, not
+## yet mirrored to a ticket number): at 3.0 the sweep cleared the "stacked"
+## complaint but left the near stone's own near-camera closeness fully
+## revealed for the first time -- it covered the beast from chest to paws,
+## worse than the original stacked-pot look, because nothing was hiding it any
+## more. Widened to 6.5: rendered 3.0/3.5/4.0/4.5/5.0/5.5/6.0/7.0 (and, again,
+## the full beast-width offset `_beast_box.size.x * 0.5` = 5.4) and looked at
+## each one at 1:1 -- 4.0 still grazed the front leg, 6.0 already pushes the
+## stone half off the LEFT edge of a 1280-wide frame, and the full beast-width
+## offset stretches it into the exact "clay pot" silhouette #16 already fixed
+## once. 6.5 is the smallest width in that sweep with the near stone fully
+## clear of the beast's ears-to-paws rect (confirmed both by eye and by a
+## pixel diff against a stones-disabled render) while still reading as one
+## rock, not a bucket, and still fully on screen.
+const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 6.5
 ## The grounded camera's fixed standoff behind the active hunter, in world
 ## units, and where it looks as a multiple of hunter height. Fixed on purpose:
 ## see the long note at its use in _aim_camera.

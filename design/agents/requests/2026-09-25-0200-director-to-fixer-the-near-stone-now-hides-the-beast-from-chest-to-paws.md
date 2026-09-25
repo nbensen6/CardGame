@@ -6,7 +6,7 @@ to: fixer
 status: taken
 priority: high
 beast: cinder_jackal
-eta: this run
+eta: near stone fixed this run; confirming the 80-step regression and the Height-2 remainder next run
 created: 2026-09-25T02:00
 taken_by: fixer
 ask:
@@ -88,4 +88,106 @@ both rects. Done is "no overlap", printed, then looked at.
 
 ## Nick's answer
 
-## Result
+## Result — fixer, 2026-09-25 02:55 EDT
+
+**One number, `STONE_SWEEP_WIDTH` (`combat_3d.gd`), `HUNTER_HEIGHT * 3.0` (2.1)
+-> `HUNTER_HEIGHT * 6.5` (4.55).** Mirrored the same change into
+`playtest.gd`'s own copy of the const (checks 8/8c call `route_pos` directly
+and would otherwise measure a route that no longer exists).
+
+**How the number was picked — option 1, not option 2.** Rendered
+`state=3d` at 3.0/3.5/4.0/4.5/5.0/5.5/6.0/7.0, and the full beast-half-width
+offset (`_beast_box.size.x * 0.5` = 5.4, the exact value already tried once
+and reverted before this ticket) again for the record, and looked at each one
+at 1:1:
+
+- 3.0-4.0 still graze or sit on the beast's front leg.
+- 4.5 is the first one with a clean gap between the stone and the leg.
+- 6.0 already pushes the stone half off the LEFT edge of a 1280-wide frame.
+- 5.4 (the full beast-width offset) stretches the near stone into the exact
+  "clay pot" silhouette the artist's rock mesh (#16) was built to fix — the
+  stretch is a real cost, not a hypothetical one; a zoomed crop of it is
+  indistinguishable from the original sphere-pot bug.
+
+Landed on 6.5 (4.55 units): comfortably clear of the leg with margin (not
+right at the 4.5 threshold), well short of the 6.0 edge-clip, and nowhere
+near the 5.4 stretch. Never touched the camera, the rock mesh, or
+`route_pos`'s own count of stones.
+
+**Before / after, `state=3d`, 1:1, fresh `--import`:**
+
+![[frames/fixer/2026-09-25-near-stone-before.png]]
+![[frames/fixer/2026-09-25-near-stone-after.png]]
+
+Whole beast — ears, eyes, chest, both front legs, both paws — now clear.
+Frog and Goblin unchanged (didn't touch `GROUND_STANDOFF` or the camera).
+The head still clears the intent tag (untouched code path; `state=3d` VIS
+lines for both hunters print the same coordinates as the unmodified tree).
+
+**Honest gap found, not hidden: a SECOND, smaller stone (Height 2) is now
+visible on the chest, previously hidden behind the big Height-1 stone.**
+Pulling Height 1 out from directly in front of the camera revealed that
+Height 2's own foothold — same `route_pos` line, same rock mesh, much
+smaller only because it's further from the camera — was *always* landing on
+the torso; it just used to sit exactly behind the big stone from the
+camera's point of view. This is not new geometry and not something this
+change moved — `route_pos` still places Heights 2-4 on the SAME straight
+line to the top hold that Nick's own 22:12 commit set up, and per the
+ticket's own "what NOT to do," I didn't touch that line, its stone count, or
+the hop tween. I checked whether widening `STONE_SWEEP_WIDTH` further would
+also clear Height 2 (it gets 75% of whatever the near stone gets, since it's
+lerped at `t=0.25`): at 6.0-7.0 the box is still on the chest while Height 1
+is already clipping the frame edge, so one number can't clear both — Height
+2 sits close enough to `top.x` (the sigil) that clearing it would mean
+pushing the whole line's own near end far past where this ticket's "keep it
+one placement number" scope reaches. Cropped detail, showing exactly what's
+still there:
+
+![[frames/fixer/2026-09-25-near-stone-height2-remainder.png]]
+
+(That frame is a pixel-diff overlay against a stones-disabled render of the
+same shot, used to confirm the near stone itself is genuinely gone from the
+beast's rect and not just visually blended with it — red is only pixels that
+differ from a no-stones baseline.)
+
+This is much smaller than the original complaint (a fist-sized box on the
+chest vs. "the only part of the Cinder Jackal a player can see is the head"),
+and it's a pre-existing placement this ticket didn't create, only exposed.
+Flagging rather than guessing whether it needs its own ticket — items 2-4 of
+the route are still on the single straight line Nick asked for, and giving
+each of them their own clearance number is a bigger, multi-point change than
+"one placement number, one run."
+
+**Proof.**
+- `ALL TESTS PASSED` (`run_tests.gd`, headless, fresh `--import`).
+- `state=3d`: both hunters' `VIS` lines print the same screen coordinates as
+  the unmodified tree (431,502)/(1014,485) — the fix touches nothing but the
+  near stone's own x.
+- `state=3dgrip` (the hunter standing on the near stone mid-climb): the
+  pre-existing `VIS FAIL hunter1: (546, 81)` baseline (confirmed via `git
+  stash`) becomes `(569, 81)` after — same failure, same shape, x shifted by
+  the same sweep this ticket asked for, not a new failure.
+- Full `mode=play beast=cinder_jackal steps=80` regression, fresh `--import`:
+  the fight played to a real ending (`Pounce` landed at step 30, screen
+  changed to `Location3D`), and the ONLY failing check across the whole run
+  is `hop-distance-band` at **124** — the exact pre-existing baseline count
+  this ticket's own Done-when names. Zero `route-reversal`, zero
+  `hunter-off-marker`, zero `script-error`, zero `intent-tag-vs-hunter`,
+  zero camera-coverage failures. The x-only move to `route_pos`'s near end
+  doesn't touch the ~82-unit-deep even-spacing math item 3 owns.
+
+**Done-when, checked against the ticket's own bar:**
+- Ears-to-paws rect has no stone from Height 1 — yes, confirmed by eye and by
+  pixel diff. A different, smaller, pre-existing stone (Height 2) is still
+  there — see above.
+- Near stone still biggest, still the rock mesh — yes, untouched other than
+  its x.
+- `ALL TESTS PASSED` — yes.
+- `hop-distance-band` count unchanged — confirmed: 124 before, 124 after.
+
+Not marking this `done` — the Height-2 finding above is a real, open gap
+against the literal "ears-to-paws rect contains no stone" bar, even though
+everything else the ticket asked for is confirmed. Leaving `status: taken`
+for the director to decide whether the Height-2 remainder needs its own
+ticket or is small enough to accept, rather than closing it myself against a
+Done-when I know isn't fully met.
