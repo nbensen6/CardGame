@@ -63,6 +63,20 @@ run failed.
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
+- [ ] **Climb shot at the sigil: hunter above the hand, head in frame.**
+      The locked-camera run's own after frame
+      (`agents/frames/builder/2026-09-25-locked-camera-climb-after.png`) has
+      the Frog at bottom-left BEHIND the card fan and two-thirds of the
+      frame sky. That breaks the bar's ticked line "nothing important is
+      behind the hand". At the top hold: the hunter's back bottom-centre,
+      fully above the cards, the jackal's head in the upper half. The
+      builder's own finding says why: `climb_dist_for`'s clearance term is
+      measured off the whole beast's bounding box, ~13 units on top of the
+      fixed 6. Measure the clearance from the hold's own surface, not the
+      model's AABB; the camera may sit above the hold looking down at the
+      head, which is the natural shot at a weak point on a face. Shot:
+      `state=3dclimb`, hunter fully above the card fan, jackal's eyes
+      visible.
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
