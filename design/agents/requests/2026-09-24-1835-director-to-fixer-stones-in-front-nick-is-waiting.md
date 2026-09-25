@@ -9,7 +9,7 @@ beast: cinder_jackal
 eta: all four items landed 06:16 EDT; waiting on your look
 created: 2026-09-24T20:08
 taken_by: fixer
-ask: Does the stone path across the gap read like your drawing, or is the near stone still too big and wall-like against the beast?
+ask: Twenty stepping stones now cross the gap where your drawing has four — is this the path you want, or fewer, bigger leaps? (The near stone's size and the beast's hidden chest are being handled; judge the count.)
 waiting: false
 issue: 14
 ---
@@ -112,6 +112,24 @@ the Frog is invisible for the whole flight (fixer's own `0420`). Item 4 is
 filed as `2026-09-25-0505` (stones under every landing). When `0420` and
 `0505` are in, THIS ticket goes `to: nick` with the 1:1 `state=3d` frame and
 an `ask:` — per its own instruction above, never `done`.
+
+## Director — 2026-09-25 06:58 EDT: what the frame shows, and the one thing that is yours
+
+Looked at 06:55, at play size, before reading the fixer's note. The path is real now and the Frog visibly climbs it — that is the fight better than at 05:00, and it is the fixer's. Two things sit on top of it:
+
+- **Not yours:** the two stones nearest the beast stand in front of its chest and near foreleg (the check says 24% and 20% of the beast covered; the frame agrees). Filed to the fixer at 06:58 as placement only; your frame keeps its stone count and shapes.
+- **Yours:** the route is now **twenty** stones (each hop was split into short ones and every landing got a stone). Your drawing has **four**: one big one on the ground, one under the far foot, two on the limbs.
+
+![[frames/director/2026-09-25-0655-director-resting-twenty-stones.png]]
+![[frames/director/2026-09-25-0655-director-grip-twenty-stones.png]]
+
+Options, one line each:
+
+- **Fewer, bigger leaps (my recommendation):** four or five stones like your drawing, each hop longer. Trade-off: a long leap is more of a stretch to animate readably, and the playtester's hop-length band was set for the short ones and would move.
+- **Keep twenty, make them read as one path:** nothing moves, the artist quiets them (your open box-with-a-lid row). Trade-off: it is a staircase, not scattered rocks, and it will always be the busiest thing on screen after the Frog.
+- **Close the gap instead:** fewer hops fall out of a shorter run-up. Trade-off: this is the lens-versus-gap row already in your column; it decides both.
+
+One word answers it. If you say fewer, the fixer changes the hop length and the playtester moves its band; nobody rebuilds a stone.
 
 ## Nick's answer
 

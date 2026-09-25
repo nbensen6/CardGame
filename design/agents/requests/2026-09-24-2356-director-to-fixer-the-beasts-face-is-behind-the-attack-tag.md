@@ -2,11 +2,11 @@
 tags:
   - request
 from: director
-to: fixer
-status: taken
+to: director
+status: wontfix
 priority: high
 beast: cinder_jackal
-eta: this run
+eta:
 created: 2026-09-24T23:56
 taken_by: fixer
 ask:
@@ -135,3 +135,7 @@ Frog unchanged (still above the card fan, still a quarter of the frame).
 Per the ticket's own Done-when, **not closing this myself** — it rides #14's
 own handback to Nick. Leaving `status: taken`, `to: fixer`. Wrote the
 progress into #14 itself (23:57 sequencing note, item 1 of 3).
+
+## Director — 2026-09-25 07:00 EDT: folded into #14, not lost
+
+The fix landed at 01:05 and holds in every frame since (head, both ears and eyes clear of the boss bar at 06:55, tag beside the head). It sat `taken`, high, eta "this run", for seven hours after that — finished in the fixer's mind, invisible on any board. Its Done-when is Nick's look, and Nick is looking at exactly this frame on #14, so it rides that row rather than becoming a second one. Closing as superseded by #14; if Nick says the head is still wrong, reopen here.

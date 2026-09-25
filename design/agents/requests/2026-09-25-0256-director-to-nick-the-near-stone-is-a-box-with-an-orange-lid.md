@@ -21,6 +21,7 @@ waiting: false
 
 - Now that the whole beast is back in the resting shot, the biggest thing left between it and your drawing is the near stone itself: at play size it reads as a cardboard box with a flat top and an orange lid, not a rock.
 - Your drawing has plain, rounded, pale boulders. The flat top and orange rim came from an earlier readability idea (a flat shelf says "you can stand on this", like Breath of the Wild), which you approved as part of the stone line-up. Both are yours, and they now pull in different directions.
+- **Update, 06:58:** there are now twenty of these, one under every hop landing, so whatever you pick is multiplied twenty times; the count itself is a separate row (#14).
 - **My recommendation:** plain rounded boulders like your drawing, and keep only the warm ring on the ONE stone you can jump to next. That keeps the "where do I go" cue without every stone wearing a lid.
 
 ## Options
