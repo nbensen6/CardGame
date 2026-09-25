@@ -2074,48 +2074,41 @@ func _check_hunter_on_stone(v: Node, node: Node3D, cam: Camera3D, to_foot: int, 
 	var beast_node: Variant = v.get("_beast")
 	if not (stones is Array) or (stones as Array).is_empty():
 		return
-	# Which stone this landing is actually ON: the nearest `_float_stones`
-	# entry to the hunter's own settled position. `_build_float_stones`
-	# places one stone per sub-hop landing along the WHOLE route (ground to
-	# top), the same chain `_stand_on_model`/`route_pos_cleared` compute --
-	# so a genuinely correct landing sits within centimetres of its own
-	# stone by construction, and nearest-by-distance finds it without having
-	# to re-derive which sub-hop index this foot corresponds to.
-	var nearest_i := -1
-	var nearest_d := INF
-	for si in range((stones as Array).size()):
-		var st := (stones as Array)[si] as Node3D
-		if st == null or not is_instance_valid(st):
-			continue
-		var d := st.position.distance_to(landed)
-		if d < nearest_d:
-			nearest_d = d
-			nearest_i = si
-	if nearest_i < 0:
-		return
-	# The LAST landing in the chain is always the top/sigil hold -- placed by
-	# `foothold_anchor`, on the mesh, not a floating route waypoint (the same
-	# structural split check 8e already uses for `beast-behind-stone`, and
-	# for the same reason: that stone's own real depth sits at or behind the
-	# beast's near face by construction, not by camera-angle coincidence).
-	# Only there does beast geometry count as real footing -- the director's
-	# own instruction: "do NOT exempt the sigil hold... treat beast pixels
-	# as valid footing at the top hold only."
-	var is_top := nearest_i == (stones as Array).size() - 1
-	var target_stone := (stones as Array)[nearest_i] as Node3D
+	# Whether this landing IS the top/sigil hold -- the highest named climb
+	# point (`c.boss.weak_point_height`), placed by `foothold_anchor` ON the
+	# mesh, not a floating route waypoint (the same structural fact check 8e
+	# already leans on for `beast-behind-stone`). Only there does beast
+	# geometry count as real footing -- the director's own instruction: "do
+	# NOT exempt the sigil hold... treat beast pixels as valid footing at the
+	# top hold only."
+	var c := _combat()
+	var is_top := c != null and c.boss != null and to_foot >= maxi(int(c.boss.weak_point_height), 1)
+	# First tried matching the ONE `_float_stones` entry nearest the settled
+	# `landed` position -- wrong call: `_build_float_stones` applies
+	# `chest_clear_push` continuously to every decorative landing, while the
+	# fixer's own #0802 fix only pushes the hunter's real foot at i=0 (that
+	# ticket's own disclosed, out-of-scope residual, "0.93-3.27 units" on
+	# rungs above the first). Picking the nearest stone by raw 3D distance
+	# then means comparing against a stone that ISN'T the one actually
+	# rendered under the feet, at a real real-world gap that size, and
+	# firing 0% every time even though the frame (hop_000_04.png this run)
+	# plainly shows the Frog sitting on a real stone. This check only has to
+	# answer the literal question the ticket asks -- "is a stone (not ground
+	# or sky) what is drawn under the feet" -- not which named stone that is,
+	# so it tests against every stone at once instead of guessing one.
+	var footers: Array = (stones as Array).duplicate()
+	if is_top and beast_node is Node3D:
+		footers.append(beast_node as Node3D)
 	var vp := Rect2(Vector2.ZERO, Vector2(root.get_visible_rect().size))
 	var rect := Combat3D.hunter_screen_rect(cam, Combat3D._merged_aabb(node)).intersection(vp)
 	if rect.size.x < 2.0 or rect.size.y < 2.0:
 		return   # off screen entirely -- nothing to sample, not this check's problem
 	var band_h: float = maxf(4.0, rect.size.y * FOOT_BAND_FRAC)
 	var band := Rect2(rect.position.x, rect.position.y + rect.size.y - band_h, rect.size.x, band_h).intersection(vp)
-	var footers: Array = [target_stone]
-	if is_top and beast_node is Node3D:
-		footers.append(beast_node as Node3D)
 	var pct: float = await _foot_pixels(node, footers, band)
 	if pct < 0.0:
-		return   # couldn't measure (footer freed, band clipped to nothing) -- say nothing rather than guess
-	var label := "the sigil/top hold (stone or beast both count as footing)" if is_top else ("stone %d (dist %.2f)" % [nearest_i, nearest_d])
+		return   # couldn't measure (footers freed, band clipped to nothing) -- say nothing rather than guess
+	var label := "the sigil/top hold (any stone or the beast)" if is_top else "the route's stones"
 	# CALIBRATION PENDING (FOOT_STONE_COVER_MIN's own doc comment): print-only
 	# for now, no _fail, until a real run's numbers are in hand.
 	_note("step %d: hunter-on-stone -- foothold %d, %.1f%% of the foot band is %s (want >= %.0f%%)"
