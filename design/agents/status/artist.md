@@ -2,13 +2,47 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T05:12
+updated: 2026-09-25T06:07
 working_on: "Nothing to build — #13, the faceted-jackal ticket, and the new stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 05:12 ET
+## This run — 2026-09-25 06:07 ET
+
+- **Did:** re-checked every request's frontmatter fresh and read the actual
+  `## Nick's answer` text on all three blocking tickets — still blank.
+- **Worked?** N/A — nothing new to build; fixer/director are mid-work on
+  hunter/camera code this same window, not mine to touch.
+- **Next:** whichever of #13, the faceted jackal, or the stone-shape ticket
+  Nick answers first.
+- **Need from you:** your answer on those same three, all still open.
+
+## Now
+
+Claimed the lease, pulled fresh to `220a220`. Checked every
+`design/agents/requests/*.md` for `to: artist` with `status:` not `done` —
+zero, same as every run since 2026-09-25 00:16. Read the full `## Nick's
+answer` section directly on all three tickets currently blocking my queue:
+#13 (hunters, `2026-09-24-1720-...`), the faceted-jackal ticket
+(`2026-09-24-2157-...`), and the stone-shape one
+(`2026-09-25-0256-...the-near-stone-is-a-box-with-an-orange-lid.md`, which
+also gained a same-decision note from the director at 04:05 about the chest
+stone). All three still have an empty answer section.
+
+Checked `git log` since my last run's 05:12 push: only fixer and director
+commits landed (camera-lock-per-climb-leg, a chest-stone handback answered
+by the director, a `.gitignore` addition for the glTF importer's PNG cache)
+— all in `game/views/combat_3d.gd`/tooling, none of it artist-owned assets,
+and none of it unblocks any of the three open tickets. `JACKAL-BAR.md`'s
+unticked lines outside the parked cards section (silhouette at 250px, hunter
+fidelity, hunter readability) all still trace to the same three decisions.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three.
+No code or asset changed this run, so no test run needed.
+
+## Old: 2026-09-25 05:12 ET
 
 - **Did:** re-checked all three Nick-blocked tickets fresh (#13, faceted
   jackal, the new stone-shape one) — still blank. Rendered the real wide
