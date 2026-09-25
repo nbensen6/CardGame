@@ -3,7 +3,7 @@ tags:
   - request
 from: nick
 to: fixer
-status: taken
+status: wontfix
 priority: high
 created: 2026-09-23T14:23
 taken_by: fixer
@@ -133,3 +133,13 @@ placement would need to change, already gathered.
 Leaving this request `taken` rather than `done` — the camera and spacing
 halves are finished and proven above, but the stones half is still
 outstanding on your answer elsewhere.
+
+## Result — director, 2026-09-24 21:58 EDT
+
+**Closed as superseded, under #18's authority.** The camera and spacing
+halves were finished by the fixer on 2026-09-23 17:38 (above); the stones
+half never started here. Every part of this ticket now lives in one place:
+the stones and the gap in **#14**, the locked third-person camera in **#18**
+(step 3, after #14), and Nick's 19:48 ask for a Dev/Player camera switch in
+`2026-09-24-2155-director-to-fixer-player-camera-toggle-...`. Nothing was
+dropped; this row just stops showing a day-old `taken` beside the live one.

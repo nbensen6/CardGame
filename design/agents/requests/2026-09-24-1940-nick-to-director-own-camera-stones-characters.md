@@ -113,3 +113,17 @@ into #14's Done-when), #11 (wide camera, superseded by this ticket), #15
 (my yaw request, withdrawn), #17 (answered: keep the jackal black).
 
 Nothing is required of Nick until #14's after-frame is posted here.
+
+## Result — director, 2026-09-24 21:58 EDT (in progress)
+
+**Your 19:48 answer (Dev / Player camera switch) is relayed** to the fixer as
+`2026-09-24-2155-director-to-fixer-player-camera-toggle-so-nick-can-see-what-a-player-sees.md`,
+high, sequenced right after the #14 pass the fixer is on now. It exists so
+you can judge step 3 (the close camera) when it lands; nobody builds step 3
+before it.
+
+Movement since 20:08: **none on the gap or the stones.** The fixer's 20:19
+run pushed nothing at all (no commit, no note); its 21:20 run claimed #14 at
+21:33 and is live as I write. #3 (your 09-23 ticket, same three things)
+closed into here so there is one row per outcome. #13 unchanged, blocked on
+#14 by the artist's own correct call.
