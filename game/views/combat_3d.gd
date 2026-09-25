@@ -375,10 +375,17 @@ const GROUND_STANDOFF := 4.2
 ## pixel diff against a stones-disabled render) while still reading as one
 ## rock, not a bucket, and still fully on screen.
 const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 6.5
-## The grounded camera's fixed standoff behind the active hunter, in world
-## units, and where it looks as a multiple of hunter height. Fixed on purpose:
-## see the long note at its use in _aim_camera.
-const GROUND_VIEW_DIST := 3.0
+## The camera's fixed standoff behind the active hunter, in world units --
+## at rest AND mid-climb alike (Nick, 2026-09-25, two drawings: "zoom out" at
+## rest; "camera closer, should be locked to character" mid-climb). One
+## number for both is the point: the old resting value (3.0) sat right on
+## the near stone, and the old climbing shot instead re-fit a window around
+## the BEAST's own height (_dist_for_window(want.y)), which on a tall beast
+## pulled the lens back until the hunter was a speck on its chest -- locked
+## to the beast, not to the hunter it was supposed to follow. A hunter who
+## reads the same size on the ground and three storeys up IS "locked to the
+## character." See the long note at its use in _aim_camera.
+const ACTIVE_HUNTER_DIST := 6.0
 const GROUND_VIEW_EYE := 1.05
 const GROUND_VIEW_PITCH := 0.08
 ## How long a coach hint stays up before dismissing itself. Long enough to read
@@ -1242,7 +1249,12 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
 			+ HUNTER_HEIGHT * 1.4 + _focus_lift
-	_dist = maxf(_dist_for_window(window), 2.6)
+	# Same fixed standoff the ground shot uses (ACTIVE_HUNTER_DIST), not a window
+	# fit around `window` -- fitting the beast's own height is exactly what put
+	# the hunter a speck on a tall beast's chest (Nick, 2026-09-25: "camera
+	# closer, should be locked to character"). One number, on the ground and up
+	# the side, is what makes the hunter read as the same size in both.
+	_dist = minf(climb_dist_for(_beast_box.end.z, _pivot.z), _cam_reach())
 	_apply_orbit()
 
 
@@ -2320,10 +2332,10 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		if _air_settle <= 0.0:
 			_air_span = 0.0
 	var grounded := not _user_framed and not anyone_off_ground(_hunters)
-	if grounded:
-		# ON THE GROUND THE CAMERA DOES NOT FIT THE BEAST. It stands a fixed
-		# distance behind the active hunter and lets the beast be however big it
-		# happens to be from there.
+	if not _user_framed:
+		# THE CAMERA DOES NOT FIT THE BEAST, on the ground or up its side. It
+		# stands a fixed distance behind the active hunter and lets the beast
+		# be however big it happens to be from there, and it follows every hop.
 		#
 		# Nick, 2026-09-24, with a drawing: the hunter is close to camera in the
 		# foreground and the beast is far away across a wide gap. Fitting the
@@ -2332,16 +2344,16 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# the composition unchanged at every step, because a window sized off
 		# the beast's height simply zooms back out by however much you moved.
 		# The gap can only appear if the camera stops compensating for it.
-		_working_dist = minf(GROUND_VIEW_DIST, _cam_reach())
-		var gs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
-		if gs >= 0 and gs < _hunters.size():
-			_pivot_target.y = float((_hunters[gs]["home"] as Vector3).y) \
-				+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _pan.y
-	elif not _user_framed:
+		#
 		# Never further out than the wall. This is where the enclosure stops
 		# being scenery and starts being a rule: the framing maths would
 		# happily ask for 30 units on a Titan in a 17-unit arena, and did.
-		_working_dist = minf(_dist_for_window(want.y), _cam_reach())
+		_working_dist = minf(ACTIVE_HUNTER_DIST, _cam_reach())
+		if grounded:
+			var gs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+			if gs >= 0 and gs < _hunters.size():
+				_pivot_target.y = float((_hunters[gs]["home"] as Vector3).y) \
+					+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _pan.y
 	elif _focused and _air_span > THIRD_WINDOW * 0.55:
 		# A focused shot owns its own distance (_user_framed), but a leap taller
 		# than a third of the frame cannot be watched from inside it — let the
@@ -2543,6 +2555,18 @@ static func dist_for_window_for(window: float, fov_deg: float, beast_front_z: fl
 
 func _dist_for_window(window: float) -> float:
 	return dist_for_window_for(window, _cam.fov, _beast_box.end.z, _pivot_target.z)
+
+
+## The climbing camera's own stand-off: ACTIVE_HUNTER_DIST, fixed, plus the
+## same beast-front clearance dist_for_window_for's standoff term adds -- a
+## hold near the front face needs none, one buried in the climb (near the top
+## of a reared-up beast) still needs the lens pulled back far enough to clear
+## the mesh, or the camera renders from inside it. Static and pure so this
+## exact rule -- one fixed number, not a window fit around the beast's own
+## height -- is provable headless (Nick, 2026-09-25: "camera closer, should
+## be locked to character").
+static func climb_dist_for(beast_front_z: float, pivot_z: float) -> float:
+	return ACTIVE_HUNTER_DIST + maxf(beast_front_z * 0.85 - pivot_z, 0.0)
 
 
 ## Whether any hunter has left the ground — the same 0.05 epsilon

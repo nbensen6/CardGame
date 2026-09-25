@@ -1836,6 +1836,15 @@ func _init() -> void:
 	_test_backlog86_dist_for_window_for_adds_no_standoff_once_pivot_reaches_the_front()
 	_test_backlog86_dist_for_window_for_standoff_covers_only_what_the_pivot_has_not()
 
+	# climb_dist_for -- the climbing camera's own stand-off (builder, 2026-09-25,
+	# "one locked camera, resting and climbing"): ACTIVE_HUNTER_DIST, fixed,
+	# plus only the beast-clearance a deeply buried hold still needs. Replaces
+	# _focus_camera's old _dist_for_window(THIRD_WINDOW) call, which re-fit a
+	# window around the beast's own height and pulled the lens back until a
+	# climbing hunter was a speck on a tall beast's chest.
+	_test_climb_dist_for_is_the_fixed_hunter_dist_once_the_pivot_reaches_the_front()
+	_test_climb_dist_for_adds_exactly_the_uncovered_clearance()
+
 	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
 	# 2026-09-23, "make the resting camera third person too"). The whole shot is
 	# two claims: the lens trucks off the hunter's spine, and the aim slides past
@@ -29243,6 +29252,22 @@ func _test_backlog86_dist_for_window_for_standoff_covers_only_what_the_pivot_has
 		"lens 5.0 plus the full 8.5-unit standoff (0.85 * front 10) when the pivot hasn't moved off centre")
 	_expect(is_equal_approx(pivot_partway, 10.5),
 		"moving the pivot 3 units toward the front cuts the exact same 3 units off the standoff, not less and not more")
+
+
+func _test_climb_dist_for_is_the_fixed_hunter_dist_once_the_pivot_reaches_the_front() -> void:
+	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 8.5), Combat3D.ACTIVE_HUNTER_DIST),
+		"at 0.85 of the beast's own front the hold needs no extra clearance -- the hunter reads the same size as at rest")
+	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 20.0), Combat3D.ACTIVE_HUNTER_DIST),
+		"a hold already past the front doesn't shrink the distance below the fixed number either")
+
+
+func _test_climb_dist_for_adds_exactly_the_uncovered_clearance() -> void:
+	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 0.0),
+			Combat3D.ACTIVE_HUNTER_DIST + 8.5),
+		"a hold at the beast's own centre still needs the full 8.5-unit clearance on top of the fixed stand-off")
+	_expect(is_equal_approx(Combat3D.climb_dist_for(10.0, 3.0),
+			Combat3D.ACTIVE_HUNTER_DIST + 5.5),
+		"moving the hold 3 units toward the front cuts the same 3 units off the clearance, not the fixed part")
 
 
 ## backlog #86 duty 2: `_switch_to()` already cancelled an in-progress
