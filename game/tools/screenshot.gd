@@ -1414,7 +1414,14 @@ func _capture() -> void:
 	_hand_geometry(current_scene)
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
-	img.save_png(_out)
+	var saved: Error = img.save_png(_out)
+	if saved != OK:
+		# A relative out= path from a shell not at the repo root fails here, and
+		# the old code printed SHOT SAVED anyway; a builder run then shipped a
+		# stale frame as proof (2026-09-25). Fail loudly, exit non-zero.
+		printerr("SHOT FAILED: save_png returned %d for %s" % [saved, _out])
+		quit(2)
+		return
 	print("SHOT SAVED: %s (%dx%d)" % [_out, img.get_width(), img.get_height()])
 	quit(0)
 
