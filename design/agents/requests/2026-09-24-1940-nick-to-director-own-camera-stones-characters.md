@@ -199,3 +199,18 @@ Movement on the three since 02:05 — the resting shot now has the whole beast:
 Beside your drawing at 1:1 tonight:
 
 ![[frames/director/2026-09-25-0253-director-resting-vs-reference.png]]
+
+## Result — director, 2026-09-25 05:57 EDT (in progress)
+
+Movement on the three since 02:58 — nothing you can see yet; the resting,
+sigil and grip shots are the 05:00 ones to the pixel:
+
+| ask | state at 05:57 |
+|---|---|
+| camera locked third-person, Risk of Rain shot | landed 23:46; the lens-vs-gap question is with you on the camera ticket. The fixer is now on the camera losing the Frog for a whole Leap (its own finding, filed 04:20, raised to high) |
+| stones left → right → head | the long hops are split into short ones (fixer, 04:20) but the Frog lands on air between the near box and the chest — stones under those landings are the next fixer item after the camera. The small "stone on the chest" is not on the body at all: it floats most of the way across the gap and only lines up from the resting camera (playtester's measurement, 05:31). From the front it reads as a bag the beast carries. Your stones-on-the-limbs placement needs the gap answer first |
+| smooth hunters, clean outline | both hunters done 01:36; #13 is with you to say yes or no |
+
+Beside your drawing at 1:1 (unchanged since 02:53):
+
+![[frames/director/2026-09-25-0253-director-resting-vs-reference.png]]

@@ -2,14 +2,14 @@
 tags:
   - request
 from: director
-to: director
+to: playtester
 status: open
-priority: high
+priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-25T02:57
-taken_by: playtester
-ask: The chest stone (Height 2) is not just "near" the beast's near face -- it measures ~42 world units in front of the beast's own nearest surface, a real gap your proposed rule can't call "on the body." Accept it reads fine from this one angle and I'll exempt it by name, or pick another fix?
+taken_by:
+ask:
 waiting: false
 ---
 
@@ -144,3 +144,38 @@ of the beast's near face is occluding, a stone inside or behind that face is
 a foothold. Done-when above stands. I have told the fixer on #14 not to
 move either stone on your numbers.
 
+
+## Director — 2026-09-25 05:57 EDT: answer — neither (a) nor a route bend; the overlap metric is the lever, and it is the same lever as `0506`
+
+Good half. The structural split is better than the depth rule I proposed —
+the sigil hold is on the mesh, so it can never occlude, and you proved it
+both ways. Keep it exactly as shipped.
+
+**The chest stone: do NOT exempt it by name or Height.** A named exemption
+hides precisely the class of bug this check exists to catch — the original
+near stone was the same construction, a floating waypoint that happened to
+sit in front of the body. Your 42-unit number is a real finding and I have
+taken it into #18 (mine); it is a placement fact for the stones item, after
+Nick answers the gap-vs-lens question already in his column. **Do NOT ask
+the fixer to bend `route_pos`'s low rungs toward the body** — the stones'
+depth is Nick's gap, not the check's business, and I have told the fixer
+twice not to move either stone on the check's numbers.
+
+**What to change is the metric, and you have already named it:** your own
+crop shows a corner graze, while the rect says 23%. A quadruped's screen rect
+is mostly air. So this ticket folds into `2026-09-25-0506` — build the
+drawn-pixel primitive once there (a frame counts as "hunter on screen" only
+when hunter pixels are drawn) and apply the same primitive here (a stone
+"covers" the beast by the beast pixels it hides, not by rect overlap). One
+primitive, two checks. Print BOTH numbers for a run or two (rect % and pixel
+%) so the reader can see the old figure die honestly rather than vanish.
+
+- Do `0506` first, as already sequenced; this lands with it or the run after.
+- Do NOT move the 50% or the 20% thresholds. Do NOT rebuild either check.
+- Done-when here becomes: the chest stone's pixel cover is reported and is
+  below threshold on the current tree; the 01:51 tree's near stone (`b2a5c21`,
+  beast hidden chest to paws) still fails by pixels; the sigil hold still
+  never fires. Same three frames you already have.
+
+What is working: printing the real numbers before trusting a rule, and
+reverting to prove the split is what clears the sigil, not luck. Keep that.
