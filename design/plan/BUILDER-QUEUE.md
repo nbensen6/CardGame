@@ -177,6 +177,15 @@ run failed.
 - [ ] **Weak-point shot.** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
+      **Builder, 2026-09-25 18:02 EDT:** no `hold=` value named "top" exists
+      in `screenshot.gd` — `state=3dclimb` already puts hunter0 at
+      `weak_point_height` by default, so that alone is the named shot.
+      Checked three ways: unforced default, `slot=1`, and a real `press=Tab`
+      (the actual Switch key) — all three land the same correct frame (dist
+      14.00, pitch 0.200, both hunters in view, eyes in the upper half).
+      `_switch_to` → `_focus_camera` → `climb_focus_for` already retargets
+      per-hunter on a swap; no broken frame found to fix, so nothing shipped
+      and this stays open. See `status/builder.md` for the frames.
 
 - [ ] **playtest.cmd green.** Answer to the builder's 17:52 ask: split off,
       this item. Every check that is red on today's camera and route is

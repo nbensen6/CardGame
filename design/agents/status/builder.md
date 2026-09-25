@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T17:52
-working_on: "playtest checks re-derived, waiting on Nick"
+updated: 2026-09-25T18:02
+working_on: "weak-point shot investigated, no change; queue still open"
 ---
 
 # builder
@@ -13,16 +13,17 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 17:52 EDT
+2026-09-25 18:02 EDT
 
-- **Did:** hunter-off-marker/hop-distance-band's own top-hold z now matches `_top_hold()`'s hull-pushed z instead of the raw sigil anchor, so mid-route legs measure against where the route actually is.
-- **Worked?** Partly — hunter-off-marker's route-mismatch failures dropped from 10 to 2 on a 25-step playtest run (the 2 left are a different, pre-existing bug, see Found); hop-distance-band stayed clean before and after.
-- **Look at:** no shot — this item is ALL TESTS PASSED plus playtest.cmd, both run before/after below.
-- **Ask:** the queue item wants a fully green playtest.cmd — camera-not-over-shoulder/hunter-offscreen/beast-behind-stone are still red, but read as the same camera work already open above in the queue. Same run, or split off?
-- **Found:** the 2 remaining hunter-off-marker fails are footholds AT/PAST the top rung (weak_point_height) — a hunter that hops past the sigil (Leap/Grappling Hook) lands off the check's dynamic shared-foothold x by ~1.7-2.6m, byte-identical failure before and after this fix, so it's a separate bug in the check's top-branch side logic, not the route-vs-anchor bug this item targeted. Also confirmed real: `run_tests.gd` still ALL TESTS PASSED, and every OTHER playtest failure this run (beast-behind-stone, camera-not-over-shoulder, hunter-offscreen, hunter-lost-mid-hop, damage-popup-offscreen, intent-tag-vs-hunter) was already red before this change too — all already tracked by the open camera items above in the queue, not new.
+- **Did:** checked whether "Weak-point shot" (locked camera on the active hunter at the top hold, follows on Switch) is already correct or still needs work.
+- **Worked?** No — found nothing to fix, so no code changed and no frame moved; per the brief's own rule that means the item is not done, left `- [ ]` open rather than ticking `[?]` for no real work.
+- **Look at:** ![[frames/builder/2026-09-25-weak-point-shot-before.png]] then ![[frames/builder/2026-09-25-weak-point-shot-after.png]]
+- **Ask:** is there a specific broken frame you saw that this item should target, or can it be ticked as already covered by the camera work above?
+- **Found:** three separate captures of `state=3dclimb` (unforced default = hunter0 active at weak_point_height; `slot=1`; a real `press=Tab`, the actual Switch key) all land the same correct shot — dist=14.00, pitch=0.200, both hunters in frame, eyes in the upper half. `climb_t` (ground=0..top=1) comes out at/near 1.0 for both hunters on this beast, since `state=3dclimb`'s own fixture already puts hunter1 one rung below the top, so switching between them doesn't visibly change the framing — `_switch_to` → `_focus_camera` → `climb_focus_for` already retargets per-hunter correctly. No defect found in two hours of reading; did not rewrite the ticket to manufacture one.
 
 ## Log
 
+- 2026-09-25 18:02 EDT — builder: investigated weak-point-shot Switch behaviour, already correct in every path tried, no change shipped, item left open.
 - 2026-09-25 17:52 EDT — builder: playtest's own top-hold z now hull-corrected like the real route, not the raw anchor; tested, pushed.
 - 2026-09-25 17:41 EDT — builder: goblin trim (boots/shorts/strap/ear) recoloured to one muted rust, baked into goblin_mech_ai.glb's embedded texture; built, tested, pushed.
 - 2026-09-25 17:26 EDT — builder: ground hunters face the beast, backs to camera, not the camera itself; built, tested, pushed.
