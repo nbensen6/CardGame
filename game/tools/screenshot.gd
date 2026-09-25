@@ -573,6 +573,14 @@ func _report_visibility(view: Node) -> void:
 	# enough for the camera's look-ahead to reach it. Below that, a Titan's weak
 	# point being over the horizon of the frame is the scale doing its job, not a
 	# framing bug — so don't assert it and don't cry wolf about it.
+	# Every stone and every rung, in world and on screen: "the hunter hangs
+	# beside its stone" is a claim about two positions, so print both.
+	print("RUNGS %s" % [view.get("_climb_points")])
+	var stones: Array = view.get("_float_stones")
+	for k in range(stones.size()):
+		var st: Node3D = stones[k]
+		var sp: String = "behind" if cam.is_position_behind(st.position) 			else "(%d, %d)" % [int(cam.unproject_position(st.position).x), int(cam.unproject_position(st.position).y)]
+		print("STONE%d world=%v screen=%s" % [k, st.position, sp])
 	var sigil: Node3D = view.get("_sigil")
 	if sigil != null and sigil.visible:
 		var me := int(view.call("_me"))

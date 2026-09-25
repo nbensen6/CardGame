@@ -10,6 +10,20 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **DECISION, waiting on Nick: big Frog or visible stairs?** Measured
+      2026-09-25 17:05 EDT with the stones printed to screen: the route IS an
+      even staircase in the world (z 81, 65, 49, 33, 17; y 1 to 15), but from a
+      camera 6 behind a hunter standing 85 units from the beast the whole
+      staircase lands in 40 screen pixels, edge-on. A sweep of every camera
+      distance, height and pitch found none that keeps the Frog above the
+      cards, the beast in frame, AND the stones 25 px apart. Two frames:
+      `agents/frames/builder/2026-09-25-stairs-a-beast-far.png` (as built: Frog
+      big, beast whole and far, stairs edge-on) and
+      `agents/frames/builder/2026-09-25-stairs-b-beast-near.png` (hunters 3
+      beast-lengths away instead of 5: stairs read as stairs, beast's head off
+      the top). Pick one, or say "stairs AND whole beast, Frog can be small"
+      and the builder raises the camera. Nothing below moves the stones until
+      this is answered.
 - [?] **Camera toggle Nick can find.** The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
@@ -97,29 +111,19 @@ run failed.
       reads like a yaw problem, out of this item's scope (clearance + pitch
       only); stopped rather than tune a third constant. See the proposed
       item below.
-- [?] **Hops land on stones, not in the air.** Nick's frame
-      `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
-      to points in open air beside the jackal while the stones sit on the
-      ground behind it. Every climb hop ends with the hunter's feet on a
-      stone of the route, at every height, for both hunters. The playtester's
-      `hunter-on-stone` check and the floating-Frog tickets (#34, #36, the
-      2026-09-25 one) are the same bug seen from the tool side. Shot:
-      `state=3dclimb` and `state=3dgrip`, feet on stone in both.
-      **Builder, 2026-09-25 16:43 EDT:** root cause at the TOP hold only:
-      `_stand_on_model` returned `_top_hold(side)` — the dynamic
-      shared-foothold nudge, 0.0 whenever a hunter reaches the sigil alone —
-      instead of `_top_hold(route_side)`, the fixed per-hunter line
-      `_build_float_stones` actually plants a stone on. A lone climber stood
-      centred between both top stones, on neither. Fixed (one line), tested
-      (`_test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone`).
-      `state=3dclimb`'s Frog now lands on the stone crate at the jackal's
-      face — see the before/after in `status/builder.md`. `state=3dgrip`'s
-      own frame did not move: hunter0 ends the shot on the ground (foot 0,
-      no stone needed) and hunter1 sits at a non-top rung, so neither hunter
-      in that particular scripted state touches the branch this fix changed.
-      Mid-route footing (any rung strictly between the ground and the top)
-      was already using the correct `route_side` before this run and is
-      unverified rather than fixed — see the two Found items below.
+- [ ] **Hops land on stones, not in the air — mid-route.** The builder's
+      16:43 pass fixed the top hold only. Measured 2026-09-25 17:05 EDT with
+      `state=3dclimb slot=1` (the harness now prints STONE/HUNTER/RUNGS lines):
+      hunter1 at foot 4 has home z 30.71, its stone (STONE8) is at z 33.33:
+      2.62 units in front of the stone, in the air. hunter0 at the top: home z
+      16.58 vs stone z 17.41, 0.83 off the same way. Hunters at rest are
+      correct (z 85.27). The offset grows with rung, so the hunter's route and
+      the stones' route are built from different numbers (suspect: the
+      hunters' stops are computed before `_beast_box`/the hull are final, or
+      `hop_subpoints`/`_advance_climb_home` leave `home` on a sub-point).
+      Done-when: HUNTER home == its STONE world position within 0.1 on every
+      rung, printed by the harness, and a `run_tests.gd` case on the shared
+      rule. Shot: `state=3dclimb slot=1`, Goblin's feet on a stone.
 - [ ] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
