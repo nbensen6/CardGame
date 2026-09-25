@@ -36,7 +36,7 @@ run failed.
       Frog. Rungs 1-4 still bunch near the jackal (perspective, camera
       almost on top of rung 0 while the route's far end is ~80 units away) —
       may resolve once the queued zoom-out lands, may not.
-- [ ] **One locked camera, resting and climbing.** Two frames from Nick:
+- [?] **One locked camera, resting and climbing.** Two frames from Nick:
       at rest, "zoom out" (`art/references/2026-09-25-nick-stones-and-zoom.webp`);
       mid-climb, "camera closer, should be locked to character"
       (`art/references/2026-09-25-nick-climb-camera-closer.webp`, the Frog a
@@ -49,6 +49,20 @@ run failed.
       run found rungs 1-4 collapse to one screen point because the camera
       (dist=3) sits on rung 0; the route cannot be judged until this lands. Shot: `state=3d` and `state=3dclimb` side by side; the hunter
       must be the same size on screen in both.
+      **Builder, 2026-09-25 15:55 EDT:** GROUND_VIEW_DIST (3.0) renamed
+      ACTIVE_HUNTER_DIST and raised to 6.0; the climbing camera
+      (`_focus_camera`) now uses that same fixed number plus only the
+      beast-clearance a buried hold still needs (`climb_dist_for`,
+      tested), instead of `_dist_for_window(THIRD_WINDOW)` fitting a
+      window around the beast's own height. Rest shot (dist 3→6) matches
+      Nick's "zoom out." Climb shot (dist 22.4→19.4) is closer and no
+      longer clips through the mesh, but `state=3dclimb`'s own test
+      scenario puts both hunters at/near weak_point_height — the most
+      extreme, deepest-buried hold on the route — where the clearance term
+      still dominates, so the hunter is noticeably smaller there than at
+      rest; the "same size in both" bar is met at holds nearer the beast's
+      front and not yet at the very top. The dedicated weak-point-shot
+      queue item below covers that top hold specifically.
 - [ ] **Hops land on stones, not in the air.** Nick's frame
       `art/references/2026-09-25-nick-hopping-in-air.webp`: the Frog climbs
       to points in open air beside the jackal while the stones sit on the
@@ -123,3 +137,16 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       fix (#0658) was never re-measured under `state=3d` — worth checking
       once the camera work settles, rather than assuming it's still needed
       at its old value.
+- [ ] (proposed) Re-check the stone route's rungs 1-4 (the "collapse to one
+      screen point" item above) against the new dist=6 rest shot — the old
+      note was measured at the pre-fix dist=3.
+- [ ] (proposed) The climbing camera's beast-clearance term
+      (`climb_dist_for`) still measures "how deep is this hold in the mesh"
+      off the whole model's own AABB front face (`_beast_box.end.z * 0.85`),
+      tuned for grounded-hunter framing, not for a hold already ON the
+      body. At weak_point_height (state=3dclimb's own test scenario) that
+      clearance is ~13 units on top of the fixed 6, so the hunter reads
+      much smaller there than at rest, even though the general rule (one
+      fixed stand-off, closer than the old window-fit) is working. The
+      weak-point-shot queue item below should measure this directly rather
+      than assume the general fix already covers the top hold.
