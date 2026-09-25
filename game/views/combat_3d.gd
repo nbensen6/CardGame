@@ -3387,6 +3387,31 @@ static func stand_z_for(anchors: Dictionary, foot: int, anchor_z: float, hull_cl
 	return maxf(anchor_z, hull_clear)
 
 
+## Whether `_stand_on_model` should even ask the hull for a foot -- true only
+## when `foothold_anchor()` genuinely interpolates for it (strictly between
+## two DIFFERENT anchors), never when it clamps to an edge.
+##
+## 2026-09-25, director (#0802, reopened a second time): every Height PAST
+## the model's highest climb marker counted as "not an exact rung" too --
+## `_climb_points` stops at the weak point (Height 5 on the Cinder Jackal;
+## FOOTHOLD_MAX reaches 16, so Heights 6-16 are real, reachable foothold
+## values, all spent fighting the weak point rather than climbing further).
+## `foothold_anchor` already clamps every one of them to the SAME top anchor
+## (its own "clamps above the highest rung" contract, tested above) -- there
+## is no lerp across the body's curve to rescue there, so the hull had
+## nothing to add, exactly the exact-rung case above. It got asked anyway,
+## found the same kind of stray hull cell the doc comment above blames for
+## the ear, and put the hunter at z=13.92 while the sigil's own stone
+## (`_top_hold()`, built from the same anchor) sat at z=0.53 -- 13+ units
+## away with nothing under the hunter at all, on every Height past 5.
+static func stand_needs_hull_clearance(anchors: Dictionary, foot: int) -> bool:
+	if anchors.is_empty() or anchors.has(foot):
+		return false
+	var rungs: Array = anchors.keys()
+	rungs.sort()
+	return foot > int(rungs[0]) and foot < int(rungs[rungs.size() - 1])
+
+
 ## Where a hunter at `foot` stands, from the model's own anchors.
 ##
 ## Exactly on a rung when the Height matches one, and between the two that
@@ -3397,10 +3422,13 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	# Two hunters on one ledge stand apart rather than inside each other.
 	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
 	# Only a lerped, off-anchor foothold needs the hull's guess — see
-	# stand_z_for above. Skip the hull query entirely on an exact rung; it has
-	# nothing to add and, per the bug this guards against, can actively hurt.
+	# stand_z_for above. Skip the hull query on an exact rung AND on any foot
+	# past the model's highest climb marker (stand_needs_hull_clearance,
+	# #0802 reopened): both land on a clamped, already-correct anchor with
+	# nothing for the hull to add, and asking it anyway is what put a hunter
+	# 13+ units from the sigil's own stone on every Height past the weak point.
 	var z: float = p.z
-	if not _climb_points.has(foot):
+	if stand_needs_hull_clearance(_climb_points, foot):
 		# And OUT to the body's real surface at that spot, not a fraction of
 		# the bounding box. The anchors are authored on the surface in
 		# Blender, but a point ON a surface is still half a hunter inside it,

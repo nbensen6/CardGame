@@ -963,6 +963,18 @@ func _init() -> void:
 	_test_backlog86_stand_z_for_trusts_the_anchor_on_an_exact_rung_even_past_a_bigger_hull_read()
 	_test_backlog86_stand_z_for_still_takes_the_hull_when_off_anchor_and_it_reaches_further()
 	_test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads_short()
+	# fixer, 2026-09-25: #0802 reopened a second time -- every Height PAST the
+	# model's highest climb marker (the Cinder Jackal's weak point, foothold
+	# 5, with FOOTHOLD_MAX reaching 16) still asked the hull too, the same
+	# stray-cell failure stand_z_for was built to dodge, and put the hunter
+	# 13+ units from the sigil's own stone. stand_needs_hull_clearance is the
+	# gate that was missing: the hull earns a look only when foothold_anchor
+	# truly interpolates, never when it clamps to an edge.
+	_test_stand_needs_hull_clearance_is_false_on_an_exact_rung()
+	_test_stand_needs_hull_clearance_is_true_strictly_between_two_rungs()
+	_test_stand_needs_hull_clearance_is_false_below_the_lowest_rung()
+	_test_stand_needs_hull_clearance_is_false_above_the_highest_rung()
+	_test_stand_needs_hull_clearance_is_false_with_no_anchors_at_all()
 	# fixer, 2026-09-23: two hunters sharing a narrow foothold (foothold 4, the
 	# Cinder Jackal's own ear) -- stone_point's old radial-from-origin push
 	# added its own x-drift on top of stand_offset_x's side spacing, and the
@@ -22032,6 +22044,41 @@ func _test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads
 	var anchors := {3: Vector3.ZERO, 5: Vector3.ZERO}
 	var z: float = Combat3D.stand_z_for(anchors, 4, 6.47, 2.0)
 	_expect(is_equal_approx(z, 6.47), "off an anchor, a hull read SHORTER than the lerped z must still lose to maxf — the lerp already cleared the surface, unchanged from before this fix")
+
+
+## #0802 (reopened a second time, director): live on the Cinder Jackal,
+## _climb_points tops out at Height 5 (the weak point) but FOOTHOLD_MAX is
+## 16 -- every Height from 6 to 16 is a real, reachable foothold (fighting
+## the weak point), none of them an exact key, and the old gate
+## (`not anchors.has(foot)`) sent every one of them to the hull.
+## foothold_anchor() itself already clamps a foot past the highest rung to
+## that SAME top anchor (no real lerp to rescue) -- measured live, the hull
+## found a stray cell and put the hunter at z=13.92 against the sigil
+## stone's own z=0.53. These pin the gate with no scene tree and no model
+## loaded (#86 duty 3), the same way foothold_anchor's own tests do.
+func _test_stand_needs_hull_clearance_is_false_on_an_exact_rung() -> void:
+	var anchors := {0: Vector3.ZERO, 4: Vector3.ZERO, 5: Vector3.ZERO}
+	_expect(not Combat3D.stand_needs_hull_clearance(anchors, 4), "an exact rung already has a raycast-true anchor -- the hull has nothing to add")
+
+
+func _test_stand_needs_hull_clearance_is_true_strictly_between_two_rungs() -> void:
+	var anchors := {0: Vector3.ZERO, 8: Vector3.ZERO}
+	_expect(Combat3D.stand_needs_hull_clearance(anchors, 4), "a foot genuinely between two different anchors is the one case foothold_anchor lerps across the body's curve -- the hull is the only way to clear it")
+
+
+func _test_stand_needs_hull_clearance_is_false_below_the_lowest_rung() -> void:
+	var anchors := {4: Vector3.ZERO, 8: Vector3.ZERO}
+	_expect(not Combat3D.stand_needs_hull_clearance(anchors, 0), "foothold_anchor clamps a foot below the lowest rung to that same anchor -- no lerp happened, so the hull has nothing to add")
+
+
+func _test_stand_needs_hull_clearance_is_false_above_the_highest_rung() -> void:
+	var anchors := {0: Vector3.ZERO, 1: Vector3.ZERO, 2: Vector3.ZERO, 3: Vector3.ZERO, 4: Vector3.ZERO, 5: Vector3.ZERO}
+	for foot in [6, 7, 11, 13, 16]:
+		_expect(not Combat3D.stand_needs_hull_clearance(anchors, foot), "foothold %d is past the highest climb marker (5) -- foothold_anchor clamps it to that same top anchor, the exact live case that put a hunter 13+ units off the sigil's own stone" % foot)
+
+
+func _test_stand_needs_hull_clearance_is_false_with_no_anchors_at_all() -> void:
+	_expect(not Combat3D.stand_needs_hull_clearance({}, 4), "no anchors at all means no rungs to bracket between -- must not crash indexing an empty, sorted keys array")
 
 
 ## fixer, 2026-09-23 — stone_point used to push every standing point
