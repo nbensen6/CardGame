@@ -2,117 +2,103 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T07:02
-working_on: The stone path landed but stands in front of the beast; fixer told to move the offending stones, Nick asked to judge twenty stones against his four.
+updated: 2026-09-25T07:58
+working_on: Nothing visible moved this hour; the sigil-shot "Goblin out of frame by design" call was two agents' and is now Nick's row; chasing #0658 and his five answers.
 ---
 
 # director
 
-## This run — 2026-09-25 07:02 EDT
+## This run — 2026-09-25 07:58 EDT
 
-- **Did:** better for the path, worse for the beast: twenty stones now cross the gap and two of them hide its chest.
-- **Worked?** Half; the Frog climbs a real staircase, but the beast's forelegs went behind it and a check said so.
-- **Next:** fixer moves the two stones off the beast without changing count or shape; you judge twenty stones versus your four.
-- **Need from you:** one word on #14: this path, or fewer bigger leaps?
+- **Did:** the fight is not better or worse since 07:02; nothing visible landed and the chest fix is mid-run.
+- **Worked?** Yes, quietly: the playtester's new check is honest and closed on a test, and nobody widened anything.
+- **Next:** confirm the chest and near foreleg are clear once #0658 lands, then the weak-point shot after your word.
+- **Need from you:** one word each on #14 and the camera row; a new sixth row on the weak-point shot.
 
 ## Now
 
-**What a player sees, before I read anyone's note (06:55, on `2149db5`).**
-Resting: the black jackal the same size and place as at 05:00, head and
-ears clear of the boss bar, "Attack 7" beside it — and a staircase of five
-or six pale, orange-lidded stones climbing from the Frog's left to the
-beast's chest, the two nearest standing in front of its lower chest and
-its whole near foreleg. At play size the jackal is behind a stack of
-boxes. Grip: about twelve of those stones in a line running up to a pair
-of legs behind the attack tag; the Frog behind a red "3" on one of them.
-Sigil: unchanged — four-fifths empty sky, the beast a lump behind the
-cards, the Frog a speck, the Goblin out of frame.
+**What a player sees, before I read anyone's note (07:53, on `ebdf221`).**
+Resting: the same frame as 06:55 to the pixel that matters — black jackal
+upper-left of centre, head clear of the bar, "Attack 7" beside it, twenty
+pale orange-lidded stones climbing from the Frog's left to its chest, the
+two nearest still standing in front of its lower chest and near foreleg;
+the Frog big, bottom-left, facing away; the Goblin far right, alone on an
+empty half of the frame. Grip: the red "3" on the Frog, twelve stones in a
+line, the beast a pair of legs behind the tag. Sigil: four-fifths sky, the
+beast a lump behind the cards, the Frog a speck, the Goblin out of frame,
+the intent tag floating alone.
 
-![[frames/director/2026-09-25-0655-director-resting-twenty-stones.png]]
-![[frames/director/2026-09-25-0655-director-grip-twenty-stones.png]]
-![[frames/director/2026-09-25-0655-director-sigil.png]]
+![[frames/director/2026-09-25-0753-director-resting.png]]
+![[frames/director/2026-09-25-0753-director-grip.png]]
+![[frames/director/2026-09-25-0753-director-sigil.png]]
 
-**Against the drawing:** the drawing has four round white boulders — one
-big one on the ground, one under the far foot, two on the limbs — and the
-beast filling the upper two thirds. The game has twenty stones (`stone 0`
-to `stone 19` in the check's own print), lidded boxes, laid as a
-staircase, and the beast at a third. The path-as-a-path is closer to the
-drawing than the two-stones-and-air of 05:00. The count and the occlusion
-are further from it.
+**Against the drawing:** unchanged since last run — beast at a third where
+the drawing has two thirds, twenty lidded boxes where it has four round
+boulders, the frog an eighth of the beast there and the same height here.
+Every one of those gaps is already a row on Nick's board or a ticket in
+the fixer's queue. Nothing new drifted.
 
-**Did the fight get better for Nick, or did a score go up?** Both, and
-that is the finding. The fixer's #0505 (06:16) is real: the Frog visibly
-climbs a staircase instead of bouncing on nothing, and the resting shot
-reads as one path. But the same push took the beast's chest and near
-foreleg off screen, and the playtester's `beast-behind-stone` check said
-so — 13 fails on the fixer's own 80-step run, 7 on my 6-step one, 24% and
-20% of the beast under stones 8 and 9 at rest, 39% mid-Tongue-Snap. The
-fixer wrote the number down honestly (good) and then ruled it "the
-playtester's check to sharpen, not mine to chase", citing my 04:05
-on-body ruling. That ruling was about the sigil hold, which is anchored
-to the mesh. Stones 7-10 are floating approach waypoints 40-odd units in
-front of the beast — the exact class the check was built for — and the
-1:1 frame agrees with it. A check that says the beast is hidden, on a
-frame where the beast is hidden, is not a check bug. Filed to the fixer,
-high: move only the offending landings, keep count and shape still for
-Nick, do not touch threshold, camera, gap or split.
+**Did the fight get better for Nick, or did a score go up?** Neither, and
+that is fine this hour. The playtester's #0506 landed: the mid-hop check
+now judges real drawn pixels, and it proved the check bites by reverting
+the fixer's fix and watching the number jump to 44%, then put the fix
+back. That is exactly the discipline I asked for, it closed on a test, and
+it changed nothing on screen by design. The artist rendered, found nothing
+unblocked, built nothing — correct; card art is parked by Nick himself, so
+its idle hours are not a miss. The fixer claimed #0658 at 07:22 and is
+live; no push yet at 07:58.
 
-**My share of it:** #0505 said "a stone under every sub-hop landing" and
-not "and the beast stays visible from the resting camera". I noted that
-exact omission on #14 at 02:05 and repeated it. Every stone ticket from
-here carries the line.
+**A decision that was his, made without him — the top line.** The sigil
+frame above has no Goblin in it. The screenshot harness prints "out of
+frame by design" for that (playtester, 03:22 today), and the bar's "both
+hunters are always findable, including mid-climb" is ticked (artist,
+yesterday) on the argument that the party panel is what keeps the partner
+findable — on a frame taken before Nick opened the gap, when the Goblin
+stood beside the Frog. I cannot find Nick saying the partner may leave the
+frame at the payoff moment, and his camera words assume it is in view.
+Filed `to: nick` with the frame, two options and a recommendation
+(reframe on the beast's head and back, Goblin small below), sequenced
+after his resting-camera row. Left the bar tick in place with a one-line
+"disputed" note under it — his to untick, not mine. Told nobody to build.
 
-**Nick's row rewritten (#14).** The fixer's handback asked him about the
-near stone's size. The frame's actual question is twenty stones versus
-his four, which is entangled with his open gap row: fewer hops need
-longer leaps (the playtester's band moves) or a shorter gap (his lens
-row). Rewrote `ask:` to the count, embedded both frames, gave three
-options with a recommendation (fewer, bigger leaps). Told him the near
-stone and the hidden chest are being handled so he judges one thing.
+**Closed since my last run:** #0506 (playtester, done — closed on a real
+pixel test plus a negative test; fine). Nothing closed on his judgement.
 
-**Closed since my last run:** #0505 (fixer, done — closed on the frame
-and the split, fine, apart from the occlusion above); #0420 (fixer, done —
-closed on a pixel count I reproduced myself last run, fine); #14 handed
-back to Nick correctly: `to: nick`, `open`, `ask:` filled, 1:1 frame.
-Nothing closed on a judgement that was his.
+**Stuck:** #0257 (playtester) is `open` while the playtester works it as
+its own — low risk, it is addressed to nobody else; not worth a ticket.
+#0258 and #0405 still open to the fixer, correctly behind #0658. #18
+(mine) has no visible movement; chase entry added, every lever is Nick's.
 
-**Stuck, and handled:** #2356 (beast's face behind the tag) sat `taken`,
-high, eta "this run", for seven hours after its fix landed at 01:05 —
-finished in the fixer's mind, on nobody's board. Its judge is Nick and
-Nick is looking at that head on #14's frame, so I folded it into #14
-(`wontfix`, superseded) rather than give him a sixth row for the same
-look. Also: the fixer's 06:29 note says "nothing of mine — waiting on
-Nick" while #0258 (popup on the Frog) and #0405 (hunters side-on) have
-been open `to: fixer` since 02:58 and 04:05. Said so on the new ticket.
-The fixer reads its own queue less well than it reads the code.
+**Nick's column:** #14, the camera row, #13, the box-with-a-lid, the
+faceted jackal, the RoR picture, and now the weak-point shot. No answers
+since yesterday 19:48. The two that unblock the fixer's next runs are #14
+and the camera row.
 
-**Nick's column:** #14 (ask rewritten), #13, the box-with-a-lid (#0256,
-now noted as twenty of them), the faceted jackal, the RoR picture, the
-player-camera toggle. No answers since my last run. Nothing of his was
-decided without him this hour; the count question nearly was — the
-fixer's ask would have had him judge the near stone while the twenty
-went by as "the path".
+**Filed:** one request (nick, 07:58); one note on the bar; one chase entry
+on #18. Two slots unused on purpose — the fixer has three tickets and
+reads its queue badly enough that a fourth would not help; the artist is
+blocked on Nick; the playtester's next step is already its own.
 
-**Playtester:** its check caught the real thing this hour and its
-numbers were right; #0506 is in its lane and it is live now (claimed
-06:47). Nothing filed. **Artist:** blocked on Nick on three, built
-nothing rather than something — correct. Nothing filed.
+**What is working:** the playtester proving a check can fail before
+trusting that it passes; the fixer writing failing numbers down; the head
+clear of the bar in every frame since 01:05. Do not optimise any of that
+away.
 
-**Filed:** one request (fixer, 06:58); one ask rewritten (#14, Nick);
-one bullet on #0256; #2356 folded. Third slot unused.
+**Harness note for the other three:** the first `state=3d` render after
+`--import` on this cold sandbox came out empty — a sand disc, a yellow
+blob, blank HUD — and the second was real. If your first frame of a run
+looks like nothing, render it again before you file anything.
 
-**What is working:** the fixer writing the failing number down instead of
-leaving it out; the playtester's check firing on a real occlusion the
-same hour it was refined; the head clear of the bar in every frame since
-01:05. Do not optimise any of those away.
+![[frames/director/2026-09-25-0752-director-cold-render-empty.png]]
 
-**Not filed (kept for later):** the sigil shot's empty sky and the Goblin
-out of frame there (#18 step 3, after the gap, per Nick's own order); the
-grip shot's beast reduced to legs (same camera step); the fixer's leap
-strip tiled at 213 px a tile, too small for anyone to judge motion from
-— a strip for the record is not a strip for looking.
+**Not filed (kept for later):** the intent tag floating in the sky at the
+sigil (moves with the sigil camera; do not tune it for a pose that is
+about to change); the Goblin alone on an empty right half of the resting
+frame (the lens row decides it); the grip shot's beast reduced to legs
+(same camera step).
 
 ## Log
+- 2026-09-25 07:58 EDT — nothing visible moved (frames match 06:55); #0658 live in the fixer's run, playtester closed #0506 on a real test, artist correctly idle on Nick; found the "partner off-screen at the sigil is by design" call made by two agents, not Nick — filed it to him with a frame, marked the bar tick disputed; harness note: the first render on a cold sandbox came out empty.
 
 - 2026-09-25 07:02 EDT — path better, beast worse: #0505 put twenty stones across the gap and two hide the chest; the check fired 7-13 times and the fixer called it the playtester's; filed placement-only fix to the fixer (high), rewrote Nick's #14 ask to the count with options, folded stale #2356 into #14, flagged #0258/#0405 open while the fixer said nothing of mine.
 - 2026-09-25 06:05 EDT — addendum: fixer's camera lock landed 05:56; verified by my own pixel count, Frog drawn in 24/24 opening Leap frames (was 0/24) and the mid-Leap shot is the best frame yet; found the 24 shots are the first 24 frames only, added to 0506.

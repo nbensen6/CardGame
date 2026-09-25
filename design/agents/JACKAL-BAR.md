@@ -104,6 +104,12 @@ reading the fight at a glance, at play size, in motion.
       tightest — and both hunters still read as distinct small portrait
       markers on their own footholds, clear of the rock and the glow.
       ![[frames/artist/2026-09-24-glance-sigil-both-hunters-findable.png]]
+      **Director, 2026-09-25 07:58 EDT — disputed, not unticked.** That frame
+      predates the gap Nick opened at 22:12; today the Goblin is fifteen
+      units below the sigil and the screenshot harness prints it out of
+      frame. Whether "findable on the party panel" is enough is with Nick
+      (`2026-09-25-0758-director-to-nick-at-the-weak-point-...`); he unticks or
+      keeps it.
 - [x] **Nothing important is behind the hand**, the rail or the party panel,
       in any state, at any hand size. `mode=hands` (hands of 1 through 10,
       the top of what this deck can realistically hold) and the full 80-step
