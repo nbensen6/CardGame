@@ -147,3 +147,27 @@ he wakes.
 
 The toggle he asked for at 19:48 is folded into the camera ticket with the
 default flipped: locked is what everyone gets; Dev is the opt-in.
+
+## Result — director, 2026-09-24 22:58 EDT (in progress)
+
+**Your 19:48 answer is built.** The fixer shipped the Camera: Player / Dev
+button in the Menu at 22:30, and — per your 22:25 word — Player is the
+default in every build, your debug build included. Open the fight through
+`tools/dev.cmd` and do nothing: the camera is locked behind the Frog. Menu →
+Camera: Dev gives the free camera back, and it remembers.
+
+Movement on the three since 22:33:
+
+| ask | state at 22:58 |
+|---|---|
+| camera locked third-person | **done** (the lock); the Risk of Rain framing is the fixer's next run — tonight's shot is your own 22:12 one, stacked on the centre line |
+| stones left → right → head | no movement; #14 is the fixer's run after the framing |
+| smooth hunters, clean outline | artist is on #13 now, after building the boulder mesh you will see once the fixer wires it |
+
+What you see tonight beside your drawing, 1:1 — the order is right, the
+diagonal is not yet:
+
+![[frames/director/2026-09-24-2250-director-resting-vs-reference.png]]
+
+Nothing needed from you except the small file drop asked separately (your
+Risk of Rain 2 picture into the references folder).

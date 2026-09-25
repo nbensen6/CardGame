@@ -2,13 +2,115 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-24T22:35
-working_on: Nick's three overnight asks (locked RoR camera, stones left-to-right to the head, smooth hunters) — one ticket each, chased every run.
+updated: 2026-09-24T22:58
+working_on: Nick's three overnight asks — camera lock landed, RoR framing and the stones are the fixer's next two runs, hunters with the artist.
 ---
 
 # director
 
-## This run — 2026-09-24 22:35 EDT (live, on your message)
+## This run — 2026-09-24 22:58 EDT
+
+- **Did:** looked at all three shots; nothing visible moved since 22:35, and the camera lock you asked for is in.
+- **Worked?** Partly: the lock is real but invisible in a frame; the shot is still your 22:12 one, stacked dead centre.
+- **Next:** fixer tunes the over-the-shoulder shot, then the stones; artist smooths the hunters, then the horizon line.
+- **Need from you:** nothing urgent; one small file drop asked as a ticket (your Risk of Rain picture).
+
+## Now
+
+**What a player sees, before I read anyone's note.** Resting shot: a black
+jackal with ember panels, whole, centre-top, about a third of the frame; a
+big pale stone with an orange cap in front of it, a smaller one above, both
+on the same vertical line as the beast; the Frog and Goblin at the bottom
+centre, under the intent tag, about a ninth of the frame tall; a hard red
+line the full width of the frame at the beast's ankles. Sigil close-up:
+mostly purple sky, a black lump bottom-left, the Frog on a stone at
+centre-left, "Attack 7" hanging over nothing — unreadable, unchanged for
+three runs. Grip shot: the Frog fully hidden behind a "3" the size of four
+Frogs; only the beast's legs in frame, the same red line behind them.
+
+![[frames/director/2026-09-24-2250-director-resting-shot.png]]
+![[frames/director/2026-09-24-2250-director-at-the-sigil.png]]
+![[frames/director/2026-09-24-2250-director-grip.png]]
+
+**Against the drawing**, 1:1 beside it:
+
+![[frames/director/2026-09-24-2250-director-resting-vs-reference.png]]
+
+| his drawing | the frame now | verdict |
+|---|---|---|
+| whole beast, upper-middle, about half the frame | whole, 38% | yes |
+| frog large, bottom-left, camera near it | ~85 px, bottom-centre | half — right size class, wrong place |
+| stones recede from frog to beast | big near, small far, in order | **yes — Nick's 22:12 commit** |
+| path runs diagonally, left to right | everything on one vertical line | **no** — the framing pass (camera ticket), then #14 |
+| broad hot glow at the horizon | a 3 px red line | **no** — new ticket to artist |
+| cool sky, dark ground, pale stones | yes | yes |
+| beast black | black | settled (#17) |
+
+**Did the fight get better for Nick, or did three scores go up?** Neither,
+in fifteen minutes: nothing visible moved. Two correct-but-invisible pieces
+landed, and both were scoped that way on purpose by me, so they are not the
+failure pattern — the fixer's camera lock (a frame cannot show "drag does
+nothing"; the proof is real synthesised drags, which is the right proof) and
+the artist's boulder mesh (asset only, handoff to the fixer filed, because
+two hands in `_build_float_stones` on the same night is how a run gets
+spent on a merge). What Nick sees is still exactly his own 22:12 commit.
+**The single thing standing in the way is the framing pass**: his commit
+put the order right and the camera behind the hunter, and the next fixer
+run has to move that camera over one shoulder so the depth he drew reads as
+a diagonal instead of a stack. Advised on the camera ticket with the numbers
+(Frog a ninth, beast 38%, both want "closer", and "do not widen").
+
+**My miss, at the top as the brief says:** the red horizon line has been in
+every frame I have posted since 21:54 and I named it tonight for the first
+time. Filed to the artist, after #13.
+
+**Audit of what closed since 22:35.** The stones-as-pots ticket, closed by
+the artist at 22:26: its Done-when was mine and measurable (a mesh at
+budget, rendered in the fight via a local swap, reads as rock, a handoff
+request filed) — all four met, the before/after is 1:1 and honest, and it
+reads as rock. Legitimate close; Nick sees pots until the fixer wires it,
+and that is the open handoff, queued behind #14 by the artist's own correct
+call. Nothing else closed. **Stuck audit:** the camera ticket's Result says
+"handing it back" while the frontmatter still says `to: fixer`, `taken` —
+but its `eta:` says the framing is next run and the ticket's last Done-when
+is the shot, not the lock, so it is correctly still the fixer's; told it so.
+#13 correctly held by the artist. Keep-or-revert jackal (mine, to Nick):
+no answer yet, not urgent.
+
+**Filed (three, the limit):**
+
+1. `to: fixer` — a director section on the live camera ticket: over one
+   shoulder, pivot on the active hunter, closer and lower; do NOT widen, do
+   NOT move stones, do NOT touch the climb camera yet.
+2. `to: artist`, after #13 — the 3 px red horizon; widen the sky band into
+   the glow his drawing has; do NOT change the colours or add geometry.
+3. `to: nick` — drop the Risk of Rain 2 picture into the references folder.
+   (My 22:35 note asked this in `Need from you`, which COMMON 1a says he
+   never sees. Corrected.)
+
+**Held back (not filed, watch next run):**
+
+- The sigil close-up is unreadable and has been for three runs. It is held
+  on purpose: #14 moves the route, and the route decides where that camera
+  stands. The run after #14 lands, it is the first thing I file.
+- The "3" popup covers the Frog entirely in the grip shot. A harness moment
+  (popup and leap at the same instant); in play it fades. Watch, do not file.
+- The playtester is live on my checks ticket as I write; judge next run.
+- The artist's 22:30 note says Nick asked live to redo the hunters' look.
+  #13 is `taken` by the artist and hands back to Nick; nothing for me to
+  move — but the artist must not pick the look for him. If a frame comes
+  back with one style chosen, it goes to Nick with options.
+
+**What is working, so nobody optimises it away:** Nick's own 22:12 commit
+is the first frame in which the stones are in FRONT of the beast in the
+order he drew; the fixer proving the camera lock with real drags rather than
+the gate test; the artist verifying the boulder in the actual fight and
+then reverting rather than committing into the fixer's function; the
+playtester breaking code on purpose to prove a check fires. Keep all of it.
+The palette is right, the beast's silhouette reads, the stone shape is now
+right and only waits on wiring.
+
+## Old: 2026-09-24 22:35 EDT (live, on your message)
 
 - **Did:** re-aimed all three agents at your three asks for tonight; the camera toggle was never built, so you did not miss it.
 - **Worked?** Your 22:12 commit is the biggest visible step yet: close camera, real-size hunters, a gap.
@@ -22,7 +124,7 @@ working_on: Nick's three overnight asks (locked RoR camera, stones left-to-right
 - **Next:** your camera-switch ask is with the fixer; then #14, re-aimed after two dead ends it proved tonight.
 - **Need from you:** one word on the re-cut jackal (keep or revert); nothing else.
 
-## Now
+### Now, as of 22:35 EDT
 
 **What a player sees, before I read anyone's note.** Resting shot: a tall
 black dog with orange panels, whole, on a dark disc under a purple sky; two
@@ -205,6 +307,7 @@ Closed: #4, #5, #11, #15, #17. The camera ticket (#18 step 3) is filed only
 once #14 lands, so the fixer has exactly one thing in front of it.
 
 ## Log
+- 2026-09-24 22:58 EDT — nothing visible moved; camera lock (fixer) and boulder mesh (artist) both landed correct-but-invisible by my own scoping. Advised the fixer on the over-the-shoulder framing, filed the horizon line to the artist, asked Nick for the RoR picture as a ticket.
 - 2026-09-24 22:35 EDT — Nick live: three asks by morning. Camera ticket rewritten (locked by default, RoR shot), #14 re-aimed on his route_pos, #13 re-aimed smooth, playtester told its checks read the old route.
 - 2026-09-24 21:58 EDT — no movement on #14; relayed Nick's camera-switch ask to the fixer, closed #3 into #14/#18, filed stones-shape (artist) and jackal keep/revert (nick).
 - 2026-09-24 20:09 EDT — took #18; reorganised #4/#5/#11/#14/#15/#17 (one live stones ticket, Nick's column cleared).

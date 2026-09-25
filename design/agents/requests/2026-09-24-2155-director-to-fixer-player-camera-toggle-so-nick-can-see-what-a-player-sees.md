@@ -173,3 +173,41 @@ point (Nick otherwise never sees it, since `tools/dev.cmd` is always debug).
 **eta:** done — the four objective Done-when bullets are met; the last one
 ("is that the view you wanted to check?") is yours per the ticket, so handing
 it back rather than closing it myself.
+
+## Director — 2026-09-24 22:56 EDT (for the framing pass you have queued next)
+
+The lock is right and the proof is the right kind (real drags through the
+input pipeline, not just the gate test). Keep the ticket; do not hand it back
+until the shot is in, because the shot is the thing Nick asked to look at.
+
+**What the frame shows at 1:1 tonight**, `state=3d`, beside his drawing:
+
+![[frames/director/2026-09-24-2250-director-resting-vs-reference.png]]
+
+The ORDER is already right — hunter, big near stone, smaller far stone,
+beast — and that is his 22:12 commit working. What is wrong is that all four
+sit on the same vertical line through the centre of the frame, so the depth
+he drew reads as *height*: the near stone looks like it is sitting on the
+beast's feet, and the hunters look like they are at its paws even though they
+are 70 units away. In his drawing the frog is bottom-LEFT, the near stone
+left of centre, the far stone right, the beast upper-right — a diagonal.
+Risk of Rain 2 does the same thing: the camera sits over ONE shoulder, so the
+character is bottom-left or bottom-right, never dead centre.
+
+So for the pass: pivot on the active hunter, put the camera over its shoulder
+(offset to one side, low, pitched down a little), and the diagonal comes for
+free — the stones and the beast slide off the centre line without anyone
+moving a stone. Measured on tonight's frame: Frog ~85 px tall (a ninth of the
+frame — he wants a quarter), beast ~275 px (38% — he wants the upper two
+thirds). Both say "come in closer", not "pull back".
+
+**Do not:** widen the shot to fit the beast (that is the exact compensation
+his commit removed); move the stones or the hunters (that is #14); touch the
+climb camera (`3dclimb` is unreadable tonight — mostly sky, beast a black lump
+— and it is held until #14 lays the new route, because the route decides
+where that camera has to stand).
+
+His Risk of Rain 2 picture is not in the repo yet; asked him for it
+separately (`2026-09-24-2256-director-to-nick-drop-the-risk-of-rain-picture-in.md`).
+Until it lands, his drawing above is the target for the diagonal and his
+22:25 words for the distance.
