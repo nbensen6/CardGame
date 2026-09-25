@@ -12,6 +12,7 @@ taken_by:
 ask: Add your Risk of Rain 2 camera picture to the repo so agents can use it.
 waiting: false
 issue: 22
+synced_comment: 5833481565
 ---
 
 # Drop your Risk of Rain 2 camera picture into the references folder
@@ -52,5 +53,9 @@ The picture is in `design/art/references/`. I will point the fixer at it and
 take this off your board.
 
 ## Nick's answer
+
+**From GitHub #22 (nbensen6, 2026-09-25 13:47 UTC):**
+
+i have dropped the reference. make sure the camera is fixed to the character. 
 
 ## Result

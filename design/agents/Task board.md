@@ -12,8 +12,8 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|
 | **director** | idle | the fight is better: the Frog lands on stones again in play; the grip shot everyone … | fixer fixes the fall pose and closes #0802 honestly; playtester builds feet-on-stone on … | #18 |
 | **artist** | idle | re-verified fresh again (import, tests, two renders) — all three Nick tickets still … | whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first. | #13 |
-| **playtester** | idle | rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff, not a projected … | apply the same primitive to `beast-behind-stone`'s chest stone (`0257`, folded into this … | #24 #29 |
-| **fixer** | 🟢 running | fixed #0658 — the approach stones' straight sweep stood in front of the beast's chest and … | #0258 (damage number on the Frog) or #0405 (hunters side-on), both open, both older than … | #14 #19 #25 #26 #28 #30 |
+| **playtester** | idle | closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not … | `0803` (high) — build `hunter-on-stone`, the check that should have caught the … | #29 #? |
+| **fixer** | idle | investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, … | #0258 or #0405, both open `to: fixer`, both older than this one. | #14 #19 #25 #26 #30 |
 
 ## Tickets
 
@@ -21,14 +21,13 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 |---|---|---|---|---|---|
 | #18 | director | high | gap+stones 3-4 fixer runs, camera after, characters with the artist | taken | Own these three to completion. Chase them every run until I … |
 | #13 | artist | high | tonight: 1-2 runs | open | The hunters are photoreal models rendered at 40 pixels. … |
-| #24 | playtester | normal | — | open | The tree moved under your occlusion check: the near stone … |
 | #29 | playtester | high | — | open | No check says whether the hunter is standing on a stone — … |
+| #- | playtester | normal | — | open | `screenshot.gd`'s `state=3dgrip` saves the shot before the … |
 | #14 | fixer | high | all four items landed 06:16 EDT; waiting on your look | open | Open the gap between the hunters and the jackal, then lay … |
 | #19 | fixer | high | done, pending your look | open | Lock the camera third-person behind the hunter, in EVERY … |
 | #25 | fixer | normal | — | open | When the Frog takes a hit, the damage number sits on top of … |
 | #26 | fixer | normal | — | open | At rest the Frog stands side-on, looking off the right edge … |
-| #28 | fixer | high | next run | taken | The chest is clear, but the Frog now stands on air beside … |
-| #30 | fixer | high | this run | taken | After a fall the Frog hangs in the air beside an empty … |
+| #30 | fixer | high | rides #0933 (playtester's harness fix) | taken | After a fall the Frog hangs in the air beside an empty … |
 | #21 | nick | normal | — | open | The jackal was re-cut to half its geometry this evening — … |
 | #22 | nick | normal | — | open | Drop your Risk of Rain 2 camera picture into the references … |
 | #23 | nick | normal | — | open | The near stone is a box with an orange lid; your drawing … |
@@ -55,13 +54,13 @@ _Generated from the agents' own status notes and the open requests. Do not edit 
 - Next: whichever of #13, the faceted jackal, or the near-stone ticket Nick answers first.
 - **Needs you:** your answer on those same three — #13 has been open since yesterday 17:20, going on 16 hours.
 
-**playtester** — 2026-09-25 07:45 EDT
+**playtester** — 2026-09-25 09:39 EDT
 
-- Did: rebuilt `hunter-lost-mid-hop` on real drawn pixels (render diff, not a projected rectangle) per the director's `0506`, high priority.
-- Next: apply the same primitive to `beast-behind-stone`'s chest stone (`0257`, folded into this one).
+- Did: closed `0257`'s chest-stone half — `beast-behind-stone` now judges real drawn pixels, not rect overlap.
+- Next: `0803` (high) — build `hunter-on-stone`, the check that should have caught the frog-on-air regression.
 
-**fixer** — 2026-09-25 07:56 EDT
+**fixer** — 2026-09-25 09:35 EDT
 
-- Did: fixed #0658 — the approach stones' straight sweep stood in front of the beast's chest and near foreleg from the resting camera.
-- Next: #0258 (damage number on the Frog) or #0405 (hunters side-on), both open, both older than this one.
+- Did: investigated #0905 (grip shot shows a fallen Frog mid-air) — it's a harness timing bug, not a placement bug.
+- Next: #0258 or #0405, both open `to: fixer`, both older than this one.
 

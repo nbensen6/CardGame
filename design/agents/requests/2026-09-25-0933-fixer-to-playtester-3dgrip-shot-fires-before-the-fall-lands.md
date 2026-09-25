@@ -11,9 +11,12 @@ created: 2026-09-25T09:33
 taken_by:
 ask:
 waiting: false
+issue: 31
 ---
 
 # `screenshot.gd`'s `state=3dgrip` saves the shot before the fall animation actually lands
+
+**#31**
 
 ▶ **[Fight this now](obsidian://shell-commands/?vault=design&execute=fight-request-beast)** — opens the fight this note is about.
 

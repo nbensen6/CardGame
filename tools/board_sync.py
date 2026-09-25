@@ -270,9 +270,30 @@ def issue_body(path, body, fm):
     head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel
     head += "comment here and the sync copies it back into the note for the agents._\n\n"
-    if "![[" in body:
-        head += "_(Frames referenced below are in the repo, not rendered here.)_\n\n"
-    return head + fight_link(body, fm)
+    return head + fight_link(embed_frames(body), fm)
+
+
+def embed_frames(body):
+    """Turn Obsidian's ![[frames/...]] into images GitHub actually renders.
+
+    These tickets argue from evidence -- "here is what a player sees" followed
+    by a frame -- and on GitHub that frame was a line of literal text, so the
+    argument arrived with its evidence missing and Nick could not tell what was
+    being asked (2026-09-25). The blob?raw=1 form renders inline for anyone
+    signed in to a private repo, and is still a working link if it does not.
+
+    A target that is not actually in the repo is left exactly as written rather
+    than turned into a link that 404s.
+    """
+    def one(m):
+        inner = m.group(1).split("|")[0].strip()
+        for base in ("design/agents", "design"):
+            path = "%s/%s" % (base, inner)
+            if os.path.exists(path.replace("/", os.sep)):
+                return "![%s](https://github.com/%s/blob/main/%s?raw=1)" % (
+                    os.path.basename(inner), REPO, quote(path))
+        return m.group(0)
+    return re.sub(r"!\[\[([^\]]+)\]\]", one, body)
 
 
 def fight_link(body, fm):
@@ -512,6 +533,16 @@ def selftest():
     # Nothing in an issue may be an obsidian:// link: GitHub deletes those, and
     # a deleted link is what sent Nick copy-pasting in the first place
     assert "obsidian://" not in b, b
+
+    # an Obsidian embed becomes an image GitHub renders, and an embed whose
+    # file is not in the repo is left alone rather than linked to a 404
+    real = "agents/frames/director/2026-09-25-0753-director-sigil.png"
+    import os as _os
+    if _os.path.exists(_os.path.join("design", *real.split("/"))):
+        out2 = embed_frames("![[%s]]" % real)
+        assert out2.startswith("![") and "blob/main/design/" in out2, out2
+        assert "![[" not in out2
+    assert embed_frames("![[no/such/file.png]]") == "![[no/such/file.png]]"
     print("BOARD SYNC SELFTEST OK")
 
 
