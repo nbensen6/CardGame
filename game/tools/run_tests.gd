@@ -992,12 +992,20 @@ func _init() -> void:
 	_test_hop_subpoints_matches_the_live_20m_repro()
 	# fixer, 2026-09-25: #0658 -- the low-mid stretch of route_pos()'s own
 	# sweep read as a wall in front of the beast's chest/foreleg from the
-	# resting camera. chest_clear_push is the decorative-only nudge on top
-	# of it.
+	# resting camera. chest_clear_push is the nudge that clears it.
 	_test_chest_clear_push_is_full_strength_at_the_sweep_start()
 	_test_chest_clear_push_fades_to_zero_at_the_taper_point()
 	_test_chest_clear_push_is_zero_past_the_taper()
 	_test_chest_clear_push_decreases_monotonically()
+	# fixer, 2026-09-25: #0802 -- #0658 applied chest_clear_push to the
+	# decorative rock only, leaving _stand_on_model's own route_pos point
+	# behind -- the Frog stood on air beside its own stone. route_pos_cleared
+	# folds the same push into the one point both the rock and the hunter's
+	# foot now read.
+	_test_route_pos_cleared_matches_route_pos_past_the_taper()
+	_test_route_pos_cleared_matches_chest_clear_push_at_the_sweep_start()
+	_test_route_pos_cleared_never_moves_the_top_hold()
+	_test_route_pos_cleared_single_rung_matches_route_pos()
 	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
 	# climb's FINAL stop before the tween even started, so the camera's lock
 	# point (_lock_point reads home.x/.z) aimed at the destination for the
@@ -22199,6 +22207,46 @@ func _test_chest_clear_push_decreases_monotonically() -> void:
 		var cur: float = Combat3D.chest_clear_push(t)
 		_expect(cur <= prev + 0.0001, "the push must ease off as the route nears the beast, never spike back up partway through -- a bump reads as a stone that jumps sideways for no reason")
 		prev = cur
+
+
+## #0802 (director): the Frog stood on air beside its own stone because
+## chest_clear_push moved the decorative rock (_build_float_stones) without
+## moving the hunter's own landing (_stand_on_model, plain route_pos).
+## route_pos_cleared is route_pos with the SAME push folded into the one
+## point both now read -- these pin its shape with no scene tree and no
+## model loaded (#86 duty 3), the same way route_pos()'s own tests do.
+func _test_route_pos_cleared_matches_route_pos_past_the_taper() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	# i = n-2 is the rung just short of the top hold; at n=5 that's t=0.75,
+	# past CHEST_CLEAR_TAPER (0.6), where chest_clear_push is exactly zero.
+	var i := n - 2
+	var raw: Vector3 = Combat3D.route_pos(top, -20.0, i, n, 6.0)
+	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, i, n, 6.0)
+	_expect(cleared == raw, "past the taper the route is already clean against the beast -- route_pos_cleared must hand back route_pos's own point unchanged, or a stone that already read fine gets nudged for no reason")
+
+
+func _test_route_pos_cleared_matches_chest_clear_push_at_the_sweep_start() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var half_width := 6.0
+	var n := 5
+	var raw: Vector3 = Combat3D.route_pos(top, -20.0, 0, n, half_width)
+	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, 0, n, half_width)
+	_expect(is_equal_approx(cleared.x, raw.x - Combat3D.CHEST_CLEAR_PUSH), "at t=0 (the sweep's own near end, rung 1 -- where the worst-measured overlap sat) route_pos_cleared must push the SAME point the hunter lands on by the full CHEST_CLEAR_PUSH, further from the top hold's own x -- got %.2f, wanted %.2f" % [cleared.x, raw.x - Combat3D.CHEST_CLEAR_PUSH])
+	_expect(is_equal_approx(cleared.y, raw.y) and is_equal_approx(cleared.z, raw.z), "the push is sideways only -- y and z must stay exactly on route_pos's own line")
+
+
+func _test_route_pos_cleared_never_moves_the_top_hold() -> void:
+	var top := Vector3(0.4, 12.0, 2.0)
+	var n := 5
+	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -20.0, n - 1, n, 6.0)
+	_expect(is_equal_approx(cleared.x, top.x) and is_equal_approx(cleared.y, top.y) and is_equal_approx(cleared.z, top.z), "the top hold (i = n-1) is the sigil -- the one place the route must still touch the beast -- and must land exactly on it, push or no push")
+
+
+func _test_route_pos_cleared_single_rung_matches_route_pos() -> void:
+	var top := Vector3(1.0, 2.0, 3.0)
+	var cleared: Vector3 = Combat3D.route_pos_cleared(top, -5.0, 0, 1, 4.0)
+	_expect(cleared == top, "a beast with only one climb rung has no approach to sweep or clear across -- route_pos_cleared must hand back the top hold unchanged, same as route_pos itself")
 
 
 ## #0420: home_after_leg is the pure step behind the per-sub-hop camera fix --

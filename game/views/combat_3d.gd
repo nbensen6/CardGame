@@ -3332,7 +3332,7 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	# on the line leading there, so the top is what that line is drawn to.
 	if n <= 1 or i >= n - 1:
 		return on_body
-	return route_pos(_top_hold(), ground_standoff_for(_beast_box.end.z), i, n,
+	return route_pos_cleared(_top_hold(), ground_standoff_for(_beast_box.end.z), i, n,
 		STONE_SWEEP_WIDTH)
 
 
@@ -4039,13 +4039,38 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 ## falling). This bulges exactly that early stretch further along the same
 ## direction route_pos already sweeps, fading linearly to zero by t=0.6 so
 ## the stones from there to the sigil (already reading clean) are untouched.
-## Decorative only -- see its one call site in _build_float_stones -- so the
-## hunter's own foot (still `_stand_on_model`'s unmodified route_pos point)
-## never strays outside the nudged rock's own footprint.
+##
+## 2026-09-25, director (#0802): the first version of this push applied to
+## the DECORATIVE rock only (_build_float_stones), leaving the hunter's own
+## foot (`_stand_on_model`, still plain route_pos) up to CHEST_CLEAR_PUSH
+## (5.6 units) away from the stone it was supposed to be standing on -- the
+## Frog landed on air beside its own rock. "Neither endpoint can move" was
+## about the GAP'S OWN WIDTH and the sub-hop split (#14/#0505/#0420), never
+## about this push: #0802 asks for exactly this lever to move the real
+## landing too, not a new one. route_pos_cleared (below) is route_pos with
+## this SAME push folded into the point the hunter actually stands on, so a
+## foot and its rock can never again disagree about where the stone is.
 const CHEST_CLEAR_TAPER := 0.6
 const CHEST_CLEAR_PUSH := HUNTER_HEIGHT * 8.0
 static func chest_clear_push(t: float) -> float:
 	return CHEST_CLEAR_PUSH * clampf(1.0 - t / CHEST_CLEAR_TAPER, 0.0, 1.0)
+
+
+## route_pos(), with chest_clear_push's own sideways nudge folded into the
+## SAME point -- the point `_stand_on_model` hands the hunter and
+## `_build_float_stones` hands the decorative rock, so the two can never
+## drift apart (#0802). route_pos() itself stays pure and untouched (its own
+## "one line, even steps" tests keep pinning the un-pushed geometry) --
+## everything downstream that wants the cleared route calls this instead.
+static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
+		half_width: float) -> Vector3:
+	var p := route_pos(top, ground_z, i, n, half_width)
+	if n <= 1:
+		return p
+	var push: float = chest_clear_push(float(i) / float(n - 1))
+	if push > 0.0:
+		p.x += signf(-half_width) * push
+	return p
 
 
 func _build_float_stones() -> void:
@@ -4073,27 +4098,11 @@ func _build_float_stones() -> void:
 	rungs.sort()
 	var at := Vector3(0.0, 0.0, minf(ground_standoff_for(_beast_box.end.z), _arena_r * 0.86))
 	var landings: Array[Vector3] = []
-	# Where the SWEEP itself begins -- rung 1's own stop (route_pos's t=0,
-	# the "start" chest_clear_push measures from). Everything before it is
-	# the ground->rung-1 leg, on a different line entirely (never measured
-	# as occluding, see check 8's own numbers) and left out of the nudge
-	# below on purpose.
-	var sweep_from_index := 0
 	for h in rungs:
 		var stop: Vector3 = _stand_on_model(int(h), 0.0)
 		for sub in hop_subpoints(at, stop, HOP_MAX_LEG):
 			landings.append(sub)
-		if h == rungs[0]:
-			sweep_from_index = landings.size() - 1
 		at = stop
-	# The two ends of route_pos()'s own straight sweep, recomputed the same
-	# way route_pos builds them internally -- needed here only to recover
-	# how far along that line (t, 0..1) a given landing already sits, since
-	# every point on it was placed by the exact same lerp (chest_clear_push's
-	# own doc comment has why).
-	var top_pt: Vector3 = _top_hold()
-	var sweep_start_pt := Vector3(top_pt.x - STONE_SWEEP_WIDTH, HUNTER_HEIGHT * 1.6,
-		ground_standoff_for(_beast_box.end.z) - HUNTER_HEIGHT * 6.0)
 	for index in range(landings.size()):
 		# A wrapper, not a mesh directly, so the bob/spin in _process (which
 		# reads/writes `st.position`/`st.rotation.y` by array index — see the
@@ -4101,25 +4110,14 @@ func _build_float_stones() -> void:
 		# rigid piece, while the flat cap and rim below stay level and don't
 		# inherit the boulder's own random tilt/squash (see BODY below).
 		var stone := Node3D.new()
-		var pos: Vector3 = landings[index]
-		# #0658 (director): the low-mid stretch of the sweep (route_pos, above)
-		# reads as a wall in front of the beast's chest/foreleg from the
-		# resting camera. Nudge the DECORATIVE rock only -- never `landings`,
-		# never `_stand_on_model`'s own return -- so the hunter's actual foot
-		# (still exactly route_pos's point) and every check built on it
-		# (hunter-off-marker, hop-distance-band, the sigil, the gap) are
-		# untouched to the float; the rock stays well within the hunter's own
-		# footing radius of its unmodified landing (see the CHEST_CLEAR_PUSH
-		# magnitude picked against that radius, and the request's own numbers
-		# on what this moved and what it didn't).
-		var is_top_hold: bool = index == landings.size() - 1
-		if index >= sweep_from_index and not is_top_hold \
-				and not is_equal_approx(top_pt.y, sweep_start_pt.y):
-			var t: float = clampf((pos.y - sweep_start_pt.y) / (top_pt.y - sweep_start_pt.y), 0.0, 1.0)
-			var push: float = chest_clear_push(t)
-			if push > 0.0:
-				pos.x += signf(sweep_start_pt.x - top_pt.x) * push
-		stone.position = pos
+		# #0802 (director): #0658's first version nudged this DECORATIVE
+		# position only, leaving `landings` (built from `_stand_on_model`)
+		# pointing at the old, un-pushed spot -- the Frog stood on air beside
+		# its own rock. `_stand_on_model` now calls route_pos_cleared, so
+		# `landings` already IS the chest-cleared point; the rock and the
+		# hunter's foot are the same value by construction, not two values
+		# kept in sync by hand.
+		stone.position = landings[index]
 		_rig.add_child(stone)
 
 		# BODY: an irregular convex-hull rock (FOOTHOLD_ROCK, the artist's

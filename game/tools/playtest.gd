@@ -654,7 +654,12 @@ func _check(v: Node, when: String) -> void:
 					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected x=%.2f y=%.2f, x-tol %.2f)" \
 						% [when, foot, home.distance_to(Vector3(x_expected, anchor.y, home.z)), home, x_expected, anchor.y, tol_x])
 			else:
-				var expected: Vector3 = v.call("route_pos", route_top_hold, route_ground_z, i, n, STONE_SWEEP_WIDTH)
+				# route_pos_cleared, not raw route_pos (#0802): _stand_on_model
+				# folds chest_clear_push's own sideways nudge into the point the
+				# hunter actually lands on now, so "expected" has to match --
+				# else this check would measure the hunter against a route the
+				# game no longer walks.
+				var expected: Vector3 = v.call("route_pos_cleared", route_top_hold, route_ground_z, i, n, STONE_SWEEP_WIDTH)
 				var miss := home.distance_to(expected)
 				if miss > 0.10:
 					_fail("hunter-off-marker", "%s: hunter at foothold %d is %.2fm from its live route position (home %v, expected %v, tol 0.10)" \
@@ -760,7 +765,10 @@ func _check(v: Node, when: String) -> void:
 			if i >= n2 - 1:
 				pts.append(route_top_hold)
 			else:
-				pts.append(v.call("route_pos", route_top_hold, route_ground_z, i, n2, STONE_SWEEP_WIDTH))
+				# route_pos_cleared, same reason as check 8 above: the real
+				# hop legs the hunter animates now start from the chest-cleared
+				# point, not the raw sweep line.
+				pts.append(v.call("route_pos_cleared", route_top_hold, route_ground_z, i, n2, STONE_SWEEP_WIDTH))
 		for i in range(pts.size() - 1):
 			var a3: Vector3 = pts[i]
 			var b3: Vector3 = pts[i + 1]
