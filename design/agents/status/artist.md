@@ -2,13 +2,66 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-25T04:07
-working_on: "Nothing to build — every open artist item (#13 hunters, the faceted-jackal ticket) is still sitting with Nick."
+updated: 2026-09-25T05:12
+working_on: "Nothing to build — #13, the faceted-jackal ticket, and the new stone-shape ticket are all still sitting with Nick."
 ---
 
 # artist
 
-## This run — 2026-09-25 04:07 ET
+## This run — 2026-09-25 05:12 ET
+
+- **Did:** re-checked all three Nick-blocked tickets fresh (#13, faceted
+  jackal, the new stone-shape one) — still blank. Rendered the real wide
+  shot to look for anything unblocked; found nothing new to build.
+- **Worked?** N/A — nothing of mine to do; confirmed rather than assumed.
+- **Next:** whichever of the three Nick answers first.
+- **Need from you:** your answer on #13, the faceted jackal, and the near
+  stone's shape (a new director ticket) — three now, all open since last
+  night or this morning.
+
+## Now
+
+Claimed the lease, pulled fresh, checked every `design/agents/requests/*.md`
+for `to: artist` with `status:` not `done` — zero, same as the last three
+runs. Read the full `## Nick's answer` section directly (not a grep
+snippet) on all three tickets currently blocking my queue: #13 (hunters),
+the faceted-jackal ticket, and the new one filed this morning by the
+director (`2026-09-25-0256-...the-near-stone-is-a-box-with-an-orange-lid.md`,
+which also names the artist as the one who'd take it if Nick picks "plain
+boulders"). All three are still blank — no GitHub-mirrored answer either.
+
+Rather than just repeat the last three runs' conclusion from memory, set up
+fresh (Godot 4.7.1 + `--import`, `ALL TESTS PASSED`) and actually rendered
+`state=3d wide` to look for any unblocked work. Found something worth
+recording even though it changes nothing I can act on: both hunters are
+currently fully off-screen in that shot (`VIS FAIL hunter0: (639, 1462)`,
+`VIS FAIL hunter1: (850, 1462)` — off the bottom of a 720px-tall frame, not
+just small). That's a live symptom of the fixer/director's own in-progress
+work this hour (the 04:05/05:05 tickets on hunters standing side-on and
+hopping across the gap on nothing) — already filed, already theirs, not a
+new defect for me to report. It does mean the "readable at fight distance"
+bar line can't be re-measured honestly right now; the camera/positioning
+code is mid-change under someone else's lease, so any pixel-height number
+I took today would be stale the moment their fix lands.
+
+Also visible in that same render: the near stone (`_build_float_stones`)
+still reads exactly as the director's new ticket describes it — a pale box
+with a flat top and dark-orange rim, not a boulder. Confirms the ticket's
+own frames; no new information, and it's Nick's call to make (three
+options laid out there), not mine to guess at.
+
+Deleted one stray untracked file before this push:
+`game/assets/3d/cast/goblin_mech_ai_Image_0.png`, Godot's own texture
+extraction from `--import`, the exact orphan a prior run (2026-09-25 01:33
+ET) already identified and removed for the same reason — it comes back
+every fresh sandbox and isn't meant to be tracked.
+
+Did not spend Meshy credits or touch the jackal/hunters/stones, per the
+standing "do not touch again until Nick answers" instruction on all three
+open tickets. `ALL TESTS PASSED` on the unmodified tree; no code or asset
+changed this run.
+
+## Old: 2026-09-25 04:07 ET
 
 - **Did:** re-checked every request file's frontmatter fresh (not from
   memory) — zero `to: artist` requests are open, and both tickets waiting
