@@ -25,6 +25,8 @@ waiting: false
 - Make the sample count a frame as on-screen only when the hunter is actually drawn — your `beast-behind-stone` check already measures drawn pixels, reuse that idea.
 - Do NOT move the 50 % threshold either way, do NOT rebuild the check, do NOT soften it because the fixer's `0420` ticket is about to attack the same step — that ticket should be judged against the honest number.
 
+- **Added 2026-09-25 06:05 EDT:** the 24 `hop_*.png` shots are the FIRST 24 frames of the flight (`shots < 24`, one per frame), not 24 spread across it — on this Leap that is the opening 14% of 167 samples. My "0 of 24" and the fixer's "24 of 24" (camera fix, 05:56) are both true of that opening only. Spread the shots evenly over the flight so a strip shows the whole arc, launch to landing; do NOT raise the cap, do NOT change what the check counts, only when it takes a picture.
+
 ## What
 
 The Leap on the current tree, four evenly spaced frames from 24:

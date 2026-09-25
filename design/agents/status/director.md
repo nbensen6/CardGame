@@ -2,17 +2,17 @@
 tags:
   - agent-status
 agent: director
-updated: 2026-09-25T05:57
-working_on: Nothing visible moved this hour; the fixer is live on the camera lock, the playtester's chest-stone question answered (pixel metric, no exemption, no route bend), Nick's five rows unchanged.
+updated: 2026-09-25T06:05
+working_on: The camera fix landed at 05:56 and the Frog is drawn through the opening of the Leap; the rest of the flight is still proven only by projection, so 0506 settles it.
 ---
 
 # director
 
 ## This run — 2026-09-25 05:57 EDT
 
-- **Did:** the fight is exactly as it was at 05:12; nothing visible shipped, the fixer is mid-run on the camera.
-- **Worked?** The playtester proved the "chest stone" floats in the gap and only lines up from one camera.
-- **Next:** playtester measures cover by drawn pixels, not rectangles; fixer's camera lock, then stones under landings.
+- **Did:** better, as of 05:56: the Frog is now drawn leaping at the beast's feet, where it was invisible before.
+- **Worked?** Yes for the opening of the Leap, which I counted myself; the rest of the flight is still unproven.
+- **Next:** playtester spreads the shots over the whole flight and counts pixels; fixer puts stones under the landings.
 - **Need from you:** the same five rows; the lens-vs-gap one unblocks the stones and the sigil shot.
 
 ## Now
@@ -40,8 +40,8 @@ those is the gap-vs-lens question sitting in Nick's column since 21:55
 yesterday. Nick has said the drawing is placement only, not colour, so the
 black jackal and the purple sky are right and stay.
 
-**Did the fight get better for Nick, or did a score go up?** Neither, this
-hour. Since 05:12 one commit touched the game and it was a check
+**Did the fight get better for Nick, or did a score go up?** Neither, as of
+this note's first draft — see the addendum below for what landed at 05:56. Since 05:12 one commit touched the game and it was a check
 (`playtest.gd`), no view. That is correct: the artist has three tickets with
 Nick and built nothing rather than something; the fixer claimed at 05:19 and
 is, by its own queue, on the camera lock (`0420`, high) — its result may
@@ -68,6 +68,31 @@ print rect and pixel numbers side by side for a run so the old figure dies
 honestly. Thresholds untouched, no rebuild. Re-addressed `to: playtester`,
 normal, after `0506`.
 
+**Addendum, 06:05 — the fixer landed the camera lock at 05:56, after
+the note above was written, and I looked rather than trusted it.** Reran
+the same 24-step play on `a6f97ed` and counted Frog pixels in the 24 Leap
+frames with the same detector as last run: 200-400 in every frame, where
+last run found zero in all 24. At 1:1 the mid-Leap shot is the best frame
+this fight has produced: the whole beast, face clear, tag above the head,
+the Frog in the air between its forelegs with a stone under it. A player
+sees a frog leaping at a jackal. That is the fight getting better, and it
+is the fixer's, with tests.
+
+![[frames/director/2026-09-25-0605-director-leap-frog-visible.png]]
+
+![[frames/director/2026-09-25-0605-director-leap-sheet-after-camera-fix.png]]
+
+**The honest limit, which nobody's number states:** the 24 shots are the
+FIRST 24 frames of a 167-frame flight, one per frame (`shots < 24` in the
+harness), so both my old "0 of 24" and the fixer's "24 of 24" describe the
+opening 14% of the Leap. The Frog's centroid across those frames dips and
+rises about 90 px and comes back — one sub-hop at the beast's feet. Whether
+it stays visible on the way up to the head is proven only by the projection
+check (`167/167`), which is the very thing `0506` says is not visibility.
+Added one bullet to `0506`: spread the shots across the flight; cap and
+counting unchanged. That is my second filed thing this run; the third slot
+stays empty.
+
 **Audit of what closed since 05:12:** nothing closed. **Stuck:** nothing
 new; `2356` (face behind the tag) is still `taken` with an eta of "this run"
 from 23:56 — it rides #14's handback by my own 05:12 call and the head is
@@ -91,6 +116,7 @@ step 3, after the gap and the stones, per Nick's own order.
 
 ## Log
 
+- 2026-09-25 06:05 EDT — addendum: fixer's camera lock landed 05:56; verified by my own pixel count, Frog drawn in 24/24 opening Leap frames (was 0/24) and the mid-Leap shot is the best frame yet; found the 24 shots are the first 24 frames only, added to 0506.
 - 2026-09-25 05:57 EDT — nothing visible moved (frames identical to 05:00 bar idle); fixer live on camera lock; answered the playtester's chest-stone handback (pixel metric via 0506, no exemption, no route bend) — the chest stone is a floating waypoint that only lines up from one camera, recorded on #18; nothing closed, nothing stuck, Nick's five rows unchanged.
 - 2026-09-25 05:12 EDT — fight not better; hop split landed correct-but-invisible (Frog drawn in 0/24 Leap frames, lands on air twice). Raised fixer's camera-lock to high, filed stones-under-landings (fixer) and drawn-pixels check (playtester); #14 eta un-staled.
 - 2026-09-25 04:08 EDT — nothing reached the game this hour; camera ask to Nick rewritten to name the gap-vs-two-thirds collision; hunters-face-the-beast filed to fixer after the hops; fixer told stone 2/5 are on-body; playtester pointed at the on-body split.
