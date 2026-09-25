@@ -2,13 +2,83 @@
 tags:
   - agent-status
 agent: artist
-updated: 2026-09-24T22:30
-working_on: "Closed #17 (footholds read as rock, not pots). Nick's now live in-session asking to redo the frog/goblin look — pivoting there next."
+updated: 2026-09-24T23:40
+working_on: "Investigated #19 (horizon red line), found it's the Wall mesh at a grazing angle, not the sky — handed back to director; #13 still blocked on #18."
 ---
 
 # artist
 
-## This run — 2026-09-24 22:30 ET
+## This run — 2026-09-24 23:40 ET
+
+- **Did:** dug into the horizon red-line ticket (#19). The director's fix
+  (widen the sky curve) doesn't touch it — proved that, then proved it's
+  really the arena Wall mesh viewed edge-on, not the sky.
+- **Worked?** No fix shipped. Widening the curve changed nothing; hiding
+  the Wall mesh made the line vanish into a smooth gradient — so that's
+  the real cause, and it's geometry/shader, both outside what this ticket
+  let me touch.
+- **Next:** handed back to the director with the corrected diagnosis. May
+  clear on its own once #18's camera-in-close lands (changes the angle on
+  that wall); otherwise needs a texture-filter or geometry fix, not a
+  biome number.
+- **Need from you:** nothing blocking — #19 is the director's call now.
+
+![[frames/artist/2026-09-24-2340-artist-horizon-line-wall-present.png]]
+![[frames/artist/2026-09-24-2340-artist-horizon-smooth-wall-hidden.png]]
+
+## Now
+
+No request I could actually finish this run. #13 (hunters) is still open,
+`taken_by: artist`, correctly blocked on #14/#18 (the fixer hasn't landed
+the gap/stones yet). The only other open `to: artist` note was #19 (director,
+the horizon red line) — took it, but it turned out to be mis-diagnosed and
+outside my scope to actually fix; wrote up why below and handed it back.
+
+**Set up fresh** (fresh sandbox): Godot 4.7.1 + `--import`, `ALL TESTS
+PASSED` confirmed before touching anything.
+
+**#19: the horizon red line.** The ticket's own diagnosis — widen
+`ProceduralSkyMaterial.sky_curve`/`ground_curve` on `quarry_ember` — is
+wrong. Set both explicitly (0.75/0.45, up from the engine defaults
+0.15/0.02) in `combat_3d._light_for`, exactly the "one or two numbers in
+`BIOME`" scope the ticket allowed, and re-rendered `state=3d` clean three
+times: pixel-identical to the unmodified tree at the seam. The curve was
+never the lever.
+
+Chased it down by elimination instead of guessing again (killed two stray
+Xvfb processes left over from an earlier timed-out test first — they were
+quietly corrupting renders and cost me a false positive):
+
+- Forced the environment background to solid green — the line barely
+  changed. If it were the sky material, `BG_COLOR` would have erased it.
+- Zeroed sun, fill, ambient and fog light energy together — everything
+  else in frame went black; this line stayed lit. Only background content
+  survives that.
+- Hid `Wall`, `Floor`, the sigil's `Glow`, and the beast one at a time.
+  Hiding `Wall` alone removes the line completely and reveals a smooth
+  purple-to-red gradient that already matches Nick's reference.
+
+So it's the arena Wall mesh (`cinder_jackal_ai.glb`, the Meshy crater rim),
+not the sky. The "mountains" filling most of the frame above the line are
+the Wall's own silhouette; the line sits on its lowest visible edge, seen
+almost perfectly edge-on from this camera. `creature.gdshader`'s atlas
+sampler is `filter_nearest` (no mip/linear blend) — exactly what turns a
+foreshortened texture band into a hard aliased line instead of a soft one.
+
+Every real lever here is one the ticket ruled out — the wall's angle is
+geometry/camera, the filtering is the shader. Nothing in `combat_3d.BIOME`
+reaches the Wall at all (confirmed by the light-zeroing test above). Wrote
+this up on the request itself and handed it back `to: director` rather
+than force a fix through a door the ticket closed, or fake a close.
+Flagged that #18's camera-in-close may fix this as a side effect (it
+changes the distance/angle to this exact wall) — worth rechecking before
+spending a dedicated fix on it.
+
+Reverted every debug/investigation edit — `combat_3d.gd` and
+`screenshot.gd` are unchanged from `origin/main` (`git diff` clean).
+`ALL TESTS PASSED` on the unmodified tree.
+
+## Old: 2026-09-24 22:30 ET
 
 - **Did:** closed #17 — rebuilt the floating footholds as an irregular
   low-poly rock (18 tris), not a sphere; reads as boulder, not a pot.
@@ -3428,6 +3498,11 @@ only touched the visual dressing) is the obvious next real-geometry pass.
 
 ## Log
 
+- 2026-09-24 23:40 EDT — #19 (horizon red line): director's sky-curve
+  diagnosis was wrong (proved with a clean measurement, no visible change).
+  Traced it to the arena Wall mesh viewed edge-on (hiding it removes the
+  line entirely) — geometry/shader, outside this ticket's scope. Handed
+  back to director with findings; no code shipped, tree unchanged.
 - 2026-09-24 17:24 EDT — closed #12 (Nick, high priority): recoloured the
   arena ground dark, the floating footholds pale, and the sky/ambient/fog
   cool purple-into-pink for the Cinder Jackal fight only, colours sampled

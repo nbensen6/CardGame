@@ -2,13 +2,13 @@
 tags:
   - request
 from: director
-to: artist
+to: director
 status: open
 priority: normal
 beast: cinder_jackal
 eta:
 created: 2026-09-24T22:57
-taken_by:
+taken_by: artist
 ask:
 waiting: false
 ---
@@ -71,4 +71,67 @@ purple sky above and the dark ground below.
 
 ## Nick's answer
 
-## Result
+## Result — artist, 2026-09-24 23:40 EDT (not fixed — diagnosis was wrong, handing back)
+
+**The line is not the sky.** Widening `ProceduralSkyMaterial.sky_curve`/
+`ground_curve` on `quarry_ember` from the engine defaults (0.15/0.02) to
+0.75/0.45 — set in `combat_3d._light_for`, exactly the "one or two numbers
+in `BIOME`" this ticket asked for — changed nothing at the seam,
+pixel-for-pixel, across three clean re-renders. That already said the curve
+wasn't the lever, but I kept digging rather than hand back a guess.
+
+Proved what it actually is by process of elimination, one clean render each
+(stray Xvfb processes from an earlier test were corrupting results — killed
+them and reran everything once the environment was verified clean):
+
+- Forced the environment's background to solid green
+  (`background_mode = BG_COLOR`): the line stayed, almost unchanged. If it
+  were the sky material it would have vanished — the sky background is what
+  `BG_COLOR` replaces.
+- Zeroed sun, fill, ambient and fog light energy together: everything else
+  in frame went to (0,0,0) except this line, which stayed lit. Background
+  content (the true sky) is the only thing that would survive that.
+- Hid every named mesh one at a time (`Wall`, `Floor`, the sigil's `Glow`,
+  the beast) via `visible = false`. Hiding `Wall` — and only `Wall` — makes
+  the line disappear completely, replaced by a smooth, continuous
+  purple-to-red gradient that already matches Nick's reference:
+
+  ![[frames/artist/2026-09-24-2340-artist-horizon-line-wall-present.png]]
+  ![[frames/artist/2026-09-24-2340-artist-horizon-smooth-wall-hidden.png]]
+
+**So it is the arena Wall mesh itself** (`cinder_jackal_ai.glb`, the Meshy
+crater rim from #`tools/blender/ai/cinder_jackal_env_ai.py`), not the sky
+behind it. What looks like "mountains" filling most of the frame above the
+line is the Wall's own silhouette; the line sits exactly on its lowest
+visible edge, where the wall's base — textured with the "ember crack"
+detail the build script describes — is viewed almost perfectly edge-on at
+this camera's angle and distance. A band of texture that reads fine
+face-on collapses to a few screen pixels at that foreshortening, and
+`creature.gdshader`'s atlas sampler is declared `filter_nearest` (no
+mip/linear blend), which is exactly the kind of minification that turns a
+compressed gradient into a hard aliased line instead of a soft one.
+
+**Why I'm not fixing it:** every lever that would actually change this is
+one this ticket rules out — the wall's placement/angle is geometry and
+camera (both explicitly "do NOT"), and the texture filtering is the
+shader (also "do NOT"). There is no number in `combat_3d.BIOME` that
+reaches the Wall mesh at all; light doesn't touch it, per the last test
+above. I didn't want to force a fix through a door this ticket closed, so
+I'm hand this back rather than fake a close.
+
+**Worth knowing for sequencing:** #18's own plan (open the gap, then bring
+the camera in close behind the hunter) changes the distance and angle to
+this exact wall, which may move or shrink this seam as a side effect once
+that lands — worth a recheck against the new camera before spending a
+dedicated fix on it. If it's still there after #18's camera step, the real
+options are (a) a small texture-filtering change on the Wall's material
+(`filter_nearest` → `filter_linear_mipmap` on `creature.gdshader`'s atlas
+sampler, scoped to the Wall's own material instance, not the shared
+shader default) or (b) nudging the Wall's base geometry so it isn't
+viewed edge-on from the ground camera — both outside what this ticket
+authorized me to touch.
+
+Reverted all debug/investigation code — `game/views/combat_3d.gd` and
+`game/tools/screenshot.gd` are unchanged from before this run
+(`git diff` clean). `ALL TESTS PASSED`, unaffected either way since nothing
+shipped.
