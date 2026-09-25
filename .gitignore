@@ -24,6 +24,12 @@
 # --- Inside the project: Godot cache, imported assets, editor/OS junk ---
 .godot/
 *.import
+# Godot's glTF importer sometimes re-encodes an embedded jpg texture to a
+# lossless PNG cache next to the source on import (e.g. goblin_mech_ai's
+# Image_0) -- a derived, regenerable-from-source file, never the source
+# itself (that's always the tracked .jpg beside it). Every fresh --import
+# regenerates it identically; it doesn't belong in the diff.
+game/assets/3d/**/*_Image_*.png
 export_presets.cfg
 build/
 .mono/
