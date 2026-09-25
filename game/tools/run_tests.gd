@@ -21909,13 +21909,18 @@ func _test_backlog86_ground_standoff_for_grows_with_the_front_edge() -> void:
 
 
 func _test_backlog86_ground_standoff_for_matches_the_cinder_jackal_live_numbers() -> void:
-	# The exact _beast_box.end.z read live off the fight (see the request's
-	# own frame): confirms the formula reproduces the real, deliberately
-	# generous standoff distance (26.72) rather than the old, clamped-away
-	# one (17.59) — the number that has to beat the arena's own 0.86 clamp
-	# for the fix to hold at all (proven by the next test).
-	var back: float = Combat3D.ground_standoff_for(16.494751)
-	_expect(is_equal_approx(snappedf(back, 0.01), 26.72), "ground_standoff_for(front_edge) must be front_edge * (1 + GROUND_STANDOFF) -- got %.3f" % back)
+	# The exact _beast_box.end.z read live off the fight: confirms the formula
+	# reproduces the real standoff rather than the old, clamped-away one.
+	# Written against the CONSTANT rather than a baked number -- GROUND_STANDOFF
+	# went 0.62 -> 4.2 on 2026-09-24 to open the gap Nick asked for, and a test
+	# that hard-codes the distance only ever says "the constant changed", which
+	# nobody needed telling.
+	var front := 16.494751
+	var back: float = Combat3D.ground_standoff_for(front)
+	_expect(is_equal_approx(back, front * (1.0 + Combat3D.GROUND_STANDOFF)),
+		"ground_standoff_for(front_edge) must be front_edge * (1 + GROUND_STANDOFF) -- got %.3f" % back)
+	_expect(back > front,
+		"the hunters must stand clear of the beast's own front edge, not inside it")
 
 
 func _test_backlog86_ground_standoff_for_survives_the_arena_clamp_it_used_to_lose_to() -> void:

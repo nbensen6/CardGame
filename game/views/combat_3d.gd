@@ -328,7 +328,17 @@ const OVER_SHOULDER := 4.2
 ## ground_standoff_for). They used to stand at 0.9 of its front face, which is
 ## close enough to touch it and left nowhere to put a camera except further out
 ## than the whole arena.
-const GROUND_STANDOFF := 0.62
+## How far the hunters stand off the beast's front face, as a fraction of its
+## own depth. Was 0.62, which put them under its chin -- Nick, 2026-09-24:
+## "there is just not enough space between the characters and the beast."
+## His reference has a wide stretch of empty ground between the two, and the
+## stone path crosses it.
+const GROUND_STANDOFF := 4.2
+## The grounded camera's fixed standoff behind the active hunter, in world
+## units, and where it looks as a multiple of hunter height. Fixed on purpose:
+## see the long note at its use in _aim_camera.
+const GROUND_VIEW_DIST := 9.0
+const GROUND_VIEW_EYE := 3.2
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
 ## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
@@ -2189,7 +2199,24 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		_air_chase = _air_settle > 0.0
 		if _air_settle <= 0.0:
 			_air_span = 0.0
-	if not _user_framed:
+	if not _user_framed and not anyone_off_ground(_hunters):
+		# ON THE GROUND THE CAMERA DOES NOT FIT THE BEAST. It stands a fixed
+		# distance behind the active hunter and lets the beast be however big it
+		# happens to be from there.
+		#
+		# Nick, 2026-09-24, with a drawing: the hunter is close to camera in the
+		# foreground and the beast is far away across a wide gap. Fitting the
+		# beast to the frame makes that picture impossible to reach -- the fixer
+		# proved it by hand, pushing the hunter from z=26 to z=544 and finding
+		# the composition unchanged at every step, because a window sized off
+		# the beast's height simply zooms back out by however much you moved.
+		# The gap can only appear if the camera stops compensating for it.
+		_working_dist = minf(GROUND_VIEW_DIST, _cam_reach())
+		var gs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+		if gs >= 0 and gs < _hunters.size():
+			_pivot_target.y = float((_hunters[gs]["home"] as Vector3).y) \
+				+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _pan.y
+	elif not _user_framed:
 		# Never further out than the wall. This is where the enclosure stops
 		# being scenery and starts being a rule: the framing maths would
 		# happily ask for 30 units on a Titan in a 17-unit arena, and did.
@@ -2280,6 +2307,44 @@ static func _window_for(want: float) -> float:
 ## orbit camera's position, and the point to aim at: the pivot slid horizontally
 ## toward the beast, never vertically (the jump owns the vertical).
 ##
+## How many climb rungs this beast has, and where one sits in that order.
+## Both are tiny, but they are asked for in two places (the stones and the
+## hunters) and the two MUST agree or a hunter lands beside its own stone.
+func _rung_count() -> int:
+	var n := 0
+	for h in _climb_points.keys():
+		if int(h) > 0:
+			n += 1
+	return n
+
+
+## Where the highest rung sits on the body -- the end of the route, and the one
+## hold that is still ON the beast.
+func _top_hold() -> Vector3:
+	var top := 0
+	for h in _climb_points.keys():
+		top = maxi(top, int(h))
+	var p: Vector3 = foothold_anchor(_climb_points, top)
+	var x: float = stand_offset_x(p.x, 0.0, _beast_box.size.x)
+	return stone_point(Vector3(x, p.y, p.z))
+
+
+func _rung_index(foot: int) -> int:
+	var rungs: Array[int] = []
+	for h in _climb_points.keys():
+		if int(h) > 0:
+			rungs.append(int(h))
+	rungs.sort()
+	var i := rungs.find(foot)
+	# An off-anchor height (mid-climb, between two rungs) sits at the nearest
+	# rung below it rather than snapping to the start of the route.
+	if i == -1:
+		for k in range(rungs.size()):
+			if rungs[k] <= foot:
+				i = k
+	return maxi(i, 0)
+
+
 ## Static and pure so the composition can be proven headless: truck right of the
 ## lens axis, aim left of the hunter, and at amount 0 both reduce to exactly the
 ## old shot.
@@ -3150,7 +3215,23 @@ func _stand_on_model(foot: int, side: float) -> Vector3:
 	# Out onto the floating stone (Nick, 2026-09-23: "make sure the characters
 	# actually land on the stones"). The stone hangs at stone_point() and the
 	# hunter has to stand on it, so one rule places both.
-	return stone_point(Vector3(x, p.y, z))
+	#
+	# And then out ACROSS THE GAP. The route is no longer a ladder against the
+	# beast's flank: rung by rung it walks from the ground in front of the
+	# hunters up and back to the body, so the first hop is a low stone near you
+	# and the last lands on the beast (Nick, 2026-09-24, with a drawing). This
+	# is deliberately inside _stand_on_model rather than only on the decorative
+	# rock, because the stone and the hunter standing on it have to be one rule
+	# -- move only the rock and hunters hop onto empty air beside it.
+	var on_body := stone_point(Vector3(x, p.y, z))
+	var n := _rung_count()
+	var i := _rung_index(foot)
+	# The TOP hold is the one place the route must still touch the beast -- it
+	# is the sigil, the thing you are climbing to. Every rung below it is a step
+	# on the line leading there, so the top is what that line is drawn to.
+	if n <= 1 or i >= n - 1:
+		return on_body
+	return route_pos(_top_hold(), ground_standoff_for(_beast_box.end.z), i, n)
 
 
 ## The LEDGES strictly between two footholds — the flat ground a hunter can
@@ -3444,7 +3525,11 @@ func _place_hunters(s: Dictionary) -> void:
 			# creature (ground_standoff_for above), and the clamp keeps them on
 			# the floor rather than out in the apron.
 			var back: float = ground_standoff_for(_beast_box.end.z)
-			pos = Vector3(side * (_beast_box.size.x * 0.22 + 0.6), 0.0,
+			# Narrow, not the beast's own half-width: the grounded camera now
+			# stands 9 units behind the active hunter, and at that range a split
+			# sized off a 10-unit-wide beast threw the second hunter off the
+			# right edge of the frame (VIS FAIL hunter1, measured).
+			pos = Vector3(side * (_beast_box.size.x * 0.06 + 0.5), 0.0,
 				minf(back, _arena_r * 0.86))
 		elif not _climb_points.is_empty():
 			# The model says where its ledges are, so stand on one.
@@ -3692,13 +3777,52 @@ static func stone_point(on_skin: Vector3) -> Vector3:
 	return on_skin + Vector3(0.0, 0.0, HUNTER_HEIGHT)
 
 
+## Where a rung's stone sits once the route is a PATH ACROSS THE GAP rather
+## than a ladder bolted to the beast's flank.
+##
+## Nick, 2026-09-24, with a drawing: the stones climb away from the hunter
+## toward a distant beast, big and near in the foreground, smaller as they go.
+## Every stone used to sit at its climb point on the skin, so the whole route
+## was a vertical smear against the body and read as scattered rocks.
+##
+## `at_beast` is the climb point (where the hunter must end up, unchanged --
+## the hop still has to land on the body). `ground_z` is where the hunters
+## stand. Rung `i` of `n` is placed that fraction of the way in, so the first
+## stone is out near the hunters and the last is at the beast. Height comes
+## from the climb point untouched, so the path rises as it recedes.
+static func route_pos(top: Vector3, ground_z: float, i: int, n: int) -> Vector3:
+	if n <= 1:
+		return top
+	# ONE straight line from the ground to the top hold, with the rungs spaced
+	# evenly along it. Lerping each rung toward its OWN body anchor instead was
+	# the obvious version and it was wrong: five different destinations make
+	# five different step lengths, and the playtest measured consecutive hops
+	# of 2.38m and 1.51m against its own 2.42m floor. Even spacing is the whole
+	# point of a staircase -- it is what lets you read the route as a route.
+	var t := clampf(float(i) / float(n - 1), 0.0, 1.0)
+	# The near end: just in front of the hunters, barely off the ground, and
+	# nearly centred. Height matters as much as depth -- keeping the climb
+	# point's own y put the very first stone six units in the air right beside
+	# the hunter, which reads as a floating rock, not a first step.
+	var start := Vector3(top.x * 0.2, HUNTER_HEIGHT * 1.6,
+		ground_z - HUNTER_HEIGHT * 6.0)
+	return start.lerp(top, t)
+
+
 func _build_float_stones() -> void:
 	for st in _float_stones:
 		(st as Node3D).queue_free()
 	_float_stones.clear()
 	if _beast == null:
 		return
-	for h in _climb_points.keys():
+	# Every rung, in order, so a stone knows how far along the route it is and
+	# can be placed across the gap rather than all of them against the body.
+	var rungs: Array[int] = []
+	for hh in _climb_points.keys():
+		if int(hh) > 0:
+			rungs.append(int(hh))
+	rungs.sort()
+	for h in rungs:
 		var height := int(h)
 		if height <= 0:
 			continue   # Height 0 is the ground; you are already standing on it
@@ -3708,6 +3832,8 @@ func _build_float_stones() -> void:
 		# rigid piece, while the flat cap and rim below stay level and don't
 		# inherit the boulder's own random tilt/squash (see BODY below).
 		var stone := Node3D.new()
+		# _stand_on_model already walks the route (see route_pos there), so the
+		# stone simply goes where the hunter will stand. One rule, both places.
 		stone.position = _stand_on_model(height, 0.0)
 		_rig.add_child(stone)
 
