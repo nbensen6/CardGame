@@ -2,11 +2,72 @@
 tags:
   - agent-status
 agent: fixer
-updated: 2026-09-24T21:49
-working_on: Ruled out two dead ends on #14 (camera can't reveal the gap; raycast-onto-surface can't give open-air stones); wrote both up, shipped no code.
+updated: 2026-09-24T22:40
+working_on: Shipped the camera lock-by-default (Nick's live ask); RoR shot framing itself is next.
 ---
 
 # fixer
+
+## This run — 2026-09-24 22:40 EDT
+
+- **Did:** built the Camera Dev/Player menu toggle, then Nick answered live
+  mid-push wanting it locked by default in every build — flipped that too.
+- **Worked?** Yes. Fresh launch is now locked third-person even in a debug
+  build; Dev is a Menu opt-in; all tests pass.
+- **Next:** the Risk of Rain shot itself (pivot on active hunter, distance,
+  pitch) — a real tuning pass, not done yet. Then back to #14.
+- **Need from you:** nothing right now — the lock is live tonight like you
+  asked; the exact shot still needs a next-run pass.
+
+## Now
+
+Took the sole high-priority open `to: fixer` request (2155, director's own
+ordering note on #14: camera switch first, then back to #14). Built the
+toggle — `Progress.dev_camera_enabled(is_debug_build)` /
+`set_dev_camera_enabled(on)` (`game/core/progress.gd`) and a `Camera:  Dev /
+Player` button above the keybind rows (`game/views/combat_3d.gd`
+`_open_settings`) — and was mid-push (pass 1) when Nick answered live,
+22:25 EDT: *"The camera should be locked to 3rd person on the character. I
+still cannot find the toggle."* The first design defaulted the setting to
+`is_debug_build` (Dev in a debug build) — but his own build is always
+debug (`tools/dev.cmd`), so that default never locked anything for him at
+all. `git pull --rebase` landed the director's rewritten ticket mid-push;
+resolved the conflict and did pass 2 in the same run rather than push a fix
+that didn't fix his actual complaint.
+
+**Pass 2:** `Progress.dev_camera_enabled()` dropped the `is_debug_build`
+input and now defaults to `false` (Player/locked) unconditionally — nothing
+set, in any build, is locked. `free_camera_allowed` itself is unchanged
+(still ANDs `is_debug_build` separately, so a release build stays hard
+-locked regardless of the Menu). Fixed `state=3dfreecam`
+(`tools/screenshot.gd`) to force Dev before its own drag tests, since that
+harness's whole job is exercising the free camera and would otherwise read
+the new locked default as "nothing works."
+
+Proved it, not just logically:
+- Fresh scratch config, `state=3dsettings`: button reads **"Camera:
+  Player"** — frame below.
+- `run_tests.gd`: `ALL TESTS PASSED`, including a fresh-config check that
+  `Progress.dev_camera_enabled() == false` with nothing set, and the
+  ticket's required "Player forces it false even in a debug build" case on
+  `free_camera_allowed`.
+- `state=3dfreecam` still drags/pans/WASDs correctly once Dev is set (forced
+  by the harness itself now) — same per-spot pattern as before this pass.
+  `gauge` flickers `drags`/`DEAD` run to run — a pre-existing harness timing
+  flake at that one spot (reproduced 3x on identical code), not new.
+- `state=3d`/`3dclimb`/`3dgrip` hash mismatches before/after turned out to
+  be pre-existing: unmodified `main` doesn't hash-match itself between two
+  back-to-back runs either (software-GL jitter, confirmed with `git stash`).
+
+Did NOT touch the Risk of Rain framing itself (pivot on the active hunter,
+the 9-unit standoff, pitch/distance) — a real visual-tuning task, separate
+from the mechanical lock-by-default fix, and not rushed into the same push.
+Left `2155` at `status: taken`, `to: fixer` (not `nick` — the ticket's
+Done-when for the framing half still needs work before there's anything to
+show him); `## Result` has both passes in full, with frames.
+![[frames/fixer/2026-09-24-camera-locked-by-default.png]]
+
+## Old: 2026-09-24 21:49 EDT — stones and the gap (#14)
 
 ## This run — 2026-09-24 21:49 EDT
 
@@ -1768,6 +1829,14 @@ further either.
 
 ## Log
 
+- 2026-09-24 22:40 EDT — #18's camera-switch request (2026-09-24-2155), two
+  passes: built the Menu's Camera Dev/Player toggle, then Nick answered live
+  wanting it locked by default in EVERY build (his own is always debug) —
+  flipped `Progress.dev_camera_enabled()` to default `false` unconditionally.
+  `free_camera_allowed` still ANDs `is_debug_build` separately. Fixed
+  `state=3dfreecam` to force Dev before its own drag tests. `ALL TESTS
+  PASSED`. Left `to: fixer`, `status: taken` — the Risk of Rain framing
+  itself (not just the lock) is still open, next run.
 - 2026-09-24 17:43 EDT (latest) — #11 composition (hunters far back, whole
   beast in frame): fixed the camera half. `_focus_camera` no longer cuts to
   a tight over-the-shoulder lock while everyone is grounded (new

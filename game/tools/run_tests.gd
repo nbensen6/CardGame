@@ -2542,6 +2542,12 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid()
 	_test_backlog86_free_camera_allowed_matches_is_debug_build_exactly()
 
+	# request 2026-09-24-2155: Progress.dev_camera_enabled -- the Menu's
+	# Camera: Player / Dev toggle's own persisted state.
+	_test_backlog_dev_camera_enabled_defaults_to_player_with_no_config()
+	_test_backlog_dev_camera_enabled_round_trips_dev()
+	_test_backlog_dev_camera_enabled_round_trips_back_to_player()
+
 	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
 	# HP bar, clear of the hand) never accounted for the top-left party panel,
 	# even though the HP-bar clamp (lo_y=70) sits inside the panel's own
@@ -26720,10 +26726,43 @@ func _test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_
 ## harness relies on drag/orbit=, e.g. state=3dfreecam) or leave it free in
 ## a real release, the exact thing this request asked to close off.
 func _test_backlog86_free_camera_allowed_matches_is_debug_build_exactly() -> void:
-	_expect(Combat3D.free_camera_allowed(true) == true,
-		"a debug build (the editor, every agent/dev/test run here) must keep the free camera available, or state=3dfreecam and every drag/orbit= harness call breaks")
-	_expect(Combat3D.free_camera_allowed(false) == false,
-		"only a non-debug build (an exported Release template) may lose the free camera -- that is the whole point of the gate")
+	_expect(Combat3D.free_camera_allowed(true, true) == true,
+		"a debug build with the Menu's Camera toggle on Dev (the editor, every agent/dev/test run here) must keep the free camera available, or state=3dfreecam and every drag/orbit= harness call breaks")
+	_expect(Combat3D.free_camera_allowed(false, true) == false,
+		"only a non-debug build (an exported Release template) may lose the free camera from is_debug_build alone -- that is the whole point of the gate")
+	# request 2026-09-24-2155: the Menu's Camera: Dev / Player toggle
+	# (Progress.dev_camera_enabled) must be able to force Player even in a
+	# debug build, or Nick -- who always plays through tools/dev.cmd, a debug
+	# build -- can never see the locked camera a released player actually gets.
+	_expect(Combat3D.free_camera_allowed(true, false) == false,
+		"the Camera: Player setting must block the free camera even in a debug build, or the toggle does nothing for the one person who needs it")
+
+
+## request 2026-09-24-2155, revised after Nick's live 22:25 EDT ask: with no
+## config value saved yet, dev_camera_enabled must read false (Player,
+## locked third-person) unconditionally, in every build -- the first version
+## keyed the default off is_debug_build, and Nick's own build is always
+## debug (tools/dev.cmd), so that default never locked the camera for him at
+## all ("I still cannot find the toggle").
+func _test_backlog_dev_camera_enabled_defaults_to_player_with_no_config() -> void:
+	Progress.use_scratch_slot("run_tests_backlog_dev_camera_fresh")
+	_expect(Progress.dev_camera_enabled() == false,
+		"a fresh launch with nothing set must default to Player (locked) in every build, debug included, or Nick can never find the lock without opening the Menu first")
+
+
+func _test_backlog_dev_camera_enabled_round_trips_dev() -> void:
+	Progress.use_scratch_slot("run_tests_backlog_dev_camera_dev")
+	Progress.set_dev_camera_enabled(true)
+	_expect(Progress.dev_camera_enabled() == true,
+		"choosing Dev from the Menu must stick, and survive the same ConfigFile round-trip the keybinds already prove out")
+
+
+func _test_backlog_dev_camera_enabled_round_trips_back_to_player() -> void:
+	Progress.use_scratch_slot("run_tests_backlog_dev_camera_player")
+	Progress.set_dev_camera_enabled(true)
+	Progress.set_dev_camera_enabled(false)
+	_expect(Progress.dev_camera_enabled() == false,
+		"switching back to Player must stick too, not just leave the non-default value behind")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never

@@ -3,12 +3,12 @@ tags:
   - request
 from: director
 to: fixer
-status: open
+status: taken
 priority: high
 beast: cinder_jackal
-eta: tonight, first: 1 run
+eta: tonight — the default-lock half is in this push; the Risk of Rain framing is next run
 created: 2026-09-24T21:55
-taken_by:
+taken_by: fixer
 ask:
 waiting: false
 ---
@@ -78,4 +78,98 @@ drag: it orbits.
 
 ## Nick's answer
 
-## Result
+## Result, pass 2 — fixer, 2026-09-24 22:40 EDT
+
+Nick answered live while pass 1 (below) was mid-push, and the director
+rewrote this ticket around his answer: the default had to flip
+unconditionally to Player, not stay keyed off `is_debug_build` (his own
+build is always debug, so that default never locked anything for him). This
+pass makes that change; pass 1's toggle mechanism, button, and ConfigFile
+plumbing are unchanged and still the foundation.
+
+**Did:** `Progress.dev_camera_enabled()` now takes no `is_debug_build`
+input and defaults to `false` (Player) unconditionally — a fresh launch is
+locked third-person in every build, debug included, with nothing in the
+Menu touched. `free_camera_allowed(is_debug_build, dev_camera_enabled)` is
+unchanged (still ANDs both), so a release build stays hard-locked
+regardless of the Menu setting. Also fixed `state=3dfreecam`
+(`tools/screenshot.gd`) to explicitly set Dev before its own drag tests —
+that harness exists to test the free camera itself, so it must not read the
+new locked default as "nothing works."
+
+**Proof:**
+
+- Fresh scratch config, `state=3dsettings`: button reads **"Camera:
+  Player"** with nothing set. Frame below.
+- Same fresh config, `run_tests.gd`'s new
+  `_test_backlog_dev_camera_enabled_defaults_to_player_with_no_config`:
+  `Progress.dev_camera_enabled() == false`. `ALL TESTS PASSED`.
+- `state=3dfreecam` still exercises the mechanism end-to-end (forces Dev
+  first, same drag/dead spot pattern as before this pass).
+- `gauge` flickers `drags`/`DEAD` between identical back-to-back
+  `3dfreecam` runs — reproduced 3x, present on this pass's code every time;
+  a pre-existing harness timing flake at that one spot, not a regression
+  (the other 6 spots are stable across all runs).
+- Did **not** touch the Risk of Rain framing (pivot on the active hunter,
+  9-unit standoff tuning, pitch/distance) — that is a real visual-iteration
+  task on top of this mechanical one, not a follow-on line of the same
+  change. Flagging rather than rushing it into the same push as the lock
+  fix Nick needs before he wakes up.
+
+![[frames/fixer/2026-09-24-camera-locked-by-default.png]]
+
+**eta:** the lock-by-default half is done and pushed tonight. The Risk of
+Rain framing is a separate, next-run task — render/compare/tune against his
+picture, likely 1-2 more passes.
+
+## Result, pass 1 — fixer, 2026-09-24 22:28 EDT
+
+**Did:** added `Progress.dev_camera_enabled(is_debug_build)` /
+`set_dev_camera_enabled(on)` (`game/core/progress.gd`, same ConfigFile the
+keybinds already live in), a `Camera:  Dev / Player` button in the Menu's
+Settings panel right above the keybind rows (`game/views/combat_3d.gd`
+`_open_settings`), and threaded it into the existing gate:
+`free_camera_allowed(is_debug_build, dev_camera_enabled)` now ANDs both —
+Player blocks drag/pan/wheel/WASD even in a debug build, which is the whole
+point (Nick otherwise never sees it, since `tools/dev.cmd` is always debug).
+
+**Proof, each Done-when bullet:**
+
+- **Toggle exists, flips in play, no restart needed.** Rendered
+  `state=3dsettings` (opens the same overlay the in-fight Menu button does)
+  — frame below, "Camera:  Dev" button sits right under the Keys hint,
+  above the keybind list.
+- **Player blocks every free-camera gesture in a debug build; Dev doesn't.**
+  Not just the unit test — drove it through the real input pipeline with
+  `state=3dfreecam` (synthesizes an actual mouse-down+drag+up at 7 screen
+  spots and checks `_yaw` moved), by hand-editing the scratch
+  `progress_screenshot.cfg` to force each value first:
+  - `dev_camera_enabled=false`: all 7 spots `DEAD` (before this change, drag
+    always worked in a debug build — this is the new behaviour).
+  - `dev_camera_enabled=true`: `centre`/`sky-left`/`top-bar` drag,
+    `party-panel`/`over-cards`/`ground-gap`/`gauge` stay `DEAD` — the same
+    per-spot pattern as today's shipped code (checked against `git stash`),
+    so Dev is unchanged.
+- **Survives a relaunch.** Same `ConfigFile` mechanism as `keybinds`/
+  `timing_style`, which already round-trip through a relaunch; round-trip
+  covered directly by the three new `Progress` unit tests below.
+- **`run_tests.gd`: `ALL TESTS PASSED`**, including the required third case
+  on `free_camera_allowed` (`true, false` → `false` — the setting wins over
+  a debug build) and three new tests on `Progress.dev_camera_enabled`
+  (defaults to `is_debug_build` with no config, round-trips `false`,
+  round-trips back to `true`).
+- **`state=3d`/`3dclimb`/`3dgrip` unaffected with nothing set.** Compared
+  before/after by hash first and got a mismatch — turned out the *unmodified*
+  code doesn't hash-match itself between two back-to-back runs either (same
+  diff magnitude, `mean≈0.4`–`2.8` per channel, software-GL jitter unrelated
+  to this change); confirmed with `git stash` that this run's code and the
+  original run identical `state=3dfreecam` drag/dead patterns, which is the
+  behaviour that actually matters here.
+
+![[frames/fixer/2026-09-24-camera-toggle-settings-menu.png]]
+
+**Commit:** camera toggle + tests, this push.
+
+**eta:** done — the four objective Done-when bullets are met; the last one
+("is that the view you wanted to check?") is yours per the ticket, so handing
+it back rather than closing it myself.

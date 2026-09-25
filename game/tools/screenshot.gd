@@ -1005,6 +1005,12 @@ func _capture() -> void:
 			% [back, str(pan_now),
 			   "OK" if (absf(back - settled) < 0.5 and pan_now == Vector3.ZERO) else "FAIL"])
 	if _state == "3dfreecam":  # WHERE on the screen does a drag reach the camera?
+		# Player is now the default with nothing set (request 2026-09-24-2155,
+		# Progress.dev_camera_enabled) -- this harness exists to test the free
+		# camera itself, so force Dev on the scratch config it already uses
+		# rather than have every spot below read DEAD by default and prove
+		# nothing.
+		Progress.set_dev_camera_enabled(true)
 		var cv := current_scene
 		var vw := float(_size.x) if _size != Vector2i.ZERO else float(get_root().size.x)
 		var vh := float(_size.y) if _size != Vector2i.ZERO else float(get_root().size.y)

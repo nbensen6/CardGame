@@ -2016,7 +2016,7 @@ func _frame_beast() -> void:
 func _fly(delta: float) -> void:
 	# Same local-dev-tool gate as the drag/pan/zoom controls in
 	## _unhandled_input — WASD/QE is the other half of the free camera.
-	if not free_camera_allowed(OS.is_debug_build()):
+	if not free_camera_allowed(OS.is_debug_build(), Progress.dev_camera_enabled()):
 		return
 	var overlay := _detail != null and is_instance_valid(_detail)
 	if _rebinding != "" or DevConsole.open or overlay:
@@ -2137,8 +2137,14 @@ static func lock_slot_for(lock_slot: int, hunter_count: int, me: int) -> int:
 ## OS.is_debug_build() itself reads false in a real Steam export (verify
 ## that once a build exists to check); it proves the RULE built on top of it
 ## is not accidentally inverted.
-static func free_camera_allowed(is_debug_build: bool) -> bool:
-	return is_debug_build
+##
+## dev_camera_enabled is the Menu's Camera: Dev / Player toggle (request
+## 2026-09-24-2155, Progress.dev_camera_enabled) — false wins even in a debug
+## build, which is the whole point: it is what lets Nick, who always plays a
+## debug build through tools/dev.cmd, see the exact locked camera a player
+## gets without needing an exported Release template to check it in.
+static func free_camera_allowed(is_debug_build: bool, dev_camera_enabled: bool) -> bool:
+	return is_debug_build and dev_camera_enabled
 
 
 func _aim_camera(delta: float, snap: bool) -> void:
@@ -2639,7 +2645,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	## shot _process already settles into on its own (want_ots there does not
 	## check _user_framed) — so gating the input is what actually locks the
 	## camera, not a change to the follow logic itself.
-	if not free_camera_allowed(OS.is_debug_build()):
+	if not free_camera_allowed(OS.is_debug_build(), Progress.dev_camera_enabled()):
 		return
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
@@ -4387,6 +4393,23 @@ func _open_settings() -> void:
 		11, Color(0.72, 0.68, 0.6), true)
 	hint.custom_minimum_size = Vector2(284, 0)  # this panel is 320 wide, not the inspector's 430
 	col.add_child(hint)
+
+	# Nick, live, 22:25 EDT: "The camera should be locked to 3rd person on
+	# the character. I still cannot find the toggle." Player is the default
+	# with nothing set (Progress.dev_camera_enabled), in every build debug
+	# included — drag/pan/zoom/WASD all go dead, per free_camera_allowed
+	# above, until this button is flipped to Dev.
+	var cam_mode := Button.new()
+	cam_mode.custom_minimum_size = Vector2(0, 34)
+	cam_mode.focus_mode = Control.FOCUS_NONE
+	cam_mode.text = "Camera:  %s" % ("Dev" if Progress.dev_camera_enabled() else "Player")
+	cam_mode.tooltip_text = "Player is exactly what a released build sees: no drag-orbit, pan, wheel or WASD."
+	cam_mode.pressed.connect(func() -> void:
+		var next := not Progress.dev_camera_enabled()
+		Progress.set_dev_camera_enabled(next)
+		cam_mode.text = "Camera:  %s" % ("Dev" if next else "Player"))
+	col.add_child(cam_mode)
+
 	_rebind_btns = {}
 	for k in Progress.KEYBINDS:
 		col.add_child(_keybind_row(k as Dictionary))

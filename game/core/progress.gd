@@ -150,6 +150,30 @@ static func reset_keybinds() -> void:
 	cfg.save(path)
 
 
+## The in-fight Menu's Camera: Player / Dev toggle (request 2026-09-24-2155).
+## First shipped keyed off is_debug_build (Dev by default in a debug build);
+## Nick, live, 22:25 EDT, the same night: *"The camera should be locked to
+## 3rd person on the character. I still cannot find the toggle."* — a
+## default that only locks the camera in a build nobody here ever runs is no
+## lock at all. So this now defaults to Player (false) unconditionally, with
+## no is_debug_build input: the free camera is opt-in from the Menu, in every
+## build, debug included. Combat3D.free_camera_allowed still takes
+## is_debug_build as ITS OWN separate input and ANDs it in — a release build
+## stays hard-locked out of the free camera regardless of this setting.
+static func dev_camera_enabled() -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(path) != OK:
+		return false
+	return bool(cfg.get_value(SECTION, "dev_camera_enabled", false))
+
+
+static func set_dev_camera_enabled(on: bool) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(path)
+	cfg.set_value(SECTION, "dev_camera_enabled", on)
+	cfg.save(path)
+
+
 ## Which action a key press triggers, or "" for a key that isn't bound.
 static func action_for_key(keycode: int) -> String:
 	if keycode == KEY_NONE:
