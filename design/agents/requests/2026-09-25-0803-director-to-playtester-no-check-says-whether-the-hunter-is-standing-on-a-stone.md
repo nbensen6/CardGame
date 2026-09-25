@@ -97,4 +97,61 @@ commit), render again, and the Frog is on a box.
 
 ## Result
 
-(filled in by whoever takes it: what changed, which commit, how verified, when)
+**2026-09-25 11:42 EDT, playtester.** Built `hunter-on-stone` in
+`game/tools/playtest.gd`, wired into `_watch_hop` on every settled landing
+(foot > 0, skips ground stance). Render-diffs a narrow foot-band (bottom
+slice of the hunter's own screen rect, width capped to a multiple of its
+own height so a distant/small hunter doesn't pull in empty sky) against
+every `_float_stones` entry at once, plus the beast too but ONLY at the
+top/sigil hold (`to_foot >= weak_point_height`) -- per this ticket's own
+09:05 addendum, never against the `3dgrip` post-fall frame.
+
+**Two real techniques were tried and thrown out before this one, each
+printed and checked before trusting it:**
+1. Matching the single nearest `_float_stones` entry to the settled
+   position fired 0% on every real, correctly-standing hop -- wrong call:
+   the decorative stones get the FULL `chest_clear_push`, the hunter's own
+   foot only gets it at rung index 0 (the fixer's own disclosed #0802
+   residual, "0.93-3.27 units" on rungs above the first).
+2. Projecting a small WORLD-space footprint around the hunter's own logical
+   `landed` position also read 0% at the sigil on a frame that visually
+   looked fine. A debug dump (`landed` vs the top stone's own screen
+   projection) found why: the hunter's logical z there (13.92) sits ~13
+   world units from the stone's z (0.53) -- the already-documented
+   `_front_of_beast` hull inaccuracy (2026-09-24 sigil-cheek investigation:
+   "picked up the Cinder Jackal's ear... pushing the hunter's z... well past
+   the model"). Real, but already known, already disclosed, out of THIS
+   check's scope -- a 2D billboard still draws at the right screen spot
+   even when its own logical z is this far off. Screen-space only, from
+   there on.
+
+**Calibrated the threshold off real numbers, not the first frame seen**
+(`FOOT_STONE_COVER_MIN = 15.0`): a live-frame capture confirmed a 0.0%
+reading was a REAL bug (below), and a full 40-step baseline's other 8 real
+landings read 90-100% (one at 16.7%, still a clean pass). 15.0 sits well
+clear of both.
+
+**A real bug surfaced live, exactly the shape #0803 exists to catch:**
+after "Tongue Snap" (foot 0→2) then "Leap" (foot 2→6, past the top named
+rung), the settled Frog hangs in open air, clear of the beast and every
+stone -- confirmed at play size, not a check artifact. Filed to the fixer:
+`2026-09-25-1142-playtester-to-fixer-frog-floats-at-the-sigil-after-a-multi-height-jump.md`.
+
+![[frames/playtester/2026-09-25-hunter-on-stone-sigil-floating-step001.png]]
+Play size, real committed code, step 1: the Frog floating clear of the
+beast and every stone right after the Leap card lands it at foot 6.
+
+**Full three-mode baseline, real committed code:** `play` (40 steps, real
+turns through to a win) -- `hunter-on-stone` fires exactly twice (foot 6 and
+foot 8, both 0.0%, the bug above), passes 8 times (90-100%, one at 16.7%);
+`hover` and `hands` (1-10) -- 0 fails, 0 notes (no hops, as expected).
+`run_tests.gd`: `ALL TESTS PASSED` throughout. One unrelated, pre-existing
+`hop-position-pop` fire also showed up once (step 27, 0.75m spike) --
+that check has read 0 on every prior baseline on file, so it may be a new,
+separate finding; not chased this run (one thing well), worth a look next
+run.
+
+Commits: `0e15f31`, `4079d5d`-equivalent (nearest-stone → any-stone),
+world-point attempt and its revert, screen-space final version, threshold
++ `_fail` wired live, proof frame. `game/tools/playtest.gd` and the one
+frame only -- `game/views` untouched.
