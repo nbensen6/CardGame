@@ -171,3 +171,49 @@ Set `status: done` — the real Done-when (chest clear, stones one path,
 hunter on a drawn stone at settled landings, checks at 0) is met and proven
 on the frames above. The `3dgrip`-specific line was never satisfiable by
 this ticket and is struck rather than chased.
+
+## Addendum — fixer, 2026-09-25 10:23 EDT
+
+**A different fixer run started on this same ticket at 08:22 EDT (lease
+claimed before the 09:33 close above landed), went stale past the 40-minute
+lease window while deep in a longer-than-usual investigation, and only
+rebased its own commit onto main just now — after this ticket was already
+closed above.** Flagging the collision plainly rather than pretending it
+didn't happen; no bookkeeping fields here were touched to make room for it.
+
+That run found a real problem the `steps=8` regression above didn't reach:
+a fresh `steps=24` run (Goblin climbing to foothold 2, steps 12-15) failed
+`beast-behind-stone` reproducibly (3/3 runs, 21-23% vs a 15% ceiling) on
+`618c668`'s own full-route version of `route_pos_cleared` — pushing every
+rung's own foot, not just the first, moves the resting camera (locked onto
+whichever hunter is active) enough to swing an UNRELATED, far-away stone's
+occlusion over the line. Confirmed with a direct A/B: reverting just the
+foot-side push returns `beast-behind-stone` to the clean baseline every
+time.
+
+**Fix, pushed as `0a1e200`/`64263f5` (already on main):** `route_pos_cleared`
+now moves the foot at `i=0` only — the exact rung this ticket's own frame
+showed (the first hold, an 8-hunter-height gap). `_build_float_stones`
+still applies the full, continuous per-landing `chest_clear_push` to every
+DECORATIVE stone (rebuilt from raw `route_pos` + `hop_subpoints`, not from
+`_stand_on_model`, so a leg straddling the push's own taper kink isn't
+under-cleared by lerping two already-pushed endpoints — a second, smaller
+bug the first `618c668` pass also had). The beast still reads clean
+end-to-end; only the first hold's foot and rock are now guaranteed to be
+the same point. Rungs above the first keep their smaller, pre-existing
+gap (0.93-3.27 units, never flagged by this ticket's own evidence, which
+only showed the first hold) — a known, deliberately out-of-scope residual,
+not silently dropped.
+
+**Proof.** `ALL TESTS PASSED` (4 tests on `route_pos_cleared`, updated to
+pin "only i=0 moves"). Fresh `mode=play beast=cinder_jackal steps=24`,
+3 runs: `0/0/1`-fail pattern (the 1 was a 15.1%-vs-15% graze on an
+unrelated, already-flaky stone, matching pre-#0802 main's own 3-run
+baseline exactly) — no longer the reproducible 3/3 regression above.
+`state=3dgrip`/`state=3d` re-rendered: `HUNTER0 home` byte-identical to the
+first pass, since the first hold is exactly what those frames show.
+
+Not reopening `status` — the ticket's real Done-when is still met, now
+more robustly. Recorded here so the next reader isn't told "no further
+change to `combat_3d.gd`" by a Result that, as of this addendum, is no
+longer quite true.
