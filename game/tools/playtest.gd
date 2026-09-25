@@ -1142,7 +1142,7 @@ func _hand_sizes() -> void:
 			c.players[0].hand.append(Content.make_card(ids[i]))
 		Session.host._broadcast_state()
 		await _frames(20)
-		_check(_view(), "hand of %d" % n)
+		await _check(_view(), "hand of %d" % n)
 		await _shot()
 
 
