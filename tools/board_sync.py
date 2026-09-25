@@ -257,20 +257,72 @@ def issue_body(path, body, fm):
     # is why it showed up as plain text. http IS allowed, so the buttons point
     # at the local redirector (tools/board_link.py) and it hands the browser
     # the obsidian:// address GitHub would not print.
-    head = ""
-    # A ticket waiting on Nick opens with the question and nothing else. He
-    # reads these on a phone: the decision has to be the first thing on the
-    # screen, not the fourth (Nick, 2026-09-25: "it's really difficult to tell
-    # what they are asking of me").
+    # A ticket waiting on Nick is laid out for ONE job: open it, know what to
+    # answer, comment. Nick, 2026-09-25: "click them and then immediately know
+    # what i need to answer and be able to comment my answer." Everything that
+    # is not the question -- mirror links, the agent's own write-up, the
+    # frames, the plumbing -- goes into a collapsed section underneath, so the
+    # first screen is the decision and nothing else.
     if fm.get("to", "").strip() == "nick" and not fm.get("_answered"):
-        ask = fm.get("ask", "").strip()
-        head += "## ➤ %s\n\n" % (ask or "_No question written — ask the agent what it needs._")
-    head += status_line(fm) + "\n\n"
+        return decision_body(path, body, fm)
+
+    head = status_line(fm) + "\n\n"
     head += "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
     head += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
     head += "_Mirror of `%s`. The note is the source of truth; " % rel
     head += "comment here and the sync copies it back into the note for the agents._\n\n"
     return head + fight_link(embed_frames(body), fm)
+
+
+def first_bullets(body, limit=4):
+    """The first bullet list in the note -- normally the options he is choosing
+    between. Capped, because a fifteen-bullet brief is not a decision screen."""
+    out = []
+    started = False
+    for line in body.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith(("- ", "* ")):
+            if len(out) >= limit:
+                break
+            started = True
+            out.append(stripped[2:].strip())
+        elif started and stripped == "":
+            continue
+        elif started and line.startswith((" ", "\t")):
+            # A wrapped continuation of the bullet above. The notes wrap at
+            # ~75 columns, so taking only a bullet's first line cut every
+            # option off mid-sentence on his decision screen.
+            out[-1] += " " + stripped
+        elif started:
+            break
+    # Each option gets a line he can read at a glance, not a paragraph.
+    return ["- " + (o if len(o) <= 160 else o[:160].rsplit(" ", 1)[0] + " …")
+            for o in out]
+
+
+def decision_body(path, body, fm):
+    """The issue body for something waiting on Nick: question, options, reply.
+
+    Deliberately not the agent's write-up with a heading bolted on top. That is
+    what it was, and the question was followed by a status line, two links, a
+    mirror disclaimer, the note's own title again and then a relay written for
+    another agent -- six lines of plumbing before anything he could act on.
+    """
+    rel = path.replace(os.sep, "/")
+    in_vault = rel[len("design/"):-3] if rel.endswith(".md") else rel
+    ask = fm.get("ask", "").strip()
+    out = "## ➤ %s\n\n" % (ask or "_No question written — ask the agent what it needs._")
+    bullets = first_bullets(body)
+    if bullets:
+        out += "\n".join(bullets) + "\n\n"
+    out += "**Reply in a comment below.** One word is usually enough; "
+    out += "the sync passes it to the agent within the half hour.\n\n"
+    out += "<details>\n<summary>Background, frames and the full note</summary>\n\n"
+    out += "**[Open in Obsidian](%s/note/%s)**" % (LINK_HELPER, quote(in_vault))
+    out += " · [read it on GitHub](https://github.com/%s/blob/main/%s)\n\n" % (REPO, rel)
+    out += fight_link(embed_frames(body), fm)
+    out += "\n\n</details>\n"
+    return out
 
 
 def embed_frames(body):
@@ -553,6 +605,23 @@ def selftest():
         assert out2.startswith("![") and "blob/main/design/" in out2, out2
         assert "![[" not in out2
     assert embed_frames("![[no/such/file.png]]") == "![[no/such/file.png]]"
+
+    # a ticket waiting on him opens with the question, then options, then how
+    # to reply -- and nothing else above the fold
+    note = "\n".join(["# Title", "", "## What I need", "",
+                      "- option A", "- option B", "", "long prose", ""])
+    d = decision_body(os.path.join("design", "agents", "requests", "x.md"),
+                      note, {"to": "nick", "ask": "A or B?"})
+    assert d.startswith("## ➤ A or B?"), d[:60]
+    assert "- option A" in d and "- option B" in d
+    assert d.index("Reply in a comment") < d.index("<details>")
+    assert "long prose" in d.split("<details>")[1], "the full note is kept, just folded"
+    assert first_bullets("\n".join(["- a", "- b", "- c", "- d", "- e"])) \
+        == ["- a", "- b", "- c", "- d"]
+    assert first_bullets("no bullets here") == []
+    # a wrapped bullet is rejoined, not cut off mid-sentence
+    wrapped = "\n".join(["- first part of it", "  and the rest", "- second"])
+    assert first_bullets(wrapped) == ["- first part of it and the rest", "- second"]
     print("BOARD SYNC SELFTEST OK")
 
 
