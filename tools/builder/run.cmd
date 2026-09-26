@@ -110,6 +110,12 @@ if not defined CLAUDE_CODE_OAUTH_TOKEN (
   exit /b 1
 )
 
+REM Nick's ticks and send-backs from design\Needs Nick.md go into the queue
+REM FIRST, and get pushed, so the worktree sees them before the run reads it.
+python "%ROOT%\tools\needs_nick.py" >> "%LOG%" 2>&1
+git -C "%WORK%" fetch origin --quiet
+git -C "%WORK%" checkout --detach --force origin/main --quiet
+
 set "MODE=Make the change."
 if /i "%~1"=="--dry" set "MODE=DRY RUN. Plan it and report what you WOULD change, but do not edit, build, commit or push anything."
 

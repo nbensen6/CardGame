@@ -65,7 +65,8 @@ stones climbing the gap between them, dark ground, cool sky.
        - **Found:** anything you noticed and did not fix, one line each.
 
    Then in `BUILDER-QUEUE.md`: change the item's `- [ ]` to `- [?]` (ready
-   for Nick to look). **You never write `- [x]`.** Nick ticks. Add each
+   for Nick to look) and append ` → `agents/frames/builder/<after>.png`` to
+   its bold title line, so `Needs Nick.md` can link the frame. **You never write `- [x]`.** Nick ticks. Add each
    `Found:` line to the bottom of the queue as `- [ ] (proposed) ...`.
    Timestamps are US Eastern: `TZ=America/New_York date +"%Y-%m-%d %H:%M %Z"`.
 
