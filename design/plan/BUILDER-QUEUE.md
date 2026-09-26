@@ -19,7 +19,7 @@ run failed.
       the face, the jackal is whole and far, hunters clear of the cards. The
       cost is the Frog: about 60 px at rest instead of 200. Before is the
       "stairs-a" frame. If the Frog is too small, say how big and the camera
-      comes in; the lens stays.
+      comes in; the lens stays. ^zoom-out-stairs-visible-beast-whole
 - [?] **F8 flips the camera Player/Dev.** → `agents/frames/builder/2026-09-25-f8-camera-toggle-after.png` The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
