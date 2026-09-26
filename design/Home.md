@@ -5,6 +5,8 @@ tags:
 
 # Titan-Slayers
 
+> [!todo] **[[Needs Nick]]** — one line per thing waiting on you. Start there.
+
 Co-op deckbuilder where hunters climb giant Titans. This vault is the `design/` folder of the repo — every note here is a real design doc, so editing it here edits the project.
 
 **One goal: the Cinder Jackal fight, to Slay the Spire quality.** The bar is [[JACKAL-BAR]]. The picture is yours:

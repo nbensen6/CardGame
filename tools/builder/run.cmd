@@ -132,6 +132,9 @@ echo === builder done. Check: git log origin/main -3
 REM Bring the push into the checkout Nick plays from, so dev.cmd shows it.
 REM --autostash: the session may be mid-edit there; set it aside and put it back.
 git -C "%ROOT%" pull --rebase --autostash --quiet origin main >> "%LOG%" 2>&1
+REM One short page for Nick: what is waiting on him, one line each.
+python "%ROOT%	ools
+eeds_nick.py" >> "%LOG%" 2>&1
 
 REM KEEP GOING, if the panel asked for it.
 REM
