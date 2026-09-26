@@ -5,22 +5,23 @@ tags:
 
 # Needs Nick
 
-_2026-09-25 20:35 EDT. Generated from [[BUILDER-QUEUE]]; edit there, or tell Claude._
+_2026-09-25 20:36 ET. Generated from [[BUILDER-QUEUE]]; edit there, or tell Claude._
 
 ## Decide
 
-- [ ] DECISION, waiting on Nick: big Frog or visible stairs?
+- [ ] Big Frog, or visible stairs? Frames A and B.
 
 ## Look, then tick or send back
 
-- [ ] Camera toggle Nick can find.
-- [ ] One locked camera, resting and climbing.
-- [ ] Climb shot at the sigil, second pass: trust the hold's anchor z.
-- [ ] Hops land on stones, not in the air — mid-route.
+- [ ] F8 flips the camera Player/Dev.
+- [ ] Stones: first by the hunter, last in front of the head.
+- [ ] Rest camera pulled back to 6.
+- [ ] Sigil shot: face and eyes in frame.
+- [ ] Hops land on stones.
 - [ ] Hunters face the beast.
-- [ ] Goblin reads at 40 px.
-- [ ] Re-derive the two failing playtest checks.
-- [ ] Weak-point shot.
+- [ ] Goblin: one muted trim colour.
+- [ ] Playtest: two checks re-derived.
+- [ ] Weak-point shot, same frame as the sigil.
 
 ## Latest frames
 

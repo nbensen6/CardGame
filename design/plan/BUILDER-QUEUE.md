@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [?] **Camera toggle Nick can find.** The Player/Dev button exists in the
+- [?] **F8 flips the camera Player/Dev.** The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
       config slot and it sticks). Make Player the state he lands in, and bind
@@ -20,8 +20,7 @@ run failed.
 - [x] **Nick judged the 2026-09-25 camera and stones** (2026-09-25 14:30 EDT).
       Verdict, drawn on the frame: `art/references/2026-09-25-nick-stones-and-zoom.webp`.
       Stones are wrong, camera is too close. The two items below are his answer.
-- [?] **Stones: first one in front of the hunter, last one in front of the
-      beast's head.** Today the stones sit as a cluster beside the jackal's
+- [?] **Stones: first by the hunter, last in front of the head.** Today the stones sit as a cluster beside the jackal's
       left flank, floating at chest height, and the ground between the Frog
       and the jackal is empty. Nick's arrows: the first stone lands just
       ahead of the active hunter, on the ground he is standing on; the
@@ -36,7 +35,7 @@ run failed.
       Frog. Rungs 1-4 still bunch near the jackal (perspective, camera
       almost on top of rung 0 while the route's far end is ~80 units away) —
       may resolve once the queued zoom-out lands, may not.
-- [?] **One locked camera, resting and climbing.** Two frames from Nick:
+- [?] **Rest camera pulled back to 6.** Two frames from Nick:
       at rest, "zoom out" (`art/references/2026-09-25-nick-stones-and-zoom.webp`);
       mid-climb, "camera closer, should be locked to character"
       (`art/references/2026-09-25-nick-climb-camera-closer.webp`, the Frog a
@@ -63,7 +62,7 @@ run failed.
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
       queue item below covers that top hold specifically.
-- [?] **Climb shot at the sigil, second pass: trust the hold's anchor z.**
+- [?] **Sigil shot: face and eyes in frame.**
       *Landed by the session, 2026-09-25 16:31 EDT, after the builder's two
       passes: the top stone stands in front of the face, camera at 14. Frame
       in status/builder. The anchor-trust advice below was wrong; the hull was right.*
@@ -97,7 +96,7 @@ run failed.
       reads like a yaw problem, out of this item's scope (clearance + pitch
       only); stopped rather than tune a third constant. See the proposed
       item below.
-- [?] **Hops land on stones, not in the air — mid-route.** The builder's
+- [?] **Hops land on stones.** The builder's
       16:43 pass fixed the top hold only. Measured 2026-09-25 17:05 EDT with
       `state=3dclimb slot=1` (the harness now prints STONE/HUNTER/RUNGS lines):
       hunter1 at foot 4 has home z 30.71, its stone (STONE8) is at z 33.33:
@@ -138,7 +137,7 @@ run failed.
       term turned them to face the camera instead. Dropped it (now
       `0.7 * side`); the climbing branch was untouched. Lifted into a
       tested static function, `hunter_facing_y`. Frame confirmed changed.
-- [?] **Goblin reads at 40 px.** The Frog reads at fight size; the Goblin is
+- [?] **Goblin: one muted trim colour.** The Frog reads at fight size; the Goblin is
       noise. Same treatment that fixed the Frog: fewer, bigger colour regions,
       one silhouette read (the pack? the goggles?). Shot: `state=goblin`,
       crop both hunters at 1:1.
@@ -156,7 +155,7 @@ run failed.
       or skin. Frame confirmed changed (goblin-only crop: 47% of its own
       pixels differ). Did not touch the goggles option, or shrink the pack
       itself — only the competing trim.
-- [?] **Re-derive the two failing playtest checks.** `hop-distance-band` and
+- [?] **Playtest: two checks re-derived.** `hop-distance-band` and
       `hunter-off-marker` measure the beast's authored anchors, not the stone
       route. Measure the route, or delete them. Shot: none — this one is
       `ALL TESTS PASSED` plus a green `playtest.cmd`.
@@ -174,7 +173,7 @@ run failed.
       shoulder/hunter-offscreen/hunter-lost-mid-hop/damage-popup-offscreen/
       intent-tag-vs-hunter were already red before this change, unrelated,
       and already tracked by the open camera items above.
-- [?] **Weak-point shot.** *Session, 18:05 EDT: covered by the sigil item above; the builder's 18:02 investigation confirmed the shot holds on Switch. Judge it on the sigil frame. One tick covers both.*
+- [?] **Weak-point shot, same frame as the sigil.** *Session, 18:05 EDT: covered by the sigil item above; the builder's 18:02 investigation confirmed the shot holds on Switch. Judge it on the sigil frame. One tick covers both.*
       **Original:** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
@@ -232,7 +231,7 @@ run failed.
 The builder skips this section. Answer here or in Home; the item then moves
 into Now.
 
-- [ ] **DECISION, waiting on Nick: big Frog or visible stairs?** Measured
+- [ ] **Big Frog, or visible stairs? Frames A and B.** Measured
       2026-09-25 17:05 EDT with the stones printed to screen: the route IS an
       even staircase in the world (z 81, 65, 49, 33, 17; y 1 to 15), but from a
       camera 6 behind a hunter standing 85 units from the beast the whole

@@ -8,7 +8,6 @@ hand:  python tools\\needs_nick.py
 import re
 from datetime import datetime
 from pathlib import Path
-from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parents[1]
 QUEUE = ROOT / "design" / "plan" / "BUILDER-QUEUE.md"
@@ -20,12 +19,13 @@ now_section = text.split("## Waiting on Nick")[0]
 waiting = text.split("## Waiting on Nick")[1].split("\n## ")[0] if "## Waiting on Nick" in text else ""
 
 def titles(block, mark):
-    return re.findall(r"^- \[" + re.escape(mark) + r"\] \*\*(.+?)\*\*", block, re.M)
+    found = re.findall(r"^- \[" + re.escape(mark) + r"\] \*\*(.+?)\*\*", block, re.M | re.S)
+    return [" ".join(t.split()) for t in found]
 
 look = titles(now_section, "?")
 decide = titles(waiting, " ")
 frames = sorted(FRAMES.glob("*-after.png"), key=lambda p: p.stat().st_mtime, reverse=True)[:8]
-stamp = datetime.now(ZoneInfo("America/New_York")).strftime("%Y-%m-%d %H:%M %Z")
+stamp = datetime.now().strftime("%Y-%m-%d %H:%M") + " ET"  # the PC clock is Eastern; git agrees
 
 lines = ["---", "tags:", "  - home", "---", "", "# Needs Nick", "",
          f"_{stamp}. Generated from [[BUILDER-QUEUE]]; edit there, or tell Claude._", ""]
