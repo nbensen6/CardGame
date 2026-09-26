@@ -10,17 +10,17 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [?] **F8 flips the camera Player/Dev.** The Player/Dev button exists in the
+- [?] **F8 flips the camera Player/Dev.** → `agents/frames/builder/2026-09-25-f8-camera-toggle-after.png` The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
       config slot and it sticks). Make Player the state he lands in, and bind
       one key (F8) that flips Player/Dev live with a one-second HUD label
       saying which. Shot: `state=3d` — locked third-person, hunter's back at
-      bottom-centre.
+      bottom-centre. ^f8-flips-the-camera-player-dev
 - [x] **Nick judged the 2026-09-25 camera and stones** (2026-09-25 14:30 EDT).
       Verdict, drawn on the frame: `art/references/2026-09-25-nick-stones-and-zoom.webp`.
-      Stones are wrong, camera is too close. The two items below are his answer.
-- [?] **Stones: first by the hunter, last in front of the head.** Today the stones sit as a cluster beside the jackal's
+      Stones are wrong, camera is too close. The two items below are his answer. ^nick-judged-the-2026-09-25-camera-and-st
+- [?] **Stones: first by the hunter, last in front of the head.** → `agents/frames/builder/2026-09-25-stones-after.png` Today the stones sit as a cluster beside the jackal's
       left flank, floating at chest height, and the ground between the Frog
       and the jackal is empty. Nick's arrows: the first stone lands just
       ahead of the active hunter, on the ground he is standing on; the
@@ -34,8 +34,8 @@ run failed.
       of the empty gap. First stone now sits big and low in front of the
       Frog. Rungs 1-4 still bunch near the jackal (perspective, camera
       almost on top of rung 0 while the route's far end is ~80 units away) —
-      may resolve once the queued zoom-out lands, may not.
-- [?] **Rest camera pulled back to 6.** Two frames from Nick:
+      may resolve once the queued zoom-out lands, may not. ^stones-first-by-the-hunter-last-in-front
+- [?] **Rest camera pulled back to 6.** → `agents/frames/builder/2026-09-25-locked-camera-rest-after.png` · `agents/frames/builder/2026-09-25-locked-camera-climb-after.png` Two frames from Nick:
       at rest, "zoom out" (`art/references/2026-09-25-nick-stones-and-zoom.webp`);
       mid-climb, "camera closer, should be locked to character"
       (`art/references/2026-09-25-nick-climb-camera-closer.webp`, the Frog a
@@ -61,8 +61,8 @@ run failed.
       still dominates, so the hunter is noticeably smaller there than at
       rest; the "same size in both" bar is met at holds nearer the beast's
       front and not yet at the very top. The dedicated weak-point-shot
-      queue item below covers that top hold specifically.
-- [?] **Sigil shot: face and eyes in frame.**
+      queue item below covers that top hold specifically. ^rest-camera-pulled-back-to-6
+- [?] **Sigil shot: face and eyes in frame.** → `agents/frames/builder/2026-09-25-sigil-face-after.png`
       *Landed by the session, 2026-09-25 16:31 EDT, after the builder's two
       passes: the top stone stands in front of the face, camera at 14. Frame
       in status/builder. The anchor-trust advice below was wrong; the hull was right.*
@@ -95,8 +95,8 @@ run failed.
       — the lens is looking at the side of the head/ear, not the face. That
       reads like a yaw problem, out of this item's scope (clearance + pitch
       only); stopped rather than tune a third constant. See the proposed
-      item below.
-- [?] **Hops land on stones.** The builder's
+      item below. ^sigil-shot-face-and-eyes-in-frame
+- [?] **Hops land on stones.** → `agents/frames/builder/2026-09-25-hops-on-stones-after.png` The builder's
       16:43 pass fixed the top hold only. Measured 2026-09-25 17:05 EDT with
       `state=3dclimb slot=1` (the harness now prints STONE/HUNTER/RUNGS lines):
       hunter1 at foot 4 has home z 30.71, its stone (STONE8) is at z 33.33:
@@ -125,8 +125,8 @@ run failed.
       line below on why that check mattered this run. New `run_tests.gd` case
       builds a fake mesh, calls `_build_hull()`/`_build_float_stones()` in the
       wrong order to confirm it fails (9.31 apart), then the right order to
-      confirm it passes (0.00 apart).
-- [?] **Hunters face the beast.** Nick, 2026-09-25 14:35 EDT: "want the
+      confirm it passes (0.00 apart). ^hops-land-on-stones
+- [?] **Hunters face the beast.** → `agents/frames/builder/2026-09-25-hunters-face-beast-after.png` Nick, 2026-09-25 14:35 EDT: "want the
       characters to face the beast." In the frame the Frog and Goblin stand
       side-on to the camera. At rest, after End Turn, after Switch, both
       hunters face the jackal (backs to the camera, per the Risk of Rain 2
@@ -136,8 +136,8 @@ run failed.
       toward the beast at -Z, and rotation.y=0 already facing -Z, that PI
       term turned them to face the camera instead. Dropped it (now
       `0.7 * side`); the climbing branch was untouched. Lifted into a
-      tested static function, `hunter_facing_y`. Frame confirmed changed.
-- [?] **Goblin: one muted trim colour.** The Frog reads at fight size; the Goblin is
+      tested static function, `hunter_facing_y`. Frame confirmed changed. ^hunters-face-the-beast
+- [?] **Goblin: one muted trim colour.** → `agents/frames/builder/2026-09-25-goblin-reads-after.png` The Frog reads at fight size; the Goblin is
       noise. Same treatment that fixed the Frog: fewer, bigger colour regions,
       one silhouette read (the pack? the goggles?). Shot: `state=goblin`,
       crop both hunters at 1:1.
@@ -154,7 +154,7 @@ run failed.
       the one anchor per the ticket's own suggestion; did not touch the tank
       or skin. Frame confirmed changed (goblin-only crop: 47% of its own
       pixels differ). Did not touch the goggles option, or shrink the pack
-      itself — only the competing trim.
+      itself — only the competing trim. ^goblin-one-muted-trim-colour
 - [?] **Playtest: two checks re-derived.** `hop-distance-band` and
       `hunter-off-marker` measure the beast's authored anchors, not the stone
       route. Measure the route, or delete them. Shot: none — this one is
@@ -172,8 +172,8 @@ run failed.
       the proposed item below), and beast-behind-stone/camera-not-over-
       shoulder/hunter-offscreen/hunter-lost-mid-hop/damage-popup-offscreen/
       intent-tag-vs-hunter were already red before this change, unrelated,
-      and already tracked by the open camera items above.
-- [?] **Weak-point shot, same frame as the sigil.** *Session, 18:05 EDT: covered by the sigil item above; the builder's 18:02 investigation confirmed the shot holds on Switch. Judge it on the sigil frame. One tick covers both.*
+      and already tracked by the open camera items above. ^playtest-two-checks-re-derived
+- [?] **Weak-point shot, same frame as the sigil.** → `agents/frames/builder/2026-09-25-sigil-face-after.png` *Session, 18:05 EDT: covered by the sigil item above; the builder's 18:02 investigation confirmed the shot holds on Switch. Judge it on the sigil frame. One tick covers both.*
       **Original:** Camera stays locked behind the active hunter at
       the top hold; swaps hunter on Switch. Shot: `state=3dclimb hold=top`
       (check the harness for the exact hold name).
@@ -185,7 +185,7 @@ run failed.
       14.00, pitch 0.200, both hunters in view, eyes in the upper half).
       `_switch_to` → `_focus_camera` → `climb_focus_for` already retargets
       per-hunter on a swap; no broken frame found to fix, so nothing shipped
-      and this stays open. See `status/builder.md` for the frames.
+      and this stays open. See `status/builder.md` for the frames. ^weak-point-shot-same-frame-as-the-sigil
 
 - [ ] **playtest.cmd green.** *Session, 18:35 EDT, answering the 18:27 ask: yes, retune `camera-not-over-shoulder`'s threshold and ease pair to the camera as it is now; a check's calibration is measurement, not taste. Still open: 6 red categories. Take them one per run, top of this list, in the order the builder proposed at the bottom. `beast-behind-stone` waits on the stairs decision below.*
       **Original:** Answer to the builder's 17:52 ask: split off,
@@ -224,7 +224,7 @@ run failed.
       `damage-popup-offscreen`, `intent-tag-vs-hunter`) — each is its own
       investigation, not a quick follow-on to this fix (see the proposed
       items at the bottom of this file for what was learned about each).
-      Staying `[?]`, not `[x]`.
+      Staying `[?]`, not `[x]`. ^playtest-cmd-green
 
 ## Waiting on Nick
 
@@ -244,7 +244,7 @@ into Now.
       beast-lengths away instead of 5: stairs read as stairs, beast's head off
       the top). Pick one, or say "stairs AND whole beast, Frog can be small"
       and the builder raises the camera. Nothing below moves the stones until
-      this is answered.
+      this is answered. ^big-frog-or-visible-stairs-frames-a-and-
 
 ## Open decisions, with the default the builder takes if Nick says nothing
 
