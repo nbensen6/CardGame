@@ -374,7 +374,7 @@ const GROUND_STANDOFF := 4.2
 ## clear of the beast's ears-to-paws rect (confirmed both by eye and by a
 ## pixel diff against a stones-disabled render) while still reading as one
 ## rock, not a bucket, and still fully on screen.
-const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 6.5
+const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 2.0
 ## The camera's fixed standoff behind the active hunter, in world units --
 ## at rest AND mid-climb alike (Nick, 2026-09-25, two drawings: "zoom out" at
 ## rest; "camera closer, should be locked to character" mid-climb). One
@@ -385,9 +385,13 @@ const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 6.5
 ## to the beast, not to the hunter it was supposed to follow. A hunter who
 ## reads the same size on the ground and three storeys up IS "locked to the
 ## character." See the long note at its use in _aim_camera.
-const ACTIVE_HUNTER_DIST := 6.0
-const GROUND_VIEW_EYE := 1.05
-const GROUND_VIEW_PITCH := 0.08
+const ACTIVE_HUNTER_DIST := 8.0
+## Up the side the subject is the hunter on its stone, not the whole beast:
+## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
+## locked to character"; at 8 with the 65-degree lens the Goblin was 15 px).
+const CLIMB_HUNTER_DIST := 5.0
+const GROUND_VIEW_EYE := 2.0
+const GROUND_VIEW_PITCH := 0.20
 ## The locked climbing camera's own pitch, at the very top of the route
 ## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears
 ## the sigil so the lens sits ABOVE them and looks down. At the sigil the
@@ -2634,7 +2638,7 @@ func _dist_for_window(window: float) -> float:
 ## height -- is provable headless (Nick, 2026-09-25: "camera closer, should
 ## be locked to character").
 static func climb_dist_for(beast_front_z: float, pivot_z: float) -> float:
-	return ACTIVE_HUNTER_DIST + maxf(beast_front_z * 0.85 - pivot_z, 0.0)
+	return CLIMB_HUNTER_DIST + maxf(beast_front_z * 0.85 - pivot_z, 0.0)
 
 
 ## The locked climbing camera's distance and pitch at one hold. Split out
@@ -2664,8 +2668,9 @@ static func climb_focus_for(anchors: Dictionary, foot: int, hull_front: float,
 	var front_z := foothold_anchor(anchors, foot).z if trust_anchor else hull_front
 	var pad := EXACT_RUNG_CLEARANCE_PAD if trust_anchor else 0.0
 	var dist := climb_dist_for(front_z, pivot_z) + pad
-	if climb_t >= 1.0:
-		# At the top the subject is the FACE the hunter stands in front of, and
+	var top_rung: int = int(anchors.keys().max()) if not anchors.is_empty() else -1
+	if foot >= top_rung and top_rung >= 0:
+		# On the top rung the subject is the FACE the hunter stands in front of, and
 		# a face 20 units tall from 8 units back is a black wall (2026-09-25,
 		# 16:40 frame). Stand back far enough that the hunter clears the card
 		# fan and the eyes are in the upper half.

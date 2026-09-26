@@ -13,15 +13,18 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 18:27 EDT
+2026-09-25 20:55 EDT (Claude in the session, on Nick's "zoom out" and "first stone in front of the character")
 
-- **Did:** fixed `hunter-off-marker`'s top-branch `side` (was the stale dynamic shared-foothold nudge, `_stand_on_model` has used the fixed per-hunter `route_side` there since the two-stones-sets change) and `_watch_hop`'s guard-cap bail, which used to return while a long multi-rung climb's tween was still running, leaving `home` mid-flight for every check that runs right after.
-- **Worked?** Partly — `hunter-off-marker` is now 0 fails (was 2, confirmed on three separate `playtest.cmd` runs); `run_tests.gd` is `ALL TESTS PASSED`. The ticket's done-when is no FAIL at all, and 6 other categories are still red (see queue), so this stays `[?]`, not closed.
-- **Look at:** no frame — this item's shot is `none`, the proof is `playtest.cmd`'s own FAIL count (7 categories → 6, `hunter-off-marker` gone).
-- **Ask:** is `camera-not-over-shoulder`'s 0.95 threshold and `_shoulder`'s 2.2/s ease rate a design pair I can retune, or is that Nick's call like the other camera flips have been?
-- **Found:** the remaining 6 categories, one line each, at the bottom of the queue — `camera-not-over-shoulder`'s own timing math, `beast-behind-stone`'s CHEST_CLEAR_PUSH trade-off, and three more that need a dedicated look.
+- **Did:** widened the lens to 65 degrees, put the first stone straight ahead, moved the rest camera back and up, and gave the mid-climb its own closer stand-off.
+- **Worked?** Yes — the staircase reads from the hunter to the jackal's face, the jackal is whole, hunters are clear of the cards.
+- **Look at:** ![[frames/builder/2026-09-25-stairs-a-beast-far.png]] then ![[frames/builder/2026-09-25-zoom-out-rest-after.png]]
+- **Look at:** ![[frames/builder/2026-09-25-zoom-out-climb-after.png]] and ![[frames/builder/2026-09-25-zoom-out-sigil-after.png]]
+- **Ask:** is the Frog too small now? Say how big and the camera comes in.
+- **Found:** after a fall (`state=3dgrip`) the damage number still lands on the hunter and the hunter sits on the card fan's top edge; that is the open playtest item.
 
 ## Log
+
+- 2026-09-25 20:55 EDT — session: 65-degree lens, stairs visible, beast whole; pushed.
 
 - 2026-09-25 18:27 EDT — builder: playtest.cmd green -- fixed hunter-off-marker's stale side + a guard-cap bail that read `home` mid-tween; 7 failing categories down to 6; built, tested, pushed.
 - 2026-09-25 18:02 EDT — builder: investigated weak-point-shot Switch behaviour, already correct in every path tried, no change shipped, item left open.

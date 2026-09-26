@@ -10,6 +10,16 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [?] **Zoom out: stairs visible, beast whole.** → `agents/frames/builder/2026-09-25-zoom-out-rest-after.png` · `agents/frames/builder/2026-09-25-zoom-out-climb-after.png` · `agents/frames/builder/2026-09-25-zoom-out-sigil-after.png` · `agents/frames/builder/2026-09-25-stairs-a-beast-far.png`
+      Your direction, built by the session 2026-09-25 20:55 EDT, not a
+      decision: lens 48 → 65 degrees, first stone straight ahead of the
+      hunter (route sweep 4.5 → 1.4), rest camera 8 back and 2 up looking
+      slightly down, mid-climb camera 5 behind the hunter on its stone, sigil
+      shot unchanged at 14. Result: the staircase reads from the hunter to
+      the face, the jackal is whole and far, hunters clear of the cards. The
+      cost is the Frog: about 60 px at rest instead of 200. Before is the
+      "stairs-a" frame. If the Frog is too small, say how big and the camera
+      comes in; the lens stays.
 - [?] **F8 flips the camera Player/Dev.** → `agents/frames/builder/2026-09-25-f8-camera-toggle-after.png` The Player/Dev button exists in the
       fight menu's keybind panel, and Nick still sees the free camera through
       `dev.cmd`. Find out why (suspect: `screenshot.gd` sets Dev on the real
@@ -230,21 +240,6 @@ run failed.
 
 The builder skips this section. Answer here or in Home; the item then moves
 into Now.
-
-- [ ] **Big Frog, or visible stairs? Frames A and B.** Measured
-      2026-09-25 17:05 EDT with the stones printed to screen: the route IS an
-      even staircase in the world (z 81, 65, 49, 33, 17; y 1 to 15), but from a
-      camera 6 behind a hunter standing 85 units from the beast the whole
-      staircase lands in 40 screen pixels, edge-on. A sweep of every camera
-      distance, height and pitch found none that keeps the Frog above the
-      cards, the beast in frame, AND the stones 25 px apart. Two frames:
-      `agents/frames/builder/2026-09-25-stairs-a-beast-far.png` (as built: Frog
-      big, beast whole and far, stairs edge-on) and
-      `agents/frames/builder/2026-09-25-stairs-b-beast-near.png` (hunters 3
-      beast-lengths away instead of 5: stairs read as stairs, beast's head off
-      the top). Pick one, or say "stairs AND whole beast, Frog can be small"
-      and the builder raises the camera. Nothing below moves the stones until
-      this is answered. ^big-frog-or-visible-stairs-frames-a-and-
 
 ## Open decisions, with the default the builder takes if Nick says nothing
 
