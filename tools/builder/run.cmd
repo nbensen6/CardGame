@@ -118,6 +118,8 @@ git -C "%WORK%" checkout --detach --force origin/main --quiet
 
 set "MODE=Make the change."
 if /i "%~1"=="--dry" set "MODE=DRY RUN. Plan it and report what you WOULD change, but do not edit, build, commit or push anything."
+REM --loop: keep taking items until Now is empty or a run fails (see the end).
+if /i "%~1"=="--loop" echo.>"%~dp0loop.flag"
 
 echo === builder starting in %ROOT%
 echo === %MODE%
@@ -126,9 +128,13 @@ echo === launching, mode: %MODE% >> "%LOG%"
 REM acceptEdits, not bypassPermissions: this lane touches shaders, build scripts
 REM and shared tooling with nobody watching. It gets to write files without a
 REM prompt; it does not get to run arbitrary commands.
+REM Opus 5.5 at xhigh: 2.5x cheaper than Fable for work that is mostly tool
+REM calls and file reads, and its default effort is medium, so set it. Fable
+REM stays on the director session and on anything that fails twice.
 "%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly for the TOP unticked item in design/plan/BUILDER-QUEUE.md. %MODE%" ^
+  --model claude-opus-5-5 --effort xhigh --fallback-model claude-opus-5 ^
   --permission-mode acceptEdits ^
-  --allowedTools "Read,Edit,Write,Glob,Grep,Bash" >> "%LOG%" 2>&1
+  --allowedTools "Read,Edit,Write,Glob,Grep,Bash,Agent" >> "%LOG%" 2>&1
 set "RC=%ERRORLEVEL%"
 echo exit code: %RC% >> "%LOG%"
 
@@ -139,8 +145,7 @@ REM Bring the push into the checkout Nick plays from, so dev.cmd shows it.
 REM --autostash: the session may be mid-edit there; set it aside and put it back.
 git -C "%ROOT%" pull --rebase --autostash --quiet origin main >> "%LOG%" 2>&1
 REM One short page for Nick: what is waiting on him, one line each.
-python "%ROOT%	ools
-eeds_nick.py" >> "%LOG%" 2>&1
+python "%ROOT%\tools\needs_nick.py" >> "%LOG%" 2>&1
 
 REM KEEP GOING, if the panel asked for it.
 REM
@@ -156,6 +161,16 @@ REM window to stop the chain without racing it.
 if not "%RC%"=="0" (
   echo === exit %RC%, so not looping even if asked >> "%LOG%"
   goto :fin
+)
+REM Third guard: nothing left under ## Now means stop, not spin. has_open.py
+REM exits 1 when the queue has no open item the builder could take.
+if exist "%~dp0loop.flag" (
+  python "%~dp0has_open.py" >> "%LOG%" 2>&1
+  if errorlevel 1 (
+    echo === queue empty, loop ends >> "%LOG%"
+    del "%~dp0loop.flag" 2>nul
+    goto :fin
+  )
 )
 if exist "%~dp0loop.flag" (
   echo === loop.flag set, going again in 60s >> "%LOG%"

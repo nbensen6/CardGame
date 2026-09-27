@@ -41,6 +41,14 @@ stones climbing the gap between them, dark ground, cool sky.
    - Shoot the AFTER frame, same command, `-after.png`. Look at it 1:1 next
      to the before and the drawing. **If the frame did not change, the item
      is not done**, whatever else you proved. Say so and stop.
+   - **Get graded.** Run the `grader` agent (Agent tool, subagent_type
+     "grader") with exactly: the item's full text, the absolute path of the
+     before frame, the absolute path of the after frame. Nothing else: not
+     your summary, not the diff. It answers PASS or FAIL with evidence. On
+     FAIL, fix what it names and reshoot: at most two more rounds. Still
+     FAIL after that: stop, mark nothing `[?]`, write its last verdict under
+     `Found:` and leave the item `[ ]`. Paste the final VERDICT line into the
+     status note's `Worked?` bullet either way.
    - `"%GODOT%" --headless --path game --script res://tools/run_tests.gd`
      must print `ALL TESTS PASSED`. Never push red.
    - Logic gets a test in `game/tools/run_tests.gd`. A camera or layout rule
