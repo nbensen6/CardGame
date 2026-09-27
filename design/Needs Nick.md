@@ -5,7 +5,7 @@ tags:
 
 # Needs Nick
 
-_2026-09-27 18:26 ET. Tick a box to mark it done. Type after **Nick:** to send it back: your words go on the item and the builder takes it first. Then run **Send my answers** (command palette) or just run the builder._
+_2026-09-27 18:41 ET. Tick a box to mark it done. Type after **Nick:** to send it back: your words go on the item and the builder takes it first. Then run **Send my answers** (command palette) or just run the builder._
 
 ## Look, then tick or send back
 
@@ -32,6 +32,7 @@ _2026-09-27 18:26 ET. Tick a box to mark it done. Type after **Nick:** to send i
 
 ## Latest frames
 
+- [[agents/frames/builder/2026-09-27-first-climb-follow-after.png|2026-09-27-first-climb-follow]]
 - [[agents/frames/builder/2026-09-25-zoom-out-grip-after.png|2026-09-25-zoom-out-grip]]
 - [[agents/frames/builder/2026-09-25-zoom-out-sigil-after.png|2026-09-25-zoom-out-sigil]]
 - [[agents/frames/builder/2026-09-25-zoom-out-climb-after.png|2026-09-25-zoom-out-climb]]
@@ -39,4 +40,3 @@ _2026-09-27 18:26 ET. Tick a box to mark it done. Type after **Nick:** to send i
 - [[agents/frames/builder/2026-09-25-weak-point-shot-after.png|2026-09-25-weak-point-shot]]
 - [[agents/frames/builder/2026-09-25-goblin-reads-after.png|2026-09-25-goblin-reads]]
 - [[agents/frames/builder/2026-09-25-hunters-face-beast-after.png|2026-09-25-hunters-face-beast]]
-- [[agents/frames/builder/2026-09-25-hops-on-stones-after.png|2026-09-25-hops-on-stones]]
