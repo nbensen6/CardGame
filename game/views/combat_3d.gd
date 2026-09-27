@@ -546,6 +546,17 @@ var _want_third := false
 var _focus_lift := 0.0
 ## Jump framing: whether this hop has already left the camera's dead zone (so
 ## the follow stiffens), and how far past it the hunter got (so the shot widens).
+##
+## The two numbers below used to be inline literals. They are named because the
+## playtester's `camera-not-over-shoulder` check cannot judge `_shoulder` without
+## them: after a landing the truck is held OFF for AIR_SETTLE_TIME and only then
+## eases in at SHOULDER_EASE_RATE, so a check that samples too early reads a
+## value that was never going to be there yet. See `shoulder_settle_seconds`.
+## How long the stiffer follow -- and with it `want_shoulder_truck` answering
+## 0.0 -- outlives a landing, in seconds.
+const AIR_SETTLE_TIME := 0.45
+## `_shoulder`'s ease rate toward its target, per second (`_aim_camera`).
+const SHOULDER_EASE_RATE := 2.2
 var _air_chase := false
 var _air_span := 0.0
 var _air_settle := 0.0
@@ -2378,7 +2389,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 					_pivot_target.y = clampf(_pivot.y, eye - dead, eye + dead)
 					_air_span = 0.0
 				_air_chase = true
-		_air_settle = 0.45   # keep the stiffer follow briefly after touchdown
+		_air_settle = AIR_SETTLE_TIME   # keep the stiffer follow briefly after touchdown
 	elif not snap:
 		# The stiff follow outlives the jump by a beat: a big climb lands with
 		# the camera still metres behind, and easing that last gap at the lazy
@@ -2449,7 +2460,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	if snap:
 		_shoulder = want_ots
 	else:
-		_shoulder = lerpf(_shoulder, want_ots, 1.0 - exp(-delta * 2.2))
+		_shoulder = lerpf(_shoulder, want_ots, 1.0 - exp(-delta * SHOULDER_EASE_RATE))
 	if _want_third and not _establishing and not _user_framed and not _hunters.is_empty():
 		_want_third = false
 		# 0.20, measured against the card fan rather than guessed. At 0.30 the
@@ -2707,6 +2718,28 @@ static func want_shoulder_truck(focused: bool, grounded: bool, establishing: boo
 		air_chase: bool, air_span: float, third_window: float) -> float:
 	return 1.0 if ((focused or grounded) and not establishing and not air_chase
 			and air_span <= third_window * 0.55) else 0.0
+
+
+## How long, in seconds, the over-the-shoulder truck needs before `_shoulder`
+## reaches `want` -- `air_settle` of holding at 0.0 after a landing, then the
+## exponential ease from `from` at `rate`/s.
+##
+## This exists because the playtester's `camera-not-over-shoulder` check read a
+## value mid-ease and called it "never engaged." Measured on a 25-step run,
+## 2026-09-26: all 9 fails were partly-eased, in two clean clusters -- 0.42-0.44
+## on the steps whose hop hit `_watch_hop`'s guard cap (only the 43-frame tail,
+## ~0.72s, of which AIR_SETTLE_TIME eats 0.45), and 0.87-0.91 on the steps that
+## got the extra frames of a fully watched hop. Not one was near 0.0: the truck
+## always engaged; the check just never let it finish. The check now waits this
+## long before judging, instead of a fixed frame count -- frames are the wrong
+## currency for a rule written in seconds.
+static func shoulder_settle_seconds(from: float, want: float, rate: float,
+		air_settle: float) -> float:
+	if want <= from:
+		return air_settle
+	if want >= 1.0 or rate <= 0.0:
+		return INF   # the ease is asymptotic; it never actually arrives at 1.0
+	return air_settle + log((1.0 - from) / (1.0 - want)) / rate
 
 
 ## What the camera should be looking at, and how much world to fit around it:

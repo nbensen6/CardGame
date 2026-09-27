@@ -1,0 +1,17 @@
+tools\playtest.cmd mode=play beast=cinder_jackal steps=25   (BEFORE, at b49edeb)
+
+Every camera-not-over-shoulder FAIL this run, verbatim:
+
+FAIL [step  8] camera-not-over-shoulder: End Turn: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.680, want >= 0.95)
+FAIL [step  9] camera-not-over-shoulder: play 'Pounce' [timed] (hunter 0): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.437, want >= 0.95)
+FAIL [step 10] camera-not-over-shoulder: play 'Leapfrog' (hunter 0): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.431, want >= 0.95)
+FAIL [step 11] camera-not-over-shoulder: play 'Hop' [timed] (hunter 0): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.878, want >= 0.95)
+FAIL [step 16] camera-not-over-shoulder: play 'Grappling Hook' [timed] (hunter 1): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.423, want >= 0.95)
+FAIL [step 17] camera-not-over-shoulder: End Turn: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.906, want >= 0.95)
+FAIL [step 19] camera-not-over-shoulder: play 'Tongue Snap' [timed] (hunter 0): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.869, want >= 0.95)
+FAIL [step 20] camera-not-over-shoulder: play 'Hop' [timed] (hunter 0): the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=0.869, want >= 0.95)
+(one further fail earlier in the run, before the captured tail -- the summary count below is authoritative)
+
+Final line:
+
+PLAYTEST FAIL: 6 failing check(s) { "hunter-off-marker": 8, "hunter-offscreen": 4, "camera-not-over-shoulder": 9, "beast-behind-stone": 8, "intent-tag-vs-hunter": 1, "dead-click": 1 }

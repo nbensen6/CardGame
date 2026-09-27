@@ -1,0 +1,45 @@
+tools\playtest.cmd mode=play beast=cinder_jackal steps=25   (AFTER)
+
+Every camera-not-over-shoulder line this run, verbatim (grep "over-the-shoulder").
+The check now says the number out loud when it passes, so "0 fails" cannot be
+confused with a silenced check:
+
+End Turn: over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+play 'Build Grapple' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=0.995 (want >= 0.95, settled inside 3.62s)
+play 'Burn Coal' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+play 'Catapult' (hunter 1) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+End Turn: over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+play 'Pounce' [timed] (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=0.952 (want >= 0.95, settled inside 3.62s)
+play 'Leapfrog' (hunter 0) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=0.952 (want >= 0.95, settled inside 3.62s)
+play 'Hop' [timed] (hunter 0) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+End Turn: over-the-shoulder truck engaged -- _shoulder=0.993 (want >= 0.95, settled inside 3.62s)
+play 'Goblin Jetpack' (hunter 1) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=0.999 (want >= 0.95, settled inside 3.62s)
+play 'Build Mech' (hunter 1) at (512.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+play 'Build Grapple' (hunter 1) at (716.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+play 'Grappling Hook' [timed] (hunter 1) at (716.0, 471.0): over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+End Turn: over-the-shoulder truck engaged -- _shoulder=0.992 (want >= 0.95, settled inside 3.62s)
+play 'Brace' (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=0.999 (want >= 0.95, settled inside 3.62s)
+play 'Tongue Snap' [timed] (hunter 0) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+play 'Hop' [timed] (hunter 0) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=0.951 (want >= 0.95, settled inside 3.62s)
+play 'Scramble' (hunter 0) at (512.0, 468.0): over-the-shoulder truck engaged -- _shoulder=0.995 (want >= 0.95, settled inside 3.62s)
+End Turn: over-the-shoulder truck engaged -- _shoulder=0.999 (want >= 0.95, settled inside 3.62s)
+play 'Build Grapple' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+play 'Goblin Jetpack' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+PLAYTEST FAIL: 4 failing check(s) { "hunter-off-marker": 8, "hunter-offscreen": 4, "beast-behind-stone": 8, "intent-tag-vs-hunter": 1 }
+
+Deltas against the before file:
+  camera-not-over-shoulder  9 fails -> 0 fails, 21 passing samples (0.951 - 1.000)
+  hunter-off-marker         8 -> 8   (unchanged, not this run's category)
+  hunter-offscreen          4 -> 4   (unchanged, not this run's category)
+  beast-behind-stone        8 -> 8   (unchanged; an intermediate run read 6, so that
+                                      category swings run to run -- not a side effect
+                                      of this change either way)
+  intent-tag-vs-hunter      1 -> 1   (unchanged, not this run's category)
+  dead-click                1 -> 0   (a step-23 misclick in the before run, not reproduced)
+  failing categories        6 -> 4
+
+Still red, by Nick's own "one category per run" instruction: hunter-off-marker,
+hunter-offscreen, beast-behind-stone (waiting on the stairs decision),
+intent-tag-vs-hunter. The parent item cannot print "no FAIL" this run.
+
+game/tools/run_tests.gd: ALL TESTS PASSED

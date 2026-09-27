@@ -2553,6 +2553,7 @@ func _finish_with_deferred_tests() -> void:
 	# shoulder on the active hunter at rest as well as mid-climb.
 	_test_want_shoulder_truck_engages_at_rest_now()
 	_test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps()
+	_test_shoulder_settle_seconds_is_the_wait_the_check_owes_the_ease()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
@@ -29707,6 +29708,43 @@ func _test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps
 		"air_chase (mid-hop dead-zone follow) must stay off, same as before this change")
 	_expect(is_equal_approx(Combat3D.want_shoulder_truck(true, false, false, false, 5.0, 8.0), 0.0),
 		"a leap taller than the third-window threshold frames the whole arc, not a shoulder")
+
+
+## The rule the playtester's camera-not-over-shoulder check was missing: how
+## long the truck actually needs. It judged after 43-45 FRAMES (~0.72s) a value
+## the camera cannot deliver for 1.81s, and reported a truck a third of the way
+## in as one that "never engaged" (9 fails, all 0.42-0.91, none near 0.0).
+func _test_shoulder_settle_seconds_is_the_wait_the_check_owes_the_ease() -> void:
+	var need := Combat3D.shoulder_settle_seconds(0.0, 0.95,
+		Combat3D.SHOULDER_EASE_RATE, Combat3D.AIR_SETTLE_TIME)
+	_expect(absf(need - 1.812) < 0.01,
+		"0 -> 0.95 at 2.2/s behind a 0.45s air settle is 1.81s, got %.3f" % need)
+	_expect(need > 45.0 / 60.0,
+		"the old 45-frame tail (%.2fs) must be provably too short, or there was no bug" % (45.0 / 60.0))
+	# Replay the ease itself at that budget and confirm it really arrives.
+	var shoulder := 0.0
+	var t := 0.0
+	var dt := 1.0 / 60.0
+	while t < need:
+		t += dt
+		if t > Combat3D.AIR_SETTLE_TIME:
+			shoulder = lerpf(shoulder, 1.0, 1.0 - exp(-dt * Combat3D.SHOULDER_EASE_RATE))
+	_expect(shoulder >= 0.95,
+		"stepping the real ease for the budgeted %.2fs must pass 0.95, reached %.3f" % [need, shoulder])
+	# ...and that the old budget does not, so the test fails if someone shortens
+	# the wait back to a frame count.
+	shoulder = 0.0
+	t = 0.0
+	while t < 45.0 / 60.0:
+		t += dt
+		if t > Combat3D.AIR_SETTLE_TIME:
+			shoulder = lerpf(shoulder, 1.0, 1.0 - exp(-dt * Combat3D.SHOULDER_EASE_RATE))
+	_expect(shoulder < 0.95,
+		"the old 45-frame tail must NOT reach 0.95, or the measured bug was imaginary (%.3f)" % shoulder)
+	_expect(is_equal_approx(Combat3D.shoulder_settle_seconds(0.99, 0.5, 2.2, 0.45), 0.45),
+		"already past the bar: only the air settle is owed")
+	_expect(Combat3D.shoulder_settle_seconds(0.0, 1.0, 2.2, 0.45) == INF,
+		"an asymptotic ease never reaches 1.0 exactly -- say so rather than divide by zero")
 
 
 ## request #11 ("hunters far back, stones a visible path"): before either

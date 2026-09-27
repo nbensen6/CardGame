@@ -234,7 +234,28 @@ run failed.
       `damage-popup-offscreen`, `intent-tag-vs-hunter`) — each is its own
       investigation, not a quick follow-on to this fix (see the proposed
       items at the bottom of this file for what was learned about each).
-      Staying `[?]`, not `[x]`. ^playtest-cmd-green
+      Staying `[?]`, not `[x]`.
+      **Builder, 2026-09-27 18:24 EDT:** `camera-not-over-shoulder` is now 0
+      fails (was 9), with 21 printed passing samples, `_shoulder` 0.951-1.000.
+      The camera was never broken — the check's clock was. `_shoulder`'s ease
+      is written in SECONDS (2.2/s, behind 0.45s of `_air_settle` holding it
+      at zero after every landing: 1.81s to pass 0.95) and the harness judged
+      it after a FIXED 43-45 FRAMES (~0.72s). Measured before/after: every one
+      of the 9 fails was a partly-eased value in two clean clusters —
+      0.42-0.44 on the steps whose hop hit `_watch_hop`'s guard cap (the bare
+      frame tail) and 0.87-0.91 on the steps that got the extra frames of a
+      fully-watched hop — and not one was near 0.0, so the truck always
+      engaged. Threshold unchanged at 0.95; the wait is now derived from the
+      camera's own numbers (`Combat3D.shoulder_settle_seconds`, tested, with
+      `AIR_SETTLE_TIME`/`SHOULDER_EASE_RATE` lifted out of inline literals so
+      the check cannot drift from the shot again). The check also prints its
+      value when it PASSES now, so "0 fails" can't be mistaken for a silenced
+      check. Done-when NOT met: 4 categories still red (hunter-off-marker 8,
+      hunter-offscreen 4, beast-behind-stone 8, intent-tag-vs-hunter 1), per
+      Nick's own one-category-per-run note. `run_tests.gd`: ALL TESTS PASSED.
+      Grader `VERDICT: FAIL` — scored the parent's "prints no FAIL" done-when
+      (unreachable this run by that same note); scored the camera criterion
+      MET, "re-derived, not silenced." Left `[ ]`. ^playtest-cmd-green
 
 ## Waiting on Nick
 
@@ -386,7 +407,18 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       the route-vs-anchor mismatch this item targeted. Worth a dedicated
       look with the harness's STONE/HUNTER/RUNGS print at a foothold past
       the top, the same way the "hops land on stones" item measured its bug.
-- [ ] (proposed) `camera-not-over-shoulder` (9 fails on the latest
+- [ ] (proposed) Every other playtest check that judges "the settled frame"
+      (`beast-behind-stone`, `hunter-offscreen`, the framing checks) was
+      sampling the same too-early instant `camera-not-over-shoulder` was, and
+      now sees a camera that has actually finished easing. Their counts may
+      have shifted for that reason alone — worth re-baselining each before
+      reading its number as a real bug.
+- [ ] (proposed) `beast-behind-stone` read 8, then 6, then 8 across three
+      runs of the identical command with no change in between. That category
+      is not stable run-to-run, so a single run cannot tell a fix from noise
+      — it needs either a tolerance or a repeat count before it is judged.
+- [ ] (proposed) **Built 2026-09-27 — see the Now item above; kept only for
+      the record of what was measured.** `camera-not-over-shoulder` (9 fails on the latest
       `playtest.cmd`, every one a `_shoulder` value between 0.02 and 0.88,
       none reaching the check's own 0.95 floor): the check's own doc comment
       claims `_shoulder`'s ease (`combat_3d.gd` `_aim_camera`, rate 2.2/s)

@@ -177,13 +177,26 @@ const FOOT_BAND_MIN_PX := 6.0
 ## For check 9b (camera-not-over-shoulder): how close to fully engaged (1.0)
 ## `_shoulder` must sit once the fight has settled before this counts as a
 ## real over-the-shoulder shot rather than the plain dead-centre follow cam
-## it replaced. Far under 1.0 on purpose -- `_shoulder`'s own ease
-## (combat_3d.gd _aim_camera, rate 2.2/s) reaches this in well under a
-## second of real time, and every step gives it several real seconds to
-## settle (_wait_and_poll) before _check runs, so anything short of this
-## means the truck never actually engaged, not that it simply hasn't
-## finished easing in yet.
+## it replaced.
+##
+## RECALIBRATED 2026-09-26 (Nick, queue: "retune the threshold and ease pair
+## to the camera as it is now; a check's calibration is measurement, not
+## taste"). The threshold is unchanged; the timing around it was the bug.
+## This comment used to claim the ease "reaches this in well under a second"
+## and that "every step gives it several real seconds to settle" before
+## _check runs. Both were false: the ease needs
+## Combat3D.shoulder_settle_seconds(0, 0.95, 2.2, 0.45) = 1.81s after a
+## landing, and `_wait_and_poll`'s tail is 43-45 FRAMES (~0.72s). So the
+## check was sampling a truck a third of the way in and reporting it as
+## never engaged -- 9 fails, every one between 0.42 and 0.91, none near 0.0.
+## `_settle_shoulder` now gives the ease its own clock before _check runs.
 const SHOULDER_ENGAGED_MIN := 0.95
+
+## How much longer than the arithmetic `_settle_shoulder` is allowed to wait
+## before it gives up and lets check 9b judge whatever is there. Slack, not
+## calibration: a second landing inside the wait (an ally's hop, a knockback)
+## restarts AIR_SETTLE_TIME, and the check should not fail on that alone.
+const SHOULDER_SETTLE_SLACK := 2.0
 
 ## For check 9c (camera-not-behind-hunter, was camera-ots-while-grounded):
 ## NICK'S DECISION, LIVE, 2026-09-24 22:25 EDT (relayed by the director,
@@ -476,6 +489,33 @@ func _wait_and_poll(v: Node, n: int) -> void:
 		if not is_instance_valid(v):
 			return
 		_poll_popup(v)
+
+
+## Seconds check 9b waits for the over-the-shoulder truck before judging it.
+func _shoulder_settle_budget() -> float:
+	return Combat3D.shoulder_settle_seconds(0.0, SHOULDER_ENGAGED_MIN,
+		Combat3D.SHOULDER_EASE_RATE, Combat3D.AIR_SETTLE_TIME) * SHOULDER_SETTLE_SLACK
+
+
+## Let the over-the-shoulder truck finish easing before `_check` judges it.
+##
+## `_wait_and_poll`'s tail is counted in FRAMES; `_shoulder`'s ease is written
+## in SECONDS (combat_3d.gd `_aim_camera`), behind AIR_SETTLE_TIME of holding
+## at zero after every landing. Those are different currencies, and the frame
+## count is the smaller one -- see SHOULDER_ENGAGED_MIN's own comment for the
+## measurement. Waiting on the value instead of a frame count is not the same
+## as waiting until the check passes: a camera that genuinely never engages
+## still sits where it sat when the budget runs out, and still fails.
+##
+## Deliberately does NOT `_poll_popup`: this wait is new, and extending the
+## window a damage number is watched in would quietly change a different
+## check's result (damage-popup-offscreen) on a run that is not about it.
+func _settle_shoulder(v: Node) -> void:
+	var until := Time.get_ticks_msec() + int(_shoulder_settle_budget() * 1000.0)
+	while Time.get_ticks_msec() < until:
+		if not is_instance_valid(v) or float(v.get("_shoulder")) >= SHOULDER_ENGAGED_MIN:
+			return
+		await process_frame
 
 
 # --------------------------------------------------------------- invariants
@@ -1142,8 +1182,15 @@ func _check(v: Node, when: String) -> void:
 	if not airborne and climbing and focused and not establishing and cam != null:
 		var shoulder: float = float(v.get("_shoulder"))
 		if shoulder < SHOULDER_ENGAGED_MIN:
-			_fail("camera-not-over-shoulder", "%s: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f) -- reads as a plain follow cam, not third-person over the shoulder" \
-				% [when, shoulder, SHOULDER_ENGAGED_MIN])
+			_fail("camera-not-over-shoulder", "%s: the mid-climb shot never engaged the over-the-shoulder truck (_shoulder=%.3f, want >= %.2f, after %.2fs of settling) -- reads as a plain follow cam, not third-person over the shoulder" \
+				% [when, shoulder, SHOULDER_ENGAGED_MIN, _shoulder_settle_budget()])
+		else:
+			# Say the number out loud on the way past. A check that only ever
+			# speaks when it fails leaves a silenced check and a passing check
+			# looking identical in the run log -- which is exactly what a
+			# reader of "camera-not-over-shoulder: 0" cannot tell apart.
+			_note("%s: over-the-shoulder truck engaged -- _shoulder=%.3f (want >= %.2f, settled inside %.2fs)" \
+				% [when, shoulder, SHOULDER_ENGAGED_MIN, _shoulder_settle_budget()])
 
 	# 9c. FLIPPED, 2026-09-24 (2026-09-24-2233-director-to-playtester-checks-
 	# measure-the-old-route-and-the-old-camera.md) -- see BEHIND_HUNTER_MIN's
@@ -1435,6 +1482,10 @@ func _play() -> void:
 		if _step_popup_offscreen:
 			_fail("damage-popup-offscreen", "%s: a damage number %s"
 				% [action, _step_popup_offscreen_detail])
+		# The shot's last moving part. Every check below judges a SETTLED frame,
+		# and `_wait_and_poll`'s frame-counted tail is shorter than the camera's
+		# own second-counted ease -- see `_settle_shoulder`.
+		await _settle_shoulder(v)
 		await _check(v, action)
 		await _shot()
 	_move(Vector2(screen.x * 0.5, screen.y * 0.3))

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-25T18:27
-working_on: "playtest.cmd green: hunter-off-marker fixed, 6 categories still red"
+updated: 2026-09-27T18:24
+working_on: "playtest.cmd green: camera-not-over-shoulder fixed, 4 categories still red"
 ---
 
 # builder
@@ -13,16 +13,19 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-25 20:55 EDT (Claude in the session, on Nick's "zoom out" and "first stone in front of the character")
+2026-09-27 18:24 EDT
 
-- **Did:** widened the lens to 65 degrees, put the first stone straight ahead, moved the rest camera back and up, and gave the mid-climb its own closer stand-off.
-- **Worked?** Yes — the staircase reads from the hunter to the jackal's face, the jackal is whole, hunters are clear of the cards.
-- **Look at:** ![[frames/builder/2026-09-25-stairs-a-beast-far.png]] then ![[frames/builder/2026-09-25-zoom-out-rest-after.png]]
-- **Look at:** ![[frames/builder/2026-09-25-zoom-out-climb-after.png]] and ![[frames/builder/2026-09-25-zoom-out-sigil-after.png]]
-- **Ask:** is the Frog too small now? Say how big and the camera comes in.
-- **Found:** after a fall (`state=3dgrip`) the damage number still lands on the hunter and the hunter sits on the card fan's top edge; that is the open playtest item.
+- **Did:** the over-the-shoulder check now waits out the camera's own ease before judging it, instead of a fixed frame count.
+- **Worked?** Partly — that category went 9 fails to 0 with 21 passing samples, but the parent item still prints FAIL on four other categories. `VERDICT: FAIL` (the grader scored the parent's "no FAIL" done-when, which Nick's own one-category-per-run note puts out of reach this run; it scored the camera criterion MET).
+- **Look at:** `frames/builder/2026-09-26-playtest-ots-before.txt` then `frames/builder/2026-09-26-playtest-ots-after.txt` (this item names no shot; the evidence is the run log)
+- **Ask:** next category — hunter-off-marker or hunter-offscreen?
+- **Found:** the camera was never broken; only the check's clock was. Nothing needed retuning in the shot.
+- **Found:** `beast-behind-stone` read 8, then 6, then 8 across three identical runs — that count is not stable enough to judge a change by.
+- **Found:** every other check that samples "the settled frame" was reading the same too-early instant; they now see a settled camera, so their baselines may have shifted.
 
 ## Log
+
+- 2026-09-27 18:24 EDT — builder: camera-not-over-shoulder waits for the truck's ease instead of 45 frames; 9 fails to 0; built, tested, pushed.
 
 - 2026-09-25 20:55 EDT — session: 65-degree lens, stairs visible, beast whole; pushed.
 
