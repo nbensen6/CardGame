@@ -749,6 +749,13 @@ func _capture() -> void:
 					re.sub(said, "", true).replace("\n", " | ")])
 			for _c in 3:
 				await process_frame
+			# A `climb` starts a real-time hop: shoot where it lands, not mid-air.
+			var t0 := Time.get_ticks_msec()
+			while current_scene.has_method("_followed_is_airborne") \
+					and bool(current_scene.call("_followed_is_airborne")) \
+					and Time.get_ticks_msec() - t0 < 20000:
+				await process_frame
+			await _await_camera(current_scene)
 
 	# Carry a card. Driven by calling the view's own drag handlers with real
 	# InputEvents rather than by poking at positions, so what is photographed is

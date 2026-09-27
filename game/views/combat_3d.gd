@@ -2461,7 +2461,8 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		_shoulder = want_ots
 	else:
 		_shoulder = lerpf(_shoulder, want_ots, 1.0 - exp(-delta * SHOULDER_EASE_RATE))
-	if _want_third and not _establishing and not _user_framed and not _hunters.is_empty():
+	if want_follow_engage(_want_third, _focused, grounded, _establishing, _user_framed) \
+			and not _hunters.is_empty():
 		_want_third = false
 		# 0.20, measured against the card fan rather than guessed. At 0.30 the
 		# hunters landed at y=538 on a 720 frame, which is behind the hand; at 0
@@ -2718,6 +2719,20 @@ static func want_shoulder_truck(focused: bool, grounded: bool, establishing: boo
 		air_chase: bool, air_span: float, third_window: float) -> float:
 	return 1.0 if ((focused or grounded) and not establishing and not air_chase
 			and air_span <= third_window * 0.55) else 0.0
+
+
+## Whether _aim_camera hands the shot to _focus_camera's locked follow this
+## frame: once when the establishing push lands (`want_third`), and again the
+## first time anyone leaves the ground while nothing is focused. Without the
+## second case, a fight whose establishing push landed before the first climb
+## left `_focused` false until the next Switch or End Turn, so the camera kept
+## the ground shot and the hunter climbed off the top of it (playtest
+## 'hunter-offscreen', steps 0-3, 2026-09-27).
+static func want_follow_engage(want_third: bool, focused: bool, grounded: bool,
+		establishing: bool, user_framed: bool) -> bool:
+	if establishing or user_framed:
+		return false
+	return want_third or (not focused and not grounded)
 
 
 ## How long, in seconds, the over-the-shoulder truck needs before `_shoulder`

@@ -255,7 +255,27 @@ run failed.
       Nick's own one-category-per-run note. `run_tests.gd`: ALL TESTS PASSED.
       Grader `VERDICT: FAIL` — scored the parent's "prints no FAIL" done-when
       (unreachable this run by that same note); scored the camera criterion
-      MET, "re-derived, not silenced." Left `[ ]`. ^playtest-cmd-green
+      MET, "re-derived, not silenced." Left `[ ]`.
+      **Builder, 2026-09-27 18:39 EDT:** `hunter-offscreen` is now 0 fails
+      (was 4). The check was right and the game was wrong. All 4 fails were
+      steps 0-3, the Frog's first climb, projecting to (640, -47..-261) with
+      `focused=false establishing=false` (the check now prints those flags).
+      `_focus_camera` leaves `_focused` false while everyone is on the ground
+      (#11's resting shot), and nothing turned it back on when someone left
+      the ground. Only Switch or End Turn did, so until step 4 the camera held
+      the ground shot and the Frog climbed off the top of it. `_aim_camera`
+      now hands over to the locked follow the first time anyone leaves the
+      ground (`Combat3D.want_follow_engage`, tested); the rest shot is
+      untouched. Steps 0-3 now also pass `camera-not-over-shoulder` (21 → 25
+      passing samples). Frame: `state=3d beast=cinder_jackal
+      "console=climb 2"` (the harness now waits for a console climb's hop
+      to land): before, the Frog is out of frame at (640, -48); after, it
+      is on its stone at (640, 466), back to camera, with the jackal whole
+      behind it. Still red: hunter-off-marker 8, beast-behind-stone 8
+      (10 before; this category swings between runs), intent-tag-vs-hunter 1.
+      `run_tests.gd`: ALL TESTS PASSED. Grader `VERDICT: FAIL`: it
+      graded the parent's done-when, which can't be read off a frame for
+      a "Shot: none" item. Left `[ ]`. ^playtest-cmd-green
 
 ## Waiting on Nick
 
@@ -443,7 +463,9 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       landing off-screen. Re-tuning it risks reopening the off-screen bug it
       was zeroed to fix; needs someone to check both frames together, not a
       number bumped blind.
-- [ ] (proposed) `hunter-offscreen` (4 fails, all early-game non-climb
+- [ ] (proposed) **`hunter-offscreen` built 2026-09-27 18:39 EDT, see the Now
+      item above: the cause was `_focused` staying false through the first
+      climb, not the establishing shot.** `hunter-offscreen` (4 fails, all early-game non-climb
       actions — Tongue Snap/Scramble/Tongue Snap again — projecting to
       y=-217..-868, nowhere near the 0..720 screen), `hunter-lost-mid-hop`
       (1 fail, hunter off-screen 84% of its own jump), `damage-popup-
@@ -466,3 +488,12 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
       `.glb`, which embeds its own PNG). Worth deleting the stale jpg or
       correcting the gitignore comment so the next person doesn't edit the
       jpg expecting it to change anything.
+- [ ] (proposed) The first hop now spends more of its flight off-screen:
+      step 0's mid-hop coverage went from 0% to 18% off, because the follow
+      cuts to the landing height at take-off. Step 1 improved from 22% to 4%
+      off. No check fails on it; worth a look if the first take-off reads
+      as a jump cut.
+- [ ] (proposed) `hunter-off-marker`'s 8 current fails are mid-route
+      (foothold 2 is 2.36m off in x, foothold 4 is 0.79m off), not the
+      past-the-sigil top branch fixed 2026-09-25. Same symptom, different
+      place; take it as a fresh bug.

@@ -1143,7 +1143,8 @@ func _check(v: Node, when: String) -> void:
 		else:
 			var p := cam.unproject_position(mine)
 			if p.x < -2.0 or p.y < -2.0 or p.x > screen.x + 2.0 or p.y > screen.y + 2.0:
-				_fail("hunter-offscreen", "%s: the active hunter projects to %v, off the %v screen entirely" % [when, p.round(), screen])
+				_fail("hunter-offscreen", "%s: the active hunter projects to %v, off the %v screen entirely (focused=%s establishing=%s user_framed=%s)" \
+					% [when, p.round(), screen, v.get("_focused"), v.get("_establishing"), v.get("_user_framed")])
 
 	# 9b. JACKAL-BAR / checklist item 4's own target camera: "third person
 	# over the active hunter's shoulder" is the MID-CLIMB shot -- once

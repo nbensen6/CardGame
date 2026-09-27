@@ -2554,6 +2554,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_want_shoulder_truck_engages_at_rest_now()
 	_test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps()
 	_test_shoulder_settle_seconds_is_the_wait_the_check_owes_the_ease()
+	_test_want_follow_engage_on_the_first_climb_not_only_after_the_establishing_push()
 
 	_test_backlog86_draw_relic_mod_grants_extra_cards_every_round_not_just_the_first()
 	_test_backlog86_real_draw_relics_reach_relic_totals_and_grant_extra_cards()
@@ -29708,6 +29709,25 @@ func _test_want_shoulder_truck_still_off_for_the_establishing_wide_and_big_leaps
 		"air_chase (mid-hop dead-zone follow) must stay off, same as before this change")
 	_expect(is_equal_approx(Combat3D.want_shoulder_truck(true, false, false, false, 5.0, 8.0), 0.0),
 		"a leap taller than the third-window threshold frames the whole arc, not a shoulder")
+
+
+## The first climb of a fight must engage the locked follow by itself. It used
+## to wait for a Switch or End Turn, and the hunter climbed off the top of the
+## ground shot (playtest 'hunter-offscreen', steps 0-3, 2026-09-27).
+## Args: want_third, focused, grounded, establishing, user_framed.
+func _test_want_follow_engage_on_the_first_climb_not_only_after_the_establishing_push() -> void:
+	_expect(Combat3D.want_follow_engage(false, false, false, false, false),
+		"someone left the ground and nothing is focused: the follow must engage")
+	_expect(not Combat3D.want_follow_engage(false, false, true, false, false),
+		"everyone on the ground: the resting shot keeps the frame")
+	_expect(not Combat3D.want_follow_engage(false, true, false, false, false),
+		"already focused: no re-cut every frame")
+	_expect(not Combat3D.want_follow_engage(true, false, false, true, false),
+		"the establishing push still owns the frame until it lands")
+	_expect(not Combat3D.want_follow_engage(true, false, false, false, true),
+		"a user-framed (dev free) camera is never taken over")
+	_expect(Combat3D.want_follow_engage(true, false, true, false, false),
+		"the establishing push landing still hands over, grounded or not")
 
 
 ## The rule the playtester's camera-not-over-shoulder check was missing: how
