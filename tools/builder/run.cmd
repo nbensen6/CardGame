@@ -79,6 +79,16 @@ REM this machine - the reasoning, and everything that was tried, is written out
 REM at length in tools\fixer\run.cmd. Refreshing it is the fixer's job; this
 REM lane just uses whatever is there.
 set "CLAUDE=G:\fixer-bin\claude.exe"
+REM A newer CLI staged as claude.exe.new (copied from the desktop app's bundle,
+REM %APPDATA%\Claude\claude-code\<version>\claude.exe, while a run still held
+REM the old exe open) is swapped in here, between runs. 2.1.260 did not know
+REM Opus 5.5 and compacted it at 200k; 2.1.281 does.
+if exist "%CLAUDE%.new" (
+  move /y "%CLAUDE%.new" "%CLAUDE%" >nul 2>&1 && (
+    if exist "G:\fixer-bin\version.txt.new" move /y "G:\fixer-bin\version.txt.new" "G:\fixer-bin\version.txt" >nul
+    echo === swapped in the staged claude.exe >> "%LOG%"
+  )
+)
 if not exist "%CLAUDE%" (
   echo === no claude.exe at %CLAUDE%
   echo === FAILED: no claude.exe at %CLAUDE%. Run tools\fixer\run.cmd once to populate it. >> "%LOG%"
