@@ -62,9 +62,11 @@ def parse(text):
         mark = "?" if m.group(2) else m.group(1)
         bid = re.search(r" \^([\w-]+)\s*$", block, re.M)
         ask = re.search(r"^\s{6}Ask: (.+)$", block, re.M)
+        test = re.search(r"^\s{6}Test: (.+?)(?: \^[\w-]+)?\s*$", block, re.M)
         items.append({"a": a, "b": b, "mark": mark, "title": title,
                       "body": block, "id": bid.group(1) if bid else "",
-                      "ask": ask.group(1).strip() if ask else ""})
+                      "ask": ask.group(1).strip() if ask else "",
+                      "test": test.group(1).strip() if test else ""})
     return lines, items
 
 
@@ -183,7 +185,16 @@ def bullet(it):
     ask = it.get("ask") or "Tick if it is right. Say what is wrong if not."
     # The list is a link, the Test-this-now link beside it, and a question
     # (Nick, 2026-09-28). The frames live on the ticket the link opens.
-    return "\n".join([f"- [ ] {head} · {TEST}", f"  {ask}", "  - Nick: "])
+    # An item's `Test:` line names the exact harness scenario the builder
+    # graded; the link opens the game in that scenario (test_scenario.cmd).
+    return "\n".join([f"- [ ] {head} · {test_link(it.get('test', ''))}", f"  {ask}", "  - Nick: "])
+
+
+def test_link(scenario):
+    if not scenario:
+        return TEST
+    from urllib.parse import quote
+    return f"▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario={quote(scenario, safe='')})"
 
 
 def write_page(lines, items):

@@ -66,6 +66,11 @@ var _drag := ""
 ## appears and fades, not a layout change) this is the only way a screenshot
 ## can show it took effect at all.
 var _press_key := ""
+## play — set the scenario up exactly as for a shot, then HAND IT TO NICK:
+## no capture, no quit, a normal focused window on his main screen (he asked
+## for it by clicking "Test this now" on the ticket, 2026-09-28). Values may
+## use '+' for a space (console=climb+5) so the args survive a URL.
+var _play := false
 
 
 ## Take the shot without stealing the screen.
@@ -108,8 +113,11 @@ func _stay_out_of_the_way() -> void:
 
 
 func _initialize() -> void:
-	_stay_out_of_the_way()
-	for a in OS.get_cmdline_user_args():
+	_play = "play" in OS.get_cmdline_user_args()
+	if not _play:
+		_stay_out_of_the_way()
+	for raw in OS.get_cmdline_user_args():
+		var a: String = raw.replace("+", " ") if _play else raw
 		if a == "foil":
 			CardView.force_foil = true
 		if a == "borderless":
@@ -1517,6 +1525,9 @@ func _capture() -> void:
 		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
 			"OK" if after < before else "FAIL", before, after])
 	_hand_geometry(current_scene)
+	if _play:
+		print("PLAY READY: scenario is live. Close the window when done.")
+		return
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	var saved: Error = img.save_png(_out)

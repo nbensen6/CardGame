@@ -99,7 +99,14 @@ stones climbing the gap between them, dark ground, cool sky.
        - [ ] 👀 **Title.**
              ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Title.|details]]
              Ask: one plain question, 15 words or fewer, answerable yes/no or by a choice.
+             Test: state=3dclimb slot=1 console=climb+5
              ![[agents/frames/builder/<after>.png|420]] ^block-id
+
+   `Test:` is the EXACT harness arguments of your after frame (everything
+   after `--` minus `out=`), with `+` in place of any space inside a value.
+   Nick's "Test this now" link opens the game in that scenario, focused, on
+   his screen. A question about the Frog at the sigil with a Test line that
+   starts at rest is a question he cannot answer (Nick, 2026-09-28).
 
    `^block-id` is ALWAYS the last thing on the item's last line; Obsidian
    only resolves it there, and Needs Nick links to it. When you add or

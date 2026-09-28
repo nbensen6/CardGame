@@ -27,6 +27,7 @@ Penalties (each is an automatic FAIL, they are this project's known failures):
 - card text overflowing its box, or a control pushed off the bottom of the window
 - a model rendering flat white or magenta (missing texture)
 - the frame did not change at all (identical before and after)
+- in any resting shot (`state=3d`): the beast is not visible, or a hunter is NOT nearer the camera than every stone (Nick's drawing: hunters in the foreground, stones climbing the gap, beast far). The 2026-09-28 stones item was passed with the hunters behind the stones in Nick's own view.
 
 Rules:
 - Judge only what the item asks plus the penalties. Do not list taste notes; Nick judges taste.
