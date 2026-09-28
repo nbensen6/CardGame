@@ -109,6 +109,9 @@ def apply_answers(lines, items, answers):
     to_top = []
     for it in items:
         ticked, note = answers.get(it["id"], [False, ""])
+        # "goblin looks okay at this time" is a yes, not a send-back.
+        if note and re.match(r"^(ok|okay|yes|yep|good|fine|done|approved|looks (good|okay|fine|right)|.* looks (good|okay|fine|right)( at this time| for now)?\.?)$", note.strip(), re.I):
+            ticked, note = True, ""
         if ticked and it["mark"] == "?":
             lines[it["a"]] = lines[it["a"]].replace("- [ ] 👀", "- [x]", 1)
             changed = True
