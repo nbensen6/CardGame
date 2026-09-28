@@ -10,6 +10,24 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Stones: first by the hunter, last in front of the head.**
+      **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
+      **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
+      **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
+      **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
+      Ask: Each hunter's last stone now sits beside the jackal's head, one each side. Right?
+      Test: state=3d
+      ![[agents/frames/builder/2026-09-28-top-stones-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+- [ ] **Zoom out: stairs visible, beast whole.**
+      **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
+      **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
+      Ask: Grader failed this: Frog looks bigger at the sigil than at rest. Resting range right?
+      Test: state=3dclimb
+      ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
+      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
+- [ ] **Dev camera never survives a launch.** F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast), so nothing the builder graded on the Player camera matched what he saw. Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera. Test: state=3d ^dev-camera-never-survives-a-launch
 - [ ] **Hops land on stones.**
       **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
@@ -19,13 +37,6 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
       Ask: Camera now sits further back. Far enough, or further still?
       ![[agents/frames/builder/2026-09-28-zoom-out-more-strip-after.png|420]] ^hops-land-on-stones
-- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
-      **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
-      **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
-      **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Each hunter's last stone now sits beside the jackal's head, one each side. Right?
-      ![[agents/frames/builder/2026-09-28-top-stones-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
@@ -65,12 +76,6 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Weak-point shot, same frame as the sigil.|details]]
       Ask: Same frame as the sigil item. Tick both together.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]] ^weak-point-shot-same-frame-as-the-sigil
-- [ ] 👀 **Zoom out: stairs visible, beast whole.**
-      **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
-      Ask: Grader failed this: Frog looks bigger at the sigil than at rest. Resting range right?
-      ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
 - [x] **Nick judged the 2026-09-25 camera and stones**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Nick judged the 2026-09-25 camera and stones|details]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]] ^nick-judged-the-2026-09-25-camera-and-st
