@@ -67,7 +67,8 @@ run failed.
 - [x] **Nick judged the 2026-09-25 camera and stones** ^nick-judged-the-2026-09-25-camera-and-st
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Nick judged the 2026-09-25 camera and stones|details]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
-- [ ] 👀 **Sigil shot: face and eyes in frame.** ^sigil-shot-face-and-eyes-in-frame
+- [x] **Sigil shot: face and eyes in frame.** ^sigil-shot-face-and-eyes-in-frame
+      **Closed by the session, 2026-09-28 13:40 ET:** superseded. Nick's camera rule (one fixed distance behind the held character, everywhere) covers the top stone; the Zoom out item rebuilds this shot. The question was jargon he should never have been asked.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Sigil shot: face and eyes in frame.|details]]
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
