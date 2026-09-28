@@ -198,3 +198,8 @@ appends here, never to the queue.
 - [ ] (proposed) **Opening wide shot is still a zoom.** The fight opens on the whole beast and eases in to the follow distance. Ask Nick whether the camera should start at the follow distance.
 - [ ] (proposed) **Other hunter behind the camera mid-climb.** At 3.2 units the second hunter falls behind the lens at the sigil (VIS FAIL hunter1).
 - [ ] **Hunters stand wider apart on the ground.** At ±1.15 units the Goblin's own stone line falls under the climb gauge in the Frog's view.
+
+- [ ] **Colour bible.** One note in `art/` listing every colour the game may use (sky, ground, stone, ember, each hunter, HUD), each with its light and dark version, and a rule: nothing enters the game in a colour that is not on it. From the "Stop Asking AI To Build The Whole Game At Once" video (notes/video-transcripts, 2026-09-28): their reference was daylight, the game was night, so every colour got translated once and the look stayed coherent. Ours: Nick's drawing and the RoR2 reference, translated to style C.
+- [ ] **Lighting preset panel for Nick.** A dev-only panel (behind F8's Dev mode) with sliders for sun angle, sun colour, ambient, fog density and a row of presets (dusk, deep night, blizzard, sunrise, pale day). Same video: the scene's whole mood changed per preset with no art change, and the dev tuned it by eye. Cheapest atmosphere lever we have; Nick judges by eye anyway.
+- [ ] **Simple shapes, let the light do the work.** Same video: "don't ask AI for realistic meshes; a house is boxes and a roof, the light does the rest." Our stones are crates today; a low-poly boulder from a Blender script (one line per piece, rerun on a fix) plus the lighting panel above may read better than any generated mesh.
+
