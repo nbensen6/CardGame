@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T18:25
-working_on: "Stones: first by the hunter, last in front of the head."
+updated: 2026-09-28T18:55
+working_on: "Zoom out: stairs visible, beast whole."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 18:25 EDT
+2026-09-28 18:55 EDT
 
-- **Did:** Each hunter now waits straight in front of its own line's first stone.
-- **Worked?** Partly, Frog stands in front of its stone but the Goblin leaves the Frog's frame. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-hunters-front-of-stones-before.png]] then ![[frames/builder/2026-09-28-hunters-front-of-stones-after.png]]
-- **Ask:** Goblin off-screen in Frog's view. Accept, or narrow the stone lines?
+- **Did:** Frog keeps its real size after any hop or knockback, and stands on top of its stone.
+- **Worked?** Yes, knocked-back Frog now matches the resting Frog. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-28-frog-knockback-strip-before.png]] then ![[frames/builder/2026-09-28-frog-knockback-strip-after.png]]
+- **Ask:** After a knockback, is the Frog its normal size and shape now?
 
 ## Notes
 
-- **Found:** with hunters on their own lines (~8 apart), the follow camera shows only the selected hunter.
+- **Found:** Nick's knockback screenshot shows the Frog side-on; the harness knockdown does not reproduce that facing.
+- **Found:** a cancelled hop resets the body's scale but not its forward lean.
 
 ## Log
 
+- 2026-09-28 18:55 EDT — builder: hop squash restores the hunter's fit scale, not 1 (Frog was 1.64x after any hop); rock top under the cap, hunters ride their stone's drift; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-28 18:25 EDT — builder: resting hunters stand in front of their own line's first stone (rest_pos_for); grader FAIL (other hunter off-screen), escalated; tested, pushed.
 - 2026-09-28 18:14 EDT — builder: follow aim at RoR2's pivot (1.25 hunter heights, above the head), researched from RoR2's survivor template; grader FAIL x2 (wanted further back); tested, pushed.
 - 2026-09-28 17:09 EDT — builder: playtest hop-distance-band ceiling deleted with reason, floor kept (124 -> 0 fails); grader FAIL x2 on the multi-run done-when; tested, pushed.

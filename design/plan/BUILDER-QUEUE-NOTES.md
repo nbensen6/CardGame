@@ -57,6 +57,29 @@ under the intent badge/boss bar at rest. Round 3: "Frog about 180 px tall
 (25%) at rest and about 335 px (46%) at the sigil". `run_tests.gd`: ALL
 TESTS PASSED.
 
+**Builder, 2026-09-28 18:55 EDT:** worked from Nick's 18:10 note ("model of frog
+got changed when i got knocked back"). Root cause: the hop's squash-and-stretch
+tweened the hunter body's scale back to `Vector3.ONE`, and a cancelled hop
+reset it to `Vector3.ONE` too. The Frog is fit to HUNTER_HEIGHT at scale 0.61,
+so after ANY hop (a climb or a knockdown) it stood 1.64x its size. The Goblin
+(fit 0.38) had never hopped in these shots. This is also the unexplained
+"Frog reads ~1.8x bigger at the top" from the 15:36 run.
+- `_spawn_hunter` stores the fit scale as `rest_scale` meta; `_hop` squashes
+  relative to it and `_cancel_pending_tween` restores it
+  (`hunter_rest_scale`, tested).
+- With the Frog its real size, it stood half-sunk in its stone. Two causes,
+  both fixed: the rock mesh's top sat half a cap ABOVE the cap
+  (`cap_height * 0.5 - rock_height`, against its own comment), and the stone
+  bobs ±0.08 on its own phase while the hunter on it swayed on another.
+  Rock top now sits inside the cap; a hunter standing on a stone rides that
+  stone's drift (`stone_bob`, `riding_stone`, tested).
+- Repro: `state=3d beast=cinder_jackal console=climb+5;climb+2`. Measured body
+  scale after: 0.609 (was 1.0).
+- Not reproduced: Nick's screenshot also shows the Frog side-on. The harness
+  knockdown shows it facing the beast; proposed at the bottom of the queue.
+Grader: FAIL (round 1, pair did not show rest vs knockback), FAIL (round 2,
+Frog sunk into stone), PASS (round 3). `run_tests.gd`: ALL TESTS PASSED.
+
 ## F8 flips the camera Player/Dev.
 
 The Player/Dev button exists in the

@@ -30,14 +30,13 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
       Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
       ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
-- [ ] **Zoom out: stairs visible, beast whole.**
+- [ ] 👀 **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
-      Ask: Grader failed this: Frog looks bigger at the sigil than at rest. Resting range right?
-      Test: state=3dclimb
-      ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
+      Ask: After a knockback, is the Frog its normal size and shape now?
+      Test: state=3d beast=cinder_jackal console=climb+5;climb+2
+      ![[agents/frames/builder/2026-09-28-frog-knockback-strip-after.png|420]] ^zoom-out-stairs-visible-beast-whole
 - [ ] **Dev camera never survives a launch.** F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast), so nothing the builder graded on the Player camera matched what he saw. Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera. Test: state=3d ^dev-camera-never-survives-a-launch
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
@@ -139,3 +138,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Grader reads the previous run's Ask.** It graded this run against "camera further back", the last run's question, not Nick's newest line.
 - [ ] (proposed) **Follow distance is further back than RoR2.** RoR2 puts the survivor ~16% of frame height; FOLLOW_DIST 5.2 gives ~11%.
 - [ ] (proposed) **Other hunter off-screen at rest.** With hunters on their own stone lines (~8 apart), the follow camera shows only the selected one.
+- [ ] (proposed) Nick's knockback screenshot shows the Frog side-on; the harness knockdown shows it facing the beast. Facing after a real enemy-turn knockback is unverified.
+- [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).

@@ -1451,7 +1451,7 @@ func _process(delta: float) -> void:
 		if not is_instance_valid(st):
 			continue
 		var home: Vector3 = _float_home[i]
-		st.position.y = home.y + sin(_time * 1.1 + float(i) * 1.7) * HUNTER_HEIGHT * 0.12
+		st.position.y = home.y + stone_bob(_time, i)
 		st.rotation.y += delta * 0.25
 	if _beast != null:
 		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
@@ -1481,8 +1481,12 @@ func _process(delta: float) -> void:
 		# to the destination on frame one and fought the tween for the rest of
 		# its run. Every climb read as a flat slide instead of a jump.
 		if is_instance_valid(node) and not _tween_is_live(_climb_tw.get(i) as Tween):
-			# a gentle out-of-phase idle so the two hunters don't look cloned
-			node.position.y = float((h["home"] as Vector3).y) + sin(_time * 2.3 + i * 1.7) * 0.045
+			# a gentle out-of-phase idle so the two hunters don't look cloned,
+			# unless they stand on a stone: then they ride that stone's drift,
+			# or the stone rises through their feet (Frog half-sunk, 2026-09-28)
+			var on := riding_stone(h["home"] as Vector3, _float_home)
+			node.position.y = float((h["home"] as Vector3).y) + (stone_bob(_time, on)
+				if on >= 0 else sin(_time * 2.3 + i * 1.7) * 0.045)
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * _sigil_scale * (1.0 + sin(_time * 3.0) * 0.14)
 	_fly(delta)
@@ -3930,13 +3934,14 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	var fall: float = arc["fall"]
 	var live: bool = body != null and is_instance_valid(body)
 	var flight := rise + hang + fall
+	var rest: Vector3 = hunter_rest_scale(body) if live else Vector3.ONE
 
 	# ANTICIPATION. A jump that starts the instant it is asked for reads as a
 	# teleport with an arc drawn on it; the crouch is what says the hunter
 	# DECIDED to go. 60-100ms is the window the animation literature gives:
 	# shorter cannot be seen, longer reads as input lag.
 	if live:
-		tw.tween_property(body, "scale", Vector3(1.10, 0.86, 1.10), 0.09) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(body, "scale", rest * Vector3(1.10, 0.86, 1.10), 0.09) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 	# THE ARC, one axis at a time.
 	#
@@ -3963,8 +3968,8 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	if live:
 		# TAKEOFF STRETCH, decaying back to neutral by the apex. Past ~1.2 a
 		# low-poly body reads as rubber rather than force.
-		tw.parallel().tween_property(body, "scale", Vector3(0.92, 1.16, 0.92), 0.08) 			.set_ease(Tween.EASE_OUT)
-		tw.parallel().tween_property(body, "scale", Vector3.ONE, rise - 0.08) 			.set_delay(0.08).set_ease(Tween.EASE_IN_OUT)
+		tw.parallel().tween_property(body, "scale", rest * Vector3(0.92, 1.16, 0.92), 0.08) 			.set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(body, "scale", rest, rise - 0.08) 			.set_delay(0.08).set_ease(Tween.EASE_IN_OUT)
 		# BODY ATTITUDE: lean into the arc on the way up, nose down on the way
 		# in. An upright, rigid body is the loudest "there is no animation here"
 		# tell there is, and a lean costs one more tween.
@@ -3975,9 +3980,9 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	# LANDING. Impact is a SNAP, not an ease — the asymmetry (in fast, out
 	# slow) is what reads as weight rather than as a slide into place.
 	if live:
-		tw.chain().tween_property(body, "scale", Vector3(1.18, 0.78, 1.18), 0.05) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.chain().tween_property(body, "scale", rest * Vector3(1.18, 0.78, 1.18), 0.05) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.parallel().tween_property(body, "rotation:x", 0.0, 0.05)
-		tw.tween_property(body, "scale", Vector3.ONE, 0.17) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(body, "scale", rest, 0.17) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Pure form of the arc above: the apex the hop rises to and the two halves'
@@ -4138,7 +4143,13 @@ static func _cancel_pending_tween(climb_tw: Dictionary, i: int, body: Node3D) ->
 	if old_tw != null and old_tw.is_valid():
 		old_tw.kill()
 	if body != null and is_instance_valid(body):
-		body.scale = Vector3.ONE
+		body.scale = hunter_rest_scale(body)
+
+
+## The scale a hunter's body stands at between hops: its fit-to-height scale
+## (_spawn_hunter stores it), not Vector3.ONE. A body with none stored is 1.
+static func hunter_rest_scale(body: Node3D) -> Vector3:
+	return body.get_meta("rest_scale", Vector3.ONE) as Vector3
 
 
 ## Whether `tw` (a `_climb_tw[i]` entry, or null) is still actively driving a
@@ -4228,6 +4239,22 @@ static func hunter_facing_y(t: float, side: float, from: Vector3 = Vector3.ZERO,
 	if absf(dx) < 0.0001 and absf(dz) < 0.0001:
 		return 0.0
 	return atan2(dx, dz)
+
+
+## How far stone `k` has drifted from its home at `time` (see _process).
+static func stone_bob(time: float, k: int) -> float:
+	return sin(time * 1.1 + float(k) * 1.7) * HUNTER_HEIGHT * 0.12
+
+
+## Index of the stone whose home is where a hunter at `home` stands, or -1
+## (on the ground, on the body). A hunter on a stone rides its drift.
+static func riding_stone(home: Vector3, stone_homes: Array) -> int:
+	for k in stone_homes.size():
+		var sh: Vector3 = stone_homes[k]
+		if Vector2(sh.x - home.x, sh.z - home.z).length() < HUNTER_HEIGHT * 0.5 \
+				and absf(sh.y - home.y) < HUNTER_HEIGHT * 0.25:
+			return k
+	return -1
 
 
 ## Tween-callback wrapper for home_after_leg(): fired once per sub-hop, right
@@ -4445,6 +4472,11 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 		holder.add_child(m)
 		_shade_model(m, false, hunter_toon, cid)
 		_fit_height(m, HUNTER_HEIGHT)
+		# The hop squashes and restores the body's scale; this is the size it
+		# restores TO. Restoring to Vector3.ONE threw away the fit above, so
+		# after one hop the Frog (fit 0.61) stood 1.64x its size (Nick,
+		# 2026-09-28: "model of frog got changed when i got knocked back").
+		m.set_meta("rest_scale", m.scale)
 		body = m
 		# Same idle-loop wiring _show_beast gives a rigged beast — a no-op for
 		# a model with no AnimationPlayer (every hunter today).
@@ -4732,7 +4764,10 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# diameter/height off that native size, then sit the base low
 	# enough that the scaled top reaches the underside of the cap.
 	var body_scale: float = (rock_radius * 2.0) / 1.74
-	body.position = Vector3(0.0, cap_height * 0.5 - rock_height, 0.0)
+	# Top at mid-cap, inside it. `cap_height * 0.5 - rock_height` put the
+	# rock's flat top half a cap ABOVE the cap, where it hid the feet of a
+	# hunter standing on the cap (Frog half-sunk, 2026-09-28).
+	body.position = Vector3(0.0, -cap_height * 0.5 - rock_height, 0.0)
 	body.scale = Vector3.ONE * body_scale
 	# Y-axis spin only (no per-instance tilt/squash, unlike the old
 	# sphere): a hull mesh's irregular shape already reads as a

@@ -927,6 +927,8 @@ func _init() -> void:
 	# it never cancelled a still-running tween the way the climb branch does.
 	_test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale()
 	_test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running()
+	_test_cancel_pending_tween_restores_the_fit_scale_not_one()
+	_test_hunter_on_a_stone_rides_its_drift()
 	# backlog #86 duty 2 (this turn): the per-frame idle sway raced those same
 	# tweens from the other side, rewriting node.position.y every frame with
 	# no idea one was live.
@@ -21862,6 +21864,40 @@ func _test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale() -
 		"a killed tween can leave the body mid-squash; cancellation must put it back or the next move starts from a shape nobody chose")
 	node.free()
 	body.free()
+
+
+## Nick, 2026-09-28: "model of frog got changed when i got knocked back".
+## The Frog is fit to HUNTER_HEIGHT at scale 0.61; every hop and every
+## cancelled hop restored the body to Vector3.ONE, so after one move it stood
+## 1.64x its size. Restore goes to the stored fit scale.
+func _test_cancel_pending_tween_restores_the_fit_scale_not_one() -> void:
+	var body := Node3D.new()
+	body.set_meta("rest_scale", Vector3.ONE * 0.61)
+	body.scale = Vector3(0.7, 1.3, 0.7)
+	Combat3D._cancel_pending_tween({}, 0, body)
+	_expect(body.scale.is_equal_approx(Vector3.ONE * 0.61),
+		"a cancelled hop must put the body back at its fit-to-height scale, not 1 (the Frog grew 1.64x after a knockback)")
+	_expect(Combat3D.hunter_rest_scale(body).is_equal_approx(Vector3.ONE * 0.61),
+		"hunter_rest_scale reads the stored fit scale")
+	body.free()
+	var plain := Node3D.new()
+	_expect(Combat3D.hunter_rest_scale(plain).is_equal_approx(Vector3.ONE),
+		"a body with no stored fit scale rests at 1")
+	plain.free()
+
+
+## A hunter standing on a stone moves with that stone's drift; one on the
+## ground (no stone home under them) keeps its own idle sway.
+func _test_hunter_on_a_stone_rides_its_drift() -> void:
+	var homes: Array = [Vector3(-5.0, 1.0, 80.0), Vector3(-4.9, 4.6, 65.0)]
+	_expect(Combat3D.riding_stone(Vector3(-4.9, 4.6, 65.0), homes) == 1,
+		"a hunter at a stone's home is riding that stone")
+	_expect(Combat3D.riding_stone(Vector3(-4.9, 0.0, 88.0), homes) == -1,
+		"a hunter on the ground rides no stone")
+	_expect(Combat3D.riding_stone(Vector3(-4.9, 3.0, 65.0), homes) == -1,
+		"a hunter well below a stone is not standing on it")
+	_expect(is_equal_approx(Combat3D.stone_bob(0.0, 0), 0.0),
+		"a stone's drift starts at its home")
 
 
 func _test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running() -> void:
