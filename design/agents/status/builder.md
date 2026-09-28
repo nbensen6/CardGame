@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T12:24
-working_on: "Zoom out: one fixed camera behind the held hunter"
+updated: 2026-09-28T12:51
+working_on: "F8 flips the camera Player/Dev"
 ---
 
 # builder
@@ -13,23 +13,23 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 12:24 EDT
+2026-09-28 12:51 EDT
 
-- **Did:** the camera now sits one fixed distance behind the hunter you hold, centred, at rest and climbing.
-- **Worked?** Partly: the Frog is centred, a fifth of the frame, same range everywhere, but it still reads side-on. `VERDICT: FAIL`
-- **Look at:** ![[frames/builder/2026-09-28-camera-behind-before.png]] then ![[frames/builder/2026-09-28-camera-behind-after.png]] and ![[frames/builder/2026-09-28-camera-behind-climb-after.png]]
-- **Ask:** Is this the range? If yes, should the Frog turn its back to camera next?
+- **Did:** F8 now visibly cuts the camera to a wide Dev view and back, with a readable note.
+- **Worked?** Partly: the flip and note work, but the Player shot is still side-on, which the grader fails. `VERDICT: FAIL`
+- **Look at:** ![[frames/builder/2026-09-28-f8-works-before.png]] then ![[frames/builder/2026-09-28-f8-works-after.png]]
+- **Ask:** Press F8 in a fight: does the camera jump wide with a "Camera: Dev" note?
 
 ## Notes
 
-- **Found:** the Frog still reads side-on at rest. The lens is behind it on the line to the beast, but the model faces about 90 degrees off that line.
-- **Found:** at rest, from hunter height, the near stones hide the jackal's body. Only its head clears them.
-- **Found:** the fight still opens on a wide shot of the whole beast and eases in. That is a zoom Nick may not want either.
-- **Found:** mid-climb the other hunter ends up behind the camera (VIS FAIL hunter1), now that the lens is this close.
-- **Found:** grader, last verdict: `VERDICT: FAIL`. Its fix was "swing the camera round to sit directly behind the Frog so its back faces the lens, and the Jackal stands clear above the stones".
+- **Found:** why "nothing happens": F8 did flip the setting, but Dev only unlocked dragging, so the picture never moved, and the note sat under the intent chip.
+- **Found:** the harness never touched Nick's real config slot (it uses a scratch slot), so the dev.cmd free-camera suspicion is not the harness. His real slot may simply hold Dev from the Menu button; F8 now shows and flips it.
+- **Found:** grader, last verdict: `VERDICT: FAIL`. Its fix was "make the Player camera a real locked third-person view from behind the active hunter, frog's back at bottom-centre, jackal whole", which is the Frog-facing and near-stones items already proposed.
+- **Found:** a software-rendered harness frame is about 0.2 s, so any timed HUD note fades within a few frames of a press.
 
 ## Log
 
+- 2026-09-28 12:51 EDT — builder: F8 cuts to a wide Dev view and back, note moved clear of the intent chip; grader FAIL on side-on Player shot; tested, pushed.
 - 2026-09-28 12:24 EDT — builder: one fixed follow distance (3.2) behind the held hunter, centred, yaw on the beast-to-hunter line; grader FAIL on side-on Frog; tested, pushed.
 - 2026-09-27 18:39 EDT — builder: the first climb engages the locked follow camera; hunter-offscreen 4 fails to 0; built, tested, pushed.
 - 2026-09-27 18:24 EDT — builder: camera-not-over-shoulder waits for the truck's ease instead of 45 frames; 9 fails to 0; built, tested, pushed.

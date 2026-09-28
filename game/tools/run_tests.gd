@@ -2660,6 +2660,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_dev_camera_enabled_round_trips_dev()
 	_test_backlog_dev_camera_enabled_round_trips_back_to_player()
 	_test_backlog_f8_flips_dev_camera_enabled_live()
+	_test_f8_dev_overview_is_visibly_wider()
 
 	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
 	# HP bar, clear of the hand) never accounted for the top-left party panel,
@@ -27249,8 +27250,22 @@ func _test_backlog_f8_flips_dev_camera_enabled_live() -> void:
 	c3d._unhandled_input(f8)
 	_expect(Progress.dev_camera_enabled() == false,
 		"a second F8 must flip it back to Player, not get stuck on Dev")
+	_expect(c3d._free_cam_engaged == false and c3d._pan == Vector3.ZERO,
+		"F8 back to Player must hand framing back to the locked camera, not leave the dev framing on")
 	get_root().remove_child(c3d)
 	c3d.free()
+
+
+## Nick, 2026-09-28 12:29 ET: "nothing happens when i press f8". Dev only
+## unlocked drag input, so the picture never moved. F8 now cuts to
+## dev_overview: further back than the locked shot, inside limits.
+func _test_f8_dev_overview_is_visibly_wider() -> void:
+	var o: Vector2 = Combat3D.dev_overview(3.2, 0.2)
+	_expect(o.x > 3.2 * 1.5, "Dev must pull the camera well back, or F8 still looks like nothing happened")
+	_expect(o.y >= 0.2, "Dev must not tilt lower than the locked shot, or the ground eats the hunters")
+	var far: Vector2 = Combat3D.dev_overview(50.0, 1.3)
+	_expect(far.x <= 60.0 and far.y <= Combat3D.ORBIT_PITCH_MAX + 0.001,  # Vector2 is float32
+		"Dev overview must stay inside the wheel-zoom and orbit limits")
 
 
 ## backlog #86 duty 3 (thirty-seventh pass) -- EnetTransport. A NetLink never

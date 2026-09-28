@@ -47,6 +47,30 @@ one key (F8) that flips Player/Dev live with a one-second HUD label
 saying which. Shot: `state=3d` — locked third-person, hunter's back at
 bottom-centre.
 
+### Builder run, 2026-09-28 12:51 EDT
+
+- Nick: "nothing happens when i press f8". Reproduced in the harness with
+  `press=F8`: the flag did flip to Dev, but Dev only unlocks drag/wheel input,
+  so the frame was identical, and the 1 s note at y=96 was drawn under the
+  intent chip (canvas layer 0, below the HUD).
+- The `screenshot.gd` suspect is ruled out: it uses the scratch slot
+  `progress_screenshot`, never the real one. But that scratch slot DID keep a
+  `press=F8` flip into the next shot, so the harness now resets to Player.
+- Change: F8 to Dev takes the camera (`_take_manual_control`), pins the aim
+  height with `_pan.y` (a user-framed camera otherwise aims at the
+  beast-framing height and drops the hunters under the cards), and cuts to
+  `dev_overview()` = 3.6x the locked distance, same tilt. F8 to Player calls
+  `_focus_camera()` then a snapped `_aim_camera`, a cut back. The note is 28 px
+  at y=150, clear of the chip.
+- Harness: `press=F8,F8` now presses in turn; waits 4 frames (~0.8 s here).
+- Tuning measured by the VIS lines: 1.35x put the hunters under the cards
+  until the pan pin; 2.2x with +0.25 tilt cut the jackal's head off; 3.6x
+  flat keeps both hunters (y 337) and the whole jackal.
+- Grader: FAIL three rounds. What it still names is the Player shot itself
+  (Frog side-on, not back to camera; jackal hidden behind the stones), which
+  are the proposed Frog-facing and near-stones items, and the note's 1 s
+  duration, which a still cannot show.
+
 ## Nick judged the 2026-09-25 camera and stones
 
 (2026-09-25 14:30 EDT).

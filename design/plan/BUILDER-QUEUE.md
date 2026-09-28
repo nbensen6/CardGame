@@ -102,3 +102,4 @@ Do not start until the jackal fight is ticked. One beast per run through
 - [ ] `glyph_tortoise` — check the sigil raycast lands on the head, not the shell
 
 Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
+- [ ] (proposed) **Harness frames run slow.** A software-rendered shot frame is ~0.2 s, so timed HUD notes fade within a few frames of a `press=`.

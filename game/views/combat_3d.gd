@@ -2350,6 +2350,14 @@ static func free_camera_allowed(is_debug_build: bool, dev_camera_enabled: bool) 
 	return is_debug_build and dev_camera_enabled
 
 
+## Where F8 puts the dev free camera: about three and a half times as far back
+## as the locked shot it starts from, same tilt, so turning Dev on is something
+## you can SEE and the whole beast is in it. Returns Vector2(dist, pitch), inside the wheel-zoom and orbit limits.
+static func dev_overview(dist: float, pitch: float) -> Vector2:
+	return Vector2(clampf(dist * 3.6, 4.0, 60.0),
+		clampf(pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX))
+
+
 func _aim_camera(delta: float, snap: bool) -> void:
 	if _client == null or _beast == null:
 		return
@@ -2981,8 +2989,10 @@ func _dev_note(text: String, seconds: float = 2.6) -> void:
 	l.add_theme_color_override("font_color", Color(1.0, 0.86, 0.45))
 	l.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	l.add_theme_constant_override("outline_size", 6)
+	l.add_theme_font_size_override("font_size", 28)
 	l.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	l.position.y = 96.0
+	# Below the beast's intent chip (y 80-112), which used to sit on top of it.
+	l.position.y = 150.0
 	l.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(l)
 	var tw := create_tween()
@@ -3014,6 +3024,26 @@ func _unhandled_input(event: InputEvent) -> void:
 	if key != null and key.pressed and key.keycode == KEY_F8:
 		var next := not Progress.dev_camera_enabled()
 		Progress.set_dev_camera_enabled(next)
+		# Nick, 2026-09-28 12:29 ET: "nothing happens when i press f8". The
+		# flag flipped, but Dev only unlocked drag input, so the picture never
+		# moved. Dev now takes the camera and pulls it back to an overview;
+		# Player hands framing straight back to the locked camera.
+		if next and free_camera_allowed(OS.is_debug_build(), next) and _beast != null:
+			_take_manual_control()
+			# Hold the aim where the locked shot had it. A user-framed camera
+			# aims at the beast-framing height instead, which is metres up and
+			# drops the hunter under the cards; the free-cam pan is the offset
+			# that keeps it, and Player (_focus_camera) clears it again.
+			_pan.y = _pivot.y - _climb_frame().x
+			var o := dev_overview(_free_dist_target, _pitch_target)
+			# A cut, not an ease: a flip should read the instant you press it.
+			_free_dist_target = o.x
+			_pitch_target = o.y
+			_dist = o.x
+			_pitch = o.y
+		elif not next:
+			_focus_camera()
+			_aim_camera(0.0, true)   # a cut back, too
 		_dev_note("Camera:  %s" % ("Dev" if next else "Player"), 1.0)
 		return
 	# The free camera (drag to orbit, right/middle-drag to pan, wheel to zoom,

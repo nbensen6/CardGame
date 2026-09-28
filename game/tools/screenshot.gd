@@ -51,7 +51,7 @@ var _console := ""
 ## there without letting go. A screenshot cannot drag, so without this the
 ## whole drag-to-play gesture could only ever be claimed to work.
 var _drag := ""
-## press=F8 — feed one real key press through Input.parse_input_event before
+## press=F8 (or F8,F8) — feed real key presses through Input.parse_input_event before
 ## the shot, same path a keyboard does. For a live-toggle key (a HUD note that
 ## appears and fades, not a layout change) this is the only way a screenshot
 ## can show it took effect at all.
@@ -199,6 +199,9 @@ func _initialize() -> void:
 	# "bar" set and the next 3dosu would silently shoot the wrong face. State it.
 	Progress.set_timing_style(Progress.TIMING_BAR if _state == "3dbar"
 		else Progress.TIMING_CIRCLE)
+	# Same for the camera: a press=F8 shot flips it and the flip persists, so
+	# the next shot would start on Dev. Player is the state Nick lands in.
+	Progress.set_dev_camera_enabled(false)
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()
@@ -824,15 +827,18 @@ func _capture() -> void:
 			for _i in 3:
 				await process_frame
 			print("HOVER card %d lifted" % _hover)
-	if _press_key != "":
-		var code := OS.find_keycode_from_string(_press_key)
+	# press=F8,F8 presses in turn, so a toggle can be shown going AND coming back.
+	for pk in (_press_key.split(",", false) if _press_key != "" else PackedStringArray()):
+		var code := OS.find_keycode_from_string(pk)
 		if code == KEY_NONE:
-			print("PRESS unknown key '%s'" % _press_key)
+			print("PRESS unknown key '%s'" % pk)
 		else:
 			_press(code)
-			for _i in 3:   # let the key reach _unhandled_input and its note draw
+			# Enough for the note to draw; a software-rendered frame here is
+			# ~0.2 s, so more would outlive F8's one-second note.
+			for _i in 4:
 				await process_frame
-			print("PRESS %s" % _press_key)
+			print("PRESS %s" % pk)
 	if _state.begins_with("3d") and _state not in ["3dmap", "3dloop"]:
 		_report_visibility(current_scene)
 	if _state in ["3dosu", "3dbar", "3dslide"]:  # open a timed card's window and hold it there
