@@ -2601,7 +2601,7 @@ func _top_hold(side: float = 0.0) -> Vector3:
 	for h in _climb_points.keys():
 		top = maxi(top, int(h))
 	var p: Vector3 = foothold_anchor(_climb_points, top)
-	var x: float = stand_offset_x(p.x, side, _beast_box.size.x)
+	var x: float = route_offset_x(p.x, side, _beast_box.size.x)
 	# The last stone stands IN FRONT of the head (Nick's drawing, 2026-09-25),
 	# not on the sigil's anchor. The anchor is a point on the skin where the
 	# sigil is painted; on a face that is behind the muzzle, and on the Cinder
@@ -2611,6 +2611,22 @@ func _top_hold(side: float = 0.0) -> Vector3:
 	# rule a between-rung hold already uses.
 	var z: float = top_hold_z_for(p.z, _front_of_beast(x, p.y))
 	return stone_point(Vector3(x, p.y, z))
+
+
+## How far apart the two hunters' stone lines run, as the x of one line's top
+## stone. Nick, 2026-09-28: "the pair of stones need more distance between
+## them. then each character can land on a stone that is slightly to the right
+## or left of the beast." stand_offset_x's spacing (~0.9 each side on the
+## jackal) is for two hunters sharing one ledge ON the body; used for the two
+## routes it left each rung's pair touching, one merged block in front of the
+## head. The route lines take at least ROUTE_PAIR_HALF_GAP, sized off the
+## hunter like the stones themselves, so the pair reads as two stones with
+## ground between them. Only the ROUTES read this; a hunter on a shared ledge
+## still uses stand_offset_x.
+const ROUTE_PAIR_HALF_GAP := HUNTER_HEIGHT * 4.0
+static func route_offset_x(anchor_x: float, side: float, beast_width: float) -> float:
+	var half: float = maxf(stand_offset_x(anchor_x, 1.0, beast_width) - anchor_x, ROUTE_PAIR_HALF_GAP)
+	return anchor_x + side * half
 
 
 ## The top stone's z: the sigil's own anchor, or the local face plus a hunter's

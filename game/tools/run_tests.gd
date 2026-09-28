@@ -992,6 +992,8 @@ func _init() -> void:
 	# diagonal) as well as near-to-far.
 	_test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung()
 	_test_route_pos_first_rung_sits_left_of_the_top_hold()
+	# builder, 2026-09-28: the two stone lines run apart, one each side of the beast.
+	_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge()
 	_test_route_pos_sweeps_monotonically_left_to_right()
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
@@ -22198,6 +22200,20 @@ func _test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung()
 	var top := Vector3(1.0, 2.0, 3.0)
 	var p: Vector3 = Combat3D.route_pos(top, -5.0, 0, 1, 4.0)
 	_expect(p == top, "a beast with only one climb rung has no approach to sweep across -- route_pos must hand back the top hold unchanged")
+
+
+## Nick, 2026-09-28: "the pair of stones need more distance between them."
+## The two routes' top stones must sit at least 2 * ROUTE_PAIR_HALF_GAP apart
+## (a clear gap, not stand_offset_x's touching ~1.8 on the jackal), symmetric
+## about the anchor, and side 0 must leave the anchor where it is.
+func _test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge() -> void:
+	var width := 10.8
+	var left: float = Combat3D.route_offset_x(2.0, -1.0, width)
+	var right: float = Combat3D.route_offset_x(2.0, 1.0, width)
+	_expect(right - left >= 2.0 * Combat3D.ROUTE_PAIR_HALF_GAP - 0.001, "the two stone lines must run at least 2*ROUTE_PAIR_HALF_GAP apart")
+	_expect(right - left > Combat3D.stand_offset_x(2.0, 1.0, width) - Combat3D.stand_offset_x(2.0, -1.0, width), "the route pair must be wider apart than two hunters sharing one ledge")
+	_expect(is_equal_approx((left + right) * 0.5, 2.0), "the pair must be symmetric about the anchor")
+	_expect(is_equal_approx(Combat3D.route_offset_x(2.0, 0.0, width), 2.0), "side 0 leaves the anchor's x unchanged")
 
 
 func _test_route_pos_first_rung_sits_left_of_the_top_hold() -> void:

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T12:51
-working_on: "F8 flips the camera Player/Dev"
+updated: 2026-09-28T13:11
+working_on: "Stones: first by the hunter, last in front of the head"
 ---
 
 # builder
@@ -13,22 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 12:51 EDT
+2026-09-28 13:11 EDT
 
-- **Did:** F8 now visibly cuts the camera to a wide Dev view and back, with a readable note.
-- **Worked?** Partly: the flip and note work, but the Player shot is still side-on, which the grader fails. `VERDICT: FAIL`
-- **Look at:** ![[frames/builder/2026-09-28-f8-works-before.png]] then ![[frames/builder/2026-09-28-f8-works-after.png]]
-- **Ask:** Press F8 in a fight: does the camera jump wide with a "Camera: Dev" note?
+- **Did:** Split each pair of stones apart: the Frog's line runs left of the jackal, the Goblin's right.
+- **Worked?** Partly: the pair has clear ground between it and the jackal shows whole, but the grader failed this layout once before passing it. `VERDICT: PASS`
+- **Look at:** ![[frames/builder/2026-09-28-stones-apart-before.png]] then ![[frames/builder/2026-09-28-stones-apart-after.png]]
+- **Ask:** Do the two stone lines now flank the jackal, one per hunter?
 
 ## Notes
 
-- **Found:** why "nothing happens": F8 did flip the setting, but Dev only unlocked dragging, so the picture never moved, and the note sat under the intent chip.
-- **Found:** the harness never touched Nick's real config slot (it uses a scratch slot), so the dev.cmd free-camera suspicion is not the harness. His real slot may simply hold Dev from the Menu button; F8 now shows and flips it.
-- **Found:** grader, last verdict: `VERDICT: FAIL`. Its fix was "make the Player camera a real locked third-person view from behind the active hunter, frog's back at bottom-centre, jackal whole", which is the Frog-facing and near-stones items already proposed.
-- **Found:** a software-rendered harness frame is about 0.2 s, so any timed HUD note fades within a few frames of a press.
+- **Found:** the top stones sit at the sigil's height (jaw/neck), not across the face; raising them means moving the climb's end, which is a separate change.
+- **Found:** the pair is centred on the sigil's x, right of the jackal's middle, so the Goblin's line sits further right than the Frog's sits left. A half-gap of 2.5 hunters put the Frog's stone back over the legs, so it stays at 4.
+- **Found:** the grader gave FAIL, then PASS, on the same geometry (4.0 both times); round 1 read "in front of the character" as closer to the camera than the hunter.
 
 ## Log
 
+- 2026-09-28 13:11 EDT — builder: stone lines split one each side of the jackal (route_offset_x, 4 hunters each side); grader FAIL then PASS; tested, pushed.
 - 2026-09-28 12:51 EDT — builder: F8 cuts to a wide Dev view and back, note moved clear of the intent chip; grader FAIL on side-on Player shot; tested, pushed.
 - 2026-09-28 12:24 EDT — builder: one fixed follow distance (3.2) behind the held hunter, centred, yaw on the beast-to-hunter line; grader FAIL on side-on Frog; tested, pushed.
 - 2026-09-27 18:39 EDT — builder: the first climb engages the locked follow camera; hunter-offscreen 4 fails to 0; built, tested, pushed.

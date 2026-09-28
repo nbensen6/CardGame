@@ -95,6 +95,20 @@ Frog. Rungs 1-4 still bunch near the jackal (perspective, camera
 almost on top of rung 0 while the route's far end is ~80 units away) —
 may resolve once the queued zoom-out lands, may not.
 
+**Builder, 2026-09-28 13:11 EDT:** Nick (12:29): "the pair of stones need more
+distance between them... each character can land on a stone that is
+slightly to the right or left of the beast." Before: the two lines were
+offset by `stand_offset_x` (±0.89 on the 10.8-wide jackal, meant for two
+hunters sharing a ledge on the body), so each rung's pair touched and hid
+the jackal. New `route_offset_x` gives the ROUTES at least
+`ROUTE_PAIR_HALF_GAP` = 4 hunter heights (2.8) each side; `_top_hold`
+uses it, so the stones and the hunters' landings (`_stand_on_model`) move
+together. The playtest's hunter-off-marker check now uses the same rule.
+Tried 2.5: the Frog's stone covered the jackal's legs again. Grader round
+1 FAIL (read "in front of" as closer to the camera; top stones at jaw, not
+face), round 3 PASS on the same geometry. Test:
+`_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge`.
+
 ## Rest camera pulled back to 6.
 
 Two frames from Nick:

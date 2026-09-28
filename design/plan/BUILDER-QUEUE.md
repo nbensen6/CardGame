@@ -15,11 +15,11 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#F8 flips the camera Player/Dev.|details]]
       Ask: F8 now cuts to a wide Dev view and back. Press it in a fight. Works now? Tick, or say what happened.
       ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]]
-- [ ] **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
+- [ ] 👀 **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Is the first stone ahead of the Frog and the last in front of the head? Tick, or draw on it.
-      ![[agents/frames/builder/2026-09-25-stones-after.png|420]]
+      Ask: Each hunter now has its own stone line, left and right of the jackal. Right spacing?
+      ![[agents/frames/builder/2026-09-28-stones-apart-after.png|420]]
 - [x] **Rest camera pulled back to 6.** ^rest-camera-pulled-back-to-6
       **Closed by the session, 2026-09-28 12:35 ET:** duplicate; Nick's camera answer lives on the Zoom out item below, which is open.
       **Nick, 2026-09-28 12:29 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
@@ -103,3 +103,5 @@ Do not start until the jackal fight is ticked. One beast per run through
 
 Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Harness frames run slow.** A software-rendered shot frame is ~0.2 s, so timed HUD notes fade within a few frames of a `press=`.
+- [ ] (proposed) **Top stones at the sigil's height, not the face.** The last stones sit at jaw/neck height beside the head; raising them moves the climb's end.
+- [ ] (proposed) **Stone pair centred on the sigil, not the beast.** The Goblin's line sits further right than the Frog's sits left.
