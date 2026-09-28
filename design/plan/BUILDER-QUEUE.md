@@ -20,7 +20,8 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
       Ask: Is the first stone ahead of the Frog and the last in front of the head? Tick, or draw on it.
       ![[agents/frames/builder/2026-09-25-stones-after.png|420]]
-- [ ] **Rest camera pulled back to 6.** ^rest-camera-pulled-back-to-6
+- [x] **Rest camera pulled back to 6.** ^rest-camera-pulled-back-to-6
+      **Closed by the session, 2026-09-28 12:35 ET:** duplicate; Nick's camera answer lives on the Zoom out item below, which is open.
       **Nick, 2026-09-28 12:29 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Rest camera pulled back to 6.|details]]
       Ask: Superseded by Zoom out. Tick with it, or say if mid-climb looks wrong.
@@ -38,16 +39,19 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
       Ask: Do both hunters face the jackal at rest? Tick, or say who is wrong.
       ![[agents/frames/builder/2026-09-25-hunters-face-beast-after.png|420]]
-- [ ] **Goblin: one muted trim colour.** ^goblin-one-muted-trim-colour
+- [x] **Goblin: one muted trim colour.** ^goblin-one-muted-trim-colour
+      **Closed by the session, 2026-09-28 12:35 ET:** Nick: "goblin looks okay at this time." That is a yes.
       **Nick, 2026-09-28 12:29 ET:** goblin looks okay at this time.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Goblin: one muted trim colour.|details]]
       Ask: Does the Goblin read as one figure at this size? Tick, or say what still fights.
       ![[agents/frames/builder/2026-09-25-goblin-reads-after.png|420]]
-- [ ] **Playtest: two checks re-derived.** ^playtest-two-checks-re-derived
+- [x] **Playtest: two checks re-derived.** ^playtest-two-checks-re-derived
+      **Closed by the session, 2026-09-28 12:35 ET:** test-only work, nothing for Nick to judge; the question should never have been asked.
       **Nick, 2026-09-28 12:29 ET:** I dont understand the question here
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest: two checks re-derived.|details]]
       Ask: Nothing to look at, two test checks fixed. Tick.
-- [ ] **Weak-point shot, same frame as the sigil.** ^weak-point-shot-same-frame-as-the-sigil
+- [x] **Weak-point shot, same frame as the sigil.** ^weak-point-shot-same-frame-as-the-sigil
+      **Closed by the session, 2026-09-28 12:35 ET:** duplicate of the Sigil shot item; judge that one.
       **Nick, 2026-09-28 12:29 ET:** I dont understand the question here
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Weak-point shot, same frame as the sigil.|details]]
       Ask: Same frame as the sigil item. Tick both together.

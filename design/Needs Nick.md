@@ -5,7 +5,7 @@ tags:
 
 # Needs Nick
 
-_2026-09-28 12:29 ET. Tick a box to mark it done. Type after **Nick:** to send it back: your words go on the item and the builder takes it first. Then run **Send my answers** (command palette) or just run the builder._
+_2026-09-28 12:30 ET. Tick a box to mark it done. Type after **Nick:** to send it back: your words go on the item and the builder takes it first. Then run **Send my answers** (command palette) or just run the builder._
 
 ## Look, then tick or send back
 
