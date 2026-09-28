@@ -103,6 +103,32 @@ def read_answers():
     return answers
 
 
+REFS = ROOT / "design" / "art" / "references"
+
+
+def attach_images(note):
+    """A pasted image on the Nick: line arrives as ![[name.png]] (Obsidian saves
+    the file to art/references, or the vault root on an older setting). Move
+    it under art/references, stage it so it is pushed with the answer, and
+    rewrite the embed with the full path and a width so the ticket shows it."""
+    def fix(m):
+        name = m.group(1).split("|")[0].strip()
+        src = None
+        for cand in [REFS / Path(name).name, ROOT / "design" / name, ROOT / "design" / Path(name).name]:
+            if cand.exists():
+                src = cand
+                break
+        if src is None:
+            return m.group(0)
+        dst = REFS / src.name
+        if src != dst:
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            src.replace(dst)
+        git("add", str(dst))
+        return f"![[art/references/{dst.name}|420]]"
+    return re.sub(r"!\[\[([^\]]+)\]\]", fix, note)
+
+
 def apply_answers(lines, items, answers):
     """Tick or reopen queue items from the page. Returns True if anything changed."""
     changed = False
@@ -116,6 +142,7 @@ def apply_answers(lines, items, answers):
             lines[it["a"]] = lines[it["a"]].replace("- [ ] 👀", "- [x]", 1)
             changed = True
         if note and note not in it["body"]:
+            note = attach_images(note)
             lines[it["a"]] = re.sub(r"^- \[[ x]\] (👀 )?", "- [ ] ", lines[it["a"]], count=1)
             last = it["b"] - 1
             # His words go right under the title, above Look/Ask/Details, so

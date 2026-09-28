@@ -34,6 +34,11 @@ stones climbing the gap between them, dark ground, cool sky.
 
    The import is not optional: without it every `class_name` fails to resolve.
 
+   A line starting `**Nick, <time>:**` on an item is his answer and outranks
+   everything else in the item. It may carry an image (`![[art/references/...]]`):
+   a drawing or a marked-up screenshot. Read it with the Read tool; it is
+   the spec.
+
 2. **Take the top unticked item under `## Now` in
    `design/plan/BUILDER-QUEUE.md`.** Not the one you like. Not the one you
    think is more important. The top one. Never touch `## Waiting on Nick` or

@@ -6,5 +6,6 @@
   "userIgnoreFilters": [
     "renders/",
     "archive/"
-  ]
+  ],
+  "attachmentFolderPath": "art/references"
 }
