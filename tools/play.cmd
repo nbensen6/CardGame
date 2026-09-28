@@ -21,6 +21,12 @@ set "ID=%ID:/=%"
 
 :launch
 set "GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe"
+REM A harness run killed mid-shot leaves game\override.cfg behind, and it says
+REM no_focus=true: the game then ignores the keyboard (2026-09-28, "all my
+REM keyboard inputs are not being recorded"). Clear it before every launch.
+del "%ROOT%\game\override.cfg" 2>nul
+REM Pull first: the cloud builder pushes to main and cannot reach this PC.
+git -C "%ROOT%" pull --rebase --autostash --quiet origin main
 REM Reimport first, same reason tools\dev.cmd does it: a new .glb or class_name
 REM that the cache has not seen fails to compile and looks like a broken game.
 "%GODOT%" --headless --path "%ROOT%\game" --import >nul 2>&1
