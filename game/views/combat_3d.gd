@@ -4194,6 +4194,15 @@ static func hunter_move_kind(placed: bool, was: int, foot: int, moved: bool) -> 
 ## top of each other — the same rendered point — but compared as raw
 ## footholds they read as different holds, so the offset never fired and
 ## the Goblin stood inside the Frog at the sigil.
+## Where a hunter waits on the ground: straight in front of (camera side of)
+## the first stone of its own line, so the first hop is dead ahead. Nick,
+## 2026-09-28: "hunters are not starting in front of the stones" -- they used
+## to stand ~1.2 either side of centre while the lines open out to ~4 each
+## side, so the big stones flanked the hunters instead of leading from them.
+static func rest_pos_for(first_stone: Vector3, rest_z: float) -> Vector3:
+	return Vector3(first_stone.x, 0.0, rest_z)
+
+
 static func hunter_side_offset(players: Array, i: int, height: int) -> float:
 	var cap: int = maxi(height, 1)
 	var foot: int = mini(int((players[i] as Dictionary).get("foothold", 0)), cap)
@@ -4264,6 +4273,13 @@ func _place_hunters(s: Dictionary) -> void:
 			# right edge of the frame (VIS FAIL hunter1, measured).
 			pos = Vector3(side * (_beast_box.size.x * 0.06 + 0.5), 0.0,
 				minf(back, _arena_r * 0.86))
+			if _rung_count() > 1:
+				# Each hunter starts in front of its OWN line's first stone
+				# (Nick, 2026-09-28: "hunters are not starting in front of the
+				# stones"). Same slot convention and same call as that stone.
+				var rs: float = -1.0 if i == 0 else 1.0
+				pos = rest_pos_for(route_pos_cleared(_top_hold(rs), back, 0,
+					_rung_count(), route_sweep_for(rs)), pos.z)
 		elif not _climb_points.is_empty():
 			# The model says where its ledges are, so stand on one. Fixed per
 			# slot (not the dynamic `side` above), so a hunter's own approach

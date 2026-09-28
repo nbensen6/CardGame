@@ -179,6 +179,28 @@ sigil shot), round 3 PASS on four-panel strips
 `2026-09-28-top-stones-strip-{before,after}.png` (rest, wide, Frog top,
 Goblin top): "Last stone in front of the head: MET for both hunters."
 
+**Builder, 2026-09-28 18:25 EDT** (Nick 18:10: "hunters are not starting in
+front of the stones"). Before: at rest the hunters stood ±1.15 either side
+of centre (`side * (size.x * 0.06 + 0.5)`), while the two stone lines open
+out to head_x ±4.2 (x -5.27 and 3.13 on the jackal), so each big near stone
+flanked the hunters rather than leading from them. Change: new static
+`rest_pos_for(first_stone, rest_z)`; `_place_hunters`' ground branch puts
+each hunter at its own line's first-stone x (same slot convention and same
+`route_pos_cleared` call as `_build_float_stones`), at the old rest z, which
+is 4.2 units camera-side of that stone. Test:
+`_test_rest_pos_for_stands_each_hunter_in_front_of_its_first_stone`.
+Frames (`state=3d beast=cinder_jackal`): `2026-09-28-hunters-front-of-stones-{before,after}.png`
+(Frog cam), `-wide-{before,after}` (F8 Dev), `-goblin-after` (slot=1: Goblin
+in front of its stone, Frog off the left edge).
+Grader round 1 FAIL: the Frog is in front of its stone, but the Goblin is
+off-screen in the Frog's camera (VIS FAIL hunter1 at x 1691), and its big
+stone is cut by the right edge. Its fix, "pull the right line inward",
+contradicts Nick's 13:34 V (near ends wider than the tops): the hunters are
+now 8.4 apart, and the follow cam puts roughly 112 px per unit at their
+depth, so both on screen needs a gap under ~4.5, narrower than the top
+pair's own 5.6. Not iterated further; Nick's call: accept the other hunter
+off-screen, or narrow the lines (losing the V).
+
 ## Rest camera pulled back to 6.
 
 Two frames from Nick:

@@ -995,6 +995,7 @@ func _init() -> void:
 	# builder, 2026-09-28: the two stone lines run apart, one each side of the beast.
 	_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge()
 	_test_route_sweep_for_opens_the_two_lines_into_a_v()
+	_test_rest_pos_for_stands_each_hunter_in_front_of_its_first_stone()
 	_test_route_pos_sweeps_monotonically_left_to_right()
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
@@ -22221,6 +22222,19 @@ func _test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung()
 ## hunters, small near the beast, meeting at the beast. Each hunter's line
 ## must start further OUT on its own side than it ends, so the pair is
 ## wider at the hunters than at the head.
+func _test_rest_pos_for_stands_each_hunter_in_front_of_its_first_stone() -> void:
+	var width := 10.8
+	var n := 5
+	var ground_z := 20.0
+	for side in [-1.0, 1.0]:
+		var top := Vector3(Combat3D.route_offset_x(0.0, side, width), 6.0, 2.0)
+		var first: Vector3 = Combat3D.route_pos_cleared(top, ground_z, 0, n, Combat3D.route_sweep_for(side))
+		var rest: Vector3 = Combat3D.rest_pos_for(first, ground_z)
+		_expect(is_equal_approx(rest.x, first.x), "side %d's hunter must wait on its own line, straight behind its first stone" % int(side))
+		_expect(rest.z > first.z, "side %d's hunter must stand in front of its first stone (camera side), not beside or past it" % int(side))
+		_expect(is_zero_approx(rest.y), "a waiting hunter stands on the ground")
+
+
 func _test_route_sweep_for_opens_the_two_lines_into_a_v() -> void:
 	var width := 10.8
 	var n := 5

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T18:14
-working_on: "Hops land on stones."
+updated: 2026-09-28T18:25
+working_on: "Stones: first by the hunter, last in front of the head."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 18:14 EDT
+2026-09-28 18:25 EDT
 
-- **Did:** Camera now aims above the hunter's head like Risk of Rain 2, so the hunter sits low.
-- **Worked?** Partly, framing moved to RoR2's pivot but grader wanted it further back. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-ror2-camera-before.png]] then ![[frames/builder/2026-09-28-ror2-camera-after.png]]
-- **Ask:** RoR2 sits closer than ours; move closer to match it?
+- **Did:** Each hunter now waits straight in front of its own line's first stone.
+- **Worked?** Partly, Frog stands in front of its stone but the Goblin leaves the Frog's frame. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-hunters-front-of-stones-before.png]] then ![[frames/builder/2026-09-28-hunters-front-of-stones-after.png]]
+- **Ask:** Goblin off-screen in Frog's view. Accept, or narrow the stone lines?
 
 ## Notes
 
-- **Found:** the grader graded against last run's Ask ("further back"), not Nick's newest line.
-- **Found:** RoR2's distance draws the survivor ~16% of frame height; ours is ~11%.
+- **Found:** with hunters on their own lines (~8 apart), the follow camera shows only the selected hunter.
 
 ## Log
 
+- 2026-09-28 18:25 EDT — builder: resting hunters stand in front of their own line's first stone (rest_pos_for); grader FAIL (other hunter off-screen), escalated; tested, pushed.
 - 2026-09-28 18:14 EDT — builder: follow aim at RoR2's pivot (1.25 hunter heights, above the head), researched from RoR2's survivor template; grader FAIL x2 (wanted further back); tested, pushed.
 - 2026-09-28 17:09 EDT — builder: playtest hop-distance-band ceiling deleted with reason, floor kept (124 -> 0 fails); grader FAIL x2 on the multi-run done-when; tested, pushed.
 - 2026-09-28 16:45 EDT — builder: FOLLOW_DIST 3.4 -> 5.2 (Nick: zoom out more); grader FAIL, PASS; tested, pushed.

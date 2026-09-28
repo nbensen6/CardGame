@@ -10,15 +10,15 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Stones: first by the hunter, last in front of the head.**
+- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Each hunter's last stone now sits beside the jackal's head, one each side. Right?
-      Test: state=3d
-      ![[agents/frames/builder/2026-09-28-top-stones-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+      Ask: Grader failed this: Goblin off-screen in Frog's view. Accept, or narrow the stone lines?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-28-hunters-front-of-stones-after.png|420]] ^stones-first-by-the-hunter-last-in-front
 - [ ] **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
@@ -136,3 +136,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Hunters hidden behind the cards in the wide shot.** In the establishing view neither hunter shows above the card fan; only the ground ring does.
 - [ ] (proposed) **Grader reads the previous run's Ask.** It graded this run against "camera further back", the last run's question, not Nick's newest line.
 - [ ] (proposed) **Follow distance is further back than RoR2.** RoR2 puts the survivor ~16% of frame height; FOLLOW_DIST 5.2 gives ~11%.
+- [ ] (proposed) **Other hunter off-screen at rest.** With hunters on their own stone lines (~8 apart), the follow camera shows only the selected one.
