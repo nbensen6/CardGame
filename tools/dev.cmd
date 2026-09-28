@@ -36,6 +36,10 @@ REM On 2026-09-01 a new class_name went in without a reimport: menu.gd could not
 REM resolve it, failed to compile, and the main menu came up with dead buttons -
 REM which looks exactly like a broken game and was one missing scan.
 REM Pull first: the cloud builder pushes to main and cannot reach this PC.
+REM A harness run killed mid-shot leaves game\override.cfg behind, and it
+REM says no_focus=true: the game then ignores the keyboard (2026-09-28, "all
+REM my keyboard inputs are not being recorded"). Clear it before every launch.
+del "%~dp0..\game\override.cfg" 2>nul
 echo === pulling
 git -C "%ROOT%" pull --rebase --autostash --quiet origin main
 
