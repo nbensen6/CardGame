@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T16:24
-working_on: "Stones: first by the hunter, last in front of the head."
+updated: 2026-09-28T16:45
+working_on: "Hops land on stones."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 16:24 EDT
+2026-09-28 16:45 EDT
 
-- **Did:** Moved both hunters' last stones level beside the jackal's head, one each side of the snout.
-- **Worked?** Yes, the Goblin now ends beside the head instead of the neck. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-top-stones-strip-before.png]] then ![[frames/builder/2026-09-28-top-stones-strip-after.png]]
-- **Ask:** Each hunter's last stone now sits beside the jackal's head, one each side. Right?
+- **Did:** Pulled the follow camera further back, same distance at rest, climbing and at the sigil.
+- **Worked?** Yes, the Frog draws about 40% smaller and the badge clears it mid-hop. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-28-zoom-out-more-strip-before.png]] then ![[frames/builder/2026-09-28-zoom-out-more-strip-after.png]]
+- **Ask:** Camera now sits further back. Far enough, or further still?
 
 ## Notes
 
-- **Found:** In the wide establishing shot neither hunter shows above the card fan.
-- **Found:** playtest.sh runs past 8 minutes in the cloud container; not judged this run.
+- **Found:** nothing new this run.
 
 ## Log
 
+- 2026-09-28 16:45 EDT — builder: FOLLOW_DIST 3.4 -> 5.2 (Nick: zoom out more); grader FAIL, PASS; tested, pushed.
 - 2026-09-28 16:24 EDT — builder: top stones split around the snout (_head_x) and level at one face depth (_top_pair_front); grader FAIL, FAIL, PASS; tested, pushed.
 - 2026-09-28 16:03 EDT — builder: FOLLOW_DIST 2.3 to 3.4 (Nick: too close); frame-share test band moved; grader FAIL x2; tested, pushed.
 - 2026-09-28 15:36 EDT — builder: follow distance 3.2 to 2.3, ground pitch 0.20 to 0.08, camera floor 0.8 to 0.5; hunter_frame_share rule + test; grader FAIL x3; tested, pushed.

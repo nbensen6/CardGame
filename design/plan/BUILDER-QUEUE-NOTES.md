@@ -335,6 +335,17 @@ follow MET as far as stills show; failed on the attack badge touching the
 Frog's head in two mid-hop panels and on two mid-hop panels with no stone
 under the Frog (those are airborne by design).
 
+**Builder, 2026-09-28 16:45 EDT** (Nick 16:29: "zoom the camera out more"). FOLLOW_DIST
+3.4 -> 5.2, the one stand-off used at rest, mid-climb and at the sigil.
+`hunter_frame_share` at the 65-degree lens goes 0.162 -> 0.106; the run_tests
+band moved to 0.08-0.13 and now asserts the distance is further back than 3.4.
+Frames: `state=3d slot=0 beast=cinder_jackal console="climb 5"` with `land=1`,
+`land=2`, `midair=0.45`, `midair=0.95`, tiled 2x2 into
+`2026-09-28-zoom-out-more-strip-{before,after}.png` (rest shot:
+`-rest-{before,after}`). Frog about 135 px wide -> 85 px on the strip; the
+attack badge now clears the Frog mid-hop by ~30 px.
+Grader: round 1 FAIL (single land=2 frame could not show hops), round 2 PASS.
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

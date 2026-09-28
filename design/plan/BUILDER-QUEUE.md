@@ -10,14 +10,14 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Hops land on stones.**
+- [ ] 👀 **Hops land on stones.**
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
       **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Grader failed this: attack badge touches the Frog mid-hop. Is this distance right?
-      ![[agents/frames/builder/2026-09-28-follow-further-hop-after.png|420]] ^hops-land-on-stones
+      Ask: Camera now sits further back. Far enough, or further still?
+      ![[agents/frames/builder/2026-09-28-zoom-out-more-strip-after.png|420]] ^hops-land-on-stones
 - [ ] 👀 **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]

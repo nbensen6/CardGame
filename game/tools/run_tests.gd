@@ -29637,8 +29637,10 @@ func _test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil() -> void
 	# Nick, 2026-09-28: "about the same range from the risk of rain 2 screenshot"
 	# -- survivor a quarter to a third of the frame tall. 3.2 gave 0.17.
 	var share := Combat3D.hunter_frame_share(Combat3D.FOLLOW_DIST, 65.0)
-	_expect(share >= 0.12 and share <= 0.2,
-		"at FOLLOW_DIST the hunter stays under a fifth of the frame at rest (0.12-0.20) [got=%.3f]" % share)
+	_expect(share >= 0.08 and share <= 0.13,
+		"at FOLLOW_DIST the hunter fills about a ninth of the frame at rest (0.08-0.13) [got=%.3f]" % share)
+	_expect(share < Combat3D.hunter_frame_share(3.4, 65.0),
+		"FOLLOW_DIST stands further back than 3.4, which Nick asked to zoom out from (2026-09-28 16:29)")
 	_expect(share < Combat3D.hunter_frame_share(2.3, 65.0),
 		"FOLLOW_DIST stands further back than 2.3, which Nick called too close (2026-09-28)")
 

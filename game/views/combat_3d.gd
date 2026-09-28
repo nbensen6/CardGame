@@ -411,7 +411,10 @@ static func route_sweep_for(side: float) -> float:
 ## Nick, 2026-09-28 15:44, playing at 2.3: "the placement is too close to the
 ## character." Up the side the hunter drew nearly half the frame, not the RoR2
 ## quarter, so the stand-off goes back past the old 3.2.
-const FOLLOW_DIST := 3.4
+## Nick, 2026-09-28 16:29, playing at 3.4: "zoom the camera out more." Up the
+## side the Frog still drew almost half the frame; 5.2 puts a resting hunter
+## near a ninth of it, closer to his drawing's small figure in the corner.
+const FOLLOW_DIST := 5.2
 const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## Up the side the subject is the hunter on its stone, not the whole beast:
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
