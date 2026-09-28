@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T19:05
-working_on: "Stones: first by the hunter, last in front of the head."
+updated: 2026-09-28T19:30
+working_on: "Hops land on stones."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 19:05 EDT
+2026-09-28 19:30 EDT
 
-- **Did:** Test this now no longer closes the game ten seconds in; stone layout left as Nick accepted.
-- **Worked?** Yes, the test window is still live at 30 seconds for both hunters. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-test-window-strip-before.png]] then ![[frames/builder/2026-09-28-test-window-strip-after.png]]
-- **Ask:** Does the Test this now window stay open for you now?
+- **Did:** Climbing keeps the resting camera's tilt and lift, so the first hop no longer looks like a zoom-in.
+- **Worked?** Partly, the Frog now sits at one size and spot at rest and every landing; grader misread its back. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-camera-consistent-strip-before.png]] then ![[frames/builder/2026-09-28-camera-consistent-strip-after.png]]
+- **Ask:** Does the camera stay steady now when you start climbing?
 
 ## Notes
 
-- **Found:** playtest's hop-leftover-squash check still expects scale 1 after a hop, so it fails every hop since the fit-scale fix.
-- **Found:** a full scripted fight ran to the end with no script error; if a crash remains, it is not in the harness's path.
+- **Found:** the harness's midair= samples land at different hop phases run to run, so midair strips are not comparable.
+- **Found:** camera distance was already constant (5.2); the zoom Nick saw was the climb tilting down 0.08 to 0.20.
 
 ## Log
 
+- 2026-09-28 19:30 EDT — builder: climbing camera keeps the rest pitch (0.08) and lens lift; CLIMB_FOCUS_PITCH_MAX deleted; grader FAIL x2 (midair phases, then misread facing), escalated; tested, pushed.
 - 2026-09-28 19:05 EDT — builder: harness play mode (Test this now) no longer arms the 10 s shot failsafe that quit the window; grader FAIL (wanted Goblin view) then PASS; tested, pushed.
 - 2026-09-28 18:55 EDT — builder: hop squash restores the hunter's fit scale, not 1 (Frog was 1.64x after any hop); rock top under the cap, hunters ride their stone's drift; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-28 18:25 EDT — builder: resting hunters stand in front of their own line's first stone (rest_pos_for); grader FAIL (other hunter off-screen), escalated; tested, pushed.

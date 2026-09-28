@@ -437,18 +437,6 @@ const ROR2_CAMERA_DEPTH := 10.0
 ## The aim, in hunter heights above the feet, at rest AND climbing: RoR2's pivot.
 const GROUND_VIEW_EYE := (ROR2_CAPSULE_HEIGHT * 0.5 + ROR2_PIVOT_OFFSET) / ROR2_CAPSULE_HEIGHT   # 1.25
 const GROUND_VIEW_PITCH := 0.08   # low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
-## The locked climbing camera's own pitch, at the very top of the route
-## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears
-## the sigil so the lens sits ABOVE them and looks down. At the sigil the
-## hunter stands on/in the head-and-neck mass itself (the same hull band
-## _front_of_beast's own doc comment blames for the "ear"/"muzzle" reads), so
-## without this the camera sat level with their back and looked straight past
-## the head into open sky -- the jackal was not in frame at all (Nick,
-## 2026-09-25, on the 16:11 after frame). Chosen, not derived: it is the
-## smallest tilt that puts the sigil's own screen y (VIS OK sigil, printed by
-## screenshot.gd) in the frame's upper half at the harness's own weak-point
-## scenario -- tune against that printout, not against algebra.
-const CLIMB_FOCUS_PITCH_MAX := 0.2
 ## Stand-off at the top hold. The hunter stands in front of the face there
 ## (top_hold_z_for), so the shot is of the face: further back than the
 ## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.
@@ -1359,10 +1347,7 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	var cf := climb_focus_for(_climb_points, foot, _front_of_beast(_pivot.x, _pivot.y),
 			_pivot.z, _climb_t)
 	_dist = minf(cf.x, _cam_reach())
-	# And pitch to match -- see CLIMB_FOCUS_PITCH_MAX's own doc comment. Distance
-	# alone put the lens close and level with the hunter's back, aimed past the
-	# head into sky; only sitting above them and looking down brings the head
-	# into frame at all.
+	# And the rest shot's pitch -- one look at rest and climbing (2026-09-28).
 	_pitch = cf.y
 	_apply_orbit()
 
@@ -2569,7 +2554,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			# flattening. A camera that tips DOWN at the top looks at a Titan's scalp,
 			# which reads as a floor; near-level keeps the silhouette against the sky,
 			# and a silhouette is what makes something look big.
-			_pitch = lerpf(ORBIT_PITCH_MIN, 0.10, _climb_t)
+			_pitch = GROUND_VIEW_PITCH   # the rest shot's tilt, climbing too (Nick, 2026-09-28 18:44)
 	if _free_cam_engaged and _user_framed:
 		# The dev free camera (request 2026-09-25-0956): _unhandled_input above
 		# only moves the *_target values now, so this is the one place that
@@ -2886,8 +2871,12 @@ static func climb_focus_for(anchors: Dictionary, foot: int, hull_front: float,
 		# 16:40 frame). Stand back far enough that the hunter clears the card
 		# fan and the eyes are in the upper half.
 		dist = maxf(dist, SIGIL_VIEW_DIST)
-	var pitch := lerpf(GROUND_VIEW_PITCH, CLIMB_FOCUS_PITCH_MAX, clampf(climb_t, 0.0, 1.0))
-	return Vector2(dist, pitch)
+	# The rest shot's pitch at every height (Nick, 2026-09-28 18:44: "the camera
+	# should be consistent ... closes in once you start climbing"). Tilting to
+	# 0.2 the instant a climb began raised the lens and looked down onto the
+	# stone, which read as a push-in at the same distance. climb_t is kept in
+	# the signature for the callers; it no longer moves the shot.
+	return Vector2(dist, GROUND_VIEW_PITCH)
 
 
 ## Whether any hunter has left the ground — the same 0.05 epsilon
@@ -3088,12 +3077,20 @@ func _inside_wall(p: Vector3) -> Vector3:
 	return inside_wall_at(p, _arena_r)
 
 
+## The lens shift that lifts the frame, the same at rest and up the side: it
+## used to fade out with climb_t, so the first hop dropped the whole picture
+## by a third of a unit on top of the pitch change (Nick, 2026-09-28 18:44:
+## "the camera should be consistent").
+static func lens_lift_for(dist: float) -> float:
+	return dist * GROUND_LIFT
+
+
 func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 	_dist = minf(_dist, _cam_reach())
 	var flat := cos(_pitch) * _dist
 	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
-	var lift := _dist * lerpf(GROUND_LIFT, 0.0, _climb_t)
+	var lift := lens_lift_for(_dist)
 	# Never dip under the floor. Aiming low at the foot of something 13 units tall
 	# drives the camera below y=0, and then you're looking up THROUGH the ground.
 	# The lens shift is added in because Godot applies it after this, moving the

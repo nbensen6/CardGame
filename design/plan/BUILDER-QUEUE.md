@@ -20,7 +20,7 @@ run failed.
       Ask: The test window closed itself after 10 seconds; fixed. Does it stay open now?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-28-test-window-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
-- [ ] **Hops land on stones.**
+- [ ] 👀 **Hops land on stones.**
       **Nick, 2026-09-28 18:44 ET:** the camera should be consistent. its zooming when you start climbing. I think its at a good distance when you start. but closes in once you start climbing. also the camera should be facing the same direction the character is facing.
       **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
@@ -28,8 +28,9 @@ run failed.
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
-      ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
+      Ask: Grader failed this: misread Frog's back as face. Camera steady while climbing now?
+      Test: state=3d beast=cinder_jackal console=climb+5 land=2
+      ![[agents/frames/builder/2026-09-28-camera-consistent-strip-after.png|420]] ^hops-land-on-stones
 - [x] **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.

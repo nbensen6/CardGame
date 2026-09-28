@@ -1887,7 +1887,7 @@ func _init() -> void:
 	_test_climb_focus_for_falls_back_to_the_hull_between_rungs()
 	_test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all()
 	_test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top()
-	_test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t()
+	_test_climbing_camera_keeps_the_rest_pitch_and_lift()
 	_test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil()
 	_test_follow_camera_aims_above_the_head_like_ror2()
 	_test_follow_yaw_puts_the_lens_behind_the_hunter_on_the_beast_line()
@@ -29644,13 +29644,6 @@ func _test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all() -> vo
 		"an empty anchor table has nothing to trust and must fall back to the hull reading, not crash [got=%.2f]" % out.x)
 
 
-## Level near the ground (nobody wants the wide establishing shot tipping
-## down into a floor), rising to CLIMB_FOCUS_PITCH_MAX at the top of the
-## route so the lens sits above the hold and looks down instead of past it
-## into open sky (Nick, 2026-09-25: "the jackal is not in frame at all").
-## Clamped past [0, 1] the same way every other climb_t consumer in this file
-## already is -- a stale or not-yet-refreshed climb_t must not throw the
-## pitch outside its own designed range.
 func _test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top() -> void:
 	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
 	var out := Combat3D.climb_focus_for(anchors, 4, 13.6, 14.4, 1.0)
@@ -29707,16 +29700,17 @@ func _test_follow_camera_aims_above_the_head_like_ror2() -> void:
 		"the aim sits above the hunter's head, not at its middle (0.5 until 2026-09-28)")
 
 
-func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:
-	var at_ground := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 0.0)
-	_expect(is_equal_approx(at_ground.y, Combat3D.GROUND_VIEW_PITCH),
-		"climb_t=0 must land on the same level pitch the resting shot uses [got=%.3f]" % at_ground.y)
-	var at_top := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 1.0)
-	_expect(is_equal_approx(at_top.y, Combat3D.CLIMB_FOCUS_PITCH_MAX),
-		"climb_t=1 must reach the full down-tilt so the head clears the sky [got=%.3f]" % at_top.y)
-	var past_one := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, 1.7)
-	_expect(is_equal_approx(past_one.y, Combat3D.CLIMB_FOCUS_PITCH_MAX),
-		"a climb_t past 1.0 must clamp, not overshoot CLIMB_FOCUS_PITCH_MAX [got=%.3f]" % past_one.y)
+## Nick, 2026-09-28 18:44: "the camera should be consistent. its zooming when
+## you start climbing." Same distance, but the pitch tipped from 0.08 to 0.2 and
+## the lens lift faded out the instant a climb began, which read as a push-in.
+func _test_climbing_camera_keeps_the_rest_pitch_and_lift() -> void:
+	for t: float in [0.0, 0.3, 1.0, 1.7]:
+		var cf := Combat3D.climb_focus_for({}, 0, 0.0, 0.0, t)
+		_expect(is_equal_approx(cf.y, Combat3D.GROUND_VIEW_PITCH),
+			"climb_t=%.1f keeps the resting shot's pitch [got=%.3f]" % [t, cf.y])
+	_expect(is_equal_approx(Combat3D.lens_lift_for(Combat3D.FOLLOW_DIST),
+			Combat3D.FOLLOW_DIST * Combat3D.GROUND_LIFT),
+		"the lens lift is the resting one's, with no climb term to fade it")
 
 
 ## Reproduces the sigil bug live: a hold near the beast's back/centreline

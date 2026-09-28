@@ -427,6 +427,29 @@ Frames: `2026-09-28-ror2-camera-{before,after}.png` (rest) and
 Grader: FAIL twice, both on "camera not further back" (it graded the previous run's Ask);
 its fix (pull back to 2/3 size) runs against the RoR2 numbers, so it goes to Nick.
 
+**Builder, 2026-09-28 19:30 EDT** (Nick 18:44: "the camera should be consistent. its
+zooming when you start climbing ... closes in once you start climbing. also the camera
+should be facing the same direction the character is facing"). Measured first: the
+distance never changed (CAM dist=5.20 at rest and at every landing; MIDAIR cam_dist
+5.3-5.6 through the climb), the Frog's scale stayed 1, and its yaw already matched the
+body's facing (camera yaw -0.16, body forward (0.16, -0.99): the lens sits straight
+behind it). What DID change the instant the first hop began: pitch 0.08 -> 0.20
+(`climb_focus_for` lerped to CLIMB_FOCUS_PITCH_MAX by climb_t, and climb_t reads the
+climb's FINAL height, so it hit 0.2 on hop one) and the lens lift (v_offset -0.36 -> 0,
+faded by climb_t in `_apply_orbit`). The lens rose ~0.6 and looked down onto the stone,
+which reads as a push-in at the same distance; the Frog drifted 414 -> 429 -> 441 -> 450
+px down the screen over landings 1-3. Change: pitch is GROUND_VIEW_PITCH at every height
+(CLIMB_FOCUS_PITCH_MAX deleted; the unfocused climbing branch too) and the lift is
+`lens_lift_for(dist)`, no climb term. After: the Frog is at (640, 414) at rest and at
+landings 1, 2 and 3, same size. Test `_test_climbing_camera_keeps_the_rest_pitch_and_lift`
+replaces the old pitch-rises test. Frames: `2026-09-28-camera-consistent-strip-{before,after}.png`
+(rest, `console="climb 5"` land=1/2/3).
+Grader: round 1 FAIL (compared midair samples, which land at different hop phases run to
+run), round 2 FAIL with the distance criterion MET ("frog fills about the same share ...
+the jackal grows ... because the frog is nearer to it, not because the camera zooms") but
+"the frog shows its face and pale belly to the camera". A 3x crop shows its spotted back
+and folded hind legs; the facing numbers above agree. Left to Nick.
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

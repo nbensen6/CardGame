@@ -203,3 +203,4 @@ appends here, never to the queue.
 - [ ] **Lighting preset panel for Nick.** A dev-only panel (behind F8's Dev mode) with sliders for sun angle, sun colour, ambient, fog density and a row of presets (dusk, deep night, blizzard, sunrise, pale day). Same video: the scene's whole mood changed per preset with no art change, and the dev tuned it by eye. Cheapest atmosphere lever we have; Nick judges by eye anyway.
 - [ ] **Simple shapes, let the light do the work.** Same video: "don't ask AI for realistic meshes; a house is boxes and a roof, the light does the rest." Our stones are crates today; a low-poly boulder from a Blender script (one line per piece, rerun on a fix) plus the lighting panel above may read better than any generated mesh.
 
+- [ ] (proposed) **midair= samples drift run to run.** The same midair=0.95 lands mid-hop one run and on the stone the next, so before/after midair strips are not comparable.
