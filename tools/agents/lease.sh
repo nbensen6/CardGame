@@ -17,7 +17,7 @@ set -e
 
 cmd="${1:-}"
 agent="${2:-}"
-stale="${LEASE_STALE:-2400}"   # 40 min. A run that dies mid-flight must not wedge
+stale="${LEASE_STALE:-3600}"   # 60 min. A run that dies mid-flight must not wedge
                                # its agent forever; a normal run is under 25.
 
 lease_file() { echo "design/agents/status/$1.lease"; }
