@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T14:57
-working_on: "Stones: first by the hunter, last in front of the head"
+updated: 2026-09-28T15:09
+working_on: "Hunters face the beast"
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 14:57 EDT
+2026-09-28 15:09 EDT
 
-- **Did:** Each hunter's stone line now fans outward on its own side, a V meeting at the jackal's head.
-- **Worked?** Partly: the wide view shows the V, but from behind the Frog the Goblin's big stone sits under the climb gauge. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-stone-lines-wide-before.png]] then ![[frames/builder/2026-09-28-stone-lines-wide-after.png]]; Frog view ![[frames/builder/2026-09-28-stone-lines-before.png]] then ![[frames/builder/2026-09-28-stone-lines-after.png]]
-- **Ask:** Goblin's big stone is off-screen from the Frog's view. Spread the hunters wider?
+- **Did:** Hunters on the ground now turn to look straight at the jackal instead of 40 degrees outward.
+- **Worked?** Yes, both hunters now show their backs to the camera, facing the jackal. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-28-hunters-face-beast-before.png]] then ![[frames/builder/2026-09-28-hunters-face-beast-after.png]]
+- **Ask:** Do both hunters face the jackal now?
 
 ## Notes
 
-- **Found:** From behind the Frog, the hunters stand too close (about 1.2 units each side) for both big stones to sit by their hunters on screen. Narrowing the V put the Frog's stone over the jackal's legs.
+- **Found:** From the rest view the floating stones cover part of the jackal's chest.
 
 ## Log
 
+- 2026-09-28 15:09 EDT — builder: ground hunters aim at the beast (hunter_facing_y from position); grader PASS; tested, pushed.
 - 2026-09-28 14:57 EDT — builder: stone lines fan out into a V (route_sweep_for); grader FAIL on Goblin stone under the gauge; tested, pushed.
 - 2026-09-28 14:37 EDT — builder: F8 confirmed by Nick, marked 👀 for his tick; no code change.
 - 2026-09-28 14:24 EDT — builder: follow camera rides the hopping hunter (live body, not landing stone), eased yaw; harness midair=S; grader FAIL x2; tested, pushed.

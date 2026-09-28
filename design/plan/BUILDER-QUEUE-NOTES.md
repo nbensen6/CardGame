@@ -287,6 +287,14 @@ term turned them to face the camera instead. Dropped it (now
 `0.7 * side`); the climbing branch was untouched. Lifted into a
 tested static function, `hunter_facing_y`. Frame confirmed changed.
 
+**Builder, 2026-09-28 15:09 EDT:** Nick, 2026-09-28: "the faces when at the bottom
+should be at the beast". A render with yaw 0 showed both models already
+face -Z (backs to camera), so the fixed `0.7 * side` was swinging each one
+40 degrees outward, side-on. `hunter_facing_y` now takes the hunter's
+position and the beast's, and on the ground returns `atan2(dx, dz)`: the
+yaw that aims -Z at the beast. Climbing branch unchanged. New test
+`_test_hunter_facing_y_ground_hunters_look_at_the_beast`. Grader: PASS.
+
 ## Goblin: one muted trim colour.
 
 The Frog reads at fight size; the Goblin is

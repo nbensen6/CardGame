@@ -1109,6 +1109,7 @@ func _init() -> void:
 	# within a quarter turn of facing the CAMERA instead of the beast.
 	_test_hunter_facing_y_ground_hunters_face_away_from_camera()
 	_test_hunter_facing_y_climbing_hunters_turn_to_hug_the_body()
+	_test_hunter_facing_y_ground_hunters_look_at_the_beast()
 	# fixer, 2026-09-22: gauge_dot_dx is the climb rail's own copy of the same
 	# job, for the flat 2D dots instead of the 3D hunter models. It shared the
 	# RAW-vs-clamped bug the fight above already fixed in hunter_side_offset:
@@ -22673,6 +22674,19 @@ func _test_hunter_facing_y_ground_hunters_face_away_from_camera() -> void:
 		"a grounded hunter (side -1) must face toward the beast (-Z), not the camera")
 	_expect(absf(Combat3D.hunter_facing_y(0.0, 1.0)) < PI * 0.5,
 		"a grounded hunter (side +1) must face toward the beast (-Z), not the camera")
+
+
+## Nick, 2026-09-28: "the faces when at the bottom should be at the beast".
+## A hunter standing off to either side must aim its -Z forward (rotation.y=0
+## faces -Z) at the beast, not a fixed 40 degrees outward.
+func _test_hunter_facing_y_ground_hunters_look_at_the_beast() -> void:
+	var beast := Vector3.ZERO
+	for from in [Vector3(-2.0, 0.0, 8.0), Vector3(2.0, 0.0, 8.0), Vector3(-5.0, 0.0, 3.0)]:
+		var yaw: float = Combat3D.hunter_facing_y(0.0, signf(from.x), from, beast)
+		var fwd := Vector3(-sin(yaw), 0.0, -cos(yaw))
+		var want: Vector3 = (beast - from).normalized()
+		_expect(fwd.dot(want) > 0.999,
+			"a grounded hunter at %s must face the beast (dot %.3f)" % [from, fwd.dot(want)])
 
 
 ## Climbing hunters (t>0.01) turn perpendicular to hug the body they're on --

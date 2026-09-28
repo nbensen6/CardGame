@@ -4115,14 +4115,22 @@ static func hunter_side_offset(players: Array, i: int, height: int) -> float:
 	return 0.0
 
 
-## Ground hunters (t<=0.01) stand three-quarter on, backs to the camera, per
-## Nick's Risk of Rain 2 reference -- the camera sits at +Z behind them looking
-## toward the beast at -Z, and rotation.y=0 already faces -Z, so no PI term
-## belongs here; the old "PI + 0.7 * side" turned them to face the camera
-## instead (Nick, 2026-09-25: wants the characters to face the beast).
+## Ground hunters (t<=0.01) turn to look straight at the beast from wherever
+## they stand. rotation.y=0 faces -Z (backs to the camera, which sits at +Z),
+## and yaw atan2(dx, dz) aims that -Z at `target`. The old fixed "0.7 * side"
+## swung each hunter 40 degrees OUTWARD, off the jackal and side-on to the
+## camera (Nick, 2026-09-28: "the faces when at the bottom should be at the
+## beast").
 ## Climbing hunters (t>0.01) turn to hug the body they're on, unchanged.
-static func hunter_facing_y(t: float, side: float) -> float:
-	return (0.7 * side) if t <= 0.01 else (PI * 0.5 * -side)
+static func hunter_facing_y(t: float, side: float, from: Vector3 = Vector3.ZERO,
+		target: Vector3 = Vector3(0, 0, -1)) -> float:
+	if t > 0.01:
+		return PI * 0.5 * -side
+	var dx: float = from.x - target.x
+	var dz: float = from.z - target.z
+	if absf(dx) < 0.0001 and absf(dz) < 0.0001:
+		return 0.0
+	return atan2(dx, dz)
 
 
 ## Tween-callback wrapper for home_after_leg(): fired once per sub-hop, right
@@ -4303,7 +4311,7 @@ func _place_hunters(s: Dictionary) -> void:
 			var glide := create_tween()
 			_climb_tw[i] = glide
 			_start_glide(glide, node, pos, 0.18)
-		node.rotation.y = hunter_facing_y(t, side)
+		node.rotation.y = hunter_facing_y(t, side, pos, _beast.position if _beast != null else Vector3.ZERO)
 
 
 ## Hunters come from ui/cast.gd, the one place that knows which body plays which

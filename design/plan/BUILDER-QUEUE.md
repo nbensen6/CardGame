@@ -40,11 +40,11 @@ run failed.
       ![[agents/frames/builder/2026-09-25-locked-camera-climb-after.png|420]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
       ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]]
-- [ ] **Hunters face the beast.** ^hunters-face-the-beast
+- [ ] 👀 **Hunters face the beast.** ^hunters-face-the-beast
       **Nick, 2026-09-28 12:29 ET:** no check the direction the faces are. the faces when at the bottom should be at the beast
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
-      Ask: Do both hunters face the jackal at rest? Tick, or say who is wrong.
-      ![[agents/frames/builder/2026-09-25-hunters-face-beast-after.png|420]]
+      Ask: Do both hunters face the jackal now? Tick, or say who is wrong.
+      ![[agents/frames/builder/2026-09-28-hunters-face-beast-after.png|420]]
 - [x] **Goblin: one muted trim colour.** ^goblin-one-muted-trim-colour
       **Closed by the session, 2026-09-28 12:35 ET:** Nick: "goblin looks okay at this time." That is a yes.
       **Nick, 2026-09-28 12:29 ET:** goblin looks okay at this time.
@@ -117,3 +117,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Intent badge over the climbing hunter's head.** At some landings the beast's "Attack 7" chip sits on the Goblin's tank and ears.
 - [ ] (proposed) **Loose stones sit above their shadows.** Grader saw air between the big side stones and their ground shadows mid-climb.
 - [ ] (proposed) **Hunters too close for two stone lines.** From the Frog's view the Goblin's big stone sits under the climb gauge; narrowing the V covers the jackal's legs.
+- [ ] (proposed) **Stones cover the jackal's chest at rest.** From behind the Frog the floating stones hide part of the jackal's chest.
