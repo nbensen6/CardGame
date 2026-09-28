@@ -41,15 +41,16 @@ const ROUTE_REVERSAL_TOL := 0.05
 ## HUNTER_HEIGHT * 0.9, HUNTER_HEIGHT * 3.4)` -- solved for distance instead of
 ## arc height, same algebra as tools/blender/route.py's HOP_MIN_WORLD/
 ## HOP_MAX_WORLD (kept here too since this file cannot import a .py module):
-## 0.9*0.7/0.26 = 2.4230769, 3.4*0.7/0.26 = 9.1538461. See check 8c in
-## _check() -- the stone-route request's item 2 ("ordinary hold-to-hold
-## distance should sit inside the arc system's own proportional range, not
-## down at its floor"), the same rule route.py enforces at BUILD time.
+## 0.9*0.7/0.26 = 2.4230769. See check 8c in _check() -- the stone-route
+## request's item 2 ("ordinary hold-to-hold distance should sit inside the
+## arc system's own proportional range, not down at its floor").
+## The CEILING half (3.4*0.7/0.26 = 9.15m) is gone, 2026-09-28: Nick's one
+## stone per Height and no mid-air landings fix a leg at the beast's own
+## size (16.3m on the jackal), so no route he has asked for can pass it.
 const HOP_MIN_WORLD := 2.4230769
-const HOP_MAX_WORLD := 9.1538461
 
 ## combat_3d.gd's own HUNTER_HEIGHT (0.7) -- mirrored here for the same reason
-## HOP_MIN_WORLD/HOP_MAX_WORLD are: this file can't import a .gd script's
+## HOP_MIN_WORLD is: this file can't import a .gd script's
 ## private consts either. See check 8d in _check() -- "the weak point is
 ## obvious... stays obvious as you climb toward it" (JACKAL-BAR), the sigil
 ## mark has to clear a hunter's own head once they are standing at the weak
@@ -933,12 +934,10 @@ func _check(v: Node, when: String) -> void:
 				var leg := "%s->%s" % [route_rungs[i], route_rungs[i + 1]]
 				if subs.size() > 1:
 					leg = "%s (hop %d/%d)" % [leg, j + 1, subs.size()]
+				# Floor only: see HOP_MIN_WORLD for why the ceiling went.
 				if d3 < HOP_MIN_WORLD:
 					_fail("hop-distance-band", "%s: ordinary hop Height %s measures %.2fm (< %.2f floor) -- gets hop_arc()'s same minimum bounce regardless of how close the holds really are" \
 						% [when, leg, d3, HOP_MIN_WORLD])
-				elif d3 > HOP_MAX_WORLD:
-					_fail("hop-distance-band", "%s: ordinary hop Height %s measures %.2fm (> %.2f ceiling) -- the arc stops growing with distance, stops reading as effort" \
-						% [when, leg, d3, HOP_MAX_WORLD])
 				at3 = b3j
 
 	# 8d. JACKAL-BAR "the weak point is obvious... stays obvious as you climb

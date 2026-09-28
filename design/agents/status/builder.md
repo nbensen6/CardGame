@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T16:45
-working_on: "Hops land on stones."
+updated: 2026-09-28T17:09
+working_on: "playtest.cmd green."
 ---
 
 # builder
@@ -13,12 +13,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 16:45 EDT
+2026-09-28 17:09 EDT
 
-- **Did:** Pulled the follow camera further back, same distance at rest, climbing and at the sigil.
-- **Worked?** Yes, the Frog draws about 40% smaller and the badge clears it mid-hop. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-zoom-out-more-strip-before.png]] then ![[frames/builder/2026-09-28-zoom-out-more-strip-after.png]]
-- **Ask:** Camera now sits further back. Far enough, or further still?
+- **Did:** Dropped the hop-length ceiling check the one-stone-per-Height route can never pass; kept its floor.
+- **Worked?** Partly, hop-distance-band went 124 to 0 but two other checks stay red. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-playtest-hop-ceiling-before.png]] then ![[frames/builder/2026-09-28-playtest-hop-ceiling-after.png]]
+- **Ask:** Two checks still red. Keep fixing one per run?
 
 ## Notes
 
@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-28 17:09 EDT — builder: playtest hop-distance-band ceiling deleted with reason, floor kept (124 -> 0 fails); grader FAIL x2 on the multi-run done-when; tested, pushed.
 - 2026-09-28 16:45 EDT — builder: FOLLOW_DIST 3.4 -> 5.2 (Nick: zoom out more); grader FAIL, PASS; tested, pushed.
 - 2026-09-28 16:24 EDT — builder: top stones split around the snout (_head_x) and level at one face depth (_top_pair_front); grader FAIL, FAIL, PASS; tested, pushed.
 - 2026-09-28 16:03 EDT — builder: FOLLOW_DIST 2.3 to 3.4 (Nick: too close); frame-share test band moved; grader FAIL x2; tested, pushed.

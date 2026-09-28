@@ -507,3 +507,17 @@ behind it. Still red: hunter-off-marker 8, beast-behind-stone 8
 `run_tests.gd`: ALL TESTS PASSED. Grader `VERDICT: FAIL`: it
 graded the parent's done-when, which can't be read off a frame for
 a "Shot: none" item. Left `[ ]`.
+**Builder, 2026-09-28 17:05 EDT:** `hop-distance-band` is now 0 fails
+(was 124). Only its CEILING half was red: every jackal leg measures
+16.30m against hop_arc's 9.15m cap, because the route is one straight
+line with one stone per Height (Nick, 2026-09-25) and no mid-air
+sub-landings (Nick, 2026-09-28), so leg length is set by the beast's own
+size. No route Nick has asked for can pass that ceiling, so it is
+deleted with its reason at `HOP_MIN_WORLD` in playtest.gd; the floor
+half (2.42m, "same minimum bounce however close the holds are") stays
+and still passes. Game untouched: whether a 16m hop should arc higher
+than its 2.38m cap is a look question, asked on the item. Still red:
+hunter-lost-mid-hop 1 (step 9, hunter drawn in 6/15 frames of its own
+jump), beast-behind-stone 4 (stone 7, 18-27%; waits on the stairs
+decision). `run_tests.gd`: ALL TESTS PASSED. No 3D shot for a
+"Shot: none" item; the frames are the playtest summary, before/after.

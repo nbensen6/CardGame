@@ -80,8 +80,10 @@ run failed.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
 
-- [ ] **playtest.cmd green.**
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]] ^playtest-cmd-green
+- [ ] 👀 **playtest.cmd green.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
+      Ask: Grader failed this: two checks still red. Keep fixing one per run?
+      ![[agents/frames/builder/2026-09-28-playtest-hop-ceiling-after.png|420]] ^playtest-cmd-green
 
 ## Waiting on Nick
 
