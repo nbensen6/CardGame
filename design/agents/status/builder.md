@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T15:36
-working_on: "Zoom out: stairs visible, beast whole."
+updated: 2026-09-28T16:03
+working_on: "Hops land on stones."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 15:36 EDT
+2026-09-28 16:03 EDT
 
-- **Did:** Camera sits closer and lower behind the held hunter, nearer the Risk of Rain 2 range.
-- **Worked?** Partly, rest shot moved but the Frog still reads bigger at the sigil. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-zoom-range-before.png]] then ![[frames/builder/2026-09-28-zoom-range-after.png]]
-- **Ask:** Is the resting range right now? Closer, further, or yes?
+- **Did:** Pulled the follow camera back so the hunter reads smaller, on the ground and up the side.
+- **Worked?** Partly, distance and follow passed but the badge touches the Frog mid-hop. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-follow-further-hop-before.png]] then ![[frames/builder/2026-09-28-follow-further-hop-after.png]]
+- **Ask:** Is this camera distance right now? Closer, further, or yes?
 
 ## Notes
 
-- **Found:** At the sigil the Frog reads about 1.8x its rest size though the camera stands the same 2.4-2.5 units off.
-- **Found:** The intent badge sits on the jackal's head at rest from the lower camera.
+- **Found:** Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
+- **Found:** Up the side the Frog still reads about 1.5x its rest size at the same camera distance.
 
 ## Log
 
+- 2026-09-28 16:03 EDT — builder: FOLLOW_DIST 2.3 to 3.4 (Nick: too close); frame-share test band moved; grader FAIL x2; tested, pushed.
 - 2026-09-28 15:36 EDT — builder: follow distance 3.2 to 2.3, ground pitch 0.20 to 0.08, camera floor 0.8 to 0.5; hunter_frame_share rule + test; grader FAIL x3; tested, pushed.
 - 2026-09-28 15:09 EDT — builder: ground hunters aim at the beast (hunter_facing_y from position); grader PASS; tested, pushed.
 - 2026-09-28 14:57 EDT — builder: stone lines fan out into a V (route_sweep_for); grader FAIL on Goblin stone under the gauge; tested, pushed.

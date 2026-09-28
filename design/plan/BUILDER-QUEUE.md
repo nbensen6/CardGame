@@ -10,13 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Hops land on stones.**
+- [ ] 👀 **Hops land on stones.**
       **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Grader failed this: intent badge over the Frog; mid-hop panel "floats". Camera now follows smoothly?
-      ![[agents/frames/builder/2026-09-28-camera-follows-hop-after.png|420]] ^hops-land-on-stones
+      Ask: Grader failed this: attack badge touches the Frog mid-hop. Is this distance right?
+      ![[agents/frames/builder/2026-09-28-follow-further-hop-after.png|420]] ^hops-land-on-stones
 - [ ] **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
@@ -122,3 +122,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stones cover the jackal's chest at rest.** From behind the Frog the floating stones hide part of the jackal's chest.
 - [ ] (proposed) **Hunter reads bigger at the sigil than at rest.** Camera-to-hunter distance is equal (2.49 vs 2.43 measured) yet the Frog is ~1.8x taller on screen at the top.
 - [ ] (proposed) **Intent badge covers the jackal's head at rest.** With the lower ground camera the "Attack 7" chip sits on the head.
+- [ ] (proposed) Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
+- [ ] (proposed) Up the side the Frog still reads about 1.5x its rest size at the same camera distance.

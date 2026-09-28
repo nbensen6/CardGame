@@ -293,6 +293,22 @@ Grader: FAIL, then FAIL after the landing fix (lopsided dead zone): "the
 intent badge ... sits on the Frog's head" and panel 1 (mid-hop, by design)
 read as a float. Camera fault itself not cited in round 2.
 
+**Builder, 2026-09-28 16:03 EDT** (Nick 15:44: "camera follows more smoothly, but the
+placement is too close to the character"). The 15:36 Zoom-out run had pulled
+FOLLOW_DIST in from 3.2 to 2.3; up the side that drew the Frog about 45% of
+the frame tall (rest about 25%). FOLLOW_DIST 2.3 -> 3.4, one number, rest and
+climb alike. Measured: `console="climb 5" land=2` Frog from x 430-860 to
+505-775, its stone now whole under it; rest shot now shows the Goblin too.
+`midair=` samples t 0.2..1.6: cam_dist 2.32-2.53 before, 3.42-3.55 after, Frog
+on screen 6 of 6 both. The run_tests band for `hunter_frame_share` moved to
+0.12-0.20 and now asserts FOLLOW_DIST is further back than 2.3. Frames:
+`2026-09-28-follow-further-{before,after}.png` (land 2),
+`-rest-{before,after}`, `-hop-{before,after}` (six midair samples).
+Grader round 1 FAIL (stills can't show the hop), round 2 FAIL: distance MET,
+follow MET as far as stills show; failed on the attack badge touching the
+Frog's head in two mid-hop panels and on two mid-hop panels with no stone
+under the Frog (those are airborne by design).
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

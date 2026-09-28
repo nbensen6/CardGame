@@ -408,7 +408,10 @@ static func route_sweep_for(side: float) -> float:
 ## the hunter a fifth of the frame, further back than the RoR2 shot; 2.1 made
 ## the hunter at the sigil hide the jackal's face. `hunter_frame_share` is the
 ## rule and run_tests pins it to the RoR2 band.
-const FOLLOW_DIST := 2.3
+## Nick, 2026-09-28 15:44, playing at 2.3: "the placement is too close to the
+## character." Up the side the hunter drew nearly half the frame, not the RoR2
+## quarter, so the stand-off goes back past the old 3.2.
+const FOLLOW_DIST := 3.4
 const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## Up the side the subject is the hunter on its stone, not the whole beast:
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be

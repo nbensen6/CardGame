@@ -29589,10 +29589,10 @@ func _test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil() -> void
 	# Nick, 2026-09-28: "about the same range from the risk of rain 2 screenshot"
 	# -- survivor a quarter to a third of the frame tall. 3.2 gave 0.17.
 	var share := Combat3D.hunter_frame_share(Combat3D.FOLLOW_DIST, 65.0)
-	_expect(share >= 0.2 and share <= 0.34,
-		"at FOLLOW_DIST the hunter fills the RoR2 share of the frame (0.20-0.34) [got=%.3f]" % share)
-	_expect(Combat3D.hunter_frame_share(3.2, 65.0) < 0.2,
-		"the old 3.2 stand-off was further back than the RoR2 shot")
+	_expect(share >= 0.12 and share <= 0.2,
+		"at FOLLOW_DIST the hunter stays under a fifth of the frame at rest (0.12-0.20) [got=%.3f]" % share)
+	_expect(share < Combat3D.hunter_frame_share(2.3, 65.0),
+		"FOLLOW_DIST stands further back than 2.3, which Nick called too close (2026-09-28)")
 
 
 func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:
