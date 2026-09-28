@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T14:24
-working_on: "Hops land on stones"
+updated: 2026-09-28T14:37
+working_on: "F8 flips the camera Player/Dev"
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 14:24 EDT
+2026-09-28 14:37 EDT
 
-- **Did:** The camera now rides the hunter through every hop instead of racing ahead to the landing stone.
-- **Worked?** Partly: the Frog is on screen in 6 of 6 mid-climb frames (was 1), but the grader failed it. `VERDICT: FAIL` (intent badge over the Frog; the mid-hop panel read as a float)
-- **Look at:** ![[frames/builder/2026-09-28-camera-follows-hop-before.png]] then ![[frames/builder/2026-09-28-camera-follows-hop-after.png]]
-- **Ask:** Camera now follows each hop smoothly?
+- **Did:** Nothing to build: Nick says F8 works, so the item went back to him for a tick.
+- **Worked?** Yes, no change was needed; no frame, no grader run.
+- **Look at:** ![[frames/builder/2026-09-28-f8-works-after.png]]
+- **Ask:** You said F8 works now. Tick to close it?
 
 ## Notes
 
-- **Found:** the grader saw the side stones hanging above their own ground shadows.
-- **Found:** the "Attack 7" intent badge still sits on the Frog's head and base mid-climb (already proposed).
+- **Found:** nothing new.
 
 ## Log
 
+- 2026-09-28 14:37 EDT — builder: F8 confirmed by Nick, marked 👀 for his tick; no code change.
 - 2026-09-28 14:24 EDT — builder: follow camera rides the hopping hunter (live body, not landing stone), eased yaw; harness midair=S; grader FAIL x2; tested, pushed.
 - 2026-09-28 13:55 EDT — builder: one hop per stone (climb_landings), no mid-air sub-landings; harness land=K; grader FAIL then PASS; tested, pushed.
 

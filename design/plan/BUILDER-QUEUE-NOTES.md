@@ -71,6 +71,8 @@ bottom-centre.
   are the proposed Frog-facing and near-stones items, and the note's 1 s
   duration, which a still cannot show.
 
+**Builder, 2026-09-28 14:37 EDT:** Nick's 14:14 answer ("f8 now works") reopened the item. Nothing left to build: no code changed, no frames shot, no grader run. Marked 👀 so Nick can tick it.
+
 ## Nick judged the 2026-09-25 camera and stones
 
 (2026-09-25 14:30 EDT).
