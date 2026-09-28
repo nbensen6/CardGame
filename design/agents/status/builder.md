@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-27T18:39
-working_on: "playtest.cmd green: hunter-offscreen fixed, 3 categories still red"
+updated: 2026-09-28T12:24
+working_on: "Zoom out: one fixed camera behind the held hunter"
 ---
 
 # builder
@@ -13,22 +13,24 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-27 18:39 EDT
+2026-09-28 12:24 EDT
 
-- **Did:** the camera now locks onto a hunter's first climb by itself, instead of waiting for Switch or End Turn.
-- **Worked?** Partly: hunter-offscreen went from 4 fails to 0 and the Frog stays in frame, but three other categories still print FAIL. `VERDICT: FAIL` (the grader said this "Shot: none" item can only be judged from the console output, not from frames).
-- **Look at:** ![[frames/builder/2026-09-27-first-climb-follow-before.png]] then ![[frames/builder/2026-09-27-first-climb-follow-after.png]]
-- **Ask:** Next category: hunter-off-marker (8 fails, mid-route) or intent-tag-vs-hunter (1)?
+- **Did:** the camera now sits one fixed distance behind the hunter you hold, centred, at rest and climbing.
+- **Worked?** Partly: the Frog is centred, a fifth of the frame, same range everywhere, but it still reads side-on. `VERDICT: FAIL`
+- **Look at:** ![[frames/builder/2026-09-28-camera-behind-before.png]] then ![[frames/builder/2026-09-28-camera-behind-after.png]] and ![[frames/builder/2026-09-28-camera-behind-climb-after.png]]
+- **Ask:** Is this the range? If yes, should the Frog turn its back to camera next?
 
 ## Notes
 
-- **Found:** the check was right and the game was wrong. After a fight's opening wide shot, the first climb never turned on the follow camera.
-- **Found:** the first hop now spends 18% of its flight off-screen (it was 0%), because the camera cuts to the landing height at take-off. The second hop improved from 22% to 4%.
-- **Found:** hunter-off-marker's 8 fails are mid-route (footholds 2 and 4), not the top-of-route bug fixed on 09-25.
-- **Found:** grader, last verdict: `VERDICT: FAIL`. Its fix was "grade this item on the playtest.cmd and run_tests.gd console output showing zero FAIL lines".
+- **Found:** the Frog still reads side-on at rest. The lens is behind it on the line to the beast, but the model faces about 90 degrees off that line.
+- **Found:** at rest, from hunter height, the near stones hide the jackal's body. Only its head clears them.
+- **Found:** the fight still opens on a wide shot of the whole beast and eases in. That is a zoom Nick may not want either.
+- **Found:** mid-climb the other hunter ends up behind the camera (VIS FAIL hunter1), now that the lens is this close.
+- **Found:** grader, last verdict: `VERDICT: FAIL`. Its fix was "swing the camera round to sit directly behind the Frog so its back faces the lens, and the Jackal stands clear above the stones".
 
 ## Log
 
+- 2026-09-28 12:24 EDT — builder: one fixed follow distance (3.2) behind the held hunter, centred, yaw on the beast-to-hunter line; grader FAIL on side-on Frog; tested, pushed.
 - 2026-09-27 18:39 EDT — builder: the first climb engages the locked follow camera; hunter-offscreen 4 fails to 0; built, tested, pushed.
 - 2026-09-27 18:24 EDT — builder: camera-not-over-shoulder waits for the truck's ease instead of 45 frames; 9 fails to 0; built, tested, pushed.
 

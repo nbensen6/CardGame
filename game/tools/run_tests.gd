@@ -1872,6 +1872,8 @@ func _init() -> void:
 	_test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all()
 	_test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top()
 	_test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t()
+	_test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil()
+	_test_follow_yaw_puts_the_lens_behind_the_hunter_on_the_beast_line()
 
 	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
 	# 2026-09-23, "make the resting camera third person too"). The whole shot is
@@ -27133,7 +27135,7 @@ func _test_shoulder_frame_holds_its_composition_at_every_distance() -> void:
 	var far := Combat3D.shoulder_frame(Vector3.ZERO, 0.0, 30.0, 1.0)
 	_expect(is_equal_approx((far["truck"] as Vector3).x / (near["truck"] as Vector3).x, 5.0),
 		"five times the distance trucks five times as far, so the shot keeps its composition through every zoom")
-	_expect(is_equal_approx((far["aim"] as Vector3).x / (near["aim"] as Vector3).x, 5.0),
+	_expect(is_equal_approx((far["aim"] as Vector3).x, (near["aim"] as Vector3).x * 5.0),   # a product, not a ratio: SHOULDER_AIM is 0 now
 		"the aim offset scales with distance for the same reason -- a fixed world offset would centre the hunter zoomed out and lose them zoomed in")
 
 
@@ -29463,6 +29465,36 @@ func _test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top() -> void:
 	var out := Combat3D.climb_focus_for(anchors, 4, 13.6, 14.4, 1.0)
 	_expect(is_equal_approx(out.x, Combat3D.SIGIL_VIEW_DIST),
 		"at the top the shot is of the face: the fixed stand-off gives way to SIGIL_VIEW_DIST [got=%.2f]" % out.x)
+
+
+## Nick, 2026-09-28: "the camera should not be dynamic in how its zoomed. it
+## should be static positioned behind the character." One stand-off at rest,
+## on a mid rung and at the sigil -- the hunter reads the same size in all three.
+func _test_follow_yaw_puts_the_lens_behind_the_hunter_on_the_beast_line() -> void:
+	# _apply_orbit puts the lens at pivot + (sin yaw, ., cos yaw) * dist, so the
+	# lens is behind the hunter exactly when that bearing points away from the beast.
+	var beast := Vector3(0.0, 5.0, 0.0)
+	for hunter: Vector3 in [Vector3(0.0, 0.0, 10.0), Vector3(-4.0, 0.0, 8.0), Vector3(3.0, 2.0, 6.0)]:
+		var yaw := Combat3D.follow_yaw_for(hunter, beast, 0.0)
+		var lens := hunter + Vector3(sin(yaw), 0.0, cos(yaw)) * 3.0
+		var away := Vector2(hunter.x - beast.x, hunter.z - beast.z).normalized()
+		var back := Vector2(lens.x - hunter.x, lens.z - hunter.z).normalized()
+		_expect(back.dot(away) > 0.999,
+			"the lens sits straight behind the hunter, on the line from the beast through them (hunter %s)" % hunter)
+	_expect(is_equal_approx(Combat3D.follow_yaw_for(Vector3(0.0, 3.0, 0.0), beast, 0.4), 0.4),
+		"a hunter on the beast's own axis keeps the current yaw instead of snapping to atan2(0, 0)")
+
+
+func _test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil() -> void:
+	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53), 5: Vector3(2.0, 17.0, 0.4)}
+	_expect(is_equal_approx(Combat3D.ACTIVE_HUNTER_DIST, Combat3D.FOLLOW_DIST),
+		"the resting shot stands FOLLOW_DIST behind the hunter")
+	var mid := Combat3D.climb_focus_for(anchors, 4, 13.6, 0.53, 0.5)
+	_expect(is_equal_approx(mid.x, Combat3D.FOLLOW_DIST),
+		"a mid rung stands the same FOLLOW_DIST behind the hunter, no pad [got=%.2f]" % mid.x)
+	var top := Combat3D.climb_focus_for(anchors, 5, 13.6, 14.4, 1.0)
+	_expect(is_equal_approx(top.x, Combat3D.FOLLOW_DIST),
+		"the sigil stands the same FOLLOW_DIST behind the hunter, no pull-back to frame the face [got=%.2f]" % top.x)
 
 
 func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:

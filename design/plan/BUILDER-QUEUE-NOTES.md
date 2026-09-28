@@ -16,6 +16,27 @@ cost is the Frog: about 60 px at rest instead of 200. Before is the
 "stairs-a" frame. If the Frog is too small, say how big and the camera
 comes in; the lens stays.
 
+
+**Builder, 2026-09-28 12:24 EDT:** worked from Nick's 2026-09-28 12:04 note and the Risk
+of Rain 2 screenshot (`design/art/references/hKsXNZ9zAbYXR7QxaDZBoY-1920-80.jpg`,
+survivor about a quarter of the frame tall, centred, camera behind looking at
+the boss). Changes, all in the 3D combat view:
+- One distance, `FOLLOW_DIST = 3.2`, at rest, mid-climb and at the sigil.
+  The climb pad (2.0) and the sigil pull-back (14) now equal it, and the
+  big-leap zoom-out is gone. At the 65-degree lens that puts the Frog about
+  150 px tall on a 720 frame (was about 60).
+- Aim at the hunter's own middle (`GROUND_VIEW_EYE` 0.5 hunter-heights,
+  everywhere, no climb lift), and `SHOULDER_AIM` 0, so the hunter is centred.
+  Measured: hunter0 at (640, 380) at rest, (640, 418) at the sigil.
+- Yaw on the line from the beast through the held hunter
+  (`follow_yaw_for`), so the lens is behind them, not on world +Z.
+- Tried pitch 0.35 (the beast went off the top) and 0.08 (no visible
+  change, the camera floor holds the lens height). Kept 0.20.
+Grader: FAIL twice. Both times it said the Frog reads side-on, and that the
+stones hide the beast at rest. The first is the model's facing (see "Hunters
+face the beast"). The second is stone placement seen from hunter height. I
+fixed neither: both are outside this item.
+
 ## F8 flips the camera Player/Dev.
 
 The Player/Dev button exists in the

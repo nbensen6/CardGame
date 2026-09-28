@@ -193,3 +193,7 @@ appends here, never to the queue.
       (foothold 2 is 2.36m off in x, foothold 4 is 0.79m off), not the
       past-the-sigil top branch fixed 2026-09-25. Same symptom, different
       place; take it as a fresh bug.
+- [ ] (proposed) **Frog turns its back to the camera.** With the lens now straight behind the held hunter, the Frog model still reads in profile. Its rest facing sits about 90 degrees off the beast line.
+- [ ] (proposed) **Near stones hide the jackal at rest.** From hunter height at the new range, only the jackal's head clears the first two stones.
+- [ ] (proposed) **Opening wide shot is still a zoom.** The fight opens on the whole beast and eases in to the follow distance. Ask Nick whether the camera should start at the follow distance.
+- [ ] (proposed) **Other hunter behind the camera mid-climb.** At 3.2 units the second hunter falls behind the lens at the sigil (VIS FAIL hunter1).

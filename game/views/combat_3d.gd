@@ -300,7 +300,7 @@ const SHOULDER_TRUCK := 0.15
 ## the camera's pitch as well as its yaw, which dropped the hunter from y=507 to
 ## y=602 on a 720 frame, behind the card strip (measured, first attempt at this).
 ## The vertical belongs to the jump's hold and dead zone; this must not touch it.
-const SHOULDER_AIM := 0.26
+const SHOULDER_AIM := 0.0   # centred on the hunter you hold (Nick, 2026-09-28: "more centered on the character selected")
 const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
@@ -385,12 +385,21 @@ const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 2.0
 ## to the beast, not to the hunter it was supposed to follow. A hunter who
 ## reads the same size on the ground and three storeys up IS "locked to the
 ## character." See the long note at its use in _aim_camera.
-const ACTIVE_HUNTER_DIST := 8.0
+## Nick, 2026-09-28: "the camera should not be dynamic in how its zoomed. it
+## should be static positioned behind the character about the same range from
+## the risk of rain 2 screenshot." So there is ONE distance now, FOLLOW_DIST,
+## and rest, mid-climb and the sigil all use it: the hunter is the same size in
+## every shot and the beast is however big it is from there. The RoR2 frame has
+## the survivor about a quarter of the frame tall; at the 65-degree lens a
+## 0.7-unit hunter is that size from ~2.5 units, and FOLLOW_DIST sits a touch
+## further so their stone reads under them.
+const FOLLOW_DIST := 3.2
+const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## Up the side the subject is the hunter on its stone, not the whole beast:
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
 ## locked to character"; at 8 with the 65-degree lens the Goblin was 15 px).
-const CLIMB_HUNTER_DIST := 5.0
-const GROUND_VIEW_EYE := 2.0
+const CLIMB_HUNTER_DIST := FOLLOW_DIST
+const GROUND_VIEW_EYE := 0.5   # the aim: the hunter's own middle, at rest AND climbing (2026-09-28)
 const GROUND_VIEW_PITCH := 0.20
 ## The locked climbing camera's own pitch, at the very top of the route
 ## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears
@@ -407,14 +416,14 @@ const CLIMB_FOCUS_PITCH_MAX := 0.2
 ## Stand-off at the top hold. The hunter stands in front of the face there
 ## (top_hold_z_for), so the shot is of the face: further back than the
 ## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.
-const SIGIL_VIEW_DIST := 14.0
+const SIGIL_VIEW_DIST := FOLLOW_DIST   # no pull-back at the top any more (2026-09-28)
 ## A trusted anchor's clearance term comes out at (or near) zero -- the anchor
 ## IS the surface, and `climb_dist_for` no longer pads it with a hull guess.
 ## At exactly zero the lens sits on the mesh itself, which reads as clipping
 ## rather than as "close." One small fixed pad, same idea `climb_dist_for`'s
 ## own doc comment already allows for -- not a return to the hull query, just
 ## room to see the hold from outside it.
-const EXACT_RUNG_CLEARANCE_PAD := 2.0
+const EXACT_RUNG_CLEARANCE_PAD := 0.0   # 2.0 made the climb shot 2 units wider than rest (2026-09-28)
 ## How long a coach hint stays up before dismissing itself. Long enough to read
 ## twice, short enough that it never becomes a thing you have to click away
 ## (Nick, 2026-08-06: the tips are annoying). Acting also dismisses it — if you
@@ -1290,7 +1299,7 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	var foot := 0
 	if slot >= 0 and slot < _hunters.size():
 		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
-			+ HUNTER_HEIGHT * 1.4 + _focus_lift
+			+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _focus_lift
 		foot = int((_hunters[slot] as Dictionary).get("foot", 0))
 	# Same fixed standoff the ground shot uses (ACTIVE_HUNTER_DIST), not a window
 	# fit around `window` -- fitting the beast's own height is exactly what put
@@ -2353,7 +2362,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		var fs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 		if fs >= 0 and fs < _hunters.size():
 			_pivot_target.y = float((_hunters[fs]["home"] as Vector3).y) \
-				+ HUNTER_HEIGHT * 1.2 + _focus_lift + _pan.y
+				+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _focus_lift + _pan.y
 	_pivot_target.x = lock.x + _pan.x
 	_pivot_target.z = lock.y + _pan.z
 	# A camera that rises exactly as fast as the jumper shows no jump at all:
@@ -2372,7 +2381,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		if fs2 >= 0 and fs2 < _hunters.size():
 			var node2 := _hunters[fs2]["node"] as Node3D
 			if is_instance_valid(node2):
-				var eye := node2.position.y + HUNTER_HEIGHT * 1.2 + _focus_lift
+				var eye := node2.position.y + HUNTER_HEIGHT * GROUND_VIEW_EYE + _focus_lift
 				var span: float = _jump_hi - _jump_lo
 				if span > THIRD_WINDOW * 0.55:
 					# BIG LEAP: frame the whole arc at once — aim at the middle
@@ -2385,7 +2394,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 					# SMALL HOP between stones: hold still and let them move
 					# inside a dead zone — a camera that rises with the jumper
 					# shows no jump at all.
-					var dead := THIRD_WINDOW * 0.18
+					var dead := HUNTER_HEIGHT * 0.8   # the frame is ~4 units tall at FOLLOW_DIST
 					_pivot_target.y = clampf(_pivot.y, eye - dead, eye + dead)
 					_air_span = 0.0
 				_air_chase = true
@@ -2422,13 +2431,8 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			if gs >= 0 and gs < _hunters.size():
 				_pivot_target.y = float((_hunters[gs]["home"] as Vector3).y) \
 					+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _pan.y
-	elif _focused and _air_span > THIRD_WINDOW * 0.55:
-		# A focused shot owns its own distance (_user_framed), but a leap taller
-		# than a third of the frame cannot be watched from inside it — let the
-		# camera out far enough to hold the whole arc, then the landing framing
-		# pulls it back in.
-		_working_dist = minf(_dist_for_window(_air_span * 1.25), _cam_reach())
-		_dist = lerpf(_dist, _working_dist, 1.0 - exp(-delta * 6.0))
+	# No zoom-out for a big leap any more (Nick, 2026-09-28: "the camera should
+	# not be dynamic in how its zoomed"). The pivot still rides the arc above.
 	if snap:
 		_pivot = _pivot_target
 		if not _user_framed:
@@ -2468,7 +2472,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# hunters landed at y=538 on a 720 frame, which is behind the hand; at 0
 		# they sat dead centre with half the screen given to floor. 0.20 puts
 		# them just clear of the cards with the beast owning the rest.
-		_focus_camera(THIRD_WINDOW, 0.20)
+		_focus_camera(THIRD_WINDOW, 0.0)   # no lift: same aim as rest (2026-09-28)
 		return
 	if not _user_framed:
 		if grounded:
@@ -2512,7 +2516,27 @@ func _aim_camera(delta: float, snap: bool) -> void:
 				else lerpf(_pitch, _pitch_target, ease)
 			_dist = _free_dist_target if absf(_free_dist_target - _dist) < FREE_CAM_SETTLE \
 				else lerpf(_dist, _free_dist_target, ease)
+	elif not _hunters.is_empty():
+		# Behind the hunter's back, on the line from the beast through them
+		# (Nick, 2026-09-28: "static positioned behind the character"). A
+		# fixed world yaw saw a hunter off the beast's axis side-on.
+		var ys: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+		if ys >= 0 and ys < _hunters.size():
+			_yaw = follow_yaw_for(_hunters[ys]["home"] as Vector3, _beast_box.get_center(), _yaw)
+			_yaw_target = _yaw
 	_apply_orbit()
+
+
+## The orbit yaw that puts the lens directly behind `hunter`, looking through
+## them at `beast`: _apply_orbit places the lens at pivot + (sin yaw, ., cos yaw),
+## so the yaw is the ground-plane bearing from the beast to the hunter. Keeps
+## `fallback` when the hunter stands on the beast's own axis point.
+static func follow_yaw_for(hunter: Vector3, beast: Vector3, fallback: float) -> float:
+	var dx := hunter.x - beast.x
+	var dz := hunter.z - beast.z
+	if dx * dx + dz * dz < 0.0001:
+		return fallback
+	return atan2(dx, dz)
 
 
 ## Camera distance that makes `window` world-units of height fill the frame.

@@ -13,11 +13,9 @@ run failed.
 - [ ] **Zoom out: stairs visible, beast whole.** ^zoom-out-stairs-visible-beast-whole
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
-      Ask: Is this the shot? Tick, or say how big the Frog should be.
-      ![[agents/frames/builder/2026-09-25-zoom-out-rest-after.png|420]]
-      ![[agents/frames/builder/2026-09-25-zoom-out-climb-after.png|420]]
-      ![[agents/frames/builder/2026-09-25-zoom-out-sigil-after.png|420]]
-      ![[agents/frames/builder/2026-09-25-stairs-a-beast-far.png|420]]
+      Ask: Is this the camera range? Tick, or say closer or further.
+      ![[agents/frames/builder/2026-09-28-camera-behind-after.png|420]]
+      ![[agents/frames/builder/2026-09-28-camera-behind-climb-after.png|420]]
 - [ ] 👀 **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#F8 flips the camera Player/Dev.|details]]
       Ask: Press F8 in a fight. Does the camera flip with a note? Tick, or say what happened.
