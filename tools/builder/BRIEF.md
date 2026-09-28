@@ -72,11 +72,24 @@ stones climbing the gap between them, dark ground, cool sky.
        - **Ask:** one question for Nick, 15 words or fewer, or "nothing".
        - **Found:** anything you noticed and did not fix, one line each.
 
-   Then in `BUILDER-QUEUE.md`: change the item's `- [ ]` to `- [?]` (ready
-   for Nick to look) and append ` → `agents/frames/builder/<after>.png`` to
-   its bold title line, so `Needs Nick.md` can link the frame. **You never write `- [x]`.** Nick ticks. Add each
+   Then in `BUILDER-QUEUE.md`, the item you worked. Its shape is fixed and
+   Nick reads only the first three lines:
+
+       - [?] **Title.** ^block-id
+             Look: [[agents/frames/builder/<after>.png|<after>]]
+             Ask: one plain question, 15 words or fewer, answerable yes/no or by a choice.
+             > [!note]- Details
+             > everything else: the original brief, your measurements, what you tried
+
+   Change `[ ]` to `[?]`, write the `Look:` and `Ask:` lines, and put your
+   own notes INSIDE the Details fold, prefixed `> `. Never add prose above
+   the fold, never rewrite the title, never touch `^block-id`. **You never write `- [x]`.** Nick ticks. Add each
    `Found:` line to the bottom of the queue as `- [ ] (proposed) ...`.
    Timestamps are US Eastern: `TZ=America/New_York date +"%Y-%m-%d %H:%M %Z"`.
+   `Found:` lines go under a `## Notes` heading BELOW `## This run` (Home
+   embeds This run; Nick does not want findings there). Anything you would
+   propose as new work goes to `design/plan/BUILDER-PROPOSED.md` as
+   `- [ ] **short title.** one sentence`, never into the queue.
 
 8. Stop. One item per run.
 

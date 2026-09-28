@@ -5,46 +5,34 @@ tags:
 
 # Titan-Slayers
 
-> [!todo] **[[Needs Nick]]** — one line per thing waiting on you. Start there.
+> [!todo] **[[Needs Nick]]** is the only page you have to read. Everything on it is a tick or a one-line answer.
 
-Co-op deckbuilder where hunters climb giant Titans. This vault is the `design/` folder of the repo — every note here is a real design doc, so editing it here edits the project.
-
-**One goal: the Cinder Jackal fight, to Slay the Spire quality.** The bar is [[JACKAL-BAR]]. The picture is yours:
+**The goal:** the Cinder Jackal fight, to Slay the Spire quality. The bar is [[JACKAL-BAR]]. The picture is yours:
 
 ![[art/references/2026-09-24-nick-target-composition.webp|400]]
 
-## The builder
+## How work happens
 
-One agent builds. It takes the **top unticked line** of the queue below, shoots the named frame before and after, tests, pushes. It marks a line `[?]` when it wants you to look. **Only you tick `[x]`.** Reorder the list however you like; that is the whole steering wheel.
+One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line `[?]`. You tick it or send it back on [[Needs Nick]]. Only you tick.
 
-▶ **[Run the builder now](obsidian://shell-commands/?vault=design&execute=run-builder)** — runs hidden, 10–40 min, then this page updates. Same from the palette: *Execute: Run the builder*.
+- ▶ **[Run the builder once](obsidian://shell-commands/?vault=design&execute=run-builder)**
+- ▶ **[Run until the queue is empty](obsidian://shell-commands/?vault=design&execute=run-builder-loop)** · [Stop after this run](obsidian://shell-commands/?vault=design&execute=stop-builder-loop)
+- ▶ **[Send my answers](obsidian://shell-commands/?vault=design&execute=send-answers)** after ticking or typing on Needs Nick
 
-![[BUILDER-QUEUE#Now — the Cinder Jackal fight]]
-
-### Last run
+## Last run
 
 ![[agents/status/builder#This run]]
 
-Full note: [[agents/status/builder|builder]] · frames: `agents/frames/builder/` · defaults it takes when you say nothing: [[BUILDER-QUEUE#Open decisions, with the default the builder takes if Nick says nothing|open decisions]]
-
-## Beasts
-
-[[beasts/cinder_jackal|The Cinder Jackal]] is the template; the recipe is [[ai-beast-recipe]]. Rollout waits until the jackal fight is ticked. Every beast note has a ▶ Fight this now link.
-
-![[Beasts.base#Art overhaul]]
-
 ## Where things are
 
-| folder | what is in it |
+| | |
 |---|---|
-| **plan** | [[BUILDER-QUEUE]] (live) · [[GDD]] · [[ROADMAP]] · [[OVERHAUL-PLAN]] · [[BACKLOG]] · [[titan-design]] · [[depth-plan]] |
-| **agents** | `status/builder` (live) · `frames/builder` (live) · everything else is the 2026-09-22..25 cloud-agent era, archived: [[agents/BOARD|board]] · [[agents/Agents|requests]] · [[agents/HANDOFF-TO-FABLE|what went wrong]] |
-| **guide** | [[asset-loop]] · [[ai-beast-recipe]] · [[blender-pipeline]] · [[blender-learning]] · [[audio-guide]] · [[3d-pivot]] · [[mobile-setup]] · [[climbing-and-characters]] |
-| **art** | [[ART-REVIEW]] · [[art-target]] · [[card-face-vs-sts]] · [[icon-audit]] · palette and frame templates · `previews/` · `references/` |
-| **notes** | [[feel-and-readability]] · [[tuning-knobs]] · [[balance-notes]] · [[cards-and-classes]] · [[sts2-comparison]] |
-| **beasts** · **progress** · **renders** | one note per beast · per-asset work logs · raw render output |
-
-> [!tip] How to steer
-> - Move a line up in [[BUILDER-QUEUE]] and the next run does it. Delete a line and it never happens.
-> - A `[?]` line is waiting on you. Look at the frames in **Last run**, then tick it or write what is wrong under it.
-> - Claude reads and writes here too. Ask it to add to the queue rather than describing the work twice.
+| [[Needs Nick]] | what is waiting on you |
+| [[BUILDER-QUEUE]] | the ordered work list; details fold under each line |
+| [[BUILDER-PROPOSED]] | things the builder noticed and did not do; move a line into the queue to make it real |
+| [[agents/status/builder\|builder]] | the builder's last run, in full |
+| `agents/frames/builder/` | every before and after frame |
+| [[JACKAL-BAR]] · [[GDD]] · [[ROADMAP]] · [[BACKLOG]] | what the game is and where it goes |
+| [[ai-beast-recipe]] · [[asset-loop]] · [[blender-pipeline]] | how assets get made |
+| `art/` · `beasts/` · `notes/` · `progress/` | references, one note per beast, thinking, work logs |
+| `archive/` | the September cloud-agent era, kept, ignored by search |

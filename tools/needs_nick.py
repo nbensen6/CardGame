@@ -57,9 +57,11 @@ def parse(text):
         if not m:
             continue
         title = " ".join(m.group(2).split())
-        bid = re.search(r" \^([\w-]+)\s*$", block)
+        bid = re.search(r" \^([\w-]+)\s*$", block, re.M)
+        ask = re.search(r"^\s{6}Ask: (.+)$", block, re.M)
         items.append({"a": a, "b": b, "mark": m.group(1), "title": title,
-                      "body": block, "id": bid.group(1) if bid else ""})
+                      "body": block, "id": bid.group(1) if bid else "",
+                      "ask": ask.group(1).strip() if ask else ""})
     return lines, items
 
 
@@ -75,7 +77,7 @@ def ensure_ids(lines, items):
         if it["id"]:
             continue
         slug = re.sub(r"[^a-z0-9]+", "-", it["title"].lower()).strip("-")[:40]
-        lines[it["b"] - 1] = lines[it["b"] - 1].rstrip() + " ^" + slug
+        lines[it["a"]] = lines[it["a"]].rstrip() + " ^" + slug  # on the title line
         it["id"] = slug
 
 
@@ -110,11 +112,10 @@ def apply_answers(lines, items, answers):
         if note and note not in it["body"]:
             lines[it["a"]] = re.sub(r"^- \[[ ?]\]", "- [ ]", lines[it["a"]], count=1)
             last = it["b"] - 1
-            tail = re.search(r" \^[\w-]+\s*$", lines[last])
-            bid = tail.group(0) if tail else ""
-            if tail:
-                lines[last] = lines[last][: tail.start()]
-            lines.insert(last + 1, f"      **Nick, {STAMP}:** {note}{bid}")
+            # His words go right under the title, above Look/Ask/Details, so
+            # they are the first thing the builder and he see.
+            lines.insert(it["a"] + 1, f"      **Nick, {STAMP}:** {note}")
+            last += 1
             for other in items:
                 if other["a"] > it["a"]:
                     other["a"] += 1
@@ -143,7 +144,8 @@ def bullet(it):
     paths = re.findall(r"(?:agents/frames|art/references)/[\w./-]+?\.(?:png|webp)", it["body"])
     links = " · ".join(f"[[{p}|{Path(p).stem}]]" for p in dict.fromkeys(paths))
     head = f"[[BUILDER-QUEUE#^{it['id']}|{it['title']}]]"
-    return f"- [ ] {head}" + (f" — {links}" if links else "") + "\n  - Nick: "
+    ask = it.get("ask") or "Tick if it is right. Say what is wrong if not."
+    return f"- [ ] {head}" + (f" — {links}" if links else "") + f"\n  {ask}\n  - Nick: "
 
 
 def write_page(lines, items):

@@ -4,6 +4,7 @@
   "newFileFolderPath": "beasts",
   "showFrontmatter": true,
   "userIgnoreFilters": [
-    "renders/"
+    "renders/",
+    "archive/"
   ]
 }
