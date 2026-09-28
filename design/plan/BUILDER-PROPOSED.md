@@ -197,3 +197,4 @@ appends here, never to the queue.
 - [ ] (proposed) **Near stones hide the jackal at rest.** From hunter height at the new range, only the jackal's head clears the first two stones.
 - [ ] (proposed) **Opening wide shot is still a zoom.** The fight opens on the whole beast and eases in to the follow distance. Ask Nick whether the camera should start at the follow distance.
 - [ ] (proposed) **Other hunter behind the camera mid-climb.** At 3.2 units the second hunter falls behind the lens at the sigil (VIS FAIL hunter1).
+- [ ] **Hunters stand wider apart on the ground.** At ±1.15 units the Goblin's own stone line falls under the climb gauge in the Frog's view.

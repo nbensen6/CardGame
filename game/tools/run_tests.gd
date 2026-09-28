@@ -994,6 +994,7 @@ func _init() -> void:
 	_test_route_pos_first_rung_sits_left_of_the_top_hold()
 	# builder, 2026-09-28: the two stone lines run apart, one each side of the beast.
 	_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge()
+	_test_route_sweep_for_opens_the_two_lines_into_a_v()
 	_test_route_pos_sweeps_monotonically_left_to_right()
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
@@ -22208,6 +22209,27 @@ func _test_route_pos_returns_the_top_hold_directly_when_there_is_only_one_rung()
 ## The two routes' top stones must sit at least 2 * ROUTE_PAIR_HALF_GAP apart
 ## (a clear gap, not stand_offset_x's touching ~1.8 on the jackal), symmetric
 ## about the anchor, and side 0 must leave the anchor where it is.
+## Nick, 2026-09-28, front and top view: two lines, big stones near the
+## hunters, small near the beast, meeting at the beast. Each hunter's line
+## must start further OUT on its own side than it ends, so the pair is
+## wider at the hunters than at the head.
+func _test_route_sweep_for_opens_the_two_lines_into_a_v() -> void:
+	var width := 10.8
+	var n := 5
+	var ground_z := 20.0
+	var starts := {}
+	var tops := {}
+	for side in [-1.0, 1.0]:
+		var top := Vector3(Combat3D.route_offset_x(0.0, side, width), 6.0, 2.0)
+		tops[side] = top
+		starts[side] = Combat3D.route_pos_cleared(top, ground_z, 0, n, Combat3D.route_sweep_for(side))
+		_expect(absf((starts[side] as Vector3).x) > absf(top.x), "side %d's first stone must sit further out on its own side than its top stone" % int(side))
+	var near_gap: float = (starts[1.0] as Vector3).x - (starts[-1.0] as Vector3).x
+	var far_gap: float = (tops[1.0] as Vector3).x - (tops[-1.0] as Vector3).x
+	_expect(near_gap > far_gap, "the two lines must be wider apart by the hunters (%.2f) than at the head (%.2f) -- a V, not parallel lines" % [near_gap, far_gap])
+	_expect(is_equal_approx(Combat3D.route_sweep_for(0.0), Combat3D.STONE_SWEEP_WIDTH), "no route side keeps the old leftward sweep")
+
+
 func _test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge() -> void:
 	var width := 10.8
 	var left: float = Combat3D.route_offset_x(2.0, -1.0, width)

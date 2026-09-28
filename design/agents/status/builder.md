@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T14:37
-working_on: "F8 flips the camera Player/Dev"
+updated: 2026-09-28T14:57
+working_on: "Stones: first by the hunter, last in front of the head"
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 14:37 EDT
+2026-09-28 14:57 EDT
 
-- **Did:** Nothing to build: Nick says F8 works, so the item went back to him for a tick.
-- **Worked?** Yes, no change was needed; no frame, no grader run.
-- **Look at:** ![[frames/builder/2026-09-28-f8-works-after.png]]
-- **Ask:** You said F8 works now. Tick to close it?
+- **Did:** Each hunter's stone line now fans outward on its own side, a V meeting at the jackal's head.
+- **Worked?** Partly: the wide view shows the V, but from behind the Frog the Goblin's big stone sits under the climb gauge. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-stone-lines-wide-before.png]] then ![[frames/builder/2026-09-28-stone-lines-wide-after.png]]; Frog view ![[frames/builder/2026-09-28-stone-lines-before.png]] then ![[frames/builder/2026-09-28-stone-lines-after.png]]
+- **Ask:** Goblin's big stone is off-screen from the Frog's view. Spread the hunters wider?
 
 ## Notes
 
-- **Found:** nothing new.
+- **Found:** From behind the Frog, the hunters stand too close (about 1.2 units each side) for both big stones to sit by their hunters on screen. Narrowing the V put the Frog's stone over the jackal's legs.
 
 ## Log
 
+- 2026-09-28 14:57 EDT — builder: stone lines fan out into a V (route_sweep_for); grader FAIL on Goblin stone under the gauge; tested, pushed.
 - 2026-09-28 14:37 EDT — builder: F8 confirmed by Nick, marked 👀 for his tick; no code change.
 - 2026-09-28 14:24 EDT — builder: follow camera rides the hopping hunter (live body, not landing stone), eased yaw; harness midair=S; grader FAIL x2; tested, pushed.
 - 2026-09-28 13:55 EDT — builder: one hop per stone (climb_landings), no mid-air sub-landings; harness land=K; grader FAIL then PASS; tested, pushed.

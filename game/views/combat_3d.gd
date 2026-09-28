@@ -375,6 +375,19 @@ const GROUND_STANDOFF := 4.2
 ## pixel diff against a stones-disabled render) while still reading as one
 ## rock, not a bucket, and still fully on screen.
 const STONE_SWEEP_WIDTH := HUNTER_HEIGHT * 2.0
+## Which way one hunter's line sweeps, as route_pos's signed `half_width`.
+## Nick, 2026-09-28, front and top view: "two lines, one each side, big
+## stones near the hunters, small near the beast, meeting at the beast."
+## Both lines used to sweep LEFT by the same width, so they ran parallel
+## (the right line's near stone sat almost under the jackal). Each line
+## now opens OUTWARD on its own side: `side` -1 starts further left, +1
+## further right, and both close to route_offset_x's pair at the head --
+## a V in the top view. 0.0 (no route side) keeps the old leftward sweep.
+const ROUTE_FAN_WIDTH := HUNTER_HEIGHT * 2.0
+static func route_sweep_for(side: float) -> float:
+	if side == 0.0:
+		return STONE_SWEEP_WIDTH
+	return -signf(side) * ROUTE_FAN_WIDTH
 ## The camera's fixed standoff behind the active hunter, in world units --
 ## at rest AND mid-climb alike (Nick, 2026-09-25, two drawings: "zoom out" at
 ## rest; "camera closer, should be locked to character" mid-climb). One
@@ -3766,7 +3779,7 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	if n <= 1 or i >= n - 1:
 		return _top_hold(route_side)
 	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z), i, n,
-		STONE_SWEEP_WIDTH)
+		route_sweep_for(route_side))
 
 
 ## The LEDGES strictly between two footholds — the flat ground a hunter can
@@ -4560,7 +4573,7 @@ func _build_float_stones() -> void:
 	for side in [-1.0, 1.0]:
 		var top_pt: Vector3 = _top_hold(side)
 		for index in range(n):
-			var pos: Vector3 = route_pos_cleared(top_pt, ground_z, index, n, STONE_SWEEP_WIDTH)
+			var pos: Vector3 = route_pos_cleared(top_pt, ground_z, index, n, route_sweep_for(side))
 			_add_float_stone(pos, index, n)
 
 

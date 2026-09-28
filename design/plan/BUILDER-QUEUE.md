@@ -24,12 +24,13 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
       Ask: Grader failed this: intent badge over the Frog; mid-hop panel "floats". Camera now follows smoothly?
       ![[agents/frames/builder/2026-09-28-camera-follows-hop-after.png|420]]
-- [ ] **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
+- [ ] 👀 **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Each hunter now has its own stone line, left and right of the jackal. Right spacing?
-      ![[agents/frames/builder/2026-09-28-stones-apart-after.png|420]]
+      Ask: Grader failed this: Goblin's big stone hides under the gauge. Spread hunters wider?
+      ![[agents/frames/builder/2026-09-28-stone-lines-wide-after.png|420]]
+      ![[agents/frames/builder/2026-09-28-stone-lines-after.png|420]]
 - [x] **Rest camera pulled back to 6.** ^rest-camera-pulled-back-to-6
       **Closed by the session, 2026-09-28 12:35 ET:** duplicate; Nick's camera answer lives on the Zoom out item below, which is open.
       **Nick, 2026-09-28 12:29 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
@@ -115,3 +116,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stone-to-stone hops are past the arc's ceiling.** On the jackal each hop is 16-25m against hop_arc's 9.15m; the arc stops growing and playtest's hop-distance-band now reports it.
 - [ ] (proposed) **Intent badge over the climbing hunter's head.** At some landings the beast's "Attack 7" chip sits on the Goblin's tank and ears.
 - [ ] (proposed) **Loose stones sit above their shadows.** Grader saw air between the big side stones and their ground shadows mid-climb.
+- [ ] (proposed) **Hunters too close for two stone lines.** From the Frog's view the Goblin's big stone sits under the climb gauge; narrowing the V covers the jackal's legs.

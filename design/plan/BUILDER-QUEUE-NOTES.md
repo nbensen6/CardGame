@@ -111,6 +111,28 @@ Tried 2.5: the Frog's stone covered the jackal's legs again. Grader round
 face), round 3 PASS on the same geometry. Test:
 `_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge`.
 
+**Builder, 2026-09-28 14:57 EDT:** Nick (13:34), with a front and top
+drawing: two lines, big near the hunters, small near the beast, meeting at
+the beast. Before, both lines swept LEFT by the same STONE_SWEEP_WIDTH, so
+they ran parallel (the Goblin's near stone sat almost under the jackal). New
+`route_sweep_for(side)` opens each line OUTWARD on its own side by
+ROUTE_FAN_WIDTH (1.4); tops stay at route_offset_x's ±2.8. Near ends are
+now ±4.2, tops ±2.8: a V in the top view. Stones and hunters' landings both
+read it (`_build_float_stones`, `_stand_on_model`); playtest's two route
+mirrors call it too, and its stale STONE_SWEEP_WIDTH copy (6.5, the real
+one is 2.0) is gone. Test: `_test_route_sweep_for_opens_the_two_lines_into_a_v`.
+Frames: `2026-09-28-stone-lines-wide-{before,after}.png` (establishing shot,
+shows the V), `-before/-after.png` (Frog cam), `-goblin-after.png` (Goblin
+cam: both big stones flank the jackal like his front view).
+Grader round 1 FAIL: from the Frog cam the Goblin's big stone is under the
+climb gauge, and the middle stones hide behind the Frog's big stone. Tried
+top ±1.4 with fan 0.7 (near ends ±2.1): Goblin's stone still under the gauge
+and the Frog's big stone moved in front of the jackal's legs. Reverted. The
+Frog cam maps x=+1.4 at the near-stone depth to about screen x 1095, so a V
+whose near end is wider than its top cannot keep the Goblin's stone on screen
+while the hunters stand ±1.15 apart. Needs a call: spread the hunters, or
+accept the Goblin's stone off-frame in the Frog's view.
+
 ## Rest camera pulled back to 6.
 
 Two frames from Nick:
