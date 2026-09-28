@@ -325,7 +325,7 @@ const SCENE_SHIFT := 0.0
 const GROUND_LIFT := 0.07
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
-const CAMERA_FLOOR := 0.8
+const CAMERA_FLOOR := 0.5
 ## The furthest the camera may get from the middle of the arena, in floor radii.
 ##
 ## Must stay under env.ENCLOSE_CLEAR (2.55), which is the radius env.py
@@ -404,16 +404,18 @@ static func route_sweep_for(side: float) -> float:
 ## and rest, mid-climb and the sigil all use it: the hunter is the same size in
 ## every shot and the beast is however big it is from there. The RoR2 frame has
 ## the survivor about a quarter of the frame tall; at the 65-degree lens a
-## 0.7-unit hunter is that size from ~2.5 units, and FOLLOW_DIST sits a touch
-## further so their stone reads under them.
-const FOLLOW_DIST := 3.2
+## 0.7-unit hunter is that size from ~2.5 units. 3.2 (until 2026-09-28) left
+## the hunter a fifth of the frame, further back than the RoR2 shot; 2.1 made
+## the hunter at the sigil hide the jackal's face. `hunter_frame_share` is the
+## rule and run_tests pins it to the RoR2 band.
+const FOLLOW_DIST := 2.3
 const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## Up the side the subject is the hunter on its stone, not the whole beast:
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
 ## locked to character"; at 8 with the 65-degree lens the Goblin was 15 px).
 const CLIMB_HUNTER_DIST := FOLLOW_DIST
 const GROUND_VIEW_EYE := 0.5   # the aim: the hunter's own middle, at rest AND climbing (2026-09-28)
-const GROUND_VIEW_PITCH := 0.20
+const GROUND_VIEW_PITCH := 0.08   # low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
 ## The locked climbing camera's own pitch, at the very top of the route
 ## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears
 ## the sigil so the lens sits ABOVE them and looks down. At the sigil the
@@ -2596,6 +2598,14 @@ func _aim_camera(delta: float, snap: bool) -> void:
 const FOLLOW_YAW_EASE := 6.0
 static func ease_yaw(yaw: float, want: float, delta: float) -> float:
 	return lerp_angle(yaw, want, 1.0 - exp(-delta * FOLLOW_YAW_EASE))
+
+
+## The share of the frame's height a HUNTER_HEIGHT hunter fills from `dist`
+## away through a `fov_deg` vertical lens. Nick's Risk of Rain 2 reference
+## (2026-09-28) has the survivor a quarter to a third of the frame tall; the
+## fixed follow distance is chosen to land in that band.
+static func hunter_frame_share(dist: float, fov_deg: float) -> float:
+	return HUNTER_HEIGHT / (2.0 * maxf(dist, 0.01) * tan(deg_to_rad(fov_deg) * 0.5))
 
 
 static func follow_yaw_for(hunter: Vector3, beast: Vector3, fallback: float) -> float:

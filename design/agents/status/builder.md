@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T15:09
-working_on: "Hunters face the beast"
+updated: 2026-09-28T15:36
+working_on: "Zoom out: stairs visible, beast whole."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 15:09 EDT
+2026-09-28 15:36 EDT
 
-- **Did:** Hunters on the ground now turn to look straight at the jackal instead of 40 degrees outward.
-- **Worked?** Yes, both hunters now show their backs to the camera, facing the jackal. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-hunters-face-beast-before.png]] then ![[frames/builder/2026-09-28-hunters-face-beast-after.png]]
-- **Ask:** Do both hunters face the jackal now?
+- **Did:** Camera sits closer and lower behind the held hunter, nearer the Risk of Rain 2 range.
+- **Worked?** Partly, rest shot moved but the Frog still reads bigger at the sigil. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-zoom-range-before.png]] then ![[frames/builder/2026-09-28-zoom-range-after.png]]
+- **Ask:** Is the resting range right now? Closer, further, or yes?
 
 ## Notes
 
-- **Found:** From the rest view the floating stones cover part of the jackal's chest.
+- **Found:** At the sigil the Frog reads about 1.8x its rest size though the camera stands the same 2.4-2.5 units off.
+- **Found:** The intent badge sits on the jackal's head at rest from the lower camera.
 
 ## Log
 
+- 2026-09-28 15:36 EDT — builder: follow distance 3.2 to 2.3, ground pitch 0.20 to 0.08, camera floor 0.8 to 0.5; hunter_frame_share rule + test; grader FAIL x3; tested, pushed.
 - 2026-09-28 15:09 EDT — builder: ground hunters aim at the beast (hunter_facing_y from position); grader PASS; tested, pushed.
 - 2026-09-28 14:57 EDT — builder: stone lines fan out into a V (route_sweep_for); grader FAIL on Goblin stone under the gauge; tested, pushed.
 - 2026-09-28 14:37 EDT — builder: F8 confirmed by Nick, marked 👀 for his tick; no code change.

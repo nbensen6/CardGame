@@ -62,12 +62,12 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Weak-point shot, same frame as the sigil.|details]]
       Ask: Same frame as the sigil item. Tick both together.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
-- [ ] **Zoom out: stairs visible, beast whole.** ^zoom-out-stairs-visible-beast-whole
+- [ ] 👀 **Zoom out: stairs visible, beast whole.** ^zoom-out-stairs-visible-beast-whole
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
-      Ask: Is this the camera range? Tick, or say closer or further.
-      ![[agents/frames/builder/2026-09-28-camera-behind-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-camera-behind-climb-after.png|420]]
+      Ask: Grader failed this: Frog looks bigger at the sigil than at rest. Resting range right?
+      ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
+      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]]
 - [x] **Nick judged the 2026-09-25 camera and stones** ^nick-judged-the-2026-09-25-camera-and-st
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Nick judged the 2026-09-25 camera and stones|details]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
@@ -118,3 +118,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Loose stones sit above their shadows.** Grader saw air between the big side stones and their ground shadows mid-climb.
 - [ ] (proposed) **Hunters too close for two stone lines.** From the Frog's view the Goblin's big stone sits under the climb gauge; narrowing the V covers the jackal's legs.
 - [ ] (proposed) **Stones cover the jackal's chest at rest.** From behind the Frog the floating stones hide part of the jackal's chest.
+- [ ] (proposed) **Hunter reads bigger at the sigil than at rest.** Camera-to-hunter distance is equal (2.49 vs 2.43 measured) yet the Frog is ~1.8x taller on screen at the top.
+- [ ] (proposed) **Intent badge covers the jackal's head at rest.** With the lower ground camera the "Attack 7" chip sits on the head.

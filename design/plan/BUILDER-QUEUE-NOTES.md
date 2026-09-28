@@ -37,6 +37,26 @@ stones hide the beast at rest. The first is the model's facing (see "Hunters
 face the beast"). The second is stone placement seen from hunter height. I
 fixed neither: both are outside this item.
 
+**Builder, 2026-09-28 15:36 EDT:** the 12:24 build was pushed but left without its eye, so
+this run re-took it against the RoR2 screenshot. Before: Frog ~20% of the
+frame tall, camera looking down, horizon at y~215. Changes:
+- `FOLLOW_DIST` 3.2 → 2.3 (tried 2.4, 2.6, 2.1; 2.1 hid the jackal's face
+  behind the Frog at the sigil). New static `hunter_frame_share(dist, fov)`
+  and a test pinning FOLLOW_DIST to the RoR2 band (0.20-0.34; 3.2 gave 0.17).
+- `GROUND_VIEW_PITCH` 0.20 → 0.08 and `CAMERA_FLOOR` 0.8 → 0.5, so the
+  resting lens sits low and near level like RoR2 (horizon now y~290) and the
+  jackal's head drops out from under the boss bar. The sigil pitch
+  (`CLIMB_FOCUS_PITCH_MAX`) is unchanged.
+- Tried raising the aim (`GROUND_VIEW_EYE` 0.8, 1.2): pushed the Frog behind
+  the cards, reverted.
+Measured camera-to-Frog distance: 2.49 at rest, 2.43 at the sigil, so the
+distance IS static; the Frog still reads ~1.8x bigger at the top (it did
+before too, 165 vs 290 px). Cause not found; proposed.
+Grader: FAIL three times. Round 1: change too small. Round 2: jackal head
+under the intent badge/boss bar at rest. Round 3: "Frog about 180 px tall
+(25%) at rest and about 335 px (46%) at the sigil". `run_tests.gd`: ALL
+TESTS PASSED.
+
 ## F8 flips the camera Player/Dev.
 
 The Player/Dev button exists in the
