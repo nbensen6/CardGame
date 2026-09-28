@@ -35,6 +35,10 @@ REM table, and neither is refreshed by running the game from a command line.
 REM On 2026-09-01 a new class_name went in without a reimport: menu.gd could not
 REM resolve it, failed to compile, and the main menu came up with dead buttons -
 REM which looks exactly like a broken game and was one missing scan.
+REM Pull first: the cloud builder pushes to main and cannot reach this PC.
+echo === pulling
+git -C "%ROOT%" pull --rebase --autostash --quiet origin main
+
 echo === reimporting
 "%GODOT%" --headless --path "%ROOT%\game" --import >nul 2>&1
 

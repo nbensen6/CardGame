@@ -15,8 +15,18 @@ stones climbing the gap between them, dark ground, cool sky.
 
 1. **Set up.** You are in a fresh worktree on `origin/main`.
 
+   On Windows (Nick's PC, `run.cmd`):
+
        set GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe
        "%GODOT%" --headless --path game --import
+
+   On Linux (the cloud routine): `bash tools/cloud_setup.sh`, then use the
+   `.sh` twins wherever this brief says `.cmd`: `tools/shot.sh` for
+   `tools\shot.cmd`, `tools/playtest.sh` for `tools\playtest.cmd`,
+   `tools/test.sh` for the test command. Same arguments; `out=` must be an
+   absolute path. Also run `python3 tools/needs_nick.py` first, so Nick's
+   ticks and answers reach the queue before you read it. Frame paths in
+   the repo are the same on both.
 
    The import is not optional: without it every `class_name` fails to resolve.
 
