@@ -10,11 +10,12 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
+- [ ] 👀 **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
+      **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
       **Nick, 2026-09-28 13:34 ET:** all my keyboard inputs are not being recorded in game. this could be the cause of f8 not working. please look into this.
       **Nick, 2026-09-28 12:29 ET:** f8 toggle is not working. nothing happens when i press f8
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#F8 flips the camera Player/Dev.|details]]
-      Ask: F8 now cuts to a wide Dev view and back. Press it in a fight. Works now? Tick, or say what happened.
+      Ask: Launch the game fresh. Keys work again? Then F8: does the camera flip with a note? Tick, or say what happened.
       ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]]
 - [ ] **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
