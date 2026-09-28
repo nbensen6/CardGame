@@ -10,6 +10,12 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Dev camera never survives a launch.**
+      **Nick, 2026-09-28 19:59 ET:** i loaded this test now, then pressed f8 to go to player, then pressed test now again and it loaded in dev. do i need to load my own game to stop conflictions?
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dev camera never survives a launch.|details]]
+      Ask: Press F8, relaunch: does the game open on the Player camera?
+      Test: state=3d beast=cinder_jackal press=F8
+      ![[agents/frames/builder/2026-09-28-dev-camera-launch-strip-after.png|420]] ^dev-camera-never-survives-a-launch
 - [x] **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 18:44 ET:** this is fine. the other character does not need to be on the screen when you select one. IE goblin does not need to be on the screen while selecting the frog. --- side note the came is crashing while testing.
       **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
@@ -20,7 +26,7 @@ run failed.
       Ask: The test window closed itself after 10 seconds; fixed. Does it stay open now?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-28-test-window-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
-- [ ] 👀 **Hops land on stones.**
+- [x] **Hops land on stones.**
       **Nick, 2026-09-28 18:44 ET:** the camera should be consistent. its zooming when you start climbing. I think its at a good distance when you start. but closes in once you start climbing. also the camera should be facing the same direction the character is facing.
       **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
@@ -38,11 +44,6 @@ run failed.
       Ask: After a knockback, is the Frog its normal size and shape now?
       Test: state=3d beast=cinder_jackal console=climb+5;climb+2
       ![[agents/frames/builder/2026-09-28-frog-knockback-strip-after.png|420]] ^zoom-out-stairs-visible-beast-whole
-- [ ] 👀 **Dev camera never survives a launch.**
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dev camera never survives a launch.|details]]
-      Ask: Press F8, relaunch: does the game open on the Player camera?
-      Test: state=3d beast=cinder_jackal press=F8
-      ![[agents/frames/builder/2026-09-28-dev-camera-launch-strip-after.png|420]] ^dev-camera-never-survives-a-launch
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
