@@ -208,6 +208,25 @@ builds a fake mesh, calls `_build_hull()`/`_build_float_stones()` in the
 wrong order to confirm it fails (9.31 apart), then the right order to
 confirm it passes (0.00 apart).
 
+**Builder, 2026-09-28 13:55 EDT** (Nick: "the characters are still jumping in
+mid air"). The 2026-09-25 fix made the END of every climb land on its stone,
+but not the hops in between. `_place_hunters` split every stop-to-stop leg
+with `hop_subpoints` whenever it was longer than `HOP_MAX_LEG` (9.15m), and on
+the jackal every leg is 16-25m, so each leg played as 2-3 hops whose middle
+landings had no stone (the stones went back to one per Height on 2026-09-25).
+Measured with the new `land=K` harness option (freezes the followed hunter the
+instant hop K touches down): before, `climb 5` from rest landed the Frog at
+z 78.6, 71.9, 65.2, 57.2 and the Goblin at z 77.2, 69.0, 60.9, 54.2, of which
+only z 65.2 / 60.9 are stones; after, the Frog lands at z 65.2, 49.2, 33.3,
+17.4 and the Goblin at 60.9, 40.8, 20.7, 0.5, every one a stone's own z.
+Change: one hop per named stop (`climb_landings`, shared with playtest's hop
+check); `hop_subpoints` is no longer called by the game. New test
+`_test_every_climb_landing_is_a_stone`. Shot:
+`state=3d slot=N beast=cinder_jackal console="climb 5" land=1..4`, both
+hunters, tiled into `2026-09-28-hops-land-strip-{before,after}.png`.
+Grader: FAIL on one frame (could not see "every hop"), then PASS on the
+strips: "all eight landings ... show the hunter standing on a stone".
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

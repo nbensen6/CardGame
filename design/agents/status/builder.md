@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T13:11
-working_on: "Stones: first by the hunter, last in front of the head"
+updated: 2026-09-28T13:55
+working_on: "Hops land on stones"
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 13:11 EDT
+2026-09-28 13:55 EDT
 
-- **Did:** Split each pair of stones apart: the Frog's line runs left of the jackal, the Goblin's right.
-- **Worked?** Partly: the pair has clear ground between it and the jackal shows whole, but the grader failed this layout once before passing it. `VERDICT: PASS`
-- **Look at:** ![[frames/builder/2026-09-28-stones-apart-before.png]] then ![[frames/builder/2026-09-28-stones-apart-after.png]]
-- **Ask:** Do the two stone lines now flank the jackal, one per hunter?
+- **Did:** Every climb hop now lands on its own stone; long legs no longer split into mid-air landings.
+- **Worked?** Yes: all eight landings of a full climb, both hunters, stand on stones. `VERDICT: PASS`
+- **Look at:** ![[frames/builder/2026-09-28-hops-land-strip-before.png]] then ![[frames/builder/2026-09-28-hops-land-strip-after.png]]
+- **Ask:** Play one climb: does any hop still float?
 
 ## Notes
 
-- **Found:** the top stones sit at the sigil's height (jaw/neck), not across the face; raising them means moving the climb's end, which is a separate change.
-- **Found:** the pair is centred on the sigil's x, right of the jackal's middle, so the Goblin's line sits further right than the Frog's sits left. A half-gap of 2.5 hunters put the Frog's stone back over the legs, so it stays at 4.
-- **Found:** the grader gave FAIL, then PASS, on the same geometry (4.0 both times); round 1 read "in front of the character" as closer to the camera than the hunter.
+- **Found:** climbs stop only at safe ledges, so ground to Height 2 jumps over Height 1's stone in one hop.
+- **Found:** stone-to-stone hops are 16-25m, past hop_arc's 9.15m ceiling; playtest's hop-distance-band now reports them.
+- **Found:** the grader saw the intent chip sitting on the Goblin's head at some landings.
 
 ## Log
+
+- 2026-09-28 13:55 EDT — builder: one hop per stone (climb_landings), no mid-air sub-landings; harness land=K; grader FAIL then PASS; tested, pushed.
 
 - 2026-09-28 13:11 EDT — builder: stone lines split one each side of the jackal (route_offset_x, 4 hunters each side); grader FAIL then PASS; tested, pushed.
 - 2026-09-28 12:51 EDT — builder: F8 cuts to a wide Dev view and back, note moved clear of the intent chip; grader FAIL on side-on Player shot; tested, pushed.

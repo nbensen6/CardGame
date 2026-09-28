@@ -3902,6 +3902,16 @@ const HOP_MAX_LEG := HUNTER_HEIGHT * 3.4 / 0.26
 ## own hop-distance-band check can both call it and agree on what the route
 ## actually plays as -- the same reasoning that already keeps route_pos() and
 ## STONE_SWEEP_WIDTH shared between the two files.
+## Where a climb's hops touch down, given its named stops (one per Height,
+## each with its own stone). Exactly the stops, in order, and nothing between
+## them: a landing that is not a stop is a landing on open air, which is what
+## splitting a long leg with hop_subpoints (below) did. Nick, 2026-09-28:
+## "the characters are still jumping in mid air." Pure and static so
+## run_tests.gd and playtest.gd measure the same hops the animation plays.
+static func climb_landings(stops: Array[Vector3]) -> Array[Vector3]:
+	return stops.duplicate()
+
+
 static func hop_subpoints(from: Vector3, to: Vector3, max_leg: float) -> Array[Vector3]:
 	var out: Array[Vector3] = []
 	var steps: int = maxi(1, int(ceil(from.distance_to(to) / maxf(max_leg, 0.001))))
@@ -4172,41 +4182,24 @@ func _place_hunters(s: Dictionary) -> void:
 			var lo_y: float = minf(from_pos.y, pos.y)
 			var hi_y: float = maxf(from_pos.y, pos.y)
 			# Every named stop along the way (the in-between ledges, then the
-			# final Height itself), THEN split each stop-to-stop leg with
-			# hop_subpoints -- so a leg the route already agrees is one stop
-			# (e.g. an ordinary Height N->N+1 on route_pos()'s line, now ~20m
-			# since #14 widened the gap) plays as however many hops
-			# hop_arc()'s own band asks for, not one stretched-out one. A leg
-			# already short enough is untouched (hop_subpoints is a no-op).
-			#
-			# The `step` BUDGET for that one named-rung leg is shared across
-			# however many sub-hops it got split into, not repeated for each
-			# -- "per HOP, not split across the whole route" (the comment
-			# above) already fixed this once for named-rung counts; splitting
-			# a leg further and still charging each piece the FULL 0.62s
-			# broke the same rule a second way; found live, first version of
-			# this fix: a 3-named-rung climb (e.g. foot 2->5) split into 9
-			# sub-hops at 0.62s each played for ~5.6s and lost the hunter off
-			# the top of the frame for 71% of it (playtest's own
-			# hunter-lost-mid-hop, step 16, 2026-09-25). Distance still
-			# decides the ARC HEIGHT (hop_arc reads `from`/`to`, not `step`),
-			# so a shared, smaller step keeps each piece reading as real
-			# effort -- only the total climb's own length stops ballooning.
+			# final Height itself), one hop each -- see climb_landings. Each
+			# stop is a stone (`_build_float_stones` places one per Height with
+			# the same route_pos_cleared call `_stand_on_model` makes), so every
+			# hop lands on one. The old version split a long leg further with
+			# hop_subpoints, and those extra landings had no stone under them:
+			# Nick, 2026-09-28, "the characters are still jumping in mid air".
 			var stops: Array[Vector3] = []
 			for wp in way:
 				stops.append(_stand_on_model(int(wp), side, -1.0 if i == 0 else 1.0))
 			stops.append(pos)
-			for stop in stops:
-				var subs: Array[Vector3] = hop_subpoints(at, stop, HOP_MAX_LEG)
-				var sub_step: float = step / float(subs.size())
-				for sub in subs:
-					# Advance the camera's lock point onto THIS leg before it
-					# flies, not the climb's final stop -- see home_after_leg.
-					tw.tween_callback(_advance_climb_home.bind(i, sub))
-					_hop(tw, node, body, at, sub, sub_step)
-					lo_y = minf(lo_y, sub.y)
-					hi_y = maxf(hi_y, sub.y)
-					at = sub
+			for stop in climb_landings(stops):
+				# Advance the camera's lock point onto THIS leg before it
+				# flies, not the climb's final stop -- see home_after_leg.
+				tw.tween_callback(_advance_climb_home.bind(i, stop))
+				_hop(tw, node, body, at, stop, step)
+				lo_y = minf(lo_y, stop.y)
+				hi_y = maxf(hi_y, stop.y)
+				at = stop
 			# Tell the camera the whole arc BEFORE it starts, so it can frame
 			# the jump as one shot instead of chasing it. Reacting per frame
 			# always arrives late: on this Titan a single Leap covers more

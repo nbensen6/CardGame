@@ -32,11 +32,11 @@ run failed.
       ![[agents/frames/builder/2026-09-25-locked-camera-climb-after.png|420]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
       ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]]
-- [ ] **Hops land on stones.** ^hops-land-on-stones
+- [ ] 👀 **Hops land on stones.** ^hops-land-on-stones
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Play one climb. Does every hop land on a stone? Tick, or say which hop floats.
-      ![[agents/frames/builder/2026-09-25-hops-on-stones-after.png|420]]
+      Ask: Every hop now lands on its stone, one hop per stone. Floats anywhere?
+      ![[agents/frames/builder/2026-09-28-hops-land-strip-after.png|420]]
 - [ ] **Hunters face the beast.** ^hunters-face-the-beast
       **Nick, 2026-09-28 12:29 ET:** no check the direction the faces are. the faces when at the bottom should be at the beast
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
@@ -109,3 +109,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Harness frames run slow.** A software-rendered shot frame is ~0.2 s, so timed HUD notes fade within a few frames of a `press=`.
 - [ ] (proposed) **Top stones at the sigil's height, not the face.** The last stones sit at jaw/neck height beside the head; raising them moves the climb's end.
 - [ ] (proposed) **Stone pair centred on the sigil, not the beast.** The Goblin's line sits further right than the Frog's sits left.
+- [ ] (proposed) **Climbs skip the stone of an unsafe Height.** Routes stop only at safe ledges, so a climb from the ground to Height 2 jumps over Height 1's stone in one long hop.
+- [ ] (proposed) **Stone-to-stone hops are past the arc's ceiling.** On the jackal each hop is 16-25m against hop_arc's 9.15m; the arc stops growing and playtest's hop-distance-band now reports it.
+- [ ] (proposed) **Intent badge over the climbing hunter's head.** At some landings the beast's "Attack 7" chip sits on the Goblin's tank and ears.

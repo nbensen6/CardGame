@@ -931,7 +931,10 @@ func _check(v: Node, when: String) -> void:
 		for i in range(pts.size() - 1):
 			var a3: Vector3 = pts[i]
 			var b3: Vector3 = pts[i + 1]
-			var subs: Array = v.call("hop_subpoints", a3, b3, HOP_MAX_WORLD)
+			# One hop per named leg now (Combat3D.climb_landings): a split
+			# leg's extra landings had no stone under them, Nick 2026-09-28.
+			var one_leg: Array[Vector3] = [b3]
+			var subs: Array = v.call("climb_landings", one_leg)
 			var at3: Vector3 = a3
 			for j in range(subs.size()):
 				var b3j: Vector3 = subs[j]

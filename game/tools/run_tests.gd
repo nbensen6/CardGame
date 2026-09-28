@@ -1006,6 +1006,7 @@ func _init() -> void:
 	_test_hop_subpoints_splits_a_long_leg_into_even_legs_inside_the_band()
 	_test_hop_subpoints_last_point_is_always_the_destination()
 	_test_hop_subpoints_matches_the_live_20m_repro()
+	_test_every_climb_landing_is_a_stone()
 	# fixer, 2026-09-25: #0658 -- the low-mid stretch of route_pos()'s own
 	# sweep read as a wall in front of the beast's chest/foreleg from the
 	# resting camera. chest_clear_push is the nudge that clears it.
@@ -22312,6 +22313,28 @@ func _test_hop_subpoints_matches_the_live_20m_repro() -> void:
 	_expect(pts.size() == 3, "20.44m over a 9.15m ceiling needs exactly ceil(20.44/9.15) = 3 sub-hops -- got %d" % pts.size())
 	var leg: float = from.distance_to(pts[0])
 	_expect(leg > 2.4230769 and leg < 9.1538461, "each of the 3 sub-hops on the live repro should land comfortably inside the 2.42-9.15 band (playtest.gd's own HOP_MIN_WORLD/HOP_MAX_WORLD) -- got %.2fm" % leg)
+
+
+## Nick, 2026-09-28: "the characters are still jumping in mid air." Every
+## landing of a climb has to be one of the stones: the stones are one per
+## Height on route_pos_cleared's line, and so are a climb's stops. On the
+## jackal's own spacing (~20m a leg, past HOP_MAX_LEG) the old hop_subpoints
+## split put a landing between every pair, where there is no stone.
+func _test_every_climb_landing_is_a_stone() -> void:
+	var top := Vector3(4.8, 15.2, 0.53)
+	var ground_z := 85.27
+	var n := 5
+	var stones: Array[Vector3] = []
+	for k in range(n):
+		stones.append(Combat3D.route_pos_cleared(top, ground_z, k, n, Combat3D.STONE_SWEEP_WIDTH))
+	_expect(stones[0].distance_to(stones[1]) > Combat3D.HOP_MAX_LEG, "the repro needs legs longer than HOP_MAX_LEG, or it cannot catch a split -- got %.2f" % stones[0].distance_to(stones[1]))
+	var landings: Array[Vector3] = Combat3D.climb_landings(stones)
+	_expect(landings.size() == stones.size(), "one hop per stone, no landings between -- %d stones, %d landings" % [stones.size(), landings.size()])
+	for land in landings:
+		var nearest := INF
+		for st in stones:
+			nearest = minf(nearest, land.distance_to(st))
+		_expect(nearest < 0.01, "a climb landed %.2f from the nearest stone, in the air" % nearest)
 
 
 ## #0658 (director): the low-mid stretch of route_pos()'s own sweep (t

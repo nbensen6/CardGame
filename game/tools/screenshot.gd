@@ -47,6 +47,11 @@ var _hand := ""
 ## up, semicolon-separated. The console is the thing most likely to break
 ## silently (it reaches into the host's live Run), and a screenshot cannot type.
 var _console := ""
+## land=K -- with a console `climb`, freeze the followed hunter the moment it
+## touches down for the K-th time, instead of waiting for the whole climb. A
+## finished climb only ever shows the last stone; this shows a hop in between,
+## which is where a landing on open air hides.
+var _land := 0
 ## drag=2,300,240 — pick card 2 up and carry it to (300,240), then shoot it
 ## there without letting go. A screenshot cannot drag, so without this the
 ## whole drag-to-play gesture could only ever be claimed to work.
@@ -114,6 +119,8 @@ func _initialize() -> void:
 			_console = a.substr(8)
 		if a.begins_with("drag="):
 			_drag = a.substr(5)
+		if a.begins_with("land="):
+			_land = int(a.substr(5))
 		if a.begins_with("press="):
 			_press_key = a.substr(6)
 		if a.begins_with("out="):
@@ -517,6 +524,45 @@ func _router_is(router: Node, phase: String, want_scene: String) -> void:
 		"OK" if ok else "FAIL", actual, phase, mounted, want_scene])
 
 
+## land=K: pause the climb the instant hop K has landed. `home` moves at the
+## START of every hop (_advance_climb_home, a tween_callback), so the (K+1)-th
+## move is that instant, caught on the tween's own step_finished. A pause
+## there does not stop the rest of that frame's delta running on, so hop K
+## itself plays at a fiftieth of real time: what runs on past the callback
+## is a few milliseconds of the next crouch, which does not move the hunter.
+## If the climb ends first, the hunter is already on its last landing.
+func _freeze_at_landing(view: Node, k: int) -> void:
+	var hunters: Array = view.get("_hunters")
+	var slot: int = int(view.call("lock_slot_for", view.get("_lock_slot"), hunters.size(), view.call("_me")))
+	var tw: Tween = (view.get("_climb_tw") as Dictionary).get(slot) as Tween
+	if slot < 0 or tw == null or not tw.is_valid():
+		print("LAND no climb to freeze")
+		return
+	var h: Dictionary = hunters[slot]
+	# A tween that has already run a frame has already fired hop 1's callback.
+	var seen := {"last": h["home"], "moves": 1 if tw.get_total_elapsed_time() > 0.0 else 0}
+	tw.step_finished.connect(func(_idx: int) -> void:
+		if h["home"] != seen["last"]:
+			seen["last"] = h["home"]
+			seen["moves"] = int(seen["moves"]) + 1
+			if int(seen["moves"]) == k:
+				# Hop K is in the air: slow time so no frame's delta can carry
+				# the tween past its landing and on into the next jump.
+				Engine.time_scale = 0.02
+			if int(seen["moves"]) > k:
+				tw.pause())
+	var t0 := Time.get_ticks_msec()
+	while tw.is_valid() and tw.is_running() and Time.get_ticks_msec() - t0 < 60000:
+		await process_frame
+	Engine.time_scale = 1.0
+	var node: Node3D = h["node"]
+	# The callback that stopped it already aimed the camera at the NEXT hop,
+	# and home.y is still the climb's final height; point both back at the
+	# landing the hunter is standing on, or the frame shows the wrong place.
+	h["home"] = node.position
+	print("LAND %d hunter%d at %s after %d home moves" % [k, slot, str(node.position), int(seen["moves"])])
+
+
 ## Wait for the combat camera to stop moving.
 ##
 ## It eases toward its target over real seconds (the opening pull-in, and the ride
@@ -750,6 +796,8 @@ func _capture() -> void:
 				re.compile("\\[/?[^\\]]*\\]")
 				print("CONSOLE %s -> %s" % [String(cmd).strip_edges(),
 					re.sub(said, "", true).replace("\n", " | ")])
+			if _land > 0:
+				await _freeze_at_landing(current_scene, _land)
 			for _c in 3:
 				await process_frame
 			# A `climb` starts a real-time hop: shoot where it lands, not mid-air.
