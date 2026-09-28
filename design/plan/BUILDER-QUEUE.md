@@ -10,7 +10,8 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Hops land on stones.**
+- [ ] **Hops land on stones.**
+      **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
       **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
