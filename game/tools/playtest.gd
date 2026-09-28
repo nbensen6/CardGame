@@ -397,7 +397,10 @@ func _move(at: Vector2) -> void:
 	var mm := InputEventMouseMotion.new()
 	mm.position = at
 	mm.global_position = at
-	Input.warp_mouse(at)
+	# No Input.warp_mouse here. It moved Nick's REAL cursor on every
+	# scripted click (2026-09-28, "the builder is using my mouse"), and the
+	# synthesized event already carries the position the view reads;
+	# screenshot.gd's own drag code says the same and never warped.
 	root.push_input(mm)
 
 

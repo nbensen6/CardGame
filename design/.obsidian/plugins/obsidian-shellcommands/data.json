@@ -174,7 +174,7 @@
       },
       "shells": {},
       "alias": "Send my answers (Needs Nick)",
-      "icon": "send",
+      "icon": "lucide-send",
       "confirm_execution": false,
       "ignore_error_codes": [],
       "input_contents": {
@@ -210,7 +210,7 @@
       },
       "shells": {},
       "alias": "Run the builder until the queue is empty",
-      "icon": "repeat",
+      "icon": "lucide-repeat",
       "confirm_execution": false,
       "ignore_error_codes": [],
       "input_contents": {
@@ -246,7 +246,7 @@
       },
       "shells": {},
       "alias": "Stop the builder after this run",
-      "icon": "square",
+      "icon": "lucide-square",
       "confirm_execution": false,
       "ignore_error_codes": [],
       "input_contents": {

@@ -1,0 +1,195 @@
+# Builder proposals
+
+Things the builder noticed and did not do. Nick moves a line into
+[[BUILDER-QUEUE]] under Now to make it real, or deletes it. The builder
+appends here, never to the queue.
+
+- [ ] (proposed) The "screenshot.gd sets Dev on the real config slot and it
+      sticks" suspicion from the camera-toggle item didn't hold up: it
+      redirects to a scratch config before ever touching dev_camera_enabled,
+      and the real user://progress.cfg on this machine has no such key. The
+      Player-by-default fix already landed 2026-09-24 (fixer); nothing to do
+      here unless it resurfaces.
+- [ ] (proposed) F8's new HUD note (top-centre, shared with F9's) can overlap
+      the boss intent badge when one is showing. Cosmetic; low priority.
+- [ ] (proposed) The in-fight settings panel's own Camera button label goes
+      stale if F8 is pressed while the panel is open (fixes itself on next
+      open/close). Cosmetic; low priority.
+- [ ] (proposed) Rungs 1-4 of the stone route still collapse to nearly one
+      screen point near the jackal — the camera (dist=3) sits almost on top
+      of rung 0 while the route's far end (the sigil) is ~80 world units
+      away, so everything past the first rung reads as "far" in near-equal
+      measure. Re-check once the queued zoom-out item lands; if it's still
+      collapsed, the route's near end may need to stop anchoring to the
+      hunter's real (very distant) ground stance.
+- [ ] (proposed) CHEST_CLEAR_PUSH is zeroed (was throwing rung 0 off-screen
+      under the locked cam). The beast-chest-overlap problem it was added to
+      fix (#0658) was never re-measured under `state=3d` — worth checking
+      once the camera work settles, rather than assuming it's still needed
+      at its old value.
+- [ ] (proposed) Re-check the stone route's rungs 1-4 (the "collapse to one
+      screen point" item above) against the new dist=6 rest shot — the old
+      note was measured at the pre-fix dist=3.
+- [ ] (proposed) The climbing camera's beast-clearance term
+      (`climb_dist_for`) still measures "how deep is this hold in the mesh"
+      off the whole model's own AABB front face (`_beast_box.end.z * 0.85`),
+      tuned for grounded-hunter framing, not for a hold already ON the
+      body. At weak_point_height (state=3dclimb's own test scenario) that
+      clearance is ~13 units on top of the fixed 6, so the hunter reads
+      much smaller there than at rest, even though the general rule (one
+      fixed stand-off, closer than the old window-fit) is working. The
+      weak-point-shot queue item below should measure this directly rather
+      than assume the general fix already covers the top hold.
+      **Builder, 2026-09-25 16:11 EDT:** tried feeding `climb_dist_for` the
+      hold's own local surface (`_front_of_beast` at the hunter's column)
+      instead of the box's front face — only dropped the clearance from ~13
+      to ~11 (dist 19.4→17.0), not the near-zero an exact-rung anchor should
+      need. See the two items directly below.
+- [ ] (proposed) `_front_of_beast`'s 5x3 hull neighbourhood, queried at the
+      sigil's own (x, y), still reads ~13.6 even though the sigil's authored
+      anchor z is 0.53 — almost certainly the jackal's head/neck passing
+      through the same column, the same shape of contamination the
+      "ear"/"muzzle" bugs hit (see `hull_front_at`'s own doc comment).
+      `stand_z_for` already dodges exactly this for exact-rung footholds by
+      trusting the anchor's own z and never asking the hull
+      (`stand_needs_hull_clearance` returns false for them). The climbing
+      camera's clearance term should probably do the same: for an exact
+      rung, use the hold's own anchor z (clearance ~0) instead of
+      `_front_of_beast`, and reserve the hull query for interpolated
+      footholds only, if any of those ever reach `_focus_camera`.
+- [ ] (proposed) Nick's own suggested read on the sigil shot ("the camera
+      may sit above the hold looking down at the head") is a different
+      aim/pitch at the weak point, not just less clearance distance —
+      probably belongs in the "Weak-point shot" item below rather than this
+      one; the two should be looked at together once that item is up.
+- [ ] (proposed) With clearance and pitch fixed at the sigil (dist 17.0→8.0,
+      pitch rising with climb_t), the after frame shows an ear/jaw silhouette
+      against the sky, not a face — the eyes never come into frame at whatever
+      yaw the camera already had. The Weak-point shot item should check
+      whether `_yaw` needs its own rule at the top hold (facing the actual
+      front of the head) rather than just carrying over whatever yaw the
+      climb was already at.
+- [ ] (proposed) `_stand_on_model`'s `side` parameter is now unused inside
+      the function — the top-hold branch (its only reader) was switched to
+      `route_side` this run (#26). Harmless (every call site still compiles,
+      the two callers that pass a real `side` just no longer have it read),
+      but a future cleanup could drop it from the signature and its three
+      call sites, or fold it into a doc note explaining why it is still
+      passed.
+- [ ] (proposed) Mid-route footing on the "hops land on stones" item (#26):
+      checked hunter1 (weak_point_height-1, not the top) with
+      `state=3dclimb slot=1` — it stands near the jackal's front leg, not
+      obviously centred on its own decorative stone. The lateral math for
+      that branch (`route_pos_cleared` via `route_side`) was already correct
+      before this run's fix, so this may be a real second bug or may just be
+      a hard-to-read camera angle; worth a dedicated look with a render zoomed
+      on that hunter before assuming either way.
+      **Builder, 2026-09-25 17:15 EDT:** with the hull-order fix, hunter1 in
+      `state=3dclimb slot=1` now stands visibly ON its own stone (the AFTER
+      frame on this same run's item, above) — looked resolved, but not
+      re-measured at THIS specific mid-route height, so leaving this open
+      rather than closing it myself.
+- [ ] (proposed) `tools/shot.cmd`, run with a RELATIVE `out=` path from a shell
+      whose working directory isn't the repo root (confirmed with the Bash
+      tool, which runs Git Bash under Windows), fails to save: Godot logs
+      `ERROR: Can't save PNG at path: '<relative path>'` from `img.save_png()`
+      at `screenshot.gd`'s `_capture()`, but the very next line unconditionally
+      prints `SHOT SAVED: <path> (WxH)` regardless of whether the save actually
+      happened — there is no check on `save_png`'s return value (`Error`, 0 on
+      success). This run's first before/after pair silently reused an already-
+      committed frame from an earlier commit (same path, save failed both
+      times, old bytes never touched) and only an `md5sum` against `git show
+      HEAD:<path>` caught it — eyeballing the "before"/"after" images looked
+      convincing because they WERE real images, just not from this run. An
+      absolute `out=` path (e.g. `G:/ts-builder/design/...`) saves correctly.
+      Fix: `_capture()` should check `img.save_png(_out)`'s return value and
+      print an actual error (or refuse to print "SHOT SAVED") on failure, so
+      a future run can't ship a stale frame as proof without an extra hash
+      check nobody is required to run.
+- [ ] (proposed) Two `state=goblin` screenshots of the *identical* game
+      state (no code or asset change between them) differ by roughly 43,000
+      of 921,600 px, all in the background tent/box scenery to the left of
+      the hunters — not the small idle-animation jitter (ember pulse, sway)
+      this project's notes usually attribute frame-diff noise to. Worth a
+      look before it's mistaken for a real change in some future before/after
+      pair: isolate the diff to the subject's own bounding box, the way this
+      run had to, rather than trust a full-frame pixel count.
+- [ ] (proposed) `hunter-off-marker`'s TOP branch (a foothold AT or PAST the
+      route's top rung — a hunter that hops past the sigil, e.g. Leap or
+      Grappling Hook landing beyond weak_point_height) still measures the
+      hunter ~1.7-2.6m off its own expected x, byte-identical before and
+      after this run's route/top-z fix, so it's a separate bug in the check's
+      dynamic shared-foothold `side` logic (line ~732 of playtest.gd), not
+      the route-vs-anchor mismatch this item targeted. Worth a dedicated
+      look with the harness's STONE/HUNTER/RUNGS print at a foothold past
+      the top, the same way the "hops land on stones" item measured its bug.
+- [ ] (proposed) Every other playtest check that judges "the settled frame"
+      (`beast-behind-stone`, `hunter-offscreen`, the framing checks) was
+      sampling the same too-early instant `camera-not-over-shoulder` was, and
+      now sees a camera that has actually finished easing. Their counts may
+      have shifted for that reason alone — worth re-baselining each before
+      reading its number as a real bug.
+- [ ] (proposed) `beast-behind-stone` read 8, then 6, then 8 across three
+      runs of the identical command with no change in between. That category
+      is not stable run-to-run, so a single run cannot tell a fix from noise
+      — it needs either a tolerance or a repeat count before it is judged.
+- [ ] (proposed) **Built 2026-09-27 — see the Now item above; kept only for
+      the record of what was measured.** `camera-not-over-shoulder` (9 fails on the latest
+      `playtest.cmd`, every one a `_shoulder` value between 0.02 and 0.88,
+      none reaching the check's own 0.95 floor): the check's own doc comment
+      claims `_shoulder`'s ease (`combat_3d.gd` `_aim_camera`, rate 2.2/s)
+      "reaches this in well under a second" and that "every step gives it
+      several real seconds to settle" before `_check` runs. The math says
+      otherwise: `1 - exp(-2.2t) = 0.95` needs t≈1.36s, and the actual
+      post-action wait (`_wait_and_poll(v, 43 or 45)`) is ~0.72-0.75s at
+      normal speed — under half what the ease needs, not "several seconds."
+      Either the check's wait needs to genuinely grow to match its own
+      stated assumption, or `_shoulder`'s ease rate / SHOULDER_ENGAGED_MIN
+      were tuned for a shot Nick approved and only the TEST's timing
+      assumption is stale — didn't touch the gameplay-feel constants this
+      run without asking, same caution every camera flip in this file has
+      needed. Not yet tried: instrumenting one real step to confirm `delta`
+      actually behaves as this arithmetic assumes (headless rendering may be
+      slower than 1/60s/frame, which would change the numbers).
+- [ ] (proposed) `beast-behind-stone` (5 fails, always "stone 7" at
+      15.6-18.3% pixel coverage against a 15% cap): almost certainly the
+      same trade-off the "CHEST_CLEAR_PUSH is zeroed" proposed item below
+      already named — that push existed to keep a rung's stone off the
+      beast's chest (#0658) and was zeroed this session to fix rung 0
+      landing off-screen. Re-tuning it risks reopening the off-screen bug it
+      was zeroed to fix; needs someone to check both frames together, not a
+      number bumped blind.
+- [ ] (proposed) **`hunter-offscreen` built 2026-09-27 18:39 EDT, see the Now
+      item above: the cause was `_focused` staying false through the first
+      climb, not the establishing shot.** `hunter-offscreen` (4 fails, all early-game non-climb
+      actions — Tongue Snap/Scramble/Tongue Snap again — projecting to
+      y=-217..-868, nowhere near the 0..720 screen), `hunter-lost-mid-hop`
+      (1 fail, hunter off-screen 84% of its own jump), `damage-popup-
+      offscreen` (1 fail) and `intent-tag-vs-hunter` (1 fail): not
+      investigated this run past confirming they survive the
+      `_watch_hop`-tween-completion fix above (counts shifted slightly
+      run-to-run, likely just timing noise from that fix, not new bugs).
+      `hunter-offscreen`'s extreme y values are the most suspicious of the
+      four — worth checking whether the camera is still on its wide
+      establishing shot (not yet locked onto the hunter) at the exact instant
+      this check samples, the same "camera hasn't caught up yet" shape as the
+      hunter-off-marker bug fixed this run, just on the CAMERA side instead
+      of the route side.
+- [ ] (proposed) `goblin_mech_ai_Image_0.png` (and the same pattern would hit
+      any other `*_Image_*.png`) is gitignored as "derived, regenerable from
+      the tracked `.jpg` beside it" (`8e5a27c`), but the live fight actually
+      reads the PNG, not the JPG — confirmed by reverting only the PNG and
+      watching the render revert. The tracked
+      `goblin_mech_ai_Image_0.jpg` looks orphaned (unused by the current
+      `.glb`, which embeds its own PNG). Worth deleting the stale jpg or
+      correcting the gitignore comment so the next person doesn't edit the
+      jpg expecting it to change anything.
+- [ ] (proposed) The first hop now spends more of its flight off-screen:
+      step 0's mid-hop coverage went from 0% to 18% off, because the follow
+      cuts to the landing height at take-off. Step 1 improved from 22% to 4%
+      off. No check fails on it; worth a look if the first take-off reads
+      as a jump cut.
+- [ ] (proposed) `hunter-off-marker`'s 8 current fails are mid-route
+      (foothold 2 is 2.36m off in x, foothold 4 is 0.79m off), not the
+      past-the-sigil top branch fixed 2026-09-25. Same symptom, different
+      place; take it as a fresh bug.
