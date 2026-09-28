@@ -10,7 +10,8 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
+- [ ] **Stones: first by the hunter, last in front of the head.**
+      **Nick, 2026-09-28 18:44 ET:** this is fine. the other character does not need to be on the screen when you select one. IE goblin does not need to be on the screen while selecting the frog. --- side note the came is crashing while testing.
       **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
@@ -19,6 +20,16 @@ run failed.
       Ask: Grader failed this: Goblin off-screen in Frog's view. Accept, or narrow the stone lines?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-28-hunters-front-of-stones-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+- [ ] **Hops land on stones.**
+      **Nick, 2026-09-28 18:44 ET:** the camera should be consistent. its zooming when you start climbing. I think its at a good distance when you start. but closes in once you start climbing. also the camera should be facing the same direction the character is facing.
+      **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
+      **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
+      **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
+      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
+      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
+      Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
+      ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
 - [ ] **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
@@ -28,15 +39,6 @@ run failed.
       ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
       ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
 - [ ] **Dev camera never survives a launch.** F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast), so nothing the builder graded on the Player camera matched what he saw. Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera. Test: state=3d ^dev-camera-never-survives-a-launch
-- [ ] 👀 **Hops land on stones.**
-      **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
-      **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
-      **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
-      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
-      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
-      ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
