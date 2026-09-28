@@ -10,7 +10,8 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Hops land on stones.**
+- [ ] **Hops land on stones.**
+      **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
       **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
@@ -41,7 +42,7 @@ run failed.
       ![[agents/frames/builder/2026-09-25-locked-camera-climb-after.png|420]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
       ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]] ^rest-camera-pulled-back-to-6
-- [ ] 👀 **Hunters face the beast.**
+- [x] **Hunters face the beast.**
       **Nick, 2026-09-28 12:29 ET:** no check the direction the faces are. the faces when at the bottom should be at the beast
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
       Ask: Do both hunters face the jackal now? Tick, or say who is wrong.
