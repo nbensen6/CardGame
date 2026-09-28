@@ -19,6 +19,9 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Worked?** Partly: hunter-offscreen went from 4 fails to 0 and the Frog stays in frame, but three other categories still print FAIL. `VERDICT: FAIL` (the grader said this "Shot: none" item can only be judged from the console output, not from frames).
 - **Look at:** ![[frames/builder/2026-09-27-first-climb-follow-before.png]] then ![[frames/builder/2026-09-27-first-climb-follow-after.png]]
 - **Ask:** Next category: hunter-off-marker (8 fails, mid-route) or intent-tag-vs-hunter (1)?
+
+## Notes
+
 - **Found:** the check was right and the game was wrong. After a fight's opening wide shot, the first climb never turned on the follow camera.
 - **Found:** the first hop now spends 18% of its flight off-screen (it was 0%), because the camera cuts to the landing height at take-off. The second hop improved from 22% to 4%.
 - **Found:** hunter-off-marker's 8 fails are mid-route (footholds 2 and 4), not the top-of-route bug fixed on 09-25.
