@@ -194,9 +194,12 @@ def main():
     lines, items = parse(new_text)
     d, n = write_page(lines, items)
     print(f"Needs Nick.md: {d} to decide, {n} to look at" + (", answers applied" if changed else ""))
-    git("add", str(QUEUE), str(OUT))
+    # Only the queue is shared. The page is generated per machine and is
+    # gitignored: committing it from two machines made the 15-minute sync
+    # conflict on it twice on 2026-09-28.
+    git("add", str(QUEUE))
     if git("diff", "--cached", "--quiet").returncode != 0:
-        git("commit", "-q", "-m", "needs-nick: sync Nick's answers and the page")
+        git("commit", "-q", "-m", "needs-nick: Nick's answers into the queue")
         git("pull", "--rebase", "-q", "--autostash", "origin", "main")
         git("push", "-q", "origin", "main")
         print("pushed")
