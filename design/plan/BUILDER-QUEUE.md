@@ -17,7 +17,7 @@ run failed.
       Ask: F8 now cuts to a wide Dev view and back. Press it in a fight. Works now? Tick, or say what happened.
       ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]]
 - [ ] **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
-      **Nick, 2026-09-28 13:34 ET:** stone placement like this, front and top view: ![[art/references/2026-09-28-nick-stone-layout.webp|420]]no
+      **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
       Ask: Each hunter now has its own stone line, left and right of the jackal. Right spacing?
