@@ -13,7 +13,7 @@ tags:
 
 ## How work happens
 
-One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line with 👀. You tick it or send it back on [[Needs Nick]]. Only you tick.
+One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line with 👀. You tick it or send it back on [[Needs Nick]]. Only you tick. To ask for something new, fill a slot at the bottom of [[Needs Nick]]; it becomes a queue line by itself.
 
 The builder runs **in the cloud** every two hours, 9am to 7pm, on its own. Nothing on this PC moves; this PC pulls its pushes every 15 minutes. Pause or fire it from the desktop app's Routines panel ("Titan-Slayers — builder").
 
