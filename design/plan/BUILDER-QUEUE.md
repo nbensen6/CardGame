@@ -10,28 +10,30 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
+- [ ] **Hops land on stones.**
+      **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
+      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
+      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
+      Ask: Grader failed this: intent badge over the Frog; mid-hop panel "floats". Camera now follows smoothly?
+      ![[agents/frames/builder/2026-09-28-camera-follows-hop-after.png|420]] ^hops-land-on-stones
+- [ ] **Stones: first by the hunter, last in front of the head.**
+      **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
+      **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
+      **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
+      Ask: Grader failed this: Goblin's big stone hides under the gauge. Spread hunters wider?
+      ![[agents/frames/builder/2026-09-28-stone-lines-wide-after.png|420]]
+      ![[agents/frames/builder/2026-09-28-stone-lines-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+- [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
       **Nick, 2026-09-28 13:34 ET:** all my keyboard inputs are not being recorded in game. this could be the cause of f8 not working. please look into this.
       **Nick, 2026-09-28 12:29 ET:** f8 toggle is not working. nothing happens when i press f8
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#F8 flips the camera Player/Dev.|details]]
       Ask: You said F8 works now. Tick to close it?
-      ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]]
-- [ ] 👀 **Hops land on stones.** ^hops-land-on-stones
-      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
-      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Grader failed this: intent badge over the Frog; mid-hop panel "floats". Camera now follows smoothly?
-      ![[agents/frames/builder/2026-09-28-camera-follows-hop-after.png|420]]
-- [ ] 👀 **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
-      **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
-      **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Grader failed this: Goblin's big stone hides under the gauge. Spread hunters wider?
-      ![[agents/frames/builder/2026-09-28-stone-lines-wide-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-stone-lines-after.png|420]]
-- [x] **Rest camera pulled back to 6.** ^rest-camera-pulled-back-to-6
+      ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]] ^f8-flips-the-camera-player-dev
+- [x] **Rest camera pulled back to 6.**
       **Closed by the session, 2026-09-28 12:35 ET:** duplicate; Nick's camera answer lives on the Zoom out item below, which is open.
       **Nick, 2026-09-28 12:29 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Rest camera pulled back to 6.|details]]
@@ -39,47 +41,47 @@ run failed.
       ![[agents/frames/builder/2026-09-25-locked-camera-rest-after.png|420]]
       ![[agents/frames/builder/2026-09-25-locked-camera-climb-after.png|420]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
-      ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]]
-- [ ] 👀 **Hunters face the beast.** ^hunters-face-the-beast
+      ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]] ^rest-camera-pulled-back-to-6
+- [ ] 👀 **Hunters face the beast.**
       **Nick, 2026-09-28 12:29 ET:** no check the direction the faces are. the faces when at the bottom should be at the beast
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
       Ask: Do both hunters face the jackal now? Tick, or say who is wrong.
-      ![[agents/frames/builder/2026-09-28-hunters-face-beast-after.png|420]]
-- [x] **Goblin: one muted trim colour.** ^goblin-one-muted-trim-colour
+      ![[agents/frames/builder/2026-09-28-hunters-face-beast-after.png|420]] ^hunters-face-the-beast
+- [x] **Goblin: one muted trim colour.**
       **Closed by the session, 2026-09-28 12:35 ET:** Nick: "goblin looks okay at this time." That is a yes.
       **Nick, 2026-09-28 12:29 ET:** goblin looks okay at this time.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Goblin: one muted trim colour.|details]]
       Ask: Does the Goblin read as one figure at this size? Tick, or say what still fights.
-      ![[agents/frames/builder/2026-09-25-goblin-reads-after.png|420]]
-- [x] **Playtest: two checks re-derived.** ^playtest-two-checks-re-derived
+      ![[agents/frames/builder/2026-09-25-goblin-reads-after.png|420]] ^goblin-one-muted-trim-colour
+- [x] **Playtest: two checks re-derived.**
       **Closed by the session, 2026-09-28 12:35 ET:** test-only work, nothing for Nick to judge; the question should never have been asked.
       **Nick, 2026-09-28 12:29 ET:** I dont understand the question here
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest: two checks re-derived.|details]]
-      Ask: Nothing to look at, two test checks fixed. Tick.
-- [x] **Weak-point shot, same frame as the sigil.** ^weak-point-shot-same-frame-as-the-sigil
+      Ask: Nothing to look at, two test checks fixed. Tick. ^playtest-two-checks-re-derived
+- [x] **Weak-point shot, same frame as the sigil.**
       **Closed by the session, 2026-09-28 12:35 ET:** duplicate of the Sigil shot item; judge that one.
       **Nick, 2026-09-28 12:29 ET:** I dont understand the question here
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Weak-point shot, same frame as the sigil.|details]]
       Ask: Same frame as the sigil item. Tick both together.
-      ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
-- [ ] 👀 **Zoom out: stairs visible, beast whole.** ^zoom-out-stairs-visible-beast-whole
+      ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]] ^weak-point-shot-same-frame-as-the-sigil
+- [ ] 👀 **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
       Ask: Grader failed this: Frog looks bigger at the sigil than at rest. Resting range right?
       ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]]
-- [x] **Nick judged the 2026-09-25 camera and stones** ^nick-judged-the-2026-09-25-camera-and-st
+      ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
+- [x] **Nick judged the 2026-09-25 camera and stones**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Nick judged the 2026-09-25 camera and stones|details]]
-      ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
-- [x] **Sigil shot: face and eyes in frame.** ^sigil-shot-face-and-eyes-in-frame
+      ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]] ^nick-judged-the-2026-09-25-camera-and-st
+- [x] **Sigil shot: face and eyes in frame.**
       **Closed by the session, 2026-09-28 13:40 ET:** superseded. Nick's camera rule (one fixed distance behind the held character, everywhere) covers the top stone; the Zoom out item rebuilds this shot. The question was jargon he should never have been asked.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Sigil shot: face and eyes in frame.|details]]
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
-      ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]]
+      ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
 
-- [ ] **playtest.cmd green.** ^playtest-cmd-green
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
+- [ ] **playtest.cmd green.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]] ^playtest-cmd-green
 
 ## Waiting on Nick
 
