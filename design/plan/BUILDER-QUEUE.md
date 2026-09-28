@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
+- [x] **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 18:44 ET:** this is fine. the other character does not need to be on the screen when you select one. IE goblin does not need to be on the screen while selecting the frog. --- side note the came is crashing while testing.
       **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
@@ -30,7 +30,7 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
       Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
       ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
-- [ ] 👀 **Zoom out: stairs visible, beast whole.**
+- [x] **Zoom out: stairs visible, beast whole.**
       **Nick, 2026-09-28 18:10 ET:** model of frog got changed when i got knocked back. ![[art/references/Pasted image 20260928180550.png|420]]
       **Nick, 2026-09-28 12:04 ET:** Close. make it more centered on the character selected. the full frame of the beast does not need to be seen in every position. the camera should not be dynamic in how its zoomed. it should be static positioned behind the character about the same range from the risk of rain 2 screenshot.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Zoom out: stairs visible, beast whole.|details]]
