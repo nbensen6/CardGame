@@ -1,6 +1,12 @@
 @echo off
-REM Bring the cloud builder's pushes into the checkout Nick plays and reads
-REM Obsidian from. Safe to run any time: --autostash sets aside anything Nick
-REM is mid-editing and puts it back. Registered as the scheduled task
-REM "TitanSlayers Pull" every 15 minutes, launched hidden through hidden.vbs.
-git -C "%~dp0.." pull --rebase --autostash --quiet origin main
+REM Two-way sync between this PC and the cloud builder, every 15 minutes as
+REM the scheduled task "TitanSlayers Pull" (hidden, via hidden.vbs):
+REM
+REM   1. needs_nick.py: Nick's ticks and answers on design\Needs Nick.md go
+REM      into the queue, get committed and pushed. Without this step his
+REM      answers only left this PC when he ran "Send my answers" by hand
+REM      (2026-09-28: "I want to make sure the automatic upload is working").
+REM   2. pull: the cloud builder's pushes come down. --autostash sets aside
+REM      anything Nick is mid-editing and puts it back.
+python "%~dp0needs_nick.py" >> "%~dp0builder\sync.log" 2>&1
+git -C "%~dp0.." pull --rebase --autostash --quiet origin main >> "%~dp0builder\sync.log" 2>&1
