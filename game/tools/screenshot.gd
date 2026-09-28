@@ -52,6 +52,11 @@ var _console := ""
 ## finished climb only ever shows the last stone; this shows a hop in between,
 ## which is where a landing on open air hides.
 var _land := 0
+## midair=S -- with a console `climb`, let the climb and the camera run LIVE for
+## S seconds of game time, then freeze time and shoot WITHOUT snapping the
+## camera. Every other shot snaps it, which hides exactly the thing Nick saw:
+## a follow camera that lags, overshoots or cuts while the hunter is mid-hop.
+var _midair := 0.0
 ## drag=2,300,240 — pick card 2 up and carry it to (300,240), then shoot it
 ## there without letting go. A screenshot cannot drag, so without this the
 ## whole drag-to-play gesture could only ever be claimed to work.
@@ -121,6 +126,8 @@ func _initialize() -> void:
 			_drag = a.substr(5)
 		if a.begins_with("land="):
 			_land = int(a.substr(5))
+		if a.begins_with("midair="):
+			_midair = float(a.substr(7))
 		if a.begins_with("press="):
 			_press_key = a.substr(6)
 		if a.begins_with("out="):
@@ -563,6 +570,40 @@ func _freeze_at_landing(view: Node, k: int) -> void:
 	print("LAND %d hunter%d at %s after %d home moves" % [k, slot, str(node.position), int(seen["moves"])])
 
 
+## midair=S: run the climb and the follow camera in real time for `secs` of
+## game time, then stop the clock (time_scale 0 freezes tweens and _process's
+## delta alike) so the PNG is what a player saw at that instant. Prints where
+## the followed hunter sits on screen and how far the lens is from them -- the
+## numbers a camera that "jumps around" gets wrong.
+func _freeze_midair(view: Node, secs: float) -> void:
+	var hunters: Array = view.get("_hunters")
+	var slot: int = int(view.call("lock_slot_for", view.get("_lock_slot"), hunters.size(), view.call("_me")))
+	if slot < 0 or slot >= hunters.size():
+		print("MIDAIR no hunter to follow")
+		return
+	var node: Node3D = hunters[slot]["node"]
+	var t := 0.0
+	var last := Time.get_ticks_usec()
+	while t < secs:
+		await process_frame
+		var now := Time.get_ticks_usec()
+		t += float(now - last) / 1000000.0 * Engine.time_scale
+		last = now
+		# Slow the clock as the moment nears so the freeze lands close to it.
+		Engine.time_scale = clampf((secs - t) * 4.0, 0.05, 1.0)
+	Engine.time_scale = 0.0
+	await process_frame
+	var cam: Camera3D = view.get("_cam")
+	var eye: Vector3 = node.global_position + Vector3(0, 0.35, 0)
+	var sp := cam.unproject_position(eye)
+	var vp := view.get_viewport().get_visible_rect().size
+	print("MIDAIR t=%.2f hunter%d at %s screen=(%d,%d) %s behind=%s cam_dist=%.2f airborne=%s" % [
+		t, slot, str(node.position), int(sp.x), int(sp.y),
+		"ON" if Rect2(Vector2.ZERO, vp).has_point(sp) and not cam.is_position_behind(eye) else "OFF",
+		str(cam.is_position_behind(eye)), cam.global_position.distance_to(eye),
+		str(view.call("_followed_is_airborne"))])
+
+
 ## Wait for the combat camera to stop moving.
 ##
 ## It eases toward its target over real seconds (the opening pull-in, and the ride
@@ -796,9 +837,11 @@ func _capture() -> void:
 				re.compile("\\[/?[^\\]]*\\]")
 				print("CONSOLE %s -> %s" % [String(cmd).strip_edges(),
 					re.sub(said, "", true).replace("\n", " | ")])
-			if _land > 0:
+			if _midair > 0.0:
+				await _freeze_midair(current_scene, _midair)
+			elif _land > 0:
 				await _freeze_at_landing(current_scene, _land)
-			for _c in 3:
+			for _c in (0 if _midair > 0.0 else 3):
 				await process_frame
 			# A `climb` starts a real-time hop: shoot where it lands, not mid-air.
 			var t0 := Time.get_ticks_msec()
@@ -806,7 +849,8 @@ func _capture() -> void:
 					and bool(current_scene.call("_followed_is_airborne")) \
 					and Time.get_ticks_msec() - t0 < 20000:
 				await process_frame
-			await _await_camera(current_scene)
+			if _midair <= 0.0:
+				await _await_camera(current_scene)
 
 	# Carry a card. Driven by calling the view's own drag handlers with real
 	# InputEvents rather than by poking at positions, so what is photographed is

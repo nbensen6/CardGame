@@ -227,6 +227,28 @@ hunters, tiled into `2026-09-28-hops-land-strip-{before,after}.png`.
 Grader: FAIL on one frame (could not see "every hop"), then PASS on the
 strips: "all eight landings ... show the hunter standing on a stone".
 
+**Builder, 2026-09-28 14:24 EDT** (Nick 13:59: "camera is not smoothly
+following the character and is jumping around"). Cause: the follow camera
+aimed at `home`, and `_advance_climb_home` moves `home` to each leg's landing
+stone the instant the leg starts -- 16-25 units ahead on the jackal. The pivot
+eased toward it at rate 9 and overtook the hunter; the yaw also cut to the new
+bearing in one frame, and the first hop's `_focus_camera` snapped the aim to the
+climb's FINAL height. Every harness shot snaps the camera, so none of it showed
+in a frame: new harness option `midair=S` runs climb + camera live for S s of
+game time, freezes time, shoots unsnapped and prints a MIDAIR line. Before,
+`console="climb 5"` at t=0.2/0.45/0.7/0.95/1.2/1.6: Frog on screen in 1 of 6,
+behind the lens in 4. Change: `_follow_pos` (live body while its hop tween
+flies, else `home`) feeds the lock point, the yaw and the focus aim; mid-hop the
+pivot rides the body (`air_follow_pivot`), dead zone 0.56 above the eye and
+0.1 below so a landing stays above the card fan; yaw eased (`ease_yaw`); the
+big-leap "frame the whole band" branch removed (it needed the zoom-out Nick
+ruled out). After: on screen 6 of 6, x=640 every sample, lens 3.2-3.4 from the
+eye. Test `_test_follow_camera_rides_the_body_not_the_landing`. Shot strip:
+`2026-09-28-camera-follows-hop-{before,after}.png`.
+Grader: FAIL, then FAIL after the landing fix (lopsided dead zone): "the
+intent badge ... sits on the Frog's head" and panel 1 (mid-hop, by design)
+read as a float. Camera fault itself not cited in round 2.
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

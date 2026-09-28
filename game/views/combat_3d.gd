@@ -1298,7 +1298,10 @@ func _focus_camera(window := FOCUS_WINDOW, lift := 0.0) -> void:
 	_focus_lift = window * lift * lerpf(1.0, 0.5, clampf(_climb_t, 0.0, 1.0))
 	var foot := 0
 	if slot >= 0 and slot < _hunters.size():
-		_pivot.y = float((_hunters[slot]["home"] as Vector3).y) \
+		# The body, not `home`: mid-climb `home.y` is already the climb's
+		# FINAL height, so engaging the follow on the first hop cut the
+		# lens straight up to the top stone.
+		_pivot.y = _follow_pos(slot).y \
 			+ HUNTER_HEIGHT * GROUND_VIEW_EYE + _focus_lift
 		foot = int((_hunters[slot] as Dictionary).get("foot", 0))
 	# Same fixed standoff the ground shot uses (ACTIVE_HUNTER_DIST), not a window
@@ -2304,8 +2307,38 @@ func _lock_point() -> Vector2:
 	var slot := lock_slot_for(_lock_slot, _hunters.size(), _me())
 	if slot < 0 or slot >= _hunters.size():
 		return Vector2.ZERO
-	var home := _hunters[slot]["home"] as Vector3
+	var home := _follow_pos(slot)
 	return Vector2(home.x, home.z) * CAMERA_LOCK
+
+
+## Where hunter `slot` IS right now, for the camera to follow: the body itself
+## while its hop tween flies, `home` otherwise. `home` jumps to each leg's
+## landing stone the instant the leg starts (_advance_climb_home), 16-25 units
+## ahead on the jackal, so a camera easing toward `home` shot out past the
+## hunter and left it behind the lens for most of every hop (Nick, 2026-09-28:
+## "camera is not smoothly following the character and is jumping around";
+## measured with screenshot.gd midair=: 5 of 6 mid-climb samples off screen).
+func _follow_pos(slot: int) -> Vector3:
+	var h: Dictionary = _hunters[slot]
+	var node := h["node"] as Node3D
+	var live: bool = is_instance_valid(node) and _tween_is_live(_climb_tw.get(slot) as Tween)
+	return follow_point(h["home"] as Vector3, node.position if live else Vector3.ZERO, live)
+
+
+## The pivot while the followed hunter is in the air: x/z locked to the body
+## (the target already is the body, see _follow_pos), y free inside the dead
+## zone around its eye and dragged along at the zone's edge, never outside it.
+## Lopsided on purpose: the hunter may rise `dead` above the aim, so the jump
+## reads, but only AIR_DROP_SLACK below it -- a hunter falling toward a stone
+## under a held aim landed with its feet behind the card fan (grader, 2026-09-28).
+const AIR_DROP_SLACK := 0.1
+static func air_follow_pivot(pivot: Vector3, target: Vector3, eye: float, dead: float) -> Vector3:
+	return Vector3(target.x, clampf(pivot.y, eye - dead, eye + AIR_DROP_SLACK), target.z)
+
+
+## The pure rule under _follow_pos: the live body while airborne, else home.
+static func follow_point(home: Vector3, body: Vector3, airborne: bool) -> Vector3:
+	return body if airborne else home
 
 
 ## Which hunter slot the camera should actually track: the explicit lock, if it
@@ -2379,6 +2412,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 	# height once they land - Mario Odyssey holds Y through a jump; SMW/DKC pan
 	# only after touchdown. `home` is already the LANDING spot, so the target
 	# below is exactly where the camera eases to the moment the hop ends.
+	var air_eye := NAN   # set while the followed hunter is mid-hop, see below
 	if not snap and _followed_is_airborne():
 		# ... but only while they stay inside a window. Holding it flat sent a
 		# long Leap clean off the top of the screen (playtest check
@@ -2390,21 +2424,16 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			var node2 := _hunters[fs2]["node"] as Node3D
 			if is_instance_valid(node2):
 				var eye := node2.position.y + HUNTER_HEIGHT * GROUND_VIEW_EYE + _focus_lift
-				var span: float = _jump_hi - _jump_lo
-				if span > THIRD_WINDOW * 0.55:
-					# BIG LEAP: frame the whole arc at once — aim at the middle
-					# of the band the jump covers and open the shot to hold it.
-					# One shot for the flight beats chasing, which always lands
-					# late; on this Titan a Leap is taller than the frame.
-					_pivot_target.y = (_jump_lo + _jump_hi) * 0.5 + _focus_lift * 0.5
-					_air_span = span
-				else:
-					# SMALL HOP between stones: hold still and let them move
-					# inside a dead zone — a camera that rises with the jumper
-					# shows no jump at all.
-					var dead := HUNTER_HEIGHT * 0.8   # the frame is ~4 units tall at FOLLOW_DIST
-					_pivot_target.y = clampf(_pivot.y, eye - dead, eye + dead)
-					_air_span = 0.0
+				# Every hop, big or small, is a dead zone around the body. The
+				# old BIG LEAP branch aimed at the middle of the whole climb's
+				# height band, which only worked while the camera could zoom
+				# out to hold it; at the one fixed FOLLOW_DIST (2026-09-28) the
+				# frame is ~4 units tall and a 15-unit band put the hunter off
+				# the top or bottom for the whole climb.
+				var dead := HUNTER_HEIGHT * 0.8   # the frame is ~4 units tall at FOLLOW_DIST
+				_pivot_target.y = clampf(_pivot.y, eye - dead, eye + AIR_DROP_SLACK)
+				_air_span = 0.0
+				air_eye = eye
 				_air_chase = true
 		_air_settle = AIR_SETTLE_TIME   # keep the stiffer follow briefly after touchdown
 	elif not snap:
@@ -2456,6 +2485,13 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			# jump already past the dead zone gets a much stiffer follow, or
 			# the camera arrives after the hunter has landed.
 			_pivot = _pivot.lerp(_pivot_target, 1.0 - exp(-delta * (9.0 if _air_chase else 3.2)))
+		if not is_nan(air_eye):
+			# Mid-hop the lens RIDES the body instead of chasing it. The tween
+			# already moves the hunter smoothly; any ease on top only adds lag,
+			# and at FOLLOW_DIST a hop's ~30 units/s left the hunter off the
+			# frame's edge. The pivot starts the hop exactly on the body (both
+			# stand on the take-off stone), so this is continuous, not a cut.
+			_pivot = air_follow_pivot(_pivot, _pivot_target, air_eye, HUNTER_HEIGHT * 0.8)
 	# Once the establishing push has landed, fall in behind the active hunter
 	# without being asked. Deliberately AFTER the ease above rather than at fight
 	# start: cutting straight to the shoulder shot throws away the one moment the
@@ -2530,7 +2566,10 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# fixed world yaw saw a hunter off the beast's axis side-on.
 		var ys: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 		if ys >= 0 and ys < _hunters.size():
-			_yaw = follow_yaw_for(_hunters[ys]["home"] as Vector3, _beast_box.get_center(), _yaw)
+			var want_yaw := follow_yaw_for(_follow_pos(ys), _beast_box.get_center(), _yaw)
+			# Eased, not cut: a Switch, or a hop onto the other side of the
+			# beast's axis, used to swing the whole shot in one frame.
+			_yaw = want_yaw if snap else ease_yaw(_yaw, want_yaw, delta)
 			_yaw_target = _yaw
 	_apply_orbit()
 
@@ -2539,6 +2578,13 @@ func _aim_camera(delta: float, snap: bool) -> void:
 ## them at `beast`: _apply_orbit places the lens at pivot + (sin yaw, ., cos yaw),
 ## so the yaw is the ground-plane bearing from the beast to the hunter. Keeps
 ## `fallback` when the hunter stands on the beast's own axis point.
+## One frame of the follow camera's turn toward `want`, the same
+## 1-exp(-delta*k) ease _pivot uses, so the turn is frame-rate independent.
+const FOLLOW_YAW_EASE := 6.0
+static func ease_yaw(yaw: float, want: float, delta: float) -> float:
+	return lerp_angle(yaw, want, 1.0 - exp(-delta * FOLLOW_YAW_EASE))
+
+
 static func follow_yaw_for(hunter: Vector3, beast: Vector3, fallback: float) -> float:
 	var dx := hunter.x - beast.x
 	var dz := hunter.z - beast.z

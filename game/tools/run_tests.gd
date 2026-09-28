@@ -1007,6 +1007,7 @@ func _init() -> void:
 	_test_hop_subpoints_last_point_is_always_the_destination()
 	_test_hop_subpoints_matches_the_live_20m_repro()
 	_test_every_climb_landing_is_a_stone()
+	_test_follow_camera_rides_the_body_not_the_landing()
 	# fixer, 2026-09-25: #0658 -- the low-mid stretch of route_pos()'s own
 	# sweep read as a wall in front of the beast's chest/foreleg from the
 	# resting camera. chest_clear_push is the nudge that clears it.
@@ -30228,3 +30229,35 @@ func _test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process() -> v
 		"_position_intent_tag must be wired to RenderingServer.frame_pre_draw so it reads the hunter's position after this frame's climb tween has stepped, not before it")
 	get_root().remove_child(c3d)
 	c3d.free()
+
+
+## Nick, 2026-09-28: "camera is not smoothly following the character and is
+## jumping around." It aimed at `home`, which jumps to each hop's landing
+## stone (16-25 units ahead on the jackal) the instant the hop starts, so the
+## lens flew past the hunter. The rules: follow the body while airborne, keep
+## it inside the vertical dead zone, and turn the yaw rather than cut it.
+func _test_follow_camera_rides_the_body_not_the_landing() -> void:
+	var home := Vector3(-1.8, 4.6, 65.2)     # the landing stone, set at take-off
+	var body := Vector3(-1.4, 6.5, 78.6)     # where the hunter actually is
+	_expect(Combat3D.follow_point(home, body, true) == body,
+		"mid-hop the camera follows the hunter's body, not the stone it is flying to")
+	_expect(Combat3D.follow_point(home, body, false) == home,
+		"on the ground the camera follows home, exactly as before")
+	var dead := 0.56
+	var p := Combat3D.air_follow_pivot(Vector3(0.0, 2.0, 90.0), Vector3(-1.4, 9.0, 78.6), 7.0, dead)
+	_expect(is_equal_approx(p.x, -1.4) and is_equal_approx(p.z, 78.6),
+		"mid-hop the pivot sits on the body's x/z, no lag behind a 30 units/s hop")
+	_expect(is_equal_approx(p.y, 7.0 - dead),
+		"a pivot left below the dead zone is dragged to its edge, never further out (got %.2f)" % p.y)
+	var q := Combat3D.air_follow_pivot(Vector3(0.0, 6.8, 0.0), Vector3.ZERO, 7.0, dead)
+	_expect(is_equal_approx(q.y, 6.8), "a rising hunter inside the dead zone leaves the aim still, so the jump reads")
+	var r := Combat3D.air_follow_pivot(Vector3(0.0, 7.5, 0.0), Vector3.ZERO, 7.0, dead)
+	_expect(is_equal_approx(r.y, 7.0 + Combat3D.AIR_DROP_SLACK),
+		"a falling hunter drags the aim down with it, so the landing stays above the card fan (got %.2f)" % r.y)
+	var one := Combat3D.ease_yaw(0.0, 1.0, 1.0 / 60.0)
+	_expect(one > 0.0 and one < 0.2,
+		"one frame turns the yaw a little toward a new bearing, not all the way (got %.3f)" % one)
+	var settled := 0.0
+	for _i in 120:
+		settled = Combat3D.ease_yaw(settled, 1.0, 1.0 / 60.0)
+	_expect(absf(settled - 1.0) < 0.01, "two seconds of turning arrives at the bearing (got %.3f)" % settled)

@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T13:55
+updated: 2026-09-28T14:24
 working_on: "Hops land on stones"
 ---
 
@@ -13,21 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 13:55 EDT
+2026-09-28 14:24 EDT
 
-- **Did:** Every climb hop now lands on its own stone; long legs no longer split into mid-air landings.
-- **Worked?** Yes: all eight landings of a full climb, both hunters, stand on stones. `VERDICT: PASS`
-- **Look at:** ![[frames/builder/2026-09-28-hops-land-strip-before.png]] then ![[frames/builder/2026-09-28-hops-land-strip-after.png]]
-- **Ask:** Play one climb: does any hop still float?
+- **Did:** The camera now rides the hunter through every hop instead of racing ahead to the landing stone.
+- **Worked?** Partly: the Frog is on screen in 6 of 6 mid-climb frames (was 1), but the grader failed it. `VERDICT: FAIL` (intent badge over the Frog; the mid-hop panel read as a float)
+- **Look at:** ![[frames/builder/2026-09-28-camera-follows-hop-before.png]] then ![[frames/builder/2026-09-28-camera-follows-hop-after.png]]
+- **Ask:** Camera now follows each hop smoothly?
 
 ## Notes
 
-- **Found:** climbs stop only at safe ledges, so ground to Height 2 jumps over Height 1's stone in one hop.
-- **Found:** stone-to-stone hops are 16-25m, past hop_arc's 9.15m ceiling; playtest's hop-distance-band now reports them.
-- **Found:** the grader saw the intent chip sitting on the Goblin's head at some landings.
+- **Found:** the grader saw the side stones hanging above their own ground shadows.
+- **Found:** the "Attack 7" intent badge still sits on the Frog's head and base mid-climb (already proposed).
 
 ## Log
 
+- 2026-09-28 14:24 EDT — builder: follow camera rides the hopping hunter (live body, not landing stone), eased yaw; harness midair=S; grader FAIL x2; tested, pushed.
 - 2026-09-28 13:55 EDT — builder: one hop per stone (climb_landings), no mid-air sub-landings; harness land=K; grader FAIL then PASS; tested, pushed.
 
 - 2026-09-28 13:11 EDT — builder: stone lines split one each side of the jackal (route_offset_x, 4 hunters each side); grader FAIL then PASS; tested, pushed.
