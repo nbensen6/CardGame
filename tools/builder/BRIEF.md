@@ -96,10 +96,14 @@ stones climbing the gap between them, dark ground, cool sky.
    Then in `BUILDER-QUEUE.md`, the item you worked. Its shape is fixed and
    Nick reads only the first three lines:
 
-       - [ ] 👀 **Title.** ^block-id
+       - [ ] 👀 **Title.**
              ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Title.|details]]
              Ask: one plain question, 15 words or fewer, answerable yes/no or by a choice.
-             ![[agents/frames/builder/<after>.png|420]]
+             ![[agents/frames/builder/<after>.png|420]] ^block-id
+
+   `^block-id` is ALWAYS the last thing on the item's last line; Obsidian
+   only resolves it there, and Needs Nick links to it. When you add or
+   replace the last line, move the id onto the new last line.
 
    Change `- [ ]` to `- [ ] 👀` (an empty box with an eye: built, waiting
    for Nick; never `[?]`, Obsidian draws that as ticked). Write the `Ask:`

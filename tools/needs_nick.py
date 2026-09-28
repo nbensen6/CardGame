@@ -80,7 +80,8 @@ def ensure_ids(lines, items):
         if it["id"]:
             continue
         slug = re.sub(r"[^a-z0-9]+", "-", it["title"].lower()).strip("-")[:40]
-        lines[it["a"]] = lines[it["a"]].rstrip() + " ^" + slug  # on the title line
+        # Obsidian resolves a block id only at the END of the block: last line.
+        lines[it["b"] - 1] = lines[it["b"] - 1].rstrip() + " ^" + slug
         it["id"] = slug
 
 
