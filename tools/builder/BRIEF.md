@@ -60,9 +60,11 @@ stones climbing the gap between them, dark ground, cool sky.
      before frame, the absolute path of the after frame. Nothing else: not
      your summary, not the diff. It answers PASS or FAIL with evidence. On
      FAIL, fix what it names and reshoot: at most two more rounds. Still
-     FAIL after that: stop, mark nothing `[?]`, write its last verdict under
-     `Found:` and leave the item `[ ]`. Paste the final VERDICT line into the
-     status note's `Worked?` bullet either way.
+     FAIL after that: mark the item `👀` anyway and start its `Ask:` with
+     "Grader failed this: <its one-line reason>." so Nick decides. Never
+     leave a pushed change as `- [ ]`: the next run re-takes the item and
+     redoes your work (that happened 2026-09-28 with F8). Paste the final
+     VERDICT line into the status note's `Worked?` bullet either way.
    - `"%GODOT%" --headless --path game --script res://tools/run_tests.gd`
      must print `ALL TESTS PASSED`. Never push red.
    - Logic gets a test in `game/tools/run_tests.gd`. A camera or layout rule

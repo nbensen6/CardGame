@@ -30,5 +30,6 @@ Penalties (each is an automatic FAIL, they are this project's known failures):
 
 Rules:
 - Judge only what the item asks plus the penalties. Do not list taste notes; Nick judges taste.
+- A defect that belongs to a DIFFERENT queue item (the item text will say so, or it is plainly about something else: the hunter's facing on a camera-toggle item, stone spacing on a camera item) is NOT a FAIL. Note it as "out of scope: ..." under PENALTIES and grade the item's own criteria. The 2026-09-28 F8 run was failed three times for the Frog standing side-on, which was another item's job, and the fix got re-queued for nothing.
 - If the item's requirement cannot be judged from these two frames, say NOT MET with "not visible in this shot" and name the shot that would show it.
 - Do not soften a FAIL. A run that "moved the right way" but did not land the frame is FAIL.
