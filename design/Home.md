@@ -15,9 +15,10 @@ tags:
 
 One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line with 👀. You tick it or send it back on [[Needs Nick]]. Only you tick.
 
-- ▶ **[Run the builder once](obsidian://shell-commands/?vault=design&execute=run-builder)**
-- ▶ **[Run until the queue is empty](obsidian://shell-commands/?vault=design&execute=run-builder-loop)** · [Stop after this run](obsidian://shell-commands/?vault=design&execute=stop-builder-loop)
-- ▶ **[Send my answers](obsidian://shell-commands/?vault=design&execute=send-answers)** after ticking or typing on Needs Nick
+The builder runs **in the cloud** every two hours, 9am to 7pm, on its own. Nothing on this PC moves; this PC pulls its pushes every 15 minutes. Pause or fire it from the desktop app's Routines panel ("Titan-Slayers — builder").
+
+- ▶ **[Send my answers](obsidian://shell-commands/?vault=design&execute=send-answers)** after ticking or typing on Needs Nick, so the next cloud run sees them
+- Local, only while the cloud routine is paused: [Run the builder once](obsidian://shell-commands/?vault=design&execute=run-builder) · [Run until the queue is empty](obsidian://shell-commands/?vault=design&execute=run-builder-loop) · [Stop after this run](obsidian://shell-commands/?vault=design&execute=stop-builder-loop)
 
 ## Last run
 
