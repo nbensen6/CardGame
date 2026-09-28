@@ -191,7 +191,8 @@ func _initialize() -> void:
 		print("NOTE size=%dx%d is portrait; the game is landscape-locked. Shooting %dx%d."
 			% [_size.x, _size.y, _size.y, _size.x])
 		_size = Vector2i(_size.y, _size.x)
-	_failsafe()  # never hang the machine
+	if arms_failsafe(OS.get_cmdline_user_args()):
+		_failsafe()  # never hang the machine
 	# Shots should show onboarding as a NEW player sees it, whatever this machine's
 	# config happens to say — otherwise turning tips off while playing silently
 	# changes what every screenshot verifies.
@@ -1540,6 +1541,13 @@ func _capture() -> void:
 		return
 	print("SHOT SAVED: %s (%dx%d)" % [_out, img.get_width(), img.get_height()])
 	quit(0)
+
+
+## The 10 s failsafe is for unattended shots only. In `play` Nick is holding the
+## window; arming it there closed the game under him ten seconds in, which he
+## reported as "the game is crashing while testing" (2026-09-28 18:44).
+static func arms_failsafe(user_args: PackedStringArray) -> bool:
+	return not ("play" in user_args)
 
 
 func _failsafe() -> void:

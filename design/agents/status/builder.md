@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T18:55
-working_on: "Zoom out: stairs visible, beast whole."
+updated: 2026-09-28T19:05
+working_on: "Stones: first by the hunter, last in front of the head."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 18:55 EDT
+2026-09-28 19:05 EDT
 
-- **Did:** Frog keeps its real size after any hop or knockback, and stands on top of its stone.
-- **Worked?** Yes, knocked-back Frog now matches the resting Frog. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-frog-knockback-strip-before.png]] then ![[frames/builder/2026-09-28-frog-knockback-strip-after.png]]
-- **Ask:** After a knockback, is the Frog its normal size and shape now?
+- **Did:** Test this now no longer closes the game ten seconds in; stone layout left as Nick accepted.
+- **Worked?** Yes, the test window is still live at 30 seconds for both hunters. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-28-test-window-strip-before.png]] then ![[frames/builder/2026-09-28-test-window-strip-after.png]]
+- **Ask:** Does the Test this now window stay open for you now?
 
 ## Notes
 
-- **Found:** Nick's knockback screenshot shows the Frog side-on; the harness knockdown does not reproduce that facing.
-- **Found:** a cancelled hop resets the body's scale but not its forward lean.
+- **Found:** playtest's hop-leftover-squash check still expects scale 1 after a hop, so it fails every hop since the fit-scale fix.
+- **Found:** a full scripted fight ran to the end with no script error; if a crash remains, it is not in the harness's path.
 
 ## Log
 
+- 2026-09-28 19:05 EDT — builder: harness play mode (Test this now) no longer arms the 10 s shot failsafe that quit the window; grader FAIL (wanted Goblin view) then PASS; tested, pushed.
 - 2026-09-28 18:55 EDT — builder: hop squash restores the hunter's fit scale, not 1 (Frog was 1.64x after any hop); rock top under the cap, hunters ride their stone's drift; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-28 18:25 EDT — builder: resting hunters stand in front of their own line's first stone (rest_pos_for); grader FAIL (other hunter off-screen), escalated; tested, pushed.
 - 2026-09-28 18:14 EDT — builder: follow aim at RoR2's pivot (1.25 hunter heights, above the head), researched from RoR2's survivor template; grader FAIL x2 (wanted further back); tested, pushed.

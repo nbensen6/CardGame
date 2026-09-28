@@ -998,6 +998,7 @@ func _init() -> void:
 	_test_route_offset_x_splits_the_pair_wider_than_a_shared_ledge()
 	_test_route_sweep_for_opens_the_two_lines_into_a_v()
 	_test_rest_pos_for_stands_each_hunter_in_front_of_its_first_stone()
+	_test_play_mode_never_arms_the_shot_failsafe()
 	_test_route_pos_sweeps_monotonically_left_to_right()
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
@@ -30415,3 +30416,13 @@ func _test_follow_camera_rides_the_body_not_the_landing() -> void:
 	for _i in 120:
 		settled = Combat3D.ease_yaw(settled, 1.0, 1.0 / 60.0)
 	_expect(absf(settled - 1.0) < 0.01, "two seconds of turning arrives at the bearing (got %.3f)" % settled)
+
+
+## Nick, 2026-09-28 18:44: "the game is crashing while testing." Test this now
+## runs screenshot.gd in `play`, and its 10 s shot failsafe quit the window.
+func _test_play_mode_never_arms_the_shot_failsafe() -> void:
+	var shot := preload("res://tools/screenshot.gd")
+	_expect(shot.arms_failsafe(PackedStringArray(["out=/tmp/a.png", "state=3d"])),
+		"an unattended shot still arms the 10 s failsafe")
+	_expect(not shot.arms_failsafe(PackedStringArray(["play", "state=3d", "beast=cinder_jackal"])),
+		"play mode (Test this now) never arms the failsafe that closes the window")

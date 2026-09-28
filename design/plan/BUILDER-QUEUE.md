@@ -10,16 +10,16 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Stones: first by the hunter, last in front of the head.**
+- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 18:44 ET:** this is fine. the other character does not need to be on the screen when you select one. IE goblin does not need to be on the screen while selecting the frog. --- side note the came is crashing while testing.
       **Nick, 2026-09-28 18:10 ET:** hunters are not starting in front of the stones.
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Grader failed this: Goblin off-screen in Frog's view. Accept, or narrow the stone lines?
+      Ask: The test window closed itself after 10 seconds; fixed. Does it stay open now?
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-28-hunters-front-of-stones-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+      ![[agents/frames/builder/2026-09-28-test-window-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
 - [ ] **Hops land on stones.**
       **Nick, 2026-09-28 18:44 ET:** the camera should be consistent. its zooming when you start climbing. I think its at a good distance when you start. but closes in once you start climbing. also the camera should be facing the same direction the character is facing.
       **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
@@ -140,3 +140,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Other hunter off-screen at rest.** With hunters on their own stone lines (~8 apart), the follow camera shows only the selected one.
 - [ ] (proposed) Nick's knockback screenshot shows the Frog side-on; the harness knockdown shows it facing the beast. Facing after a real enemy-turn knockback is unverified.
 - [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).
+- [ ] (proposed) **Playtest's hop-leftover-squash check is stale.** It still wants body scale 1 after a hop; hunters now rest at their fit scale (0.61/0.38), so it fails every hop.

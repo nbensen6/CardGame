@@ -224,6 +224,21 @@ depth, so both on screen needs a gap under ~4.5, narrower than the top
 pair's own 5.6. Not iterated further; Nick's call: accept the other hunter
 off-screen, or narrow the lines (losing the V).
 
+**Builder, 2026-09-28 19:05 EDT** (Nick 18:44: "this is fine... side note the
+game is crashing while testing"). Layout accepted as built; this run is the
+crash. Cause: "Test this now" runs `tools/screenshot.gd -- play ...`, and the
+harness still armed its unattended-shot failsafe (`_failsafe`: 10 s, then
+`quit(1)`), so every test window closed itself ten seconds after
+`PLAY READY`. Reproduced under Xvfb: `PLAY READY` then `SHOT TIMEOUT`, process
+gone at 15 s. A full scripted fight (`playtest.sh mode=play steps=40`) ran to
+the end with no script error, so there is no second crash in the fight itself
+that the harness can find. Change: static `arms_failsafe(user_args)` is false
+in `play`; plain shots still arm it (checked: `SHOT SAVED`). Test:
+`_test_play_mode_never_arms_the_shot_failsafe`. Frames
+`2026-09-28-test-window-strip-{before,after}.png`: the play window grabbed at
+30 s, Frog (slot 0) and Goblin (slot=1) side by side; before is black (window
+gone), after is the live fight.
+
 ## Rest camera pulled back to 6.
 
 Two frames from Nick:
