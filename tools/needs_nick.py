@@ -28,7 +28,9 @@ OUT = ROOT / "design" / "Needs Nick.md"
 FRAMES = ROOT / "design" / "agents" / "frames" / "builder"
 STAMP = datetime.now().strftime("%Y-%m-%d %H:%M") + " ET"  # the PC clock is Eastern; git agrees
 
-ITEM = re.compile(r"^- \[([ ?x])\] \*\*(.+?)\*\*", re.S)
+# `- [ ] **..**` open, `- [ ] 👀 **..**` built and waiting for Nick, `- [x]` done.
+# (`[?]` was the waiting mark until 2026-09-28; Obsidian draws it as ticked.)
+ITEM = re.compile(r"^- \[([ x])\] (👀 )?\*\*(.+?)\*\*", re.S)
 
 
 # --- the queue as blocks ---------------------------------------------------
@@ -56,10 +58,11 @@ def parse(text):
         m = ITEM.match(block)
         if not m:
             continue
-        title = " ".join(m.group(2).split())
+        title = " ".join(m.group(3).split())
+        mark = "?" if m.group(2) else m.group(1)
         bid = re.search(r" \^([\w-]+)\s*$", block, re.M)
         ask = re.search(r"^\s{6}Ask: (.+)$", block, re.M)
-        items.append({"a": a, "b": b, "mark": m.group(1), "title": title,
+        items.append({"a": a, "b": b, "mark": mark, "title": title,
                       "body": block, "id": bid.group(1) if bid else "",
                       "ask": ask.group(1).strip() if ask else ""})
     return lines, items
@@ -107,10 +110,10 @@ def apply_answers(lines, items, answers):
     for it in items:
         ticked, note = answers.get(it["id"], [False, ""])
         if ticked and it["mark"] == "?":
-            lines[it["a"]] = lines[it["a"]].replace("- [?]", "- [x]", 1)
+            lines[it["a"]] = lines[it["a"]].replace("- [ ] 👀", "- [x]", 1)
             changed = True
         if note and note not in it["body"]:
-            lines[it["a"]] = re.sub(r"^- \[[ ?]\]", "- [ ]", lines[it["a"]], count=1)
+            lines[it["a"]] = re.sub(r"^- \[[ x]\] (👀 )?", "- [ ] ", lines[it["a"]], count=1)
             last = it["b"] - 1
             # His words go right under the title, above Look/Ask/Details, so
             # they are the first thing the builder and he see.
@@ -140,12 +143,17 @@ def apply_answers(lines, items, answers):
 
 # --- the page ---------------------------------------------------------------
 
+TEST = "▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)"
+
+
 def bullet(it):
-    paths = re.findall(r"(?:agents/frames|art/references)/[\w./-]+?\.(?:png|webp)", it["body"])
-    links = " · ".join(f"[[{p}|{Path(p).stem}]]" for p in dict.fromkeys(paths))
+    paths = list(dict.fromkeys(re.findall(r"(?:agents/frames|art/references)/[\w./-]+?\.(?:png|webp)", it["body"])))
     head = f"[[BUILDER-QUEUE#^{it['id']}|{it['title']}]]"
     ask = it.get("ask") or "Tick if it is right. Say what is wrong if not."
-    return f"- [ ] {head}" + (f" — {links}" if links else "") + f"\n  {ask}\n  - Nick: "
+    out = [f"- [ ] {head}", f"  {TEST} · [[BUILDER-QUEUE-NOTES#{it['title']}|details]]", f"  {ask}"]
+    out += [f"  ![[{p}|420]]" for p in paths]
+    out.append("  - Nick: ")
+    return "\n".join(out)
 
 
 def write_page(lines, items):

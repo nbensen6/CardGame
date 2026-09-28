@@ -13,7 +13,7 @@ tags:
 
 ## How work happens
 
-One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line `[?]`. You tick it or send it back on [[Needs Nick]]. Only you tick.
+One builder. It takes the top open line of [[BUILDER-QUEUE]], builds it, shoots the named frame before and after, gets graded by a second model, and marks the line with 👀. You tick it or send it back on [[Needs Nick]]. Only you tick.
 
 - ▶ **[Run the builder once](obsidian://shell-commands/?vault=design&execute=run-builder)**
 - ▶ **[Run until the queue is empty](obsidian://shell-commands/?vault=design&execute=run-builder-loop)** · [Stop after this run](obsidian://shell-commands/?vault=design&execute=stop-builder-loop)
