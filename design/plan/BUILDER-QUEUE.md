@@ -10,19 +10,20 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Hops land on stones.** ^hops-land-on-stones
-      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
-      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Every hop now lands on its stone, one hop per stone. Floats anywhere?
-      ![[agents/frames/builder/2026-09-28-hops-land-strip-after.png|420]]
-- [ ] 👀 **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
+- [ ] **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
+      **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
       **Nick, 2026-09-28 13:34 ET:** all my keyboard inputs are not being recorded in game. this could be the cause of f8 not working. please look into this.
       **Nick, 2026-09-28 12:29 ET:** f8 toggle is not working. nothing happens when i press f8
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#F8 flips the camera Player/Dev.|details]]
       Ask: Launch the game fresh. Keys work again? Then F8: does the camera flip with a note? Tick, or say what happened.
       ![[agents/frames/builder/2026-09-28-f8-works-after.png|420]]
+- [ ] **Hops land on stones.** ^hops-land-on-stones
+      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
+      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
+      Ask: Every hop now lands on its stone, one hop per stone. Floats anywhere?
+      ![[agents/frames/builder/2026-09-28-hops-land-strip-after.png|420]]
 - [ ] **Stones: first by the hunter, last in front of the head.** ^stones-first-by-the-hunter-last-in-front
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
