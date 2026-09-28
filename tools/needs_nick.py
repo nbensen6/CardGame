@@ -190,9 +190,9 @@ def write_page(lines, items):
     decide = [it for it in items if it["mark"] == " " and section_of(lines, it["a"]).startswith("## Waiting on Nick")]
     frames = sorted(FRAMES.glob("*-after.png"), key=lambda p: p.stat().st_mtime, reverse=True)[:8]
     out = ["---", "tags:", "  - home", "---", "", "# Needs Nick", "",
-           f"_{STAMP}. Tick a box to mark it done. Type after **Nick:** to send it back: "
-           f"your words go on the item and the builder takes it first. Then run **Send my answers** "
-           f"(command palette) or just run the builder._", ""]
+           f"_{STAMP}. Tick a box to mark it done. Type after **Nick:** to send it back; "
+           f"paste a picture on the same line if it helps. It uploads by itself within 15 minutes "
+           f"and the builder takes it next._", ""]
     if decide:
         out += ["## Decide", ""] + [bullet(it) for it in decide] + [""]
     if now:
