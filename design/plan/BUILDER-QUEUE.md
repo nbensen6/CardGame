@@ -10,6 +10,12 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Hops land on stones.** ^hops-land-on-stones
+      **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
+      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
+      Ask: Every hop now lands on its stone, one hop per stone. Floats anywhere?
+      ![[agents/frames/builder/2026-09-28-hops-land-strip-after.png|420]]
 - [ ] 👀 **F8 flips the camera Player/Dev.** ^f8-flips-the-camera-player-dev
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
       **Nick, 2026-09-28 13:34 ET:** all my keyboard inputs are not being recorded in game. this could be the cause of f8 not working. please look into this.
@@ -32,11 +38,6 @@ run failed.
       ![[agents/frames/builder/2026-09-25-locked-camera-climb-after.png|420]]
       ![[art/references/2026-09-25-nick-stones-and-zoom.webp|420]]
       ![[art/references/2026-09-25-nick-climb-camera-closer.webp|420]]
-- [ ] 👀 **Hops land on stones.** ^hops-land-on-stones
-      **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Every hop now lands on its stone, one hop per stone. Floats anywhere?
-      ![[agents/frames/builder/2026-09-28-hops-land-strip-after.png|420]]
 - [ ] **Hunters face the beast.** ^hunters-face-the-beast
       **Nick, 2026-09-28 12:29 ET:** no check the direction the faces are. the faces when at the bottom should be at the beast
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters face the beast.|details]]
