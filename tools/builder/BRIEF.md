@@ -20,7 +20,11 @@ stones climbing the gap between them, dark ground, cool sky.
        set GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe
        "%GODOT%" --headless --path game --import
 
-   On Linux (the cloud routine): `bash tools/cloud_setup.sh`, then use the
+   On Linux (the cloud routines, four of them 15 minutes apart): FIRST run
+   `tools/agents/lease.sh claim builder`. Exit 3 means another run is
+   already working: stop, say so in one line, touch nothing. Otherwise the
+   lease is yours; the very last thing you do, whatever happened, is
+   `tools/agents/lease.sh release builder`. Then `bash tools/cloud_setup.sh`, and use the
    `.sh` twins wherever this brief says `.cmd`: `tools/shot.sh` for
    `tools\shot.cmd`, `tools/playtest.sh` for `tools\playtest.cmd`,
    `tools/test.sh` for the test command. Same arguments; `out=` must be an
