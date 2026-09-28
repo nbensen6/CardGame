@@ -150,10 +150,9 @@ def bullet(it):
     paths = list(dict.fromkeys(re.findall(r"(?:agents/frames|art/references)/[\w./-]+?\.(?:png|webp)", it["body"])))
     head = f"[[BUILDER-QUEUE#^{it['id']}|{it['title']}]]"
     ask = it.get("ask") or "Tick if it is right. Say what is wrong if not."
-    out = [f"- [ ] {head}", f"  {TEST} · [[BUILDER-QUEUE-NOTES#{it['title']}|details]]", f"  {ask}"]
-    out += [f"  ![[{p}|420]]" for p in paths]
-    out.append("  - Nick: ")
-    return "\n".join(out)
+    # The list is a link and a question, nothing else (Nick, 2026-09-28). The
+    # Test-this-now link and the frames live on the ticket the link opens.
+    return "\n".join([f"- [ ] {head}", f"  {ask}", "  - Nick: "])
 
 
 def write_page(lines, items):
