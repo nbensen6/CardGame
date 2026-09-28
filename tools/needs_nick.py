@@ -132,6 +132,61 @@ def attach_images(note):
     return re.sub(r"!\[\[([^\]]+)\]\]", fix, note)
 
 
+WHERE = {"rest": "state=3d", "climb": "state=3dclimb slot=1", "sigil": "state=3dclimb",
+         "grip": "state=3dgrip", "menu": "state=menu", "goblin": "state=goblin"}
+
+
+def read_requests():
+    """Filled-in request slots on the page: [{what, where, priority, picture}]."""
+    if not OUT.exists():
+        return []
+    text = OUT.read_text(encoding="utf-8")
+    out = []
+    for m in re.finditer(r"^- What: *(.*)\n  Where: *(.*)\n  Priority: *(.*)\n  Picture: *(.*)$", text, re.M):
+        what = m.group(1).strip()
+        if not what:
+            continue
+        out.append({"what": what, "where": m.group(2).strip().lower(),
+                    "priority": m.group(3).strip().lower(), "picture": m.group(4).strip()})
+    return out
+
+
+def apply_requests(lines, reqs):
+    """Each filled slot becomes a queue item under ## Now: top for 'top',
+    otherwise last. Returns True if anything was added."""
+    if not reqs:
+        return False
+    now_at = next(k for k, l in enumerate(lines) if l.startswith("## Now"))
+    end = next((k for k in range(now_at + 1, len(lines)) if lines[k].startswith("## ")), len(lines))
+    for r in reqs:
+        first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
+        title = (first[:1].upper() + first[1:])[:70].rstrip() + "."
+        slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40]
+        test = WHERE.get(r["where"].split()[0] if r["where"] else "rest", r["where"] or "state=3d")
+        note = attach_images(r["what"] + (" " + r["picture"] if r["picture"] else ""))
+        block = [f"- [ ] **{title}**",
+                 f"      **Nick, {STAMP}:** {note}",
+                 f"      {test_link(test)} · [[BUILDER-QUEUE-NOTES#{title}|details]]",
+                 f"      Test: {test} ^{slug}"]
+        if r["priority"].startswith("top"):
+            first_item = next((k for k in range(now_at + 1, end) if lines[k].startswith("- [")), end)
+            lines[first_item:first_item] = block
+        else:
+            # before the blank line that closes the section
+            k = end
+            while k > now_at and not lines[k - 1].strip():
+                k -= 1
+            lines[k:k] = block
+        end += len(block)
+    return True
+
+
+REQUEST_FORM = ["## Ask the builder for something", "",
+                "Fill a slot in and it becomes a line in the queue within 15 minutes; the slot clears itself. "
+                "Where: rest, climb, sigil, grip, menu or goblin (which shot proves it). Priority: top or later.", ""]
+BLANK_SLOT = ["- What: ", "  Where: rest", "  Priority: top", "  Picture: "]
+
+
 def apply_answers(lines, items, answers):
     """Tick or reopen queue items from the page. Returns True if anything changed."""
     changed = False
@@ -211,6 +266,10 @@ def write_page(lines, items):
         out += ["## Look, then tick or send back", ""] + [bullet(it) for it in now] + [""]
     if not decide and not now:
         out += ["Nothing. The builder is running or waiting for a new line in [[BUILDER-QUEUE]].", ""]
+    out += REQUEST_FORM
+    for _ in range(3):
+        out += BLANK_SLOT
+    out.append("")
     if frames:
         out += ["## Latest frames", ""] + [f"- [[agents/frames/builder/{p.name}|{p.stem.removesuffix('-after')}]]" for p in frames] + [""]
     OUT.write_text("\n".join(out), encoding="utf-8")
@@ -226,7 +285,9 @@ def main():
     lines, items = parse(text)
     ensure_ids(lines, items)
     answers = read_answers()
+    reqs = read_requests()
     changed = apply_answers(lines, items, answers)
+    changed = apply_requests(lines, reqs) or changed
     new_text = "\n".join(lines)
     if new_text != text:
         QUEUE.write_text(new_text, encoding="utf-8")
