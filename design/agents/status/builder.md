@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T19:30
-working_on: "Hops land on stones."
+updated: 2026-09-28T19:40
+working_on: "Dev camera never survives a launch."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 19:30 EDT
+2026-09-28 19:40 EDT
 
-- **Did:** Climbing keeps the resting camera's tilt and lift, so the first hop no longer looks like a zoom-in.
-- **Worked?** Partly, the Frog now sits at one size and spot at rest and every landing; grader misread its back. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-camera-consistent-strip-before.png]] then ![[frames/builder/2026-09-28-camera-consistent-strip-after.png]]
-- **Ask:** Does the camera stay steady now when you start climbing?
+- **Did:** F8's Dev camera now lasts one launch only, with a standing DEV CAMERA tag while on.
+- **Worked?** Yes, the relaunch opens on the Player camera and the tag shows under Dev. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-28-dev-camera-launch-before.png]] then ![[frames/builder/2026-09-28-dev-camera-launch-strip-after.png]]
+- **Ask:** Press F8, relaunch: does the game open on the Player camera?
 
 ## Notes
 
-- **Found:** the harness's midair= samples land at different hop phases run to run, so midair strips are not comparable.
-- **Found:** camera distance was already constant (5.2); the zoom Nick saw was the climb tilting down 0.08 to 0.20.
+- **Found:** the fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.
 
 ## Log
 
+- 2026-09-28 19:40 EDT — builder: Dev camera is per-launch (never saved), DEV CAMERA corner tag; grader PASS; tested, pushed.
 - 2026-09-28 19:30 EDT — builder: climbing camera keeps the rest pitch (0.08) and lens lift; CLIMB_FOCUS_PITCH_MAX deleted; grader FAIL x2 (midair phases, then misread facing), escalated; tested, pushed.
 - 2026-09-28 19:05 EDT — builder: harness play mode (Test this now) no longer arms the 10 s shot failsafe that quit the window; grader FAIL (wanted Goblin view) then PASS; tested, pushed.
 - 2026-09-28 18:55 EDT — builder: hop squash restores the hunter's fit scale, not 1 (Frog was 1.64x after any hop); rock top under the cap, hunters ride their stone's drift; grader FAIL x2 then PASS; tested, pushed.

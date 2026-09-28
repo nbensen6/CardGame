@@ -222,9 +222,8 @@ func _initialize() -> void:
 	# "bar" set and the next 3dosu would silently shoot the wrong face. State it.
 	Progress.set_timing_style(Progress.TIMING_BAR if _state == "3dbar"
 		else Progress.TIMING_CIRCLE)
-	# Same for the camera: a press=F8 shot flips it and the flip persists, so
-	# the next shot would start on Dev. Player is the state Nick lands in.
-	Progress.set_dev_camera_enabled(false)
+	# The camera needs no reset here: Dev lives for one launch only
+	# (Progress.dev_camera_enabled), so every shot starts on Player.
 	if _state == "menu":  # just the main menu, no session
 		change_scene_to_file("res://views/menu.tscn")
 		_capture()

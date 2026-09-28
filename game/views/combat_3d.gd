@@ -3165,6 +3165,36 @@ func _dev_note(text: String, seconds: float = 2.6) -> void:
 	tw.tween_callback(l.queue_free)
 
 
+## A standing "DEV CAMERA" tag in the bottom-right corner while Dev is on,
+## gone the moment it is off. The DevNote above fades in a second; this one
+## stays, so Nick always knows he is not looking at the Player camera.
+func _sync_dev_camera_tag() -> void:
+	var host: Node = get_node_or_null("Hud/Root")
+	if host == null:
+		host = self
+	var tag := host.get_node_or_null("DevCameraTag") as Label
+	var on := Progress.dev_camera_enabled()
+	if not on:
+		if tag != null:
+			tag.queue_free()
+			tag.name = "DevCameraTagGone"
+		return
+	if tag != null:
+		return
+	tag = Label.new()
+	tag.name = "DevCameraTag"
+	tag.text = "DEV CAMERA"
+	tag.add_theme_color_override("font_color", Color(1.0, 0.86, 0.45))
+	tag.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	tag.add_theme_constant_override("outline_size", 5)
+	tag.add_theme_font_size_override("font_size", 16)
+	tag.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT, Control.PRESET_MODE_MINSIZE, 20)
+	# Above End Turn / Switch (bottom 64 px), below the climb meter.
+	tag.position.y -= 64.0
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	host.add_child(tag)
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	# F9 walks the card treatments: framed, borderless, borderless foil, foil.
 	#
@@ -3209,6 +3239,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_focus_camera()
 			_aim_camera(0.0, true)   # a cut back, too
 		_dev_note("Camera:  %s" % ("Dev" if next else "Player"), 1.0)
+		_sync_dev_camera_tag()
 		return
 	# The free camera (drag to orbit, right/middle-drag to pan, wheel to zoom,
 	## WASD/QE to fly — see _fly()) is a LOCAL DEV TOOL, not something normal
@@ -5309,6 +5340,7 @@ func _open_settings() -> void:
 	cam_mode.pressed.connect(func() -> void:
 		var next := not Progress.dev_camera_enabled()
 		Progress.set_dev_camera_enabled(next)
+		_sync_dev_camera_tag()
 		cam_mode.text = "Camera:  %s" % ("Dev" if next else "Player"))
 	col.add_child(cam_mode)
 

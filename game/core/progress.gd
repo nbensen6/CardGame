@@ -160,18 +160,21 @@ static func reset_keybinds() -> void:
 ## build, debug included. Combat3D.free_camera_allowed still takes
 ## is_debug_build as ITS OWN separate input and ANDs it in — a release build
 ## stays hard-locked out of the free camera regardless of this setting.
+##
+## Nick, 2026-09-28 (queue: "Dev camera never survives a launch"): he pressed
+## F8 once to test it, the flag was saved, and every launch after opened in
+## the wide Dev view, so nothing graded on the Player camera matched what he
+## saw. Dev is now for THIS launch only: held in memory, never written, and
+## a stale "dev_camera_enabled" left in an old config is ignored.
+static var _dev_camera_this_launch := false
+
+
 static func dev_camera_enabled() -> bool:
-	var cfg := ConfigFile.new()
-	if cfg.load(path) != OK:
-		return false
-	return bool(cfg.get_value(SECTION, "dev_camera_enabled", false))
+	return _dev_camera_this_launch
 
 
 static func set_dev_camera_enabled(on: bool) -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(path)
-	cfg.set_value(SECTION, "dev_camera_enabled", on)
-	cfg.save(path)
+	_dev_camera_this_launch = on
 
 
 ## Which action a key press triggers, or "" for a key that isn't bound.

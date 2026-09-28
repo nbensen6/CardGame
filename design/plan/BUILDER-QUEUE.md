@@ -38,7 +38,11 @@ run failed.
       Ask: After a knockback, is the Frog its normal size and shape now?
       Test: state=3d beast=cinder_jackal console=climb+5;climb+2
       ![[agents/frames/builder/2026-09-28-frog-knockback-strip-after.png|420]] ^zoom-out-stairs-visible-beast-whole
-- [ ] **Dev camera never survives a launch.** F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast), so nothing the builder graded on the Player camera matched what he saw. Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera. Test: state=3d ^dev-camera-never-survives-a-launch
+- [ ] 👀 **Dev camera never survives a launch.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dev camera never survives a launch.|details]]
+      Ask: Press F8, relaunch: does the game open on the Player camera?
+      Test: state=3d beast=cinder_jackal press=F8
+      ![[agents/frames/builder/2026-09-28-dev-camera-launch-strip-after.png|420]] ^dev-camera-never-survives-a-launch
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
@@ -142,3 +146,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Nick's knockback screenshot shows the Frog side-on; the harness knockdown shows it facing the beast. Facing after a real enemy-turn knockback is unverified.
 - [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).
 - [ ] (proposed) **Playtest's hop-leftover-squash check is stale.** It still wants body scale 1 after a hop; hunters now rest at their fit scale (0.61/0.38), so it fails every hop.
+- [ ] (proposed) The fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.

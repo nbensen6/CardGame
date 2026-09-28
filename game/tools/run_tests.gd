@@ -2677,6 +2677,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_dev_camera_enabled_round_trips_dev()
 	_test_backlog_dev_camera_enabled_round_trips_back_to_player()
 	_test_backlog_f8_flips_dev_camera_enabled_live()
+	_test_dev_camera_never_survives_a_launch()
 	_test_f8_dev_overview_is_visibly_wider()
 
 	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
@@ -27401,6 +27402,27 @@ func _test_backlog_dev_camera_enabled_round_trips_back_to_player() -> void:
 		"switching back to Player must stick too, not just leave the non-default value behind")
 
 
+## Queue, 2026-09-28, "Dev camera never survives a launch": Nick pressed F8
+## once, the flag was saved, and every launch since opened on Dev. Dev must
+## never reach the config file, and a stale saved true must be ignored.
+func _test_dev_camera_never_survives_a_launch() -> void:
+	Progress.use_scratch_slot("run_tests_dev_camera_one_launch")
+	var stale := ConfigFile.new()
+	stale.set_value(Progress.SECTION, "dev_camera_enabled", true)
+	stale.save(Progress.path)
+	Progress.set_dev_camera_enabled(false)
+	_expect(Progress.dev_camera_enabled() == false,
+		"a dev_camera_enabled=true saved by an older build must not open the next launch on Dev")
+	var fresh := ConfigFile.new()
+	fresh.save(Progress.path)
+	Progress.set_dev_camera_enabled(true)
+	var after := ConfigFile.new()
+	after.load(Progress.path)
+	_expect(not after.has_section_key(Progress.SECTION, "dev_camera_enabled"),
+		"turning Dev on must not write it to the config, or the next launch starts on Dev")
+	Progress.set_dev_camera_enabled(false)
+
+
 ## Nick, live, 22:25 EDT: "I still cannot find the toggle" -- it is three taps
 ## deep in the settings panel. F8 flips the same Progress.dev_camera_enabled
 ## the Menu button does, through the real _unhandled_input path (a bare
@@ -27420,6 +27442,9 @@ func _test_backlog_f8_flips_dev_camera_enabled_live() -> void:
 	c3d._unhandled_input(f8)
 	_expect(Progress.dev_camera_enabled() == true,
 		"F8 must flip Player to Dev, the same value the Menu button writes")
+	var tag := c3d.find_child("DevCameraTag", true, false) as Label
+	_expect(tag != null and tag.text == "DEV CAMERA",
+		"while Dev is on a DEV CAMERA tag must stay on screen, or Nick cannot tell he is off the Player camera")
 	var note := c3d.get_node_or_null("DevNote") as Label
 	_expect(note != null and note.text == "Camera:  Dev",
 		"F8 must show which state it landed in, or the flip is invisible until you open the Menu to check")
@@ -27428,6 +27453,8 @@ func _test_backlog_f8_flips_dev_camera_enabled_live() -> void:
 		"a second F8 must flip it back to Player, not get stuck on Dev")
 	_expect(c3d._free_cam_engaged == false and c3d._pan == Vector3.ZERO,
 		"F8 back to Player must hand framing back to the locked camera, not leave the dev framing on")
+	_expect(c3d.find_child("DevCameraTag", true, false) == null,
+		"F8 back to Player must take the DEV CAMERA tag away")
 	get_root().remove_child(c3d)
 	c3d.free()
 

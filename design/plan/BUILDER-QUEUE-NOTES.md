@@ -625,3 +625,14 @@ hunter-lost-mid-hop 1 (step 9, hunter drawn in 6/15 frames of its own
 jump), beast-behind-stone 4 (stone 7, 18-27%; waits on the stairs
 decision). `run_tests.gd`: ALL TESTS PASSED. No 3D shot for a
 "Shot: none" item; the frames are the playtest summary, before/after.
+
+## Dev camera never survives a launch.
+
+Original item: F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast). Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera.
+
+2026-09-28 19:40 EDT, builder:
+- `Progress.dev_camera_enabled` is now a static var for this launch only; it never writes the config, and an old saved `dev_camera_enabled=true` is ignored.
+- `Combat3D._sync_dev_camera_tag()` puts a standing "DEV CAMERA" label bottom-right (above End Turn) while Dev is on. F8 and the Menu's Camera button both call it.
+- The screenshot harness no longer forces Player at start, so the second shot proves the fix on its own (its scratch config may still hold an old true).
+- Tests: the F8 test checks the tag appears and disappears; a new test checks that a stale saved true is ignored and that Dev never reaches the config.
+- After strip: left is the F8 launch (Dev, tag), right is the next plain launch (Player). Grader: PASS.
