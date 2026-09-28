@@ -1035,6 +1035,12 @@ func _init() -> void:
 	# actually builds a stone on), so a lone climber at the sigil stood
 	# centred between both top stones, on neither.
 	_test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone()
+	# builder, 2026-09-28: Nick, "the last stone for the goblin is not at the
+	# head" -- the two top stones read the face in their own columns, so one
+	# stood at the muzzle and the other back at the neck.
+	_test_top_pair_front_of_takes_the_furthest_face()
+	_test_head_x_of_is_the_middle_of_the_snout_columns()
+	_test_both_top_stones_stand_level_in_front_of_the_head()
 	# fixer, 2026-09-25: #0420 -- home used to jump straight to a chained
 	# climb's FINAL stop before the tween even started, so the camera's lock
 	# point (_lock_point reads home.x/.z) aimed at the destination for the
@@ -22446,6 +22452,48 @@ func _test_route_pos_cleared_single_rung_matches_route_pos() -> void:
 ## wrong too. No hull built here (`_hull` stays empty), so `_front_of_beast`
 ## falls back to the box's own front face regardless of x -- this isolates
 ## the x-axis half of the bug, which is all `route_side` vs `side` changes.
+## The jackal's hull at the sigil's height, measured 2026-09-28: the snout is
+## columns 3-5 (x -2.27..0.13), the sigil anchor sits at x 2.0 on the edge.
+func _test_head_x_of_is_the_middle_of_the_snout_columns() -> void:
+	var xs := PackedFloat32Array([-5.87, -4.67, -3.47, -2.27, -1.07, 0.13, 1.33, 2.52, 3.72])
+	var fronts := PackedFloat32Array([-16.36, 12.83, 15.35, 16.40, 16.40, 16.40, 15.56, 12.91, -16.36])
+	_expect(is_equal_approx(Combat3D.head_x_of(xs, fronts, 2.0), -1.07),
+		"the top pair splits around the snout (x -1.07), not the sigil painted on the head's edge (x 2.0)")
+	_expect(is_equal_approx(Combat3D.head_x_of(PackedFloat32Array(), PackedFloat32Array(), 2.0), 2.0),
+		"no hull columns: fall back to the sigil's own x")
+
+
+func _test_top_pair_front_of_takes_the_furthest_face() -> void:
+	_expect(is_equal_approx(Combat3D.top_pair_front_of(PackedFloat32Array([0.5, 17.1, 2.0])), 17.1),
+		"the pair's face is the furthest-forward of the sampled columns, so neither top stone lands behind the muzzle")
+
+
+## Measured on the Cinder Jackal 2026-09-28: the Frog's top stone at z 17.41,
+## the Goblin's at z 0.53, because only the Frog's column caught the muzzle.
+## A fake hull with the muzzle in ONE column must still put both at one z.
+func _test_both_top_stones_stand_level_in_front_of_the_head() -> void:
+	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
+	get_root().add_child(c3d)
+	c3d._climb_points = {1: Vector3(0.0, 10.0, 0.0), 2: Vector3(0.0, 14.0, 0.0)}
+	c3d._beast_box = AABB(Vector3(-5.0, 0.0, -5.0), Vector3(10.0, 20.0, 20.0))
+	var hx: int = Combat3D.HULL_X
+	var hy: int = Combat3D.HULL_Y
+	var hull := PackedFloat32Array()
+	hull.resize(hx * hy)
+	hull.fill(0.5)
+	var muzzle: Vector2i = Combat3D.hull_index_for(-2.8, 14.0, c3d._beast_box, hx, hy)
+	for j in range(hy):
+		hull[j * hx + muzzle.x] = 12.0
+	c3d._hull = hull
+	var left: Vector3 = c3d._top_hold(-1.0)
+	var right: Vector3 = c3d._top_hold(1.0)
+	_expect(is_equal_approx(left.z, right.z),
+		"both top stones stand at one depth in front of the head (left z=%.2f, right z=%.2f)" % [left.z, right.z])
+	_expect(right.z > 12.0, "the line whose own column misses the muzzle still stands in front of it (z=%.2f)" % right.z)
+	get_root().remove_child(c3d)
+	c3d.free()
+
+
 func _test_backlog26_stand_on_model_top_hold_matches_its_own_route_stone() -> void:
 	var c3d: Node = preload("res://views/combat_3d.tscn").instantiate()
 	get_root().add_child(c3d)

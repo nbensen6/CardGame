@@ -17,14 +17,13 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
       Ask: Grader failed this: attack badge touches the Frog mid-hop. Is this distance right?
       ![[agents/frames/builder/2026-09-28-follow-further-hop-after.png|420]] ^hops-land-on-stones
-- [ ] **Stones: first by the hunter, last in front of the head.**
+- [ ] 👀 **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 15:44 ET:** I dont understand this question. please re word this. also the last stone for the goblin is not at the head
       **Nick, 2026-09-28 13:34 ET:** no. Stone placement like this, front and top view: two lines, one each side, big stones near the hunters, small near the beast, meeting at the beast. ![[art/references/2026-09-28-nick-stone-layout.webp|420]]
       **Nick, 2026-09-28 12:29 ET:** the pair of stones need more distance between them. then each character can land on a stone that is slightly to the right or left of the beast. you should be able to tell if the stone is in front of the character?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: first by the hunter, last in front of the head.|details]]
-      Ask: Grader failed this: Goblin's big stone hides under the gauge. Spread hunters wider?
-      ![[agents/frames/builder/2026-09-28-stone-lines-wide-after.png|420]]
-      ![[agents/frames/builder/2026-09-28-stone-lines-after.png|420]] ^stones-first-by-the-hunter-last-in-front
+      Ask: Each hunter's last stone now sits beside the jackal's head, one each side. Right?
+      ![[agents/frames/builder/2026-09-28-top-stones-strip-after.png|420]] ^stones-first-by-the-hunter-last-in-front
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
@@ -124,3 +123,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Intent badge covers the jackal's head at rest.** With the lower ground camera the "Attack 7" chip sits on the head.
 - [ ] (proposed) Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
 - [ ] (proposed) Up the side the Frog still reads about 1.5x its rest size at the same camera distance.
+- [ ] (proposed) **Hunters hidden behind the cards in the wide shot.** In the establishing view neither hunter shows above the card fan; only the ground ring does.

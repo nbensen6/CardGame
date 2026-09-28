@@ -153,6 +153,32 @@ whose near end is wider than its top cannot keep the Goblin's stone on screen
 while the hunters stand ±1.15 apart. Needs a call: spread the hunters, or
 accept the Goblin's stone off-frame in the Frog's view.
 
+**Builder, 2026-09-28 16:24 EDT** (Nick 15:44: "the last stone for the goblin
+is not at the head"; also asked for the question reworded). Measured on
+`cinder_jackal`: the Frog's top stone at (-0.80, 15.1, 17.41), the Goblin's
+at (4.80, 15.1, 0.53). Two causes. (1) The pair split around the sigil's
+anchor (x 2.0), which is painted on the head's right edge; the hull at that
+height says the snout is x -2.3..0.1 (centre -1.07), so the Goblin's line
+ended past the side of the head. (2) Each top stone read the face in its own
+column, so the Frog's caught the snout (z 17.4) and the Goblin's missed it
+and fell back to the neck (z 0.5). Change: `_head_x` (middle of the hull
+columns within 0.5 of the furthest-forward one) is the pair's centre, and
+`_top_pair_front` (furthest of the snout and both stones' columns) is both
+stones' face. After: Frog top (-3.87, 15.1, 17.41), Goblin top (1.73, 15.1,
+17.41): one each side of the snout, level. Playtest's three route mirrors
+call the same two functions. Tests: `_test_head_x_of_is_the_middle_of_the_snout_columns`,
+`_test_top_pair_front_of_takes_the_furthest_face`,
+`_test_both_top_stones_stand_level_in_front_of_the_head`. Shots:
+`state=3d slot=1 console="climb 5" land=4` (Goblin at the top) as
+`2026-09-28-top-stones-level-{before,after}.png`; rest `slot=1` as
+`-rest-{before,after}`; Frog at the top as `-frog-after`. playtest.sh ran
+past 8 minutes here and was stopped, not judged.
+Grader round 1 FAIL (stone level with the head but beside the neck: the
+sigil-centred pair), round 2 FAIL (head MET, rest criteria not visible in a
+sigil shot), round 3 PASS on four-panel strips
+`2026-09-28-top-stones-strip-{before,after}.png` (rest, wide, Frog top,
+Goblin top): "Last stone in front of the head: MET for both hunters."
+
 ## Rest camera pulled back to 6.
 
 Two frames from Nick:

@@ -2673,7 +2673,7 @@ func _top_hold(side: float = 0.0) -> Vector3:
 	for h in _climb_points.keys():
 		top = maxi(top, int(h))
 	var p: Vector3 = foothold_anchor(_climb_points, top)
-	var x: float = route_offset_x(p.x, side, _beast_box.size.x)
+	var x: float = route_offset_x(_head_x(p), side, _beast_box.size.x)
 	# The last stone stands IN FRONT of the head (Nick's drawing, 2026-09-25),
 	# not on the sigil's anchor. The anchor is a point on the skin where the
 	# sigil is painted; on a face that is behind the muzzle, and on the Cinder
@@ -2681,8 +2681,65 @@ func _top_hold(side: float = 0.0) -> Vector3:
 	# stone at the anchor put the hunter, and the camera pivot with it, inside
 	# the head -- the 16:24 frame was the ear from the inside. Same clearance
 	# rule a between-rung hold already uses.
-	var z: float = top_hold_z_for(p.z, _front_of_beast(x, p.y))
+	var z: float = top_hold_z_for(p.z, _top_pair_front(p))
 	return stone_point(Vector3(x, p.y, z))
+
+
+## The x the two top stones flank: the snout, not the sigil. Nick, 2026-09-28:
+## "the last stone for the goblin is not at the head." On the jackal the sigil
+## is painted on the head's right edge (x 2.0; the snout is at x -1.1), so a
+## pair split around the sigil put the Frog's stone on the snout and the
+## Goblin's 5.6 units right of it, past the side of the head at the neck. His
+## drawing has one stone each side of the head, so the pair splits around
+## the furthest-forward columns of the body at the sigil's height.
+func _head_x(p: Vector3) -> float:
+	if _hull.is_empty():
+		return p.x
+	var xs := PackedFloat32Array()
+	var fronts := PackedFloat32Array()
+	for i in range(HULL_X):
+		var cx: float = _beast_box.position.x + (i + 0.5) * _beast_box.size.x / HULL_X
+		xs.append(cx)
+		fronts.append(_front_of_beast(cx, p.y))
+	return head_x_of(xs, fronts, p.x)
+
+
+## The pure half of _head_x: the middle of the columns that reach within
+## HEAD_FRONT_BAND of the furthest-forward one. `fallback` when none do.
+const HEAD_FRONT_BAND := 0.5
+static func head_x_of(xs: PackedFloat32Array, fronts: PackedFloat32Array, fallback: float) -> float:
+	var best := -1e9
+	for f in fronts:
+		best = maxf(best, f)
+	var sum := 0.0
+	var n := 0
+	for i in range(mini(xs.size(), fronts.size())):
+		if fronts[i] >= best - HEAD_FRONT_BAND:
+			sum += xs[i]
+			n += 1
+	return fallback if n == 0 else sum / float(n)
+
+
+## The face both top stones stand in front of: the furthest-forward of the
+## snout and the two stones' own columns. Each side used to read the face in
+## its OWN column, so on the jackal one top stone stood 17 units out at the
+## snout and the other fell back to the neck at z 0.5.
+func _top_pair_front(p: Vector3) -> float:
+	var w: float = _beast_box.size.x
+	var hx: float = _head_x(p)
+	return top_pair_front_of(PackedFloat32Array([
+		_front_of_beast(hx, p.y),
+		_front_of_beast(route_offset_x(hx, -1.0, w), p.y),
+		_front_of_beast(route_offset_x(hx, 1.0, w), p.y)]))
+
+
+## The pure half of _top_pair_front: the furthest-forward of the sampled
+## fronts, so neither line's top stone ends up behind the face.
+static func top_pair_front_of(fronts: PackedFloat32Array) -> float:
+	var best := -1e9
+	for f in fronts:
+		best = maxf(best, f)
+	return best
 
 
 ## How far apart the two hunters' stone lines run, as the x of one line's top
