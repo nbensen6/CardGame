@@ -346,6 +346,27 @@ Frames: `state=3d slot=0 beast=cinder_jackal console="climb 5"` with `land=1`,
 attack badge now clears the Frog mid-hop by ~30 px.
 Grader: round 1 FAIL (single land=2 frame could not show hops), round 2 PASS.
 
+**Builder, 2026-09-28 18:14 EDT** (Nick 18:02: "better but not perfect. do research on
+camera positions and the position specifically from risk of rain 2"). Research: RoR2's
+survivor template (ArcPh1r3/HenryTutorial `CharacterBase.cs`, the base every RoR2
+survivor mod copies from Commando) sets `pivotVerticalOffset = 1.37` above a 1.82-unit
+capsule whose origin is its centre, `idealLocalCameraPos = (0, 0, -10)` (level, 10 back
+from the pivot; "-12 for large characters like Loader"), fov 60, pitch -70..70. So the
+RoR2 pivot is 1.25 survivor heights up, ABOVE the head: the survivor stands below the
+crosshair, horizontally centred, and the enemy owns the frame's centre. Ours aimed at the
+hunter's middle (GROUND_VIEW_EYE 0.5), which put the Frog dead centre. Change:
+GROUND_VIEW_EYE = (0.91 + 1.37) / 1.82 = 1.25, with the RoR2 numbers as named constants;
+distance untouched. Measured: rest Frog screen y 358 -> 414, Goblin 361 -> 420 (feet
+above the card fan); `midair=0.45/0.95` Frog still ON screen (636,396)/(639,330).
+Distance note: RoR2 at fov 60 draws the survivor 1.82/(2*10*tan30) = 16% of frame
+height; our FOLLOW_DIST 5.2 at fov 65 draws the 0.7 hunter 11%, i.e. we already sit
+further back than RoR2 (RoR2-equivalent would be ~3.5). Left alone: Nick asked for
+"zoom out" at 3.4 and said "better" at 5.2. Test `_test_follow_camera_aims_above_the_head_like_ror2`.
+Frames: `2026-09-28-ror2-camera-{before,after}.png` (rest) and
+`-strip-{before,after}` (rest + `console="climb 5" land=2`).
+Grader: FAIL twice, both on "camera not further back" (it graded the previous run's Ask);
+its fix (pull back to 2/3 size) runs against the RoR2 numbers, so it goes to Nick.
+
 ## Hunters face the beast.
 
 Nick, 2026-09-25 14:35 EDT: "want the

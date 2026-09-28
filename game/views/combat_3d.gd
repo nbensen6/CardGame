@@ -420,7 +420,22 @@ const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
 ## locked to character"; at 8 with the 65-degree lens the Goblin was 15 px).
 const CLIMB_HUNTER_DIST := FOLLOW_DIST
-const GROUND_VIEW_EYE := 0.5   # the aim: the hunter's own middle, at rest AND climbing (2026-09-28)
+## Risk of Rain 2's own follow camera, read from the survivor template every
+## RoR2 modder starts from (ArcPh1r3/HenryTutorial, CharacterBase.cs, which
+## mirrors Commando): a 1.82-unit capsule whose origin is its centre, the
+## camera pivot 1.37 ABOVE that origin, and the lens 10 back from the pivot
+## at eye level (idealLocalCameraPos (0, 0, -10)), 60-degree vertical fov.
+## So the pivot sits above the survivor's HEAD and the lens looks level
+## through it: the survivor stands below the crosshair, feet about 70% of
+## the way down, and the thing you are fighting owns the centre. We aimed at
+## the hunter's middle (0.5), which put the Frog dead centre over the beast
+## (Nick, 2026-09-28 18:02: "research ... the position specifically from risk
+## of rain 2").
+const ROR2_CAPSULE_HEIGHT := 1.82
+const ROR2_PIVOT_OFFSET := 1.37
+const ROR2_CAMERA_DEPTH := 10.0
+## The aim, in hunter heights above the feet, at rest AND climbing: RoR2's pivot.
+const GROUND_VIEW_EYE := (ROR2_CAPSULE_HEIGHT * 0.5 + ROR2_PIVOT_OFFSET) / ROR2_CAPSULE_HEIGHT   # 1.25
 const GROUND_VIEW_PITCH := 0.08   # low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
 ## The locked climbing camera's own pitch, at the very top of the route
 ## (climb_t 1.0) -- level near the ground, rising to this as the hunter nears

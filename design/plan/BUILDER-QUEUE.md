@@ -28,15 +28,15 @@ run failed.
       ![[agents/frames/builder/2026-09-28-zoom-range-after.png|420]]
       ![[agents/frames/builder/2026-09-28-zoom-range-climb-after.png|420]] ^zoom-out-stairs-visible-beast-whole
 - [ ] **Dev camera never survives a launch.** F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast), so nothing the builder graded on the Player camera matched what he saw. Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera. Test: state=3d ^dev-camera-never-survives-a-launch
-- [ ] **Hops land on stones.**
+- [ ] 👀 **Hops land on stones.**
       **Nick, 2026-09-28 18:02 ET:** better but not perfect. do research on camera positions and the position specifically from risk of rain 2
       **Nick, 2026-09-28 16:29 ET:** zoom the camera out more
       **Nick, 2026-09-28 15:44 ET:** camera follows more smoothly, but the placement is too close to the character
       **Nick, 2026-09-28 13:59 ET:** cannot be tested till the camera is fixed. camera is not smoothly following the character and is jumping around.
       **Nick, 2026-09-28 12:29 ET:** no the characters are still jumping in mid air
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hops land on stones.|details]]
-      Ask: Camera now sits further back. Far enough, or further still?
-      ![[agents/frames/builder/2026-09-28-zoom-out-more-strip-after.png|420]] ^hops-land-on-stones
+      Ask: Grader failed this: camera not further back. Hunter now low like RoR2; also closer, RoR2-sized?
+      ![[agents/frames/builder/2026-09-28-ror2-camera-strip-after.png|420]] ^hops-land-on-stones
 - [x] **F8 flips the camera Player/Dev.**
       **Nick, 2026-09-28 14:14 ET:** f8 now works.
       **Session, 2026-09-28 13:52 ET:** the keyboard problem was on this PC, not in the game: a harness run I killed at 12:05 left `game/override.cfg` behind with no_focus=true, so every launch since ignored the keyboard. Removed, and dev.cmd/play.cmd now clear it. F8 itself was rebuilt at 12:52.
@@ -134,3 +134,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
 - [ ] (proposed) Up the side the Frog still reads about 1.5x its rest size at the same camera distance.
 - [ ] (proposed) **Hunters hidden behind the cards in the wide shot.** In the establishing view neither hunter shows above the card fan; only the ground ring does.
+- [ ] (proposed) **Grader reads the previous run's Ask.** It graded this run against "camera further back", the last run's question, not Nick's newest line.
+- [ ] (proposed) **Follow distance is further back than RoR2.** RoR2 puts the survivor ~16% of frame height; FOLLOW_DIST 5.2 gives ~11%.

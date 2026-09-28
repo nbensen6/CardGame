@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T17:09
-working_on: "playtest.cmd green."
+updated: 2026-09-28T18:14
+working_on: "Hops land on stones."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 17:09 EDT
+2026-09-28 18:14 EDT
 
-- **Did:** Dropped the hop-length ceiling check the one-stone-per-Height route can never pass; kept its floor.
-- **Worked?** Partly, hop-distance-band went 124 to 0 but two other checks stay red. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-28-playtest-hop-ceiling-before.png]] then ![[frames/builder/2026-09-28-playtest-hop-ceiling-after.png]]
-- **Ask:** Two checks still red. Keep fixing one per run?
+- **Did:** Camera now aims above the hunter's head like Risk of Rain 2, so the hunter sits low.
+- **Worked?** Partly, framing moved to RoR2's pivot but grader wanted it further back. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-28-ror2-camera-before.png]] then ![[frames/builder/2026-09-28-ror2-camera-after.png]]
+- **Ask:** RoR2 sits closer than ours; move closer to match it?
 
 ## Notes
 
-- **Found:** nothing new this run.
+- **Found:** the grader graded against last run's Ask ("further back"), not Nick's newest line.
+- **Found:** RoR2's distance draws the survivor ~16% of frame height; ours is ~11%.
 
 ## Log
 
+- 2026-09-28 18:14 EDT — builder: follow aim at RoR2's pivot (1.25 hunter heights, above the head), researched from RoR2's survivor template; grader FAIL x2 (wanted further back); tested, pushed.
 - 2026-09-28 17:09 EDT — builder: playtest hop-distance-band ceiling deleted with reason, floor kept (124 -> 0 fails); grader FAIL x2 on the multi-run done-when; tested, pushed.
 - 2026-09-28 16:45 EDT — builder: FOLLOW_DIST 3.4 -> 5.2 (Nick: zoom out more); grader FAIL, PASS; tested, pushed.
 - 2026-09-28 16:24 EDT — builder: top stones split around the snout (_head_x) and level at one face depth (_top_pair_front); grader FAIL, FAIL, PASS; tested, pushed.

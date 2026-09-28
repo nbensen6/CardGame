@@ -1885,6 +1885,7 @@ func _init() -> void:
 	_test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top()
 	_test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t()
 	_test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil()
+	_test_follow_camera_aims_above_the_head_like_ror2()
 	_test_follow_yaw_puts_the_lens_behind_the_hunter_on_the_beast_line()
 
 	# Combat3D.shoulder_frame -- the over-the-shoulder composition (Nick,
@@ -29643,6 +29644,16 @@ func _test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil() -> void
 		"FOLLOW_DIST stands further back than 3.4, which Nick asked to zoom out from (2026-09-28 16:29)")
 	_expect(share < Combat3D.hunter_frame_share(2.3, 65.0),
 		"FOLLOW_DIST stands further back than 2.3, which Nick called too close (2026-09-28)")
+
+
+## Nick, 2026-09-28 18:02: "research ... the position specifically from risk of
+## rain 2". RoR2's pivot sits 1.37 above a 1.82 capsule's centre: 1.25 survivor
+## heights up, above the head, so the survivor stands below the frame's centre.
+func _test_follow_camera_aims_above_the_head_like_ror2() -> void:
+	_expect(is_equal_approx(Combat3D.GROUND_VIEW_EYE, (0.91 + 1.37) / 1.82),
+		"the follow aim is RoR2's pivot, 1.25 hunter heights up [got=%.3f]" % Combat3D.GROUND_VIEW_EYE)
+	_expect(Combat3D.GROUND_VIEW_EYE > 1.0,
+		"the aim sits above the hunter's head, not at its middle (0.5 until 2026-09-28)")
 
 
 func _test_climb_focus_for_pitch_rises_from_ground_to_max_with_climb_t() -> void:
