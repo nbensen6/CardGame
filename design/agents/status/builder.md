@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T21:41
+updated: 2026-09-29T00:21
 working_on: "playtest.cmd green."
 ---
 
@@ -13,18 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 21:41 EDT
+2026-09-29 00:21 EDT
 
-- **Did:** Playtest's mid-hop check now holds the Frog in the air while it replays the jump.
-- **Worked?** Partly: that check went red to 0 fails, one stone check still red. VERDICT: FAIL (item needs zero checks; one-per-run MET)
-- **Look at:** ![[frames/builder/2026-09-29-playtest-lost-mid-hop-before.png]] then ![[frames/builder/2026-09-29-playtest-lost-mid-hop-after.png]]
-- **Ask:** Stones hide up to a third of the jackal at times. Fine, or move them?
+- **Did:** Tried moving the stones back two ways; both hid the jackal more, so nothing shipped.
+- **Worked?** No: your stone still hides the chest at the top, rest stones cover up to 35%. VERDICT: FAIL (chest not readable; stones and Frog cover it)
+- **Look at:** ![[frames/builder/2026-09-29-stones-back-top-before.png]] then ![[frames/builder/2026-09-29-stones-back-top-tried.png]]
+- **Ask:** Chest hides behind your own stone however far back. Raise the camera instead?
 
 ## Notes
 
-- **Found:** beast-behind-stone swings 10-12 fails run to run on unchanged code; stones 5-7 cover 15-37%.
+- **Found:** route-reversal is red on main (64 fails, Goblin climb rungs 3 and 5 on the body), not caused by this run.
+- **Found:** damage-popup-offscreen is red on main (2-3 fails).
 
 ## Log
+
+- 2026-09-29 00:21 EDT — builder: stones-back tried (whole route +20, then top stone only +20); both push beast-behind-stone 3 -> 31 and the chest stays hidden behind the hunter's own stone; grader FAIL; reverted, asked.
 
 - 2026-09-28 21:41 EDT — builder: playtest hunter-lost-mid-hop replay holds Combat3D's _process so the posed hunter survives to the render (1 -> 0 fails); grader FAIL x2 on the zero-checks done-when; tested, pushed.
 - 2026-09-28 20:21 EDT — builder: playtest hop-leftover-squash measured from the fit scale (10 -> 0 fails), hop-no-squash un-silenced; grader FAIL x2 on the zero-checks done-when; tested, pushed.

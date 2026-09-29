@@ -663,6 +663,36 @@ so it is asked on the item. `run_tests.gd`: ALL TESTS PASSED. Grader
 `VERDICT: FAIL` twice, on the parent's "zero checks" done-when; it scored
 "one red check cleared this run" MET.
 
+**Builder, 2026-09-29 00:21 EDT:** Nick's 23:44 line: move the stones
+and hunters back so the jackal's chest shows from the last stone. Tried
+it and reverted it: nothing in the game changed this run.
+Tried: a `ROUTE_PULLBACK` (a fraction of the beast's height) added to
+`top_hold_z_for`, so every stone follows because `route_pos` lerps
+to the top. Top-stone shots at 0.3/0.6/1.0/1.5 × height (6-30 units). The
+chest does not come out. At 1.0 and up a thin strip of flank shows to the
+right of the stone. The grader: "Only a thin strip of flank ... The chest
+is not readable."
+Why, from the frame math: the follow camera looks almost level (pitch
+0.08) from RoR2's pivot, 0.875 above the hunter's feet, and yaws at the
+beast's centre. So the Frog is always dead in line with the jackal's
+middle. Anything lower than the Frog's feet sits behind the Frog's own
+stone. The chest, ~8 units below the top stone, only clears the stone's
+top edge when the route is ~50 units back. No stone position fixes that
+without changing the camera (a higher pivot) or the stone's height
+(a last stone at chest height puts the chest behind the Frog's body).
+Two variants measured in the 40-step playtest:
+(a) whole route AND ground spot back 20: jackal tiny at rest,
+beast-behind-stone 3 -> 31 (Goblin's near stone 5 covers 23-30%);
+(b) top stone only back 20, ground unchanged: mid stones now hang in front
+of the jackal at rest, beast-behind-stone 3 -> 31, worst 35.0% pixel,
+over Nick's "a third is ok". Baseline on main, same run: beast-behind-stone
+3 (max 15.8%), route-reversal 64 and damage-popup-offscreen 3, neither of
+them from this item (proposed at the bottom of the queue). Grader
+`VERDICT: FAIL` on (a); (b) not shipped either. Frames:
+`2026-09-29-stones-back-top-before/-tried` (tried = (b)),
+`-rest-before/-rest-tried`. The Test link shows the game as it is
+(nothing shipped), at the top stone.
+
 ## Dev camera never survives a launch.
 
 Original item: F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast). Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera.
