@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T15:02
-working_on: "Hunters lunge when they attack and flinch when hit."
+updated: 2026-09-29T15:30
+working_on: "Played cards fly to their target."
 ---
 
 # builder
@@ -13,18 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 15:02 EDT
+2026-09-29 15:30 EDT
 
-- **Did:** The hunter who plays an attack now leaps at the beast; a hit hunter flashes white and flinches back.
-- **Worked?** Yes, after the lunge got a lift so it reads from behind; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-hunter-lunge-before.png]] then ![[frames/builder/2026-09-29-hunter-lunge-after.png]]
-- **Ask:** The hunter who played the card leaps at the beast; hit flashes white. Right?
+- **Did:** Played cards now grow out of the hand and fly to the jackal or the hunter before resolving.
+- **Worked?** Yes, after the flight was retimed and shrinks on the way; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-card-fly-before.png]] then ![[frames/builder/2026-09-29-card-fly-after.png]]
+- **Ask:** Cards now fly to the jackal or the Frog before resolving. Feel right?
 
 ## Notes
 
-- **Found:** the Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
+- **Found:** cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
 
 ## Log
+
+- 2026-09-29 15:30 EDT — builder: played cards fly (0.25 s, grow then shrink) to the beast for attacks, the hunter otherwise, effect on landing; Block landing plays `block` + ring; harness fly=/flyt=; grader FAIL x2 then PASS; tests green, pushed.
 
 - 2026-09-29 15:02 EDT — builder: rigless hunters get tween beats (attack lunge + lift + scale punch toward the beast, hit white flash + knock-back + lean), only the hunter who spent energy lunges (strike_slots); harness 3dstrike beat=/actor=; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 14:41 EDT — builder: timing notes open beside the active hunter (notes_anchor, side facing the card; note_pattern lift=false), card fallback; test pins the first note within a hunter-height; grader PASS; tests green, pushed.

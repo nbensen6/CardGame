@@ -863,3 +863,14 @@ Builder, 2026-09-29 15:02 EDT.
 - Test: `_test_hunters_lunge_on_attack_and_flinch_on_hit` pins both beats and the attribution rule.
 - Grader: FAIL (lunge not visible, hit direction unclear, Goblin unjudgeable), then PASS.
 
+## Played cards fly to their target.
+
+Builder, 2026-09-29 15:30 EDT.
+
+- A tapped card (plain tap, the circle timing, the sweep timing) is copied into a CardView on the HUD and flies from its hand slot to its target in `CARD_FLY_S` = 0.25 s: up to 1.2x in the first quarter, then shrinking to 0.3x and fading as it arrives, so it never parks over the hunter. The play command is sent only when it lands.
+- Target: the beast's weak point for an attack or any card with printed damage, the commanding hunter for everything else (`card_fly_target`). A card with Block or ally Block plays the `block` sound and pops a pale-blue ring on the hunter as it lands (`card_fly_blocks`, `_block_ring`).
+- Taps are ignored while a card is in the air (its hand index is not settled until it lands); End Turn lands a flying card first. The hunter slot is captured at tap time, so Switch mid-flight cannot redirect it.
+- Harness: `fly=N` taps card N and freezes the flight; `flyt=F` sets how far (default 0.7; 1 lands it).
+- Grader: FAIL (card at 55% still overlapped the fan and covered the Frog; the shrink was chained after the move, so the flight ran 0.44 s — fixed with delays), FAIL (no scale-up visible, no climb card shown), then PASS on a six-panel sheet.
+- Playtest FAIL lines: 74 before and after the change.
+- Not covered: cards played through a pick (exhaust/cheapen/meld) still resolve instantly.

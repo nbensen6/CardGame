@@ -1504,6 +1504,7 @@ func _init() -> void:
 	_test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold()
 	_test_grip_clock_runs_only_on_the_held_hunters_own_time()
 	_test_hunters_lunge_on_attack_and_flinch_on_hit()
+	_test_played_cards_fly_to_their_target()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
 	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
@@ -23033,6 +23034,25 @@ func _test_hunters_lunge_on_attack_and_flinch_on_hit() -> void:
 		"a 0-cost card spends nothing, so the lunge falls back to the driving hunter")
 	_expect(Combat3D.strike_slots([], [3, 3], 0) == [0],
 		"with no previous snapshot the driving hunter lunges alone")
+
+
+## Session 2026-09-29: a played card flies to the beast for an attack and to the
+## hunter for block or climb; block lands with the ring and the sound.
+func _test_played_cards_fly_to_their_target() -> void:
+	_expect(Combat3D.card_fly_target({"type": "attack", "base": {"damage": 6}}) == "beast",
+		"an attack flies to the beast")
+	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"damage": 3}}) == "beast",
+		"a skill that deals damage flies to the beast too")
+	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"block": 5}}) == "hunter",
+		"a block card flies to the hunter")
+	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"grip": 2}}) == "hunter",
+		"a climb card flies to the hunter")
+	_expect(Combat3D.card_fly_blocks({"base": {"block": 5}})
+		and Combat3D.card_fly_blocks({"base": {"ally_block": 3}})
+		and not Combat3D.card_fly_blocks({"base": {"damage": 6}}),
+		"only a card that gives Block pops the ring")
+	_expect(not Combat3D.card_in_flight(null), "nothing in the air: taps go through")
+	_expect(Combat3D.CARD_FLY_S >= 0.2 and Combat3D.CARD_FLY_S <= 0.3, "the flight is about 0.25 s")
 
 
 func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:

@@ -22,6 +22,8 @@
 ##     neither; default hunter 0 lunging. Camera shake is zeroed so the three
 ##     frames share one camera and the other hunter can be checked for stillness)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
+##   fly=N (tap the Nth card of the hand and freeze it on the way to its target)
+##   flyt=F (how far through that flight, default 0.7; 1 or more lands it)
 ##   press=F8 (feed one real key press before the shot — for a live-toggle key
 ##     whose only visible effect is a HUD note, not a layout change)
 extends SceneTree
@@ -40,6 +42,8 @@ var _thenend := 0  # thenend=N — press End Turn N more times AFTER console=, l
 var _enemyat := -1.0  # enemyat=S — shoot S real seconds after the last End Turn press
 var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
 var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
+var _flyi := -1  # fly=N — tap the Nth card of the hand and shoot it mid-flight
+var _flyt := 0.7  # flyt=F — how far through the flight to freeze; >= 1 lands it
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
@@ -180,6 +184,10 @@ func _initialize() -> void:
 			_miss = true
 		elif a == "nail=1":
 			_nail = true
+		elif a.begins_with("flyt="):
+			_flyt = float(a.substr(5))
+		elif a.begins_with("fly="):
+			_flyi = int(a.substr(4))
 		elif a.begins_with("anim="):
 			_anim = a.substr(5)
 		elif a == "classic":
@@ -948,6 +956,29 @@ func _capture() -> void:
 				await process_frame
 			print("MISS %s (%s): beast hp %d -> %d, discard %d -> %d" % [name0, "miss" if _miss else "perfect", hp0, mc.boss.hp,
 				disc0, mps.discard_pile.size()])
+
+	# fly=N: tap the Nth card, then freeze the view halfway through the card's
+	# flight, so the frame shows it between the hand and its target.
+	if _flyi >= 0 and current_scene != null and current_scene.has_method("_on_card_tapped"):
+		var fhand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
+		var frow: Node = current_scene.get("_hand_row")
+		if _flyi >= fhand.size() or frow == null:
+			print("FLY no card %d in hand" % _flyi)
+		else:
+			current_scene.call("_on_card_tapped", fhand[_flyi], frow.get_child(_flyi))
+			var ftw = current_scene.get("_card_fly_tw")
+			if ftw is Tween and (ftw as Tween).is_valid():
+				(ftw as Tween).pause()
+				(ftw as Tween).custom_step(float(current_scene.get("CARD_FLY_S")) * minf(_flyt, 1.0))
+				if _flyt >= 1.0 and (ftw as Tween).is_valid():
+					(ftw as Tween).custom_step(0.01)   # past the last step: the landing callback
+			for _i in (1 if _flyt >= 1.0 else 3):   # a landing: catch the block ring early in its swell
+				await process_frame
+			current_scene.process_mode = Node.PROCESS_MODE_DISABLED
+			var fly = current_scene.get("_card_flying")
+			print("FLY %s -> %s at %s" % [String((fhand[_flyi] as Dictionary).get("name", "?")),
+				str(current_scene.get("_card_fly_to")),
+				str((fly as Control).global_position) if fly is Control and is_instance_valid(fly) else "none"])
 
 	# Carry a card. Driven by calling the view's own drag handlers with real
 	# InputEvents rather than by poking at positions, so what is photographed is

@@ -84,10 +84,12 @@ run failed.
       Ask: The hunter who played the card leaps at the beast; hit flashes white. Right?
       Test: state=3dstrike beast=cinder_jackal beat=attack
       ![[agents/frames/builder/2026-09-29-hunter-lunge-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
-- [ ] **Played cards fly to their target.**
+- [ ] 👀 **Played cards fly to their target.**
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
-      Test: state=3d beast=cinder_jackal ^played-cards-fly-to-their-target
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
+      Ask: Cards now fly to the jackal or the Frog before resolving. Feel right?
+      Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0
+      ![[agents/frames/builder/2026-09-29-card-fly-after.png|420]] ^played-cards-fly-to-their-target
 - [ ] **The jackal dies on screen.**
       **Session, 2026-09-29 11:05 ET:** The killing blow plays `hit` and the scene cuts to the reward screen. Add a `death` clip with the same Blender script that made idle, attack and hit (`tools/blender/ai_beast.py`), a 0.6 s slow-motion on the final hit, the fall, then the cut. Done-when: a three-frame strip shows the last hit, the fall, the body down, all before the reward screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dreward%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The jackal dies on screen.|details]]
@@ -262,3 +264,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.
 - [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
 - [ ] (proposed) The Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
+- [ ] (proposed) Cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
