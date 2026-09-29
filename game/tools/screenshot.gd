@@ -27,6 +27,7 @@
 ##   deathat=0.3,1.2,2.5 (3dreward: land the killing blow in the fight and
 ##     shoot a grid of frames that many real seconds after it; a time past the
 ##     hold shows the cut to the reward screen)
+##   rest=1 (3dosu: open the timed card with both hunters still on the ground)
 ##   press=F8 (feed one real key press before the shot — for a live-toggle key
 ##     whose only visible effect is a HUD note, not a layout change)
 extends SceneTree
@@ -55,6 +56,7 @@ var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
 var _slot := -1  # slot=N — force the active hunter, so camera framing can be compared
 var _taps := false
+var _rest := false  # rest=1 — 3dosu: open the timed card with both hunters on the ground
 ## Card index to hover in the hand, or -1. The fan hides a card's rules until
 ## it is hovered, and a mouse cannot hover in a headless run - so without this
 ## flag the harness can only ever photograph the resting state, and every claim
@@ -210,6 +212,8 @@ func _initialize() -> void:
 			_orbit = float(a.substr(6))
 		elif a == "taps":
 			_taps = true
+		elif a == "rest=1":
+			_rest = true
 		elif a.begins_with("slot="):
 			_slot = int(a.substr(5))   # which hunter is ACTIVE, for camera framing work
 		elif a == "mobile":
@@ -1122,9 +1126,12 @@ func _capture() -> void:
 			# Partway up, which is where the path gets long: from a card at the
 			# bottom of the screen to a hold near a Titan's sigil is most of a
 			# frame, and that is the case where a note used to fall off the top.
+			# rest=1 leaves both on the ground, where a fight opens: the hunter
+			# stands lowest on screen, right over the hand.
 			var cu: Combat = Session.host._run.combat
-			cu.players[0].foothold = maxi(int(cu.boss.weak_point_height * 0.55), 1)
-			cu.players[1].foothold = maxi(int(cu.boss.weak_point_height * 0.35), 1)
+			if not _rest:
+				cu.players[0].foothold = maxi(int(cu.boss.weak_point_height * 0.55), 1)
+				cu.players[1].foothold = maxi(int(cu.boss.weak_point_height * 0.35), 1)
 			Session.host._broadcast_state()
 			await process_frame
 			await process_frame
@@ -1209,6 +1216,15 @@ func _capture() -> void:
 					if circle.get("_flat").is_empty() \
 							and not frame.has_point(cam3.unproject_position(live_notes[i])):
 						raw_off.append(str(i + 1))
+				# And none over the hand (Nick, 2026-09-29: "i do see timing over
+				# the cards still"): the lowest note's bottom edge against the
+				# top of the highest card.
+				var low := -INF
+				for i in range(live_notes.size()):
+					low = maxf(low, (circle.call("_screen", i) as Vector2).y + HitCircle.TARGET_RADIUS)
+				var htop: float = tv.call("_hand_top")
+				print("TIMING lowest note bottom=%d  hand top=%d  %s" % [int(low), int(htop),
+					"clear of the hand" if low <= htop else "OVER THE HAND"])
 				print("TIMING on screen: %s  (unclamped would lose: %s)" % [
 					"all" if off.is_empty() else "MISSING " + ", ".join(off),
 					"none" if raw_off.is_empty() else ", ".join(raw_off)])

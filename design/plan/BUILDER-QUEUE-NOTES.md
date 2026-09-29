@@ -917,6 +917,16 @@ Builder, 2026-09-29 18:23 EDT, on Nick's "remove grip timer for now" (17:14).
 - Tension: Nick's 11:59 answer on the timing item said "don't have them far from the card". This item moves them to the hunter. The Ask puts that to him.
 - Grader: PASS on the first round.
 
+2026-09-29 18:44 EDT, builder (Nick 17:14: "i do see timing over the cards still").
+
+- Root cause: the pattern's floor was the screen bottom less 96 px (y 624 at 720p), which is inside the hand band (card tops at y 512). A walk from a hunter standing low fanned notes down onto the cards; the whole-pattern shove used the same bottom bound.
+- Measured with a new harness line (`TIMING lowest note bottom=... hand top=...`), six rolls each: old code at rest 4/6 over the hand (worst 101 px deep), mid-climb 1/6; new code 0/10 at rest, 0/4 mid-climb. Harness `rest=1` opens the timed card with both hunters on the ground.
+- Change: `notes_floor(view_h, pad, hand_top)` = the old floor or the hand top less a note radius less 24 px (the DRAG caption clears too), whichever is higher on screen; `_hand_top()` reads the highest card; `pattern_shove(..., floor_y)` uses it as its bottom bound.
+- Grader round 1 FAIL: frame was at rest, not mid-climb (fair; reshot mid-climb), grip bar not beside the notes (moot, grip is off per Nick), and note 2 drawn over the Goblin. Fixed the last: `note_pattern(..., avoid)` rejects any step whose ring would touch the hunter's rect; NOTE_BESIDE 0.9 -> 1.15 radii, the first note's jitter pushed back out if it lands on them.
+- Test `_test_timing_notes_stay_off_the_hand`: 3 hunter spots x 40 seeds, no note bottom over the hand after the shove, no ring on the hunter; no-hand fallback unchanged.
+- Covers two proposed lines at the bottom of the queue ("notes can still open over the hunter's body", "notes may dip into the card band"); Nick can delete them.
+- Grader round 2: PASS.
+
 ## Hunters lunge when they attack and flinch when hit.
 
 Builder, 2026-09-29 15:02 EDT.

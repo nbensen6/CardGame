@@ -1086,11 +1086,14 @@ static func drag_order(plan: Vector2i, rng: RandomNumberGenerator) -> int:
 ## the lowest a note may sit (the bottom of the frame, less a margin): a walk
 ## that ran off the bottom used to be shoved up whole, over the hunter's head.
 ## The drag, if there is one, is DRAG_POINTS in a row after `drag_at` taps
-## (-1: after all of them). Pure (the RNG is passed in) so a test can pin the reach.
+## (-1: after all of them). `avoid` is the hunter's on-screen rect: no note's
+## ring is drawn over them (grader, 2026-09-29: note 2 covered the Goblin).
+## Pure (the RNG is passed in) so a test can pin the reach.
 static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 		rng: RandomNumberGenerator, floor_y: float = INF, lift: bool = true,
-		drag_at: int = -1) -> PackedVector2Array:
+		drag_at: int = -1, avoid: Rect2 = Rect2()) -> PackedVector2Array:
 	var out := PackedVector2Array()
+	var keep_off := avoid.grow(HitCircle.TARGET_RADIUS) if avoid.has_area() else Rect2()
 	var count := taps + (DRAG_POINTS if drag else 0)
 	var drag_from := taps if drag_at < 0 else mini(drag_at, taps)
 	# The first note sits on or beside the card, not always dead above it. From
@@ -1099,6 +1102,8 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 	var first := Vector2(rng.randf_range(-70.0, 70.0), rng.randf_range(-NOTE_RISE, -NOTE_RISE * 0.5)) \
 		if lift else Vector2(rng.randf_range(-8.0, 8.0), rng.randf_range(-8.0, 8.0))
 	var at := note_clamp(anchor, anchor + first, floor_y)
+	if keep_off.has_point(at):   # jittered back onto the hunter: out to the near side
+		at.x = keep_off.position.x if at.x < avoid.get_center().x else keep_off.end.x
 	out.append(at)
 	var heading := 0.0 if rng.randf() < 0.5 else PI         # off to one side
 	for i in range(1, count):
@@ -1110,7 +1115,7 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 			var turn := rng.randf_range(-0.6, 0.6) if in_drag else rng.randf_range(-1.6, 1.6)
 			var h := heading + turn
 			var p := at + Vector2(cos(h), sin(h)) * step
-			if not note_in_reach(anchor, p, floor_y):
+			if not note_in_reach(anchor, p, floor_y) or keep_off.has_point(p):
 				continue
 			var clear := true
 			for q in out:
@@ -1134,6 +1139,8 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 				var gap := 1e9
 				for q in out:
 					gap = minf(gap, q.distance_to(p))
+				if keep_off.has_point(p):
+					gap -= 1e6      # on the hunter: only if nothing else is open
 				if gap > room:
 					room = gap
 					best = p
@@ -1150,7 +1157,9 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 ## note's centre sits NOTE_BESIDE past the hunter's edge, at their chest.
 ## Falls back to the card when the hunter has no on-screen rect, or it is off
 ## the frame (`view`).
-const NOTE_BESIDE := HitCircle.TARGET_RADIUS * 0.9
+## 1.15, not 0.9: at 0.9 the first ring's edge sat on the hunter (grader,
+## 2026-09-29).
+const NOTE_BESIDE := HitCircle.TARGET_RADIUS * 1.15
 static func notes_anchor(hunter: Rect2, card: Vector2, view: Vector2) -> Vector2:
 	if hunter.size.x <= 0.0 or hunter.size.y <= 0.0 \
 			or not Rect2(Vector2.ZERO, view).has_point(hunter.get_center()):
@@ -1183,13 +1192,15 @@ func _hold_points(plan: Vector2i, from_screen: Vector2, drag_at: int = -1,
 		if hnode != null and is_instance_valid(hnode) and (_hunters[_active_slot] as Dictionary).get("body") != null:
 			hunter_rect = hunter_screen_rect(_cam, _merged_aabb(hnode))
 	var anchor := notes_anchor(hunter_rect, from_screen, view)
-	var pattern := note_pattern(anchor, plan.x, plan.y > 0, rng, view.y - pad, anchor == from_screen, drag_at)
+	var floor_y := notes_floor(view.y, pad, _hand_top())
+	var pattern := note_pattern(anchor, plan.x, plan.y > 0, rng, floor_y, anchor == from_screen, drag_at,
+		hunter_rect if anchor != from_screen else Rect2())
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
 	for at in pattern:
 		lo = Vector2(minf(lo.x, at.x), minf(lo.y, at.y))
 		hi = Vector2(maxf(hi.x, at.x), maxf(hi.y, at.y))
-	var shove := pattern_shove(lo, hi, view, pad)
+	var shove := pattern_shove(lo, hi, view, pad, floor_y)
 	var out := PackedVector2Array()
 	for at in pattern:
 		out.append(at + shove)
@@ -1202,10 +1213,37 @@ func _hold_points(plan: Vector2i, from_screen: Vector2, drag_at: int = -1,
 ## the screen from each other and off the edge of it). `lo`/`hi` bound the
 ## pattern before the shove; a corner already inside [pad, view - pad] on both
 ## axes needs no push at all.
-static func pattern_shove(lo: Vector2, hi: Vector2, view: Vector2, pad: float) -> Vector2:
+## `floor_y` lowers the bottom bound to the top of the hand (notes_floor).
+static func pattern_shove(lo: Vector2, hi: Vector2, view: Vector2, pad: float,
+		floor_y: float = INF) -> Vector2:
+	var bottom := minf(view.y - pad, floor_y)
 	return Vector2(
 		maxf(0.0, pad - lo.x) - maxf(0.0, hi.x - (view.x - pad)),
-		maxf(0.0, pad - lo.y) - maxf(0.0, hi.y - (view.y - pad)))
+		maxf(0.0, pad - lo.y) - maxf(0.0, hi.y - bottom))
+
+
+## The lowest a note's centre may sit: a whole note clear of the top of the
+## hand, never over the cards (Nick, 2026-09-29: "i do see timing over the
+## cards still"). The floor used to be the screen bottom less `pad`, which is
+## inside the hand band, so a walk from a hunter standing low on the stairs
+## fanned down onto the card tops. `hand_top` INF (no hand showing) leaves the
+## old screen-bottom floor. 24 px, not less: the DRAG caption hangs under
+## its note and must clear the card tops too.
+const NOTE_HAND_GAP := 24.0
+static func notes_floor(view_h: float, pad: float, hand_top: float) -> float:
+	return minf(view_h - pad, hand_top - HitCircle.TARGET_RADIUS - NOTE_HAND_GAP)
+
+
+## Top edge of the hand on screen: the highest card's top. INF with no cards.
+func _hand_top() -> float:
+	var top := INF
+	if _hand_row == null or not _hand_row.is_visible_in_tree():
+		return top
+	for c in _hand_row.get_children():
+		var cv := c as Control
+		if cv != null and cv.visible:
+			top = minf(top, cv.get_global_rect().position.y)
+	return top
 
 
 ## The one place a turn ends, so the button and the key can never drift apart.

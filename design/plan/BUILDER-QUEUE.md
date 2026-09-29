@@ -39,13 +39,13 @@ run failed.
       Ask: Grip timer is gone: no HOLD ON bar, nobody slips. Tick to close?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-grip-timer-removed-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
-- [ ] **Timing notes open at the hold on the beast.**
+- [ ] 👀 **Timing notes open at the hold on the beast.**
       **Nick, 2026-09-29 17:14 ET:** this question doesnt make sense. i do see timing over the cards still
       **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dosu%20beast%3Dcinder_jackal%20hold%3Don) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
-      Ask: Notes now open beside the hunter, not the card. Keep it there?
+      Ask: Notes now stay above the cards and off the hunter. Still see any over cards?
       Test: state=3dosu beast=cinder_jackal hold=on
-      ![[agents/frames/builder/2026-09-29-notes-at-hold-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
+      ![[agents/frames/builder/2026-09-29-notes-off-hand-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
 - [ ] **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
       **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -290,3 +290,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
 - [ ] (proposed) The jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
 - [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.
+- [ ] (proposed) Mid-climb, timing note 1 can sit over the jackal's leg; nothing keeps notes off the beast.

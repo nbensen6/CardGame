@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T18:23
-working_on: "The grip clock only runs on your own time."
+updated: 2026-09-29T18:44
+working_on: "Timing notes open at the hold on the beast."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 18:23 EDT
+2026-09-29 18:44 EDT
 
-- **Did:** Confirmed the grip timer is gone (switched off at 17:26); no code change needed.
-- **Worked?** Yes: no HOLD ON bar, nobody slips; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-grip-timer-removed-before.png]] then ![[frames/builder/2026-09-29-grip-timer-removed-after.png]]
-- **Ask:** Grip timer is gone: no HOLD ON bar, nobody slips. Tick to close?
+- **Did:** Timing notes now stop above the top of the hand and steer around the hunter.
+- **Worked?** Yes, 0 of 14 rolls over the cards, was 5 of 12; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-notes-off-hand-before.png]] then ![[frames/builder/2026-09-29-notes-off-hand-after.png]]
+- **Ask:** Notes now stay above the cards and off the hunter. Still see any over cards?
 
 ## Notes
 
-- **Found:** nothing new.
+- **Found:** mid-climb, note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
 
 ## Log
 
+- 2026-09-29 18:44 EDT — builder: timing notes floored at the hand top (notes_floor, _hand_top, pattern_shove floor) and kept off the hunter (note_pattern avoid, NOTE_BESIDE 1.15); harness rest=1 + lowest-note line; old 5/12 rolls over the hand, new 0/14; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:23 EDT — builder: grip clock item: grip timer already off since 17:26 (GRIP_TIMER_ON=false); verified 3dgrip GRIP-OFF OK, no bar, no slip; no code change; grader PASS; tests green, pushed.
 
 - 2026-09-29 18:09 EDT — builder: jackal's turn: body lunge (rear back in hold, 35% of gap toward bitten hunter on the bite, home by the hand, pitch + x drift), hunter damage number up and aside; Ask reworded for Nick; grader FAIL x3 (wind-up unreadable), escalated; tests green, pushed.

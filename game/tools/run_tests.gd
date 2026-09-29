@@ -1493,6 +1493,7 @@ func _init() -> void:
 	_test_hit_circle_drag_in_the_middle_then_taps()
 	_test_hit_circle_draws_above_the_hand()
 	_test_notes_open_beside_the_climbing_hunter()
+	_test_timing_notes_stay_off_the_hand()
 	_test_hit_circle_taps_then_drag()
 	_test_hit_circle_drag_off_the_ball_lets_go()
 	# backlog #86 duty 3 (twenty-sixth pass): the grip/fall timer itself --
@@ -25456,6 +25457,44 @@ func _test_note_pattern_stays_near_the_card() -> void:
 					"seed %d: notes %d and %d sit on top of each other" % [seed, i, j])
 		firsts[Vector2i(pts[1] / 40.0)] = true
 	_expect(firsts.size() >= 6, "the second note lands in different places from play to play")
+
+
+## Nick, 2026-09-29: "i do see timing over the cards still". The floor was
+## the screen bottom less 96 px, inside the hand band, so a hunter standing low
+## on the stairs fanned notes onto the card tops. Now no note, shove included,
+## reaches below the top of the hand.
+func _test_timing_notes_stay_off_the_hand() -> void:
+	var view := Vector2(1280, 720)
+	var pad := 96.0
+	var hand_top := 512.0
+	var floor_y := Combat3D.notes_floor(view.y, pad, hand_top)
+	_expect(floor_y + HitCircle.TARGET_RADIUS < hand_top, "a note on the floor still clears the hand")
+	_expect(is_equal_approx(Combat3D.notes_floor(view.y, pad, INF), view.y - pad),
+		"with no hand showing the floor is the screen bottom less the pad, as before")
+	# A hunter at rest (low on screen) and one on the first stones, both sides.
+	for hunter in [Rect2(600, 330, 60, 90), Rect2(560, 280, 60, 90), Rect2(900, 360, 50, 80)]:
+		for seed in range(40):
+			var rng := RandomNumberGenerator.new()
+			rng.seed = seed
+			var anchor := Combat3D.notes_anchor(hunter, Vector2(420, 620), view)
+			var pts := Combat3D.note_pattern(anchor, 3, true, rng, floor_y, false, rng.randi_range(0, 3), hunter)
+			for q in pts:
+				var near := Vector2(clampf(q.x, hunter.position.x, hunter.end.x),
+					clampf(q.y, hunter.position.y, hunter.end.y))
+				_expect(q.distance_to(near) >= HitCircle.TARGET_RADIUS - 0.5,
+					"seed %d: a note's ring at %s is drawn over the hunter" % [seed, str(q)])
+			var lo := Vector2(1e9, 1e9)
+			var hi := Vector2(-1e9, -1e9)
+			for q in pts:
+				lo = Vector2(minf(lo.x, q.x), minf(lo.y, q.y))
+				hi = Vector2(maxf(hi.x, q.x), maxf(hi.y, q.y))
+			var shove := Combat3D.pattern_shove(lo, hi, view, pad, floor_y)
+			for q in pts:
+				_expect((q + shove).y + HitCircle.TARGET_RADIUS < hand_top,
+					"seed %d: a note's bottom at %.0f is over the hand (top %.0f)" % [seed, (q + shove).y + HitCircle.TARGET_RADIUS, hand_top])
+	# And a pattern that ran below the floor is shoved up to it, not left there.
+	var s := Combat3D.pattern_shove(Vector2(300, 400), Vector2(500, 560), view, pad, floor_y)
+	_expect(is_equal_approx(560.0 + s.y, floor_y), "a pattern hanging over the hand is lifted to the floor")
 
 
 ## The notes open at the hold, beside the climbing hunter, not on the card
