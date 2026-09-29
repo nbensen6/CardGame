@@ -296,29 +296,73 @@ def git(*args):
     return subprocess.run(["git", "-C", str(ROOT), *args], capture_output=True, text=True)
 
 
-def main():
-    text = QUEUE.read_text(encoding="utf-8")
+def to_origin():
+    """Put this checkout exactly on origin/main before touching the queue.
+
+    The old flow committed locally and then `pull --rebase --autostash`ed.
+    On 2026-09-29 that jammed at 12:44: the rebase stopped half-way, every
+    later sync refused to run, Nick's answers piled up in local commits and
+    his page went blank for four hours. So: never rebase. Abort anything
+    half-done, set local edits aside, and stand on the remote's queue.
+    """
+    gitdir = ROOT / ".git"
+    if (gitdir / "rebase-merge").exists() or (gitdir / "rebase-apply").exists():
+        git("rebase", "--abort")
+    git("checkout", "-q", "main")
+    if git("fetch", "-q", "origin", "main").returncode != 0:
+        return False  # offline: work on what is here, push next time
+    dirty = git("status", "--porcelain", "--untracked-files=no").stdout.strip()
+    if dirty:
+        git("stash", "push", "-q", "-m", f"needs-nick set-aside {STAMP}")
+    git("reset", "-q", "--hard", "origin/main")
+    if dirty and git("stash", "pop", "-q").returncode != 0:
+        # The set-aside edits collide with what came down. Keep them in the
+        # stash list for a human; the checkout stays clean and usable.
+        git("checkout", "--", ".")
+        print("NOTE: local edits kept in `git stash list`, they conflict with origin")
+    return True
+
+
+def apply_page(text):
+    """Nick's page onto the given queue text. Returns (new_text, changed)."""
     lines, items = parse(text)
     ensure_ids(lines, items)
-    answers = read_answers()
-    reqs = read_requests()
-    changed = apply_answers(lines, items, answers)
-    changed = apply_requests(lines, reqs) or changed
-    new_text = "\n".join(lines)
-    if new_text != text:
+    changed = apply_answers(lines, items, read_answers())
+    changed = apply_requests(lines, read_requests()) or changed
+    return "\n".join(lines), changed
+
+
+def main():
+    online = to_origin()
+    pushed = True
+    changed = False
+    for attempt in range(3):
+        text = QUEUE.read_text(encoding="utf-8")
+        new_text, changed = apply_page(text)
+        if new_text == text:
+            break
         QUEUE.write_text(new_text, encoding="utf-8")
-    lines, items = parse(new_text)
+        # Only the queue is shared. The page is generated per machine and
+        # is gitignored.
+        git("add", str(QUEUE))
+        git("commit", "-q", "-m", "needs-nick: Nick's answers into the queue")
+        pushed = online and git("push", "-q", "origin", "main").returncode == 0
+        if pushed:
+            print("pushed")
+            break
+        if not online:
+            break
+        # Someone pushed in between. Stand on the new remote and apply the
+        # page again; it has not been regenerated, so his words are intact.
+        git("fetch", "-q", "origin", "main")
+        git("reset", "-q", "--hard", "origin/main")
+    if not pushed:
+        # Do NOT regenerate the page: it is the only copy of what he typed.
+        print("NOT PUSHED: Nick's answers stay on the page for the next sync")
+        return
+    lines, items = parse(QUEUE.read_text(encoding="utf-8"))
     d, n = write_page(lines, items)
     print(f"Needs Nick.md: {d} to decide, {n} to look at" + (", answers applied" if changed else ""))
-    # Only the queue is shared. The page is generated per machine and is
-    # gitignored: committing it from two machines made the 15-minute sync
-    # conflict on it twice on 2026-09-28.
-    git("add", str(QUEUE))
-    if git("diff", "--cached", "--quiet").returncode != 0:
-        git("commit", "-q", "-m", "needs-nick: Nick's answers into the queue")
-        git("pull", "--rebase", "-q", "--autostash", "origin", "main")
-        git("push", "-q", "origin", "main")
-        print("pushed")
 
 
 if __name__ == "__main__":
