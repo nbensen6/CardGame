@@ -237,6 +237,7 @@ func _init() -> void:
 	_test_backlog86_ascension_boss_strength_reaches_an_adds_own_strength_too()
 	_test_ascension9_and_10_change_a_rule()
 	_test_coach_teaches_the_right_thing_first()
+	_test_grip_timer_off_means_a_hanging_hunter_just_hangs()
 	_test_tips_can_be_switched_off_without_losing_your_place()
 	_test_backlog86_coach_teaches_at_sigil_before_armored()
 	_test_backlog86_coach_teaches_timed_card_when_hand_holds_one()
@@ -6940,6 +6941,25 @@ func _test_tips_can_be_switched_off_without_losing_your_place() -> void:
 		"tips toggle off and back on without consuming unseen hints")
 
 
+## Nick, 2026-09-29: "lets get rid of the grip mechanic for now." With the
+## switch off, leaving a hold starts no timer (so nothing drains, no bar, no
+## fall) and the coach never tells a hanging hunter their grip is draining.
+func _test_grip_timer_off_means_a_hanging_hunter_just_hangs() -> void:
+	Progress.reset_hints()
+	var hanging := {"phase": "combat", "boss": {"weak_point_height": 3},
+		"players": [{"foothold": 1, "secure": false, "reached": false},
+			{"foothold": 0, "secure": true, "reached": false}]}
+	var hint: Dictionary = Coach.hint_for(hanging, {"hand": []}, 0)
+	Progress.reset_hints()
+	_expect(not Combat3D.GRIP_TIMER_ON
+		and Combat3D.climb_state_after_secure_update(false, 1.0, false, 2) == null
+		and Combat3D.climb_state_after_secure_update(true, 0.4, false, 2) == null
+		and Combat3D.climb_state_after_secure_update(false, 1.0, false, 2, true) != null
+		and String(hint.get("id", "")) != "climbing",
+		"grip timer off: leaving a hold starts no countdown and the coach stays quiet [hint=%s]"
+			% String(hint.get("id", "")))
+
+
 func _test_coach_teaches_the_right_thing_first() -> void:
 	Progress.reset_hints()
 	# standing on the ground under a high weak point: the armoured rule matters most
@@ -6960,7 +6980,7 @@ func _test_coach_teaches_the_right_thing_first() -> void:
 	var on_map: Dictionary = Coach.hint_for({"phase": "map"}, {}, 0)
 	Progress.reset_hints()
 	_expect(String(first.get("id", "")) == "armored"
-		and String(urgent.get("id", "")) == "climbing"
+		and (String(urgent.get("id", "")) == "climbing") == Combat3D.GRIP_TIMER_ON
 		and not_repeated and String(on_map.get("id", "")) == "map",
 		"the coach teaches the most urgent unseen rule, once each")
 
@@ -21324,7 +21344,7 @@ func _test_backlog86_party_card_stats_status_tags_reached_beats_hanging_and_ende
 	_expect(Combat3D.party_card_stats(reached_and_hanging, 0, 0) == "HP 10/10   ↑6   at the sigil",
 		"reached takes priority over hanging when (hypothetically) both are true [got=%s]" % Combat3D.party_card_stats(reached_and_hanging, 0, 0))
 	var hanging := {"hp": 10, "max_hp": 10, "foothold": 3, "reached": false, "secure": false}
-	_expect(Combat3D.party_card_stats(hanging, 0, 0) == "HP 10/10   ↑3   hanging!",
+	_expect(Combat3D.party_card_stats(hanging, 0, 0) == ("HP 10/10   ↑3   hanging!" if Combat3D.GRIP_TIMER_ON else "HP 10/10   ↑3"),
 		"a hunter mid-climb with their grip timer running reads \"hanging!\" [got=%s]" % Combat3D.party_card_stats(hanging, 0, 0))
 	var ended_and_reached := {"hp": 10, "max_hp": 10, "foothold": 6, "reached": true, "secure": true, "ended": true}
 	_expect(Combat3D.party_card_stats(ended_and_reached, 0, 0) == "HP 10/10   ↑6   at the sigil   done",
@@ -23227,7 +23247,7 @@ func _test_backlog86_climb_state_secure_erases_any_existing_timer() -> void:
 
 
 func _test_backlog86_climb_state_starts_a_fresh_full_timer_on_first_leaving_a_hold() -> void:
-	var next: Variant = Combat3D.climb_state_after_secure_update(false, 1.0, false, 4)
+	var next: Variant = Combat3D.climb_state_after_secure_update(false, 1.0, false, 4, true)
 	_expect(next != null, "leaving a hold with no timer running starts one")
 	_expect(is_equal_approx(float((next as Dictionary)["g"]), 1.0),
 		"a genuine hold -> climbing transition starts the grip meter completely full")
@@ -23239,14 +23259,14 @@ func _test_backlog86_climb_state_does_not_regrip_a_timer_already_draining() -> v
 	# tested before this: reaching an intermediate ledge mid-hop (still not
 	# secure, still climbing) must NOT refill the meter, or grip effectively
 	# never runs out on a multi-ledge climb.
-	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.37, false, 8)
+	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.37, false, 8, true)
 	_expect(next != null, "a timer already running stays running while still not secure")
 	_expect(is_equal_approx(float((next as Dictionary)["g"]), 0.37),
 		"grip already draining is carried through untouched, not reset to full")
 
 
 func _test_backlog86_climb_state_updates_the_target_even_while_preserving_grip() -> void:
-	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.6, false, 12)
+	var next: Variant = Combat3D.climb_state_after_secure_update(true, 0.6, false, 12, true)
 	_expect(int((next as Dictionary)["target"]) == 12,
 		"the displayed target ledge tracks the current next_safe every update, even though grip itself is left alone")
 

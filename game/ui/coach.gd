@@ -7,6 +7,10 @@
 class_name Coach
 extends RefCounted
 
+## The real-time grip timer (combat_3d.gd reads this as its GRIP_TIMER_ON).
+## Off: Nick, 2026-09-29, "lets get rid of the grip mechanic for now".
+const GRIP_TIMER_ON := false
+
 ## Ordered most-urgent first: the first matching, unseen hint is the one shown.
 ## Each entry is {id, text, when: Callable(ctx) -> bool}.
 static func hint_for(shared: Dictionary, private: Dictionary, me: int) -> Dictionary:
@@ -37,7 +41,7 @@ static func hint_for(shared: Dictionary, private: Dictionary, me: int) -> Dictio
 			var height := int(boss.get("weak_point_height", 0))
 			var fh := int(mine.get("foothold", 0))
 			# most urgent first — a ticking grip timer beats every other lesson
-			if not bool(mine.get("secure", true)):
+			if GRIP_TIMER_ON and not bool(mine.get("secure", true)):
 				candidates.append({"id": "climbing",
 					"text": "Your grip is draining. Reach the next ledge before it empties."})
 			if bool(mine.get("reached", false)):

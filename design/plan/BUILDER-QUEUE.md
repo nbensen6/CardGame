@@ -10,14 +10,14 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Let the Frog hang?**
+- [ ] 👀 **Let the Frog hang?**
       **Nick, 2026-09-29 17:14 ET:** lets get rid of the grip mechanic for now
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
       **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Let the Frog hang?|details]]
-      Ask: Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
+      Ask: Grip is off: no countdown, nobody slips. Does climbing feel right without it?
       Test: state=3dgrip beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-frog-hang-grip.png|420]] ^let-the-frog-hang
+      ![[agents/frames/builder/2026-09-29-grip-off-after.png|420]] ^let-the-frog-hang
 - [ ] **The jackal's turn plays out on screen.**
       **Nick, 2026-09-29 17:14 ET:** re word this question it doesnt make sense
       **Session, 2026-09-29 11:05 ET:** Today the enemy turn resolves in zero seconds and the bite clip plays AFTER the damage number. On End Turn: a 0.4 s hold, the intent badge pulses, the existing `attack` clip plays, the damage and popup land on the bite frame (frame 16 of 40), then the new hand. Same for the sweep, with the shake and both hunters hopping down. No new clips. Done-when: a four-frame strip across one enemy turn shows wind-up, bite, number, new hand in that order. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -285,3 +285,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Timing notes can still open over the hunter's own body or legs (drag head over the Goblin).
 - [ ] (proposed) Timing notes may dip into the card band; clamp the walk's floor to the hand's top edge.
 - [ ] (proposed) Stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin's side covers it (30-47% vs <= 11%).
+- [ ] (proposed) The grip clock item is moot while grip is off; close or park it?

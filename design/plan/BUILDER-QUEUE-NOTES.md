@@ -842,6 +842,17 @@ The proposal: keep the +1 on the Frog's Climb cards (Leap, Scramble), but not on
 
 Picture: `state=3dgrip`, a hunter hanging with the countdown at 3.
 
+### Built 2026-09-29 17:26 EDT: grip off
+
+Nick, 17:14: "lets get rid of the grip mechanic for now" (and on the grip clock item: "remove grip timer for now"). So the Frog's +1 question is dropped; nothing about the Frog's climbs changed.
+
+- One switch, `Coach.GRIP_TIMER_ON := false` (combat_3d.gd reads it as its own `GRIP_TIMER_ON`; the view has no class_name, Coach does). Flip it to true to bring grip back; the timer code, `grip_paused`, `grip_after_tick` are untouched.
+- With it off, `climb_state_after_secure_update` always returns null, so no hunter ever gets a timer: the HOLD ON bar never shows, nothing drains, no `fall` is reported to the host.
+- The party row's "hanging!" tag and the coach's "Your grip is draining" tip go quiet off the same switch (grader round 1 failed the frame for the leftover "hanging!").
+- Core is unchanged: `secure`/`next_safe` still exist in the snapshot, and ledges still matter for anything else that reads them.
+- Harness `state=3dgrip` now waits 1 s and prints `GRIP-OFF OK: foothold 1 -> 1 after 1 s, bar shown=false` (before: the Frog fell 1 -> 0 and took 3 damage).
+- Tests: existing timer tests pass `timer_on=true` explicitly; new test `_test_grip_timer_off_means_a_hanging_hunter_just_hangs`.
+
 ## Give the jackal a swipe that cares where you are?
 
 2026-09-29 13:19 EDT, builder.

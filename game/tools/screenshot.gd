@@ -1687,12 +1687,20 @@ func _capture() -> void:
 			guard += 1
 			await process_frame
 		var after := int(Session.host._run.combat.players[0].foothold)
-		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
-			"OK" if after < before else "FAIL", before, after])
+		if not Coach.GRIP_TIMER_ON:
+			# Grip is off (Nick, 2026-09-29): no bar, and the hunter never slips.
+			await create_timer(1.0).timeout
+			after = int(Session.host._run.combat.players[0].foothold)
+			print("GRIP-OFF %s: foothold %d -> %d after 1 s, bar shown=%s" % [
+				"OK" if after == before and not (vg.get("_grip_bar") as Control).visible
+				else "FAIL", before, after, (vg.get("_grip_bar") as Control).visible])
+		else:
+			print("GRIP %s: foothold %d -> %d after the timer emptied" % [
+				"OK" if after < before else "FAIL", before, after])
 		# The other hunter was not held for any of that, so their grip must
 		# read what it read when hunter 0's clock started.
 		var other_after: float = float(((vg.get("_climb") as Dictionary).get(1, {"g": -1.0}) as Dictionary)["g"])
-		print("GRIP-PAUSE %s: other hunter's grip %.2f -> %.2f across hunter 0's climb" % [
+		if Coach.GRIP_TIMER_ON: print("GRIP-PAUSE %s: other hunter's grip %.2f -> %.2f across hunter 0's climb" % [
 			"OK" if other_before > 0.0 and is_equal_approx(other_before, other_after) else "FAIL",
 			other_before, other_after])
 		vg.call("_switch_to", 1)   # hold the Goblin again: same bar as the left half

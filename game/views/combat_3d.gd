@@ -206,6 +206,13 @@ const HUD_BOTTOM_FRACTION := 0.34
 ## the next ledge before it empties or this client reports a fall. The host is
 ## told the OUTCOME, never the ticking timer.
 const GRIP_SECONDS := 5.0
+## The one switch for that timer. Off (Nick, 2026-09-29: "lets get rid of the
+## grip mechanic for now"): a hunter between ledges simply stays there -- no
+## countdown bar, no slip, no fall report. Flip back to true to restore it; the
+## timer code below is untouched. The switch itself lives on Coach, which has a
+## class_name (this view has none), so the coach's "grip is draining" lesson
+## goes quiet off the very same flag.
+const GRIP_TIMER_ON := Coach.GRIP_TIMER_ON
 ## Hunters are the scale reference — a beast only looks colossal NEXT TO something.
 ## Dropped from 0.8 (Nick, 2026-08-15: "beasts much bigger than the hunters"), which
 ## widens the ratio from both ends at once: a lesser beast is now ~22x a hunter and a
@@ -1671,10 +1678,10 @@ func _tick_grip(delta: float) -> void:
 ## the rule the doc comment on `_update_climb_state` names and nothing tested
 ## before this — leave a timer already draining ALONE and only refresh its
 ## target, so reaching an intermediate ledge mid-hop never grants a free
-## regrip. Returns null to mean "erase."
+## regrip. Returns null to mean "erase" -- always, while GRIP_TIMER_ON is off.
 static func climb_state_after_secure_update(had_state: bool, prior_g: float,
-		secure: bool, target: int) -> Variant:
-	if secure:
+		secure: bool, target: int, timer_on: bool = GRIP_TIMER_ON) -> Variant:
+	if secure or not timer_on:
 		return null
 	if not had_state:
 		return {"g": 1.0, "target": target}
@@ -7000,8 +7007,8 @@ static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
 		parts.append((ATTACK_GLYPH + "%d") % through if through > 0 else "⛨ blocked")
 	if bool(p.get("reached", false)):
 		parts.append("at the sigil")
-	elif not bool(p.get("secure", true)):
-		parts.append("hanging!")
+	elif GRIP_TIMER_ON and not bool(p.get("secure", true)):
+		parts.append("hanging!")  # a warning about the grip timer; no timer, no warning
 	if bool(p.get("ended", false)):
 		parts.append("done")
 	return "   ".join(parts)
