@@ -102,10 +102,12 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
-- [ ] **Can't scroll on the menu.**
+- [ ] 👀 **Can't scroll on the menu.**
       **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=when%20clicking%20menu%20in%20the%20top%20right) · [[BUILDER-QUEUE-NOTES#Can't scroll on the menu.|details]]
-      Test: when clicking menu in the top right ^can-t-scroll-on-the-menu
+      Ask: Open Menu and scroll to the bottom: can you reach Back?
+      Test: state=3dsettings beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-settings-scroll-after.png|420]] ^can-t-scroll-on-the-menu
 
 
 ## Waiting on Nick
@@ -160,3 +162,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **beast-behind-stone is flaky.** The same code gives 10 or 12 fails; stones 5-7 sit at 15-24%, straddling the 15% line.
 - [ ] (proposed) **route-reversal red on main.** 64 fails: the Goblin's climb rungs 3 and 5 step backward along the sweep (on-body anchors, z 6.2 -> -0.99 -> 3.2).
 - [ ] (proposed) **damage-popup-offscreen red on main.** 2-3 fails in the 40-step playtest.
+- [ ] (proposed) Settings buttons run right up to the scrollbar with no gap.

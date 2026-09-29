@@ -5246,7 +5246,9 @@ func _open_settings() -> void:
 	_detail.mouse_filter = Control.MOUSE_FILTER_STOP
 	_overlay_root().add_child(_detail)
 	_detail.gui_input.connect(func(e: InputEvent) -> void:
-		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed:
+		# A wheel turn on the dimmed backdrop is someone trying to scroll, not leave.
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed \
+				and not _is_wheel(e as InputEventMouseButton):
 			_close_overlay())
 
 	var centre := CenterContainer.new()
@@ -5266,9 +5268,27 @@ func _open_settings() -> void:
 	panel.add_theme_stylebox_override("panel", st)
 	centre.add_child(panel)
 
+	# Nick, 2026-09-29: "can't scroll on the menu." The keybind rows pushed the
+	# panel past the bottom of the window and Abandon / Back fell off it. The
+	# column scrolls inside a box that never grows past the window.
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	panel.add_child(scroll)
+
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
-	panel.add_child(col)
+	col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(col)
+	var fit := func() -> void:
+		if is_instance_valid(scroll) and is_instance_valid(col):
+			scroll.custom_minimum_size.y = settings_scroll_height(
+				col.get_combined_minimum_size().y, get_viewport().get_visible_rect().size.y)
+	col.minimum_size_changed.connect(fit)
+	get_viewport().size_changed.connect(fit)
+	scroll.tree_exiting.connect(func() -> void:
+		if get_viewport() != null and get_viewport().size_changed.is_connected(fit):
+			get_viewport().size_changed.disconnect(fit))
+	fit.call_deferred()
 	col.add_child(_detail_label("Settings", 20, Color(1, 0.94, 0.8)))
 	col.add_child(_detail_rule())
 
@@ -5375,6 +5395,23 @@ func _open_settings() -> void:
 	back.flat = true
 	back.pressed.connect(_close_overlay)
 	col.add_child(back)
+
+
+## How tall the settings column's scroll box is: the whole column when it fits,
+## otherwise the window less SETTINGS_EDGE top and bottom (panel border and
+## padding included), so the panel never runs off the screen on any aspect.
+const SETTINGS_EDGE := 24.0
+const SETTINGS_PANEL_PAD := 40.0   # 18 content margin + 2 border, each side
+
+
+static func settings_scroll_height(content_h: float, viewport_h: float) -> float:
+	var room := viewport_h - 2.0 * SETTINGS_EDGE - SETTINGS_PANEL_PAD
+	return maxf(minf(content_h, room), 0.0)
+
+
+static func _is_wheel(e: InputEventMouseButton) -> bool:
+	return e.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN,
+		MOUSE_BUTTON_WHEEL_LEFT, MOUSE_BUTTON_WHEEL_RIGHT]
 
 
 func _close_overlay() -> void:

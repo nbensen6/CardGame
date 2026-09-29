@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T00:21
-working_on: "playtest.cmd green."
+updated: 2026-09-29T00:39
+working_on: "Can't scroll on the menu."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 00:21 EDT
+2026-09-29 00:39 EDT
 
-- **Did:** Tried moving the stones back two ways; both hid the jackal more, so nothing shipped.
-- **Worked?** No: your stone still hides the chest at the top, rest stones cover up to 35%. VERDICT: FAIL (chest not readable; stones and Frog cover it)
-- **Look at:** ![[frames/builder/2026-09-29-stones-back-top-before.png]] then ![[frames/builder/2026-09-29-stones-back-top-tried.png]]
-- **Ask:** Chest hides behind your own stone however far back. Raise the camera instead?
+- **Did:** The settings menu now scrolls inside the window, so Abandon and Back are reachable.
+- **Worked?** Yes, panel fits the window with a scrollbar. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-29-settings-scroll-before.png]] then ![[frames/builder/2026-09-29-settings-scroll-after.png]]
+- **Ask:** Open Menu and scroll to the bottom: can you reach Back?
 
 ## Notes
 
+- **Found:** Settings buttons run right up to the scrollbar with no gap.
 - **Found:** route-reversal is red on main (64 fails, Goblin climb rungs 3 and 5 on the body), not caused by this run.
 - **Found:** damage-popup-offscreen is red on main (2-3 fails).
 
 ## Log
 
+- 2026-09-29 00:39 EDT — builder: settings column wrapped in a ScrollContainer capped at the window (settings_scroll_height); wheel on the backdrop no longer closes the menu; grader PASS.
 - 2026-09-29 00:21 EDT — builder: stones-back tried (whole route +20, then top stone only +20); both push beast-behind-stone 3 -> 31 and the chest stays hidden behind the hunter's own stone; grader FAIL; reverted, asked.
 
 - 2026-09-28 21:41 EDT — builder: playtest hunter-lost-mid-hop replay holds Combat3D's _process so the posed hunter survives to the render (1 -> 0 fails); grader FAIL x2 on the zero-checks done-when; tested, pushed.

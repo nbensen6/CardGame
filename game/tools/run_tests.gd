@@ -2670,6 +2670,11 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog86_lock_slot_for_keeps_an_explicit_valid_lock()
 	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_is_stale()
 	_test_backlog86_lock_slot_for_falls_back_to_you_when_the_lock_was_never_set()
+
+	# Nick, 2026-09-29: "can't scroll on the menu." The settings column scrolls
+	# inside a box capped at the window, so Abandon and Back are always reachable.
+	_test_settings_scroll_height_caps_at_the_window()
+	_test_settings_wheel_on_backdrop_does_not_close()
 	_test_backlog86_lock_slot_for_can_return_an_invalid_slot_when_you_are_also_invalid()
 	_test_backlog86_free_camera_allowed_matches_is_debug_build_exactly()
 
@@ -30482,3 +30487,22 @@ func _test_play_mode_never_arms_the_shot_failsafe() -> void:
 		"an unattended shot still arms the 10 s failsafe")
 	_expect(not shot.arms_failsafe(PackedStringArray(["play", "state=3d", "beast=cinder_jackal"])),
 		"play mode (Test this now) never arms the failsafe that closes the window")
+
+
+func _test_settings_scroll_height_caps_at_the_window() -> void:
+	var tall := Combat3D.settings_scroll_height(1100.0, 720.0)
+	_expect(tall + 2.0 * Combat3D.SETTINGS_EDGE + Combat3D.SETTINGS_PANEL_PAD <= 720.0,
+		"a settings column taller than a 720 window scrolls inside it (got %s)" % tall)
+	_expect(Combat3D.settings_scroll_height(400.0, 1440.0) == 400.0,
+		"a settings column that fits is shown whole, no dead space")
+	_expect(Combat3D.settings_scroll_height(1100.0, 60.0) == 0.0,
+		"a tiny window never yields a negative scroll box")
+
+
+func _test_settings_wheel_on_backdrop_does_not_close() -> void:
+	var wheel := InputEventMouseButton.new()
+	wheel.button_index = MOUSE_BUTTON_WHEEL_DOWN
+	var click := InputEventMouseButton.new()
+	click.button_index = MOUSE_BUTTON_LEFT
+	_expect(Combat3D._is_wheel(wheel), "a wheel turn reads as a scroll")
+	_expect(not Combat3D._is_wheel(click), "a tap still reads as a tap (closes the menu)")

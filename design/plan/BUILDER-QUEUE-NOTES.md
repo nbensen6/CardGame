@@ -703,3 +703,16 @@ Original item: F8 into Dev is for this launch only; every launch starts on the P
 - The screenshot harness no longer forces Player at start, so the second shot proves the fix on its own (its scratch config may still hold an old true).
 - Tests: the F8 test checks the tag appears and disappears; a new test checks that a stale saved true is ignored and that Dev never reaches the config.
 - After strip: left is the F8 launch (Dev, tag), right is the next plain launch (Player). Grader: PASS.
+
+## Can't scroll on the menu.
+
+2026-09-29 00:39 EDT, builder. The in-fight settings panel (Menu, top right) grew past a
+720-tall window once the keybind rows landed: Reset keys sat on the edge and
+Abandon the hunt / Back were off-screen, with no way to scroll. The column now
+sits in a ScrollContainer whose height is `Combat3D.settings_scroll_height`
+(whole column when it fits, else window minus 24 px each side and the panel's
+padding), refitted when the column or the window changes size. A wheel turn on
+the dimmed backdrop no longer counts as a tap that closes the menu. Touch drag
+scrolls the same box. Tests: `_test_settings_scroll_height_caps_at_the_window`,
+`_test_settings_wheel_on_backdrop_does_not_close`. Grader: PASS (asked for a
+scrolled-to-bottom frame as extra proof; the shot harness has no scroll arg).
