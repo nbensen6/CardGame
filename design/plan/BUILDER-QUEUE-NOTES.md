@@ -830,3 +830,11 @@ Built 2026-09-29 14:18 EDT.
 - Playtest waits for `_enemy_stage == ""` after End Turn (polling popups meanwhile) so it judges the settled board. Same three red checks as main; beast-behind-stone varied 3 (main, one run) vs 5-8 (this branch, four runs), all borderline 15.4-17.8% with drifting stones.
 - Grader: FAIL x3. Met: the hold, the number after the hold, the hand last. Not met: the pulse and the clip do not read in stills (the jackal is small and front-on; its head drops ~0.65 s but subtly); the sweep was not shot; the Frog's damage "7" covers the Frog (existing popup placement).
 
+## The grip clock only runs on your own time.
+
+2026-09-29 14:27 EDT, builder.
+
+- Rule: `Combat3D.grip_paused(slot, held_slot, hop_live, timing_open, enemy_turn)`. A hanging hunter's clock ticks only when they are the one held (`_me()`), their own hop tween (`_climb_tw[slot]`) is done, no sweep-bar/HitCircle window is open (`switch_blocked_by_timing`), and `_enemy_stage` is empty. `GRIP_SECONDS` stays 5.0. Test: `_test_grip_clock_runs_only_on_the_held_hunters_own_time`.
+- Networked play only tracks your own slot, so there only the hop/timing/beast-turn pauses apply.
+- Harness: `state=3dgrip` now hangs the Goblin too (between holds, above the Frog), shows the Goblin's bar, runs the Frog's clock out, shows the Goblin's bar again, and saves a 1280x360 before|after strip. It prints `GRIP-PAUSE OK/FAIL`. Old code: 0.58 -> fell. New: 0.98 -> 0.98.
+- Grader round 1 FAIL (pair could not show a before/after value); round 2 FAIL only on hop/timing pauses and the 5 s, which a still cannot show; the done-when read as MET.

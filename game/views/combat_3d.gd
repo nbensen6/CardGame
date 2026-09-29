@@ -1552,15 +1552,28 @@ static func grip_after_tick(g: float, delta: float, grip_seconds: float) -> floa
 	return g - delta / grip_seconds
 
 
-## Every climbing hunter's timer ticks, whoever is active. An empty timer is a
-## fall — and in 3D that is worth SEEING, so a slipping hunter shakes harder the
-## closer they are to letting go.
+## The grip clock only runs on the hanging hunter's own time (Session,
+## 2026-09-29): it holds still while that hunter is not the one being held,
+## while their hop is still in the air, while a timing window is open, and
+## while the beast's turn plays out. Pure, so the rule is testable headless.
+static func grip_paused(slot: int, held_slot: int, hop_live: bool,
+		timing_open: bool, enemy_turn: bool) -> bool:
+	return slot != held_slot or hop_live or timing_open or enemy_turn
+
+
+## A hanging hunter's timer ticks only when grip_paused says it may. An empty
+## timer is a fall — and in 3D that is worth SEEING, so a slipping hunter shakes
+## harder the closer they are to letting go.
 func _tick_grip(delta: float) -> void:
 	if _climb.is_empty():
 		return
+	var timing_open: bool = switch_blocked_by_timing(_timing_card != null
+			and is_instance_valid(_timing_card) and _timing_card.is_timing(), _circle_index)
 	for slot in _climb.keys().duplicate():
 		var st: Dictionary = _climb[slot]
-		st["g"] = grip_after_tick(float(st["g"]), delta, _grip_seconds())
+		if not grip_paused(int(slot), _me(), _tween_is_live(_climb_tw.get(int(slot)) as Tween),
+				timing_open, _enemy_stage != ""):
+			st["g"] = grip_after_tick(float(st["g"]), delta, _grip_seconds())
 		if float(st["g"]) <= 0.0:
 			_climb.erase(slot)
 			Sfx.play("shake")

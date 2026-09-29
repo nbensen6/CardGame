@@ -66,10 +66,12 @@ run failed.
       Ask: Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
       Test: state=3d beast=cinder_jackal endturn=1
       ![[agents/frames/builder/2026-09-29-enemy-turn-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
-- [ ] **The grip clock only runs on your own time.**
+- [ ] 👀 **The grip clock only runs on your own time.**
       **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The grip clock only runs on your own time.|details]]
-      Test: state=3dgrip beast=cinder_jackal ^the-grip-clock-only-runs-on-your-own-tim
+      Ask: Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
+      Test: state=3dgrip beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-grip-clock-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
 - [ ] **Timing notes open at the hold on the beast.**
       **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal%20slot%3D1) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
@@ -253,3 +255,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The sweep's staged turn (shake, both hunters hop down on the bite) has no frame yet.
 - [ ] (proposed) Playtest beast-behind-stone swings 3 to 8 fails run to run; stone drift sits on the 15% line.
 - [ ] (proposed) The jackal's attack clip barely reads front-on at rest distance; the bite needs a lunge or a side view.
+- [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.

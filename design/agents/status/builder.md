@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T14:18
-working_on: "The jackal's turn plays out on screen."
+updated: 2026-09-29T14:27
+working_on: "The grip clock only runs on your own time."
 ---
 
 # builder
@@ -13,22 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 14:18 EDT
+2026-09-29 14:27 EDT
 
-- **Did:** End Turn now holds, pulses the intent, plays the bite, lands the damage, then deals the hand.
-- **Worked?** Partly: the order shows, but the bite pose is too subtle in stills; VERDICT: FAIL.
-- **Look at:** ![[frames/builder/2026-09-29-enemy-turn-before.png]] then ![[frames/builder/2026-09-29-enemy-turn-after.png]]
-- **Ask:** Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
+- **Did:** A hanging hunter's grip now holds still unless you hold them, mid-hop, mid-timing, or on the beast's turn.
+- **Worked?** Partly: the Goblin's grip is unchanged across the Frog's turn; VERDICT: FAIL (hop, timing pauses not visible in stills).
+- **Look at:** ![[frames/builder/2026-09-29-grip-clock-before.png]] then ![[frames/builder/2026-09-29-grip-clock-after.png]]
+- **Ask:** Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
 
 ## Notes
 
-- **Found:** a hunter's damage number covers that hunter's body at the rest camera.
-- **Found:** the sweep's staged turn (shake, hops on the bite) has no frame yet.
-- **Found:** playtest beast-behind-stone swings 3 to 8 run to run; stones drift on the 15% line.
-- **Found:** the jackal's attack clip barely reads front-on at rest distance.
+- **Found:** the grip bar shows no seconds, so the 5 s is only provable in code.
 
 ## Log
 
+- 2026-09-29 14:27 EDT — builder: grip clock pauses unless the hanging hunter is held, and during hops, timing windows and the beast's turn (grip_paused + test); harness 3dgrip hangs both hunters and shoots a before|after strip; grader FAIL x2 (hop/timing pauses not visible in stills), escalated; tests green, pushed.
 - 2026-09-29 14:18 EDT — builder: beast turn staged (0.4 s hold + badge pulse, attack clip, damage on frame 16/40, hand 0.5 s later); harness enemyat=; playtest waits the turn out; grader FAIL x3 (bite unreadable in stills), escalated; tests green, pushed.
 - 2026-09-29 13:19 EDT — builder: jackal round 4 attack_all 6 -> claw_sweep 6 (Height 4+, throws to 2); harness thenend=; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 12:53 EDT — builder: Let the Frog hang? reworded for Nick (safe stones 2/4, hanging at 1/3, Frog +1 always lands safe); grip frame embedded; nothing built; tests green, pushed.

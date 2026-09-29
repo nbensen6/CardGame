@@ -1501,6 +1501,7 @@ func _init() -> void:
 	_test_backlog86_grip_after_tick_matches_a_full_grip_seconds_countdown()
 	_test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero()
 	_test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold()
+	_test_grip_clock_runs_only_on_the_held_hunters_own_time()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
 	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
@@ -22996,6 +22997,20 @@ func _test_backlog86_key_name_falls_back_to_the_os_keycode_string() -> void:
 func _test_backlog86_grip_after_tick_matches_a_full_grip_seconds_countdown() -> void:
 	_expect(is_equal_approx(Combat3D.grip_after_tick(1.0, 5.0, 5.0), 0.0),
 		"a full grip meter drains to exactly empty after grip_seconds worth of delta")
+
+
+## Session 2026-09-29: the grip clock only runs on your own time.
+func _test_grip_clock_runs_only_on_the_held_hunters_own_time() -> void:
+	_expect(not Combat3D.grip_paused(0, 0, false, false, false),
+		"the held hunter, hanging with nothing else going on, drains")
+	_expect(Combat3D.grip_paused(1, 0, false, false, false),
+		"a hanging hunter who is not the one being held keeps their grip")
+	_expect(Combat3D.grip_paused(0, 0, true, false, false),
+		"the grip holds while the hunter's own hop is still in the air")
+	_expect(Combat3D.grip_paused(0, 0, false, true, false),
+		"the grip holds while a timing window is open")
+	_expect(Combat3D.grip_paused(0, 0, false, false, true),
+		"the grip holds while the beast's turn plays out")
 
 
 func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:

@@ -24,6 +24,7 @@
 extends SceneTree
 
 var _out := "shot.png"
+var _strip: Image = null  # a state that composes its own frame (3dgrip) saves this instead
 var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
@@ -366,6 +367,12 @@ func _initialize() -> void:
 				break
 		cg.players[0].foothold = unsafe
 		cg.players[1].foothold = maxi(cg.boss.weak_point_height - 1, 1)
+		# The other hunter hangs too (between holds, above the first), so the
+		# shot can show whose grip is paused while you hold hunter 0.
+		for h2 in range(unsafe + 1, cg.boss.weak_point_height):
+			if not (h2 in cg.boss.ledge_heights()):
+				cg.players[1].foothold = h2
+				break
 		Session.host._broadcast_state()
 	if _state == "3dclimb":  # mid-ascent in 3D — hunters should be up ON the beast
 		var c3: Combat = Session.host._run.combat
@@ -1597,13 +1604,35 @@ func _capture() -> void:
 		var vg := current_scene
 		var cg: Combat = Session.host._run.combat
 		var before := int(cg.players[0].foothold)
+		# Left half of the strip: the Goblin's own bar as the Frog's turn opens.
+		vg.call("_switch_to", 1)
+		await RenderingServer.frame_post_draw
+		var start_img := root.get_viewport().get_texture().get_image()
+		vg.call("_switch_to", 0)
+		var other_before: float = float(((vg.get("_climb") as Dictionary).get(1, {"g": -1.0}) as Dictionary)["g"])
 		var guard := 0
-		while not (vg.get("_climb") as Dictionary).is_empty() and guard < 40000:
+		while (vg.get("_climb") as Dictionary).has(0) and guard < 40000:
 			guard += 1
 			await process_frame
 		var after := int(Session.host._run.combat.players[0].foothold)
 		print("GRIP %s: foothold %d -> %d after the timer emptied" % [
 			"OK" if after < before else "FAIL", before, after])
+		# The other hunter was not held for any of that, so their grip must
+		# read what it read when hunter 0's clock started.
+		var other_after: float = float(((vg.get("_climb") as Dictionary).get(1, {"g": -1.0}) as Dictionary)["g"])
+		print("GRIP-PAUSE %s: other hunter's grip %.2f -> %.2f across hunter 0's climb" % [
+			"OK" if other_before > 0.0 and is_equal_approx(other_before, other_after) else "FAIL",
+			other_before, other_after])
+		vg.call("_switch_to", 1)   # hold the Goblin again: same bar as the left half
+		await RenderingServer.frame_post_draw
+		# One 1280x360 strip: before the Frog's turn | after it.
+		var end_img := root.get_viewport().get_texture().get_image()
+		var half := Vector2i(start_img.get_width() / 2, start_img.get_height() / 2)
+		start_img.resize(half.x, half.y)
+		end_img.resize(half.x, half.y)
+		_strip = Image.create(half.x * 2, half.y, false, start_img.get_format())
+		_strip.blit_rect(start_img, Rect2i(Vector2i.ZERO, half), Vector2i.ZERO)
+		_strip.blit_rect(end_img, Rect2i(Vector2i.ZERO, half), Vector2i(half.x, 0))
 	_hand_geometry(current_scene)
 	if _play:
 		print("PLAY READY: scenario is live. Close the window when done.")
@@ -1613,7 +1642,7 @@ func _capture() -> void:
 
 func _save_and_quit() -> void:
 	await RenderingServer.frame_post_draw
-	var img := root.get_viewport().get_texture().get_image()
+	var img := root.get_viewport().get_texture().get_image() if _strip == null else _strip
 	var saved: Error = img.save_png(_out)
 	if saved != OK:
 		# A relative out= path from a shell not at the repo root fails here, and
