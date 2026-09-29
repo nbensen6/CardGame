@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T16:04
-working_on: "The jackal dies on screen."
+updated: 2026-09-29T16:37
+working_on: "Playtest presses Switch."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 16:04 EDT
+2026-09-29 16:37 EDT
 
-- **Did:** The killing blow now lands in slow motion, the jackal falls onto its side, then the reward.
-- **Worked?** Partly: hit, fall, body down and cut all show; VERDICT: FAIL (slow-motion unprovable in stills).
-- **Look at:** ![[frames/builder/2026-09-29-jackal-death-before.png]] then ![[frames/builder/2026-09-29-jackal-death-after-strip.png]]
-- **Ask:** Kill the jackal from the top stone: slow hit, fall, then reward. Right?
+- **Did:** The scripted playtest now presses Switch mid-turn and checks the other hunter's grip holds meanwhile.
+- **Worked?** Yes: one Switch, grip 0.271 -> 0.271 while the Frog played; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-playtest-switch-before.md]] then ![[frames/builder/2026-09-29-playtest-switch-after.md]]
+- **Ask:** nothing
 
 ## Notes
 
-- **Found:** a kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
-- **Found:** the reward screen lays the jackal on its back; the death clip leaves it on its side.
-- **Found:** beasts with no rig get the slow last hit and the pause, but no fall.
+- **Found:** the grip-while-away check caught only one hanging step in 40; a scripted hang would pin it.
+- **Found:** beast-behind-stone is still the playtest's one red check (20 hits this run).
 
 ## Log
+
+- 2026-09-29 16:37 EDT — builder: playtest presses Switch once a round mid-turn (first press unconditional, later only while the held hunter hangs); checks grip-drained-away, switch-dead, switch-never-pressed; run: 1 press, grip 0.271 held; grader PASS; tests green, pushed.
 
 - 2026-09-29 16:04 EDT — builder: jackal death: `death` clip (beast_clips.py, added via new ai_beast_clip.py from the saved .blend; ai_beast.py makes it too), router holds the fight for slow last hit 0.6 s + fall + 0.8 s rest, camera pulls wide if climbing; harness deathat=; grader FAIL x3 (slow-mo not visible in stills); tests green, pushed.
 

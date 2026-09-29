@@ -530,6 +530,15 @@ Checked three ways: unforced default, `slot=1`, and a real `press=Tab`
 per-hunter on a swap; no broken frame found to fix, so nothing shipped
 and this stays open. See `status/builder.md` for the frames.
 
+## Playtest presses Switch.
+
+2026-09-29 16:37 EDT, builder.
+
+- `_play` in `game/tools/playtest.gd` clicks the real Switch button mid-turn, at most once a round: the held hunter has played a card this round and still has a playable one. The first press is unconditional; later presses only while the held hunter is hanging, so the grip check has a clock to watch.
+- Check `grip-drained-away`: the unheld hunter's `_climb[slot].g` is read before each step's click and again after the step (and at the Switch press itself, before the newly held hunter's clock runs). Any drop fails. `switch-dead` fails if the press did not change `_me()`; `switch-never-pressed` fails a play run with no press. `_finish` logs `switch: pressed N time(s); grip-while-away checked on M step(s)`.
+- Run (40 steps): `Switch (hunter 0 -> 1)` at step 1; `grip-held OK, hunter 1 grip 0.271 -> 0.271 while hunter 0 played` at step 15 (Pounce); summary 1 press, 1 checked step. Only failure: `beast-behind-stone` (red before this change too, 14 -> 20 because the card order after the switch differs).
+- Evidence: `design/agents/frames/builder/2026-09-29-playtest-switch-before.md` / `-after.md` (the reports). Grader: PASS.
+
 ## playtest.cmd green.
 
 *Session, 18:35 EDT, answering the 18:27 ask: yes, retune `camera-not-over-shoulder`'s threshold and ease pair to the camera as it is now; a check's calibration is measurement, not taste. Still open: 6 red categories. Take them one per run, top of this list, in the order the builder proposed at the bottom. `beast-behind-stone` waits on the stairs decision below.*

@@ -277,6 +277,11 @@ var _errors: Array = []           # script errors caught by _ErrLog
 var _step_saw_popup := false      # a Label3D damage number appeared under _rig this step
 var _step_popup_offscreen := false   # a seen popup projected outside the viewport at some frame this step
 var _step_popup_offscreen_detail := ""
+var _switch_presses := 0          # Switch button clicks this run (co-op coverage)
+var _switched_round := -1         # the round a Switch was last pressed in
+var _round_seen := -1             # the round `_round_played0` belongs to
+var _round_played0 := 0           # cards_played_total when that round began
+var _grip_checks := 0             # steps where the unheld hunter was hanging
 
 
 class _ErrLog extends Logger:
@@ -1379,6 +1384,45 @@ func _play() -> void:
 			if cv is CardView and not (cv as CardView).disabled:
 				target = cv
 				break
+		if c.round_num != _round_seen:
+			_round_seen = c.round_num
+			_round_played0 = c.cards_played_total
+		# The unheld hunter's grip, read before this step's click: it must
+		# not drain while the other hunter plays (grip_paused).
+		var away := 1 - me
+		var away_g := _grip_of(v, away)
+		var sb: Button = v.get("_switch_btn")
+		if target != null and sb != null and sb.is_visible_in_tree() and not sb.disabled \
+				and _switched_round != c.round_num and c.cards_played_total > _round_played0 \
+				and (_switch_presses == 0 or _grip_of(v, me) >= 0.0):
+			# Mid-turn, at most once a round: the held hunter has played a
+			# card and still has one. The first press is unconditional; after
+			# that, only while the held hunter hangs, so the grip check below
+			# has a clock to watch. Press Switch, the co-op half of the loop.
+			_switched_round = c.round_num
+			action = "Switch (hunter %d -> %d)" % [me, away]
+			await _click(sb.get_global_rect().get_center())
+			# read at the press, before the newly held hunter's clock runs
+			var got_g := _grip_of(v, away)
+			await _frames(4)
+			_switch_presses += 1
+			var now := int(v.call("_me")) if is_instance_valid(v) else me
+			if now != away:
+				_fail("switch-dead", "%s: held hunter is still %d" % [action, now])
+			if away_g >= 0.0:
+				_grip_checks += 1
+				if got_g >= 0.0 and got_g < away_g - 0.001:
+					_fail("grip-drained-away", "%s: hunter %d grip %.3f -> %.3f while the other hunter played"
+						% [action, away, away_g, got_g])
+				else:
+					_note("%s: grip-held OK, hunter %d grip %.3f -> %.3f across the other hunter's turn"
+						% [action, away, away_g, got_g])
+			else:
+				_note("%s: hunter %d not hanging, grip check skipped" % [action, away])
+			await _settle_shoulder(v)
+			await _check(v, action)
+			await _shot()
+			continue
 		if target != null:
 			# hover first, the way a hand does, then click where it now IS
 			_move((target as Control).get_global_rect().get_center())
@@ -1470,6 +1514,16 @@ func _play() -> void:
 		else:
 			idle = 0
 		_note("step %d: %s -> %s" % [s, action, _delta(before, after)])
+		if away_g >= 0.0 and int(v.call("_me")) == me:
+			var g2 := _grip_of(v, away)
+			if g2 >= 0.0:
+				_grip_checks += 1
+				if g2 < away_g - 0.001:
+					_fail("grip-drained-away", "%s: hunter %d grip %.3f -> %.3f while hunter %d played"
+						% [action, away, away_g, g2, me])
+				else:
+					_note("%s: grip-held OK, hunter %d grip %.3f -> %.3f while hunter %d played"
+						% [action, away, away_g, g2, me])
 		# Checklist item 1: real damage (boss hp down, or MY hp down --
 		# _snap only tracks the active hunter, same as every other field here)
 		# must have shown a floating number on the beast, not just moved a bar
@@ -2424,6 +2478,16 @@ static func _scale_dev(s: Vector3, rest: Vector3 = Vector3.ONE) -> float:
 	return maxf(d.x, maxf(d.y, d.z))
 
 
+## A hanging hunter's grip (1.0 full .. 0.0 falls), or -1 when they hold.
+func _grip_of(v: Node, slot: int) -> float:
+	if not is_instance_valid(v):
+		return -1.0
+	var climb: Variant = v.get("_climb")
+	if climb is Dictionary and (climb as Dictionary).has(slot):
+		return float(((climb as Dictionary)[slot] as Dictionary).get("g", -1.0))
+	return -1.0
+
+
 func _snap(c: Combat, me: int) -> Dictionary:
 	var p = c.players[me]
 	return {"energy": p.energy, "hand": p.hand.size(), "boss": c.boss.hp,
@@ -2444,6 +2508,11 @@ func _finish() -> void:
 	# anything still in the sink is the reason the run ended early.
 	while not _errors.is_empty():
 		_fail("script-error", String(_errors.pop_front()))
+	if _mode == "play":
+		_note("switch: pressed %d time(s); grip-while-away checked on %d step(s)"
+			% [_switch_presses, _grip_checks])
+		if _switch_presses == 0:
+			_fail("switch-never-pressed", "the run never pressed Switch")
 	var lines: PackedStringArray = ["# Playtest report", "",
 		"mode `%s`, beast `%s`, %d steps" % [_mode, _beast, _step + 1], "",
 		"## Result", ""]

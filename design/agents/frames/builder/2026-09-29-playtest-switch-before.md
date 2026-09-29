@@ -1,0 +1,166 @@
+# Playtest report
+
+mode `play`, beast `cinder_jackal`, 40 steps
+
+## Result
+
+- **beast-behind-stone**: 14
+
+## Log
+
+- playtest mode=play beast=cinder_jackal view=Combat3D
+- start: beast-stone cover -- occluding 6 (stone 0 rect 16.8% pixel 7.1%, stone 1 rect 16.3% pixel 11.6%, stone 2 rect 7.1% pixel 0.4%, stone 3 rect 3.0% pixel 0.0%, stone 4 rect 1.1% pixel 0.3%, stone 8 rect 1.2% pixel 0.0%), on-body (mesh-anchored) 1 (stone 9 1.6%, not a failure)
+- step 0: play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0) -> energy 3→2, hand 5→4, boss 70→69, foot 0→2, played 0→1
+- play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 4 (stone 2 rect 11.7% pixel 6.7%, stone 3 rect 4.0% pixel 1.5%, stone 4 rect 1.4% pixel 0.4%, stone 8 rect 0.5% pixel 0.0%), on-body (mesh-anchored) 1 (stone 9 1.5%, not a failure)
+- play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 1: intent tag stayed clear of the jumping hunter across 112 sampled frames
+- step 1: mid-hop pixel coverage -- 16/16 replayed frames actually drew the hunter (0% off; rect-only test said 0% off)
+- step 1: hop position continuity ok -- worst frame-to-frame step 2.740m, no isolated spike against its own neighbours (112 samples)
+- step 1: hop watched -- 112 in-flight samples (from the start), peak y 17.52 (endpoints 4.62 -> 15.09), max squash dev 0.217
+- step 1: hunter-on-stone -- foothold 6, 100.0% of the foot band is the sigil/top hold (any stone or the beast) (want >= 15%)
+- step 1: play 'Leap' (hunter 0) at (376.0, 475.0) -> energy 2→0, hand 4→3, foot 2→6, played 1→2
+- play 'Leap' (hunter 0) at (376.0, 475.0): beast-stone cover -- occluding 1 (stone 4 rect 7.3% pixel 8.9%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Leap' (hunter 0) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 2: intent tag stayed clear of the jumping hunter across 15 sampled frames
+- step 2: mid-hop pixel coverage -- 15/15 replayed frames actually drew the hunter (0% off; rect-only test said 0% off)
+- step 2: hop position continuity ok -- worst frame-to-frame step 0.270m, no isolated spike against its own neighbours (15 samples)
+- step 2: hop watched -- 15 in-flight samples (from the start), peak y 15.74 (endpoints 15.14 -> 15.17), max squash dev 0.208
+- step 2: hunter-on-stone -- foothold 8, 100.0% of the foot band is the sigil/top hold (any stone or the beast) (want >= 15%)
+- step 2: play 'Scramble' (hunter 0) at (580.0, 464.0) -> hand 3→2, foot 6→8, played 2→3
+- play 'Scramble' (hunter 0) at (580.0, 464.0): beast-stone cover -- occluding 1 (stone 4 rect 10.4% pixel 3.2%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Scramble' (hunter 0) at (580.0, 464.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 3: play 'Tongue Flick' [timed] (hunter 0) at (648.0, 468.0) -> hand 2→1, boss 69→59, played 3→4
+- play 'Tongue Flick' [timed] (hunter 0) at (648.0, 468.0): beast-stone cover -- occluding 1 (stone 4 rect 10.4% pixel 5.2%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Tongue Flick' [timed] (hunter 0) at (648.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 4: End Turn -> hand 1→0
+- FAIL [step 4] beast-behind-stone: End Turn: 17.5% (pixel; rect said 13.0%) of the beast's on-screen body is covered by stone 5 (want <= 15%)
+- FAIL [step 4] beast-behind-stone: End Turn: 43.0% (pixel; rect said 27.7%) of the beast's on-screen body is covered by stone 6 (want <= 15%)
+- End Turn: beast-stone cover -- occluding 6 (stone 3 rect 0.7% pixel 0.0%, stone 4 rect 1.6% pixel 0.0%, stone 5 rect 13.0% pixel 17.5%, stone 6 rect 27.7% pixel 43.0%, stone 7 rect 7.8% pixel 9.1%, stone 8 rect 3.4% pixel 4.0%), on-body (mesh-anchored) 1 (stone 9 1.4%, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 5: play 'Build Grapple' (hunter 1) at (308.0, 478.0) -> played 4→5
+- FAIL [step 5] beast-behind-stone: play 'Build Grapple' (hunter 1) at (308.0, 478.0): 22.6% (pixel; rect said 15.7%) of the beast's on-screen body is covered by stone 5 (want <= 15%)
+- FAIL [step 5] beast-behind-stone: play 'Build Grapple' (hunter 1) at (308.0, 478.0): 42.0% (pixel; rect said 29.1%) of the beast's on-screen body is covered by stone 6 (want <= 15%)
+- FAIL [step 5] beast-behind-stone: play 'Build Grapple' (hunter 1) at (308.0, 478.0): 16.8% (pixel; rect said 8.2%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- play 'Build Grapple' (hunter 1) at (308.0, 478.0): beast-stone cover -- occluding 6 (stone 3 rect 0.7% pixel 0.0%, stone 4 rect 1.5% pixel 0.4%, stone 5 rect 15.7% pixel 22.6%, stone 6 rect 29.1% pixel 42.0%, stone 7 rect 8.2% pixel 16.8%, stone 8 rect 3.1% pixel 5.4%), on-body (mesh-anchored) 1 (stone 9 1.4%, not a failure)
+- play 'Build Grapple' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 6: play 'Burn Coal' (hunter 1) at (308.0, 478.0) -> energy 3→2, hand 5→3, played 5→6
+- FAIL [step 6] beast-behind-stone: play 'Burn Coal' (hunter 1) at (308.0, 478.0): 21.7% (pixel; rect said 12.8%) of the beast's on-screen body is covered by stone 5 (want <= 15%)
+- FAIL [step 6] beast-behind-stone: play 'Burn Coal' (hunter 1) at (308.0, 478.0): 43.6% (pixel; rect said 24.3%) of the beast's on-screen body is covered by stone 6 (want <= 15%)
+- FAIL [step 6] beast-behind-stone: play 'Burn Coal' (hunter 1) at (308.0, 478.0): 18.2% (pixel; rect said 8.4%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- play 'Burn Coal' (hunter 1) at (308.0, 478.0): beast-stone cover -- occluding 6 (stone 3 rect 0.6% pixel 0.0%, stone 4 rect 1.5% pixel 0.4%, stone 5 rect 12.8% pixel 21.7%, stone 6 rect 24.3% pixel 43.6%, stone 7 rect 8.4% pixel 18.2%, stone 8 rect 3.5% pixel 5.5%), on-body (mesh-anchored) 1 (stone 9 1.3%, not a failure)
+- play 'Burn Coal' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 7: play 'Catapult' (hunter 1) at (444.0, 471.0) -> energy 2→1, hand 3→1, played 6→7
+- FAIL [step 7] beast-behind-stone: play 'Catapult' (hunter 1) at (444.0, 471.0): 23.7% (pixel; rect said 20.0%) of the beast's on-screen body is covered by stone 5 (want <= 15%)
+- FAIL [step 7] beast-behind-stone: play 'Catapult' (hunter 1) at (444.0, 471.0): 45.6% (pixel; rect said 28.6%) of the beast's on-screen body is covered by stone 6 (want <= 15%)
+- FAIL [step 7] beast-behind-stone: play 'Catapult' (hunter 1) at (444.0, 471.0): 18.0% (pixel; rect said 8.6%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- play 'Catapult' (hunter 1) at (444.0, 471.0): beast-stone cover -- occluding 6 (stone 3 rect 0.6% pixel 0.0%, stone 4 rect 1.4% pixel 0.4%, stone 5 rect 20.0% pixel 23.7%, stone 6 rect 28.6% pixel 45.6%, stone 7 rect 8.6% pixel 18.0%, stone 8 rect 2.9% pixel 6.5%), on-body (mesh-anchored) 1 (stone 9 1.3%, not a failure)
+- play 'Catapult' (hunter 1) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 8: End Turn -> energy 1→3, hand 1→5, turn 1→2
+- End Turn: beast-stone cover -- occluding 1 (stone 4 rect 7.5% pixel 5.4%), on-body (mesh-anchored) 0 (none, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 9: play 'Pounce' [timed] (hunter 0) at (308.0, 478.0) -> energy 3→2, hand 5→4, boss 59→45, foot 10→4, played 7→8
+- play 'Pounce' [timed] (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 2 (stone 3 rect 26.9% pixel 10.2%, stone 4 rect 1.7% pixel 0.8%), on-body (mesh-anchored) 1 (stone 9 1.5%, not a failure)
+- play 'Pounce' [timed] (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 10: intent tag stayed clear of the jumping hunter across 20 sampled frames
+- step 10: mid-hop pixel coverage -- 10/10 replayed frames actually drew the hunter (0% off; rect-only test said 0% off)
+- step 10: hop position continuity ok -- worst frame-to-frame step 2.938m, no isolated spike against its own neighbours (20 samples)
+- step 10: hop watched -- 20 in-flight samples (partial capture, arc/squash not judged), peak y 17.52 (endpoints 11.63 -> 15.18), max squash dev 0.202
+- step 10: hunter-on-stone -- foothold 7, 100.0% of the foot band is the sigil/top hold (any stone or the beast) (want >= 15%)
+- step 10: play 'Leapfrog' (hunter 0) at (376.0, 475.0) -> energy 2→0, hand 4→3, foot 4→7, played 8→9
+- play 'Leapfrog' (hunter 0) at (376.0, 475.0): beast-stone cover -- occluding 1 (stone 4 rect 10.1% pixel 4.9%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Leapfrog' (hunter 0) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 11: play 'Hop' [timed] (hunter 0) at (444.0, 471.0) -> hand 3→2, foot 7→11, played 9→10
+- play 'Hop' [timed] (hunter 0) at (444.0, 471.0): beast-stone cover -- occluding 1 (stone 4 rect 8.4% pixel 6.2%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Hop' [timed] (hunter 0) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 12: End Turn -> hand 2→0
+- FAIL [step 12] beast-behind-stone: End Turn: 19.1% (pixel; rect said 17.0%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- End Turn: beast-stone cover -- occluding 3 (stone 4 rect 1.2% pixel 0.0%, stone 7 rect 17.0% pixel 19.1%, stone 8 rect 3.0% pixel 3.7%), on-body (mesh-anchored) 1 (stone 9 1.6%, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 13: play 'Goblin Jetpack' (hunter 1) at (444.0, 471.0) -> energy 3→1, hand 5→4, played 10→11
+- play 'Goblin Jetpack' (hunter 1) at (444.0, 471.0): beast-stone cover -- occluding 3 (stone 4 rect 1.2% pixel 0.2%, stone 7 rect 16.4% pixel 11.8%, stone 8 rect 3.8% pixel 4.2%), on-body (mesh-anchored) 1 (stone 9 1.6%, not a failure)
+- play 'Goblin Jetpack' (hunter 1) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 14: play 'Build Mech' (hunter 1) at (512.0, 468.0) -> energy 1→0, hand 4→3, played 11→12
+- FAIL [step 14] beast-behind-stone: play 'Build Mech' (hunter 1) at (512.0, 468.0): 21.5% (pixel; rect said 16.1%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- play 'Build Mech' (hunter 1) at (512.0, 468.0): beast-stone cover -- occluding 3 (stone 4 rect 1.5% pixel 0.2%, stone 7 rect 16.1% pixel 21.5%, stone 8 rect 4.4% pixel 4.7%), on-body (mesh-anchored) 1 (stone 9 1.5%, not a failure)
+- play 'Build Mech' (hunter 1) at (512.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 15: play 'Build Grapple' (hunter 1) at (716.0, 471.0) -> played 12→13
+- FAIL [step 15] beast-behind-stone: play 'Build Grapple' (hunter 1) at (716.0, 471.0): 16.0% (pixel; rect said 15.3%) of the beast's on-screen body is covered by stone 7 (want <= 15%)
+- play 'Build Grapple' (hunter 1) at (716.0, 471.0): beast-stone cover -- occluding 3 (stone 4 rect 1.6% pixel 0.0%, stone 7 rect 15.3% pixel 16.0%, stone 8 rect 4.5% pixel 2.3%), on-body (mesh-anchored) 1 (stone 9 1.5%, not a failure)
+- play 'Build Grapple' (hunter 1) at (716.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 16: play 'Grappling Hook' [timed] (hunter 1) at (716.0, 471.0) -> hand 3→2, foot 2→5, played 13→14
+- play 'Grappling Hook' [timed] (hunter 1) at (716.0, 471.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 12.8%, not a failure)
+- play 'Grappling Hook' [timed] (hunter 1) at (716.0, 471.0): over-the-shoulder truck engaged -- _shoulder=0.993 (want >= 0.95, settled inside 3.62s)
+- step 17: End Turn -> energy 0→3, hand 2→5, turn 2→3
+- End Turn: beast-stone cover -- occluding 1 (stone 4 rect 7.5% pixel 10.4%), on-body (mesh-anchored) 0 (none, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 18: play 'Brace' (hunter 0) at (308.0, 478.0) -> energy 3→2, hand 5→4, played 14→15
+- play 'Brace' (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 1 (stone 4 rect 9.7% pixel 4.5%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Brace' (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 19: play 'Tongue Snap' [timed] (hunter 0) at (376.0, 475.0) -> energy 2→1, hand 4→3, boss 45→40, foot 11→13, played 15→16
+- play 'Tongue Snap' [timed] (hunter 0) at (376.0, 475.0): beast-stone cover -- occluding 1 (stone 4 rect 10.4% pixel 6.4%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Tongue Snap' [timed] (hunter 0) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 20: play 'Hop' [timed] (hunter 0) at (444.0, 471.0) -> hand 3→2, foot 13→16, played 16→17
+- play 'Hop' [timed] (hunter 0) at (444.0, 471.0): beast-stone cover -- occluding 1 (stone 4 rect 9.9% pixel 5.9%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Hop' [timed] (hunter 0) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 21: play 'Scramble' (hunter 0) at (512.0, 468.0) -> hand 2→1, played 17→18
+- play 'Scramble' (hunter 0) at (512.0, 468.0): beast-stone cover -- occluding 1 (stone 4 rect 7.4% pixel 3.3%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Scramble' (hunter 0) at (512.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 22: End Turn -> hand 1→0
+- End Turn: beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 14.0%, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 23: play 'Build Grapple' (hunter 1) at (308.0, 478.0) -> played 18→19
+- play 'Build Grapple' (hunter 1) at (308.0, 478.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 14.1%, not a failure)
+- play 'Build Grapple' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 24: play 'Goblin Jetpack' (hunter 1) at (308.0, 478.0) -> energy 3→1, hand 5→4, played 19→20
+- play 'Goblin Jetpack' (hunter 1) at (308.0, 478.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 12.1%, not a failure)
+- play 'Goblin Jetpack' (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 25: play 'Burn Coal' (hunter 1) at (376.0, 475.0) -> energy 1→0, hand 4→2, played 20→21
+- play 'Burn Coal' (hunter 1) at (376.0, 475.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 14.1%, not a failure)
+- play 'Burn Coal' (hunter 1) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 26: play 'Build Grapple' (hunter 1) at (648.0, 468.0) -> played 21→22
+- play 'Build Grapple' (hunter 1) at (648.0, 468.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 12.2%, not a failure)
+- play 'Build Grapple' (hunter 1) at (648.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 27: play 'Grappling Hook' [timed] (hunter 1) at (648.0, 468.0) -> hand 2→1, foot 5→8, played 22→23
+- play 'Grappling Hook' [timed] (hunter 1) at (648.0, 468.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 13.2%, not a failure)
+- play 'Grappling Hook' [timed] (hunter 1) at (648.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 28: End Turn -> energy 0→3, hand 1→5, turn 3→4
+- End Turn: beast-stone cover -- occluding 1 (stone 4 rect 9.4% pixel 8.5%), on-body (mesh-anchored) 0 (none, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 29: play 'Take Aim' (hunter 0) at (308.0, 478.0) -> energy 3→2, hand 5→6, played 23→24
+- play 'Take Aim' (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 1 (stone 4 rect 7.9% pixel 5.2%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Take Aim' (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 30: play 'Pounce' [timed] (hunter 0) at (270.0, 482.0) -> energy 2→1, hand 6→5, boss 40→26, foot 16→4, played 24→25
+- play 'Pounce' [timed] (hunter 0) at (270.0, 482.0): beast-stone cover -- occluding 2 (stone 3 rect 27.2% pixel 10.0%, stone 4 rect 1.7% pixel 0.8%), on-body (mesh-anchored) 1 (stone 9 1.5%, not a failure)
+- play 'Pounce' [timed] (hunter 0) at (270.0, 482.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 31: play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0) -> energy 1→0, hand 5→4, boss 26→24, foot 4→6, played 25→26
+- play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 1 (stone 4 rect 10.4% pixel 6.8%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Tongue Snap' [timed] (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 32: play 'Tongue Flick' [timed] (hunter 0) at (512.0, 468.0) -> hand 4→3, boss 24→14, played 26→27
+- play 'Tongue Flick' [timed] (hunter 0) at (512.0, 468.0): beast-stone cover -- occluding 1 (stone 4 rect 8.3% pixel 4.9%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Tongue Flick' [timed] (hunter 0) at (512.0, 468.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 33: play 'Hop' [timed] (hunter 0) at (580.0, 464.0) -> hand 3→2, foot 6→12, played 27→28
+- play 'Hop' [timed] (hunter 0) at (580.0, 464.0): beast-stone cover -- occluding 1 (stone 4 rect 9.1% pixel 8.5%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Hop' [timed] (hunter 0) at (580.0, 464.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 34: End Turn -> hand 2→0
+- End Turn: beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 13.8%, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 35: play 'Grappling Hook' [timed] (hunter 1) at (308.0, 478.0) -> hand 5→4, foot 8→11, played 28→29
+- play 'Grappling Hook' [timed] (hunter 1) at (308.0, 478.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 12.8%, not a failure)
+- play 'Grappling Hook' [timed] (hunter 1) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 36: play 'Build Mech' (hunter 1) at (376.0, 475.0) -> energy 3→2, hand 4→3, played 29→30
+- play 'Build Mech' (hunter 1) at (376.0, 475.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 13.4%, not a failure)
+- play 'Build Mech' (hunter 1) at (376.0, 475.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 37: play 'Catapult' (hunter 1) at (444.0, 471.0) -> energy 2→1, hand 3→1, played 30→31
+- play 'Catapult' (hunter 1) at (444.0, 471.0): beast-stone cover -- occluding 0 (none), on-body (mesh-anchored) 1 (stone 9 13.6%, not a failure)
+- play 'Catapult' (hunter 1) at (444.0, 471.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 38: End Turn -> energy 1→3, hand 1→5, turn 4→5
+- End Turn: beast-stone cover -- occluding 1 (stone 4 rect 9.3% pixel 10.1%), on-body (mesh-anchored) 0 (none, not a failure)
+- End Turn: over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)
+- step 39: intent tag stayed clear of the jumping hunter across 15 sampled frames
+- step 39: mid-hop pixel coverage -- 15/15 replayed frames actually drew the hunter (0% off; rect-only test said 0% off)
+- step 39: hop position continuity ok -- worst frame-to-frame step 0.304m, no isolated spike against its own neighbours (15 samples)
+- step 39: hop watched -- 15 in-flight samples (from the start), peak y 15.73 (endpoints 15.14 -> 15.10), max squash dev 0.215
+- step 39: hunter-on-stone -- foothold 16, 100.0% of the foot band is the sigil/top hold (any stone or the beast) (want >= 15%)
+- step 39: play 'Scramble' (hunter 0) at (308.0, 478.0) -> hand 5→4, foot 14→16, played 31→32
+- play 'Scramble' (hunter 0) at (308.0, 478.0): beast-stone cover -- occluding 1 (stone 4 rect 10.8% pixel 5.8%), on-body (mesh-anchored) 0 (none, not a failure)
+- play 'Scramble' (hunter 0) at (308.0, 478.0): over-the-shoulder truck engaged -- _shoulder=1.000 (want >= 0.95, settled inside 3.62s)

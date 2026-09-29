@@ -96,9 +96,10 @@ run failed.
       Ask: Grader failed this: slow-motion unseen in stills. Kill from top: slow hit, fall?
       Test: state=3dreward beast=cinder_jackal console=climb+5 deathat=0.3,1.6,2.6,3.6
       ![[agents/frames/builder/2026-09-29-jackal-death-after-strip.png|420]] ^the-jackal-dies-on-screen
-- [ ] **Playtest presses Switch.**
+- [ ] 👀 **Playtest presses Switch.**
       **Session, 2026-09-29 11:05 ET:** The scripted playtest never switches hunters, so the co-op half of the loop has no coverage. Press Switch at least once per run and add one check: the second hunter's grip did not drain during the first hunter's turn (it depends on the grip item above). Shot: none; the proof is the playtest log showing the switch and the check passing. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest presses Switch.|details]]
+      Ask: Test-only, nothing to look at: the playtest now presses Switch. Tick.
       Test: state=3d beast=cinder_jackal ^playtest-presses-switch
 - [ ] **playtest.cmd green.**
       **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
@@ -270,3 +271,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) A kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
 - [ ] (proposed) The reward screen lays the jackal on its back; the death clip leaves it on its side.
 - [ ] (proposed) Beasts with no rig get the slow last hit and the pause, but no fall.
+- [ ] (proposed) The playtest's grip-while-away check only caught one hanging step in 40; a scripted hang would pin it.
