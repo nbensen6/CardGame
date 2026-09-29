@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T14:27
-working_on: "The grip clock only runs on your own time."
+updated: 2026-09-29T14:41
+working_on: "Timing notes open at the hold on the beast."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 14:27 EDT
+2026-09-29 14:41 EDT
 
-- **Did:** A hanging hunter's grip now holds still unless you hold them, mid-hop, mid-timing, or on the beast's turn.
-- **Worked?** Partly: the Goblin's grip is unchanged across the Frog's turn; VERDICT: FAIL (hop, timing pauses not visible in stills).
-- **Look at:** ![[frames/builder/2026-09-29-grip-clock-before.png]] then ![[frames/builder/2026-09-29-grip-clock-after.png]]
-- **Ask:** Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
+- **Did:** A timed card's notes now open beside the climbing hunter instead of on the tapped card.
+- **Worked?** Yes: note 1 sits ~70 px from the Goblin, down from ~400 px; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-notes-at-hold-before.png]] then ![[frames/builder/2026-09-29-notes-at-hold-after.png]]
+- **Ask:** Notes now open beside the hunter, not the card. Keep it there?
 
 ## Notes
 
-- **Found:** the grip bar shows no seconds, so the 5 s is only provable in code.
+- **Found:** timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
 
 ## Log
 
+- 2026-09-29 14:41 EDT — builder: timing notes open beside the active hunter (notes_anchor, side facing the card; note_pattern lift=false), card fallback; test pins the first note within a hunter-height; grader PASS; tests green, pushed.
 - 2026-09-29 14:27 EDT — builder: grip clock pauses unless the hanging hunter is held, and during hops, timing windows and the beast's turn (grip_paused + test); harness 3dgrip hangs both hunters and shoots a before|after strip; grader FAIL x2 (hop/timing pauses not visible in stills), escalated; tests green, pushed.
 - 2026-09-29 14:18 EDT — builder: beast turn staged (0.4 s hold + badge pulse, attack clip, damage on frame 16/40, hand 0.5 s later); harness enemyat=; playtest waits the turn out; grader FAIL x3 (bite unreadable in stills), escalated; tests green, pushed.
 - 2026-09-29 13:19 EDT — builder: jackal round 4 attack_all 6 -> claw_sweep 6 (Height 4+, throws to 2); harness thenend=; grader FAIL then PASS; tests green, pushed.

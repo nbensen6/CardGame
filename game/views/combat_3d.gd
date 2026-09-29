@@ -1041,12 +1041,15 @@ const DRAG_POINTS := 3
 ## that ran off the bottom used to be shoved up whole, over the hunter's head. The drag, if there is one, carries on from the last
 ## tap. Pure (the RNG is passed in) so a test can pin the reach.
 static func note_pattern(anchor: Vector2, taps: int, drag: bool,
-		rng: RandomNumberGenerator, floor_y: float = INF) -> PackedVector2Array:
+		rng: RandomNumberGenerator, floor_y: float = INF, lift: bool = true) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var count := taps + (DRAG_POINTS if drag else 0)
-	# The first note sits on or beside the card, not always dead above it.
-	var at := note_clamp(anchor, anchor + Vector2(rng.randf_range(-70.0, 70.0),
-		rng.randf_range(-NOTE_RISE, -NOTE_RISE * 0.5)), floor_y)
+	# The first note sits on or beside the card, not always dead above it. From
+	# the hunter (`lift` false, see notes_anchor) the anchor already IS the
+	# spot beside them, so the first note stays on it.
+	var first := Vector2(rng.randf_range(-70.0, 70.0), rng.randf_range(-NOTE_RISE, -NOTE_RISE * 0.5)) \
+		if lift else Vector2(rng.randf_range(-8.0, 8.0), rng.randf_range(-8.0, 8.0))
+	var at := note_clamp(anchor, anchor + first, floor_y)
 	out.append(at)
 	var heading := 0.0 if rng.randf() < 0.5 else PI         # off to one side
 	for i in range(1, count):
@@ -1091,6 +1094,23 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 	return out
 
 
+## Where the pattern opens: beside the climbing hunter, on the side facing the
+## card you tapped, so the grip bar, the notes and the hunter are one place on
+## screen -- the double timing (2026-09-28 jackal fight analysis: the notes
+## streamed up from the card, the hunter was across the frame). The first
+## note's centre sits NOTE_BESIDE past the hunter's edge, at their chest.
+## Falls back to the card when the hunter has no on-screen rect, or it is off
+## the frame (`view`).
+const NOTE_BESIDE := HitCircle.TARGET_RADIUS * 0.9
+static func notes_anchor(hunter: Rect2, card: Vector2, view: Vector2) -> Vector2:
+	if hunter.size.x <= 0.0 or hunter.size.y <= 0.0 \
+			or not Rect2(Vector2.ZERO, view).has_point(hunter.get_center()):
+		return card
+	var side := -1.0 if card.x < hunter.get_center().x else 1.0
+	var edge := hunter.position.x if side < 0.0 else hunter.end.x
+	return Vector2(edge + side * NOTE_BESIDE, hunter.position.y + hunter.size.y * 0.35)
+
+
 static func note_in_reach(anchor: Vector2, p: Vector2, floor_y: float = INF) -> bool:
 	return p.distance_to(anchor) <= NOTE_REACH and p.y >= anchor.y - NOTE_RISE and p.y <= floor_y
 
@@ -1106,7 +1126,13 @@ func _hold_points(plan: Vector2i, from_screen: Vector2) -> PackedVector2Array:
 	var rng := RandomNumberGenerator.new()
 	var view := get_viewport().get_visible_rect().size
 	var pad := 96.0
-	var pattern := note_pattern(from_screen, plan.x, plan.y > 0, rng, view.y - pad)
+	var hunter_rect := Rect2()
+	if _cam != null and _active_slot >= 0 and _active_slot < _hunters.size():
+		var hnode: Node3D = (_hunters[_active_slot] as Dictionary).get("node") as Node3D
+		if hnode != null and is_instance_valid(hnode) and (_hunters[_active_slot] as Dictionary).get("body") != null:
+			hunter_rect = hunter_screen_rect(_cam, _merged_aabb(hnode))
+	var anchor := notes_anchor(hunter_rect, from_screen, view)
+	var pattern := note_pattern(anchor, plan.x, plan.y > 0, rng, view.y - pad, anchor == from_screen)
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
 	for at in pattern:

@@ -72,10 +72,12 @@ run failed.
       Ask: Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-grip-clock-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
-- [ ] **Timing notes open at the hold on the beast.**
+- [ ] 👀 **Timing notes open at the hold on the beast.**
       **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal%20slot%3D1) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
-      Test: state=3dclimb beast=cinder_jackal slot=1 ^timing-notes-open-at-the-hold-on-the-bea
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dosu%20beast%3Dcinder_jackal%20hold%3Don) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
+      Ask: Notes now open beside the hunter, not the card. Keep it there?
+      Test: state=3dosu beast=cinder_jackal hold=on
+      ![[agents/frames/builder/2026-09-29-notes-at-hold-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
 - [ ] **Hunters lunge when they attack and flinch when hit.**
       **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
@@ -256,3 +258,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Playtest beast-behind-stone swings 3 to 8 fails run to run; stone drift sits on the 15% line.
 - [ ] (proposed) The jackal's attack clip barely reads front-on at rest distance; the bite needs a lunge or a side view.
 - [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.
+- [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.

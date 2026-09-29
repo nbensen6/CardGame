@@ -838,3 +838,14 @@ Built 2026-09-29 14:18 EDT.
 - Networked play only tracks your own slot, so there only the hop/timing/beast-turn pauses apply.
 - Harness: `state=3dgrip` now hangs the Goblin too (between holds, above the Frog), shows the Goblin's bar, runs the Frog's clock out, shows the Goblin's bar again, and saves a 1280x360 before|after strip. It prints `GRIP-PAUSE OK/FAIL`. Old code: 0.58 -> fell. New: 0.98 -> 0.98.
 - Grader round 1 FAIL (pair could not show a before/after value); round 2 FAIL only on hop/timing pauses and the 5 s, which a still cannot show; the done-when read as MET.
+
+## Timing notes open at the hold on the beast.
+
+2026-09-29 14:41 EDT, builder.
+
+- Frame: the item's own Test line (3dclimb slot=1) opens no timed card, so it cannot show a note. Shot `state=3dosu beast=cinder_jackal hold=on` instead: the harness taps the Goblin's Satchel Charge mid-climb and parks note 1 at its beat.
+- Before: note 1 at about (247,540), on the tapped card, ~400 px from the hunter.
+- Change: `notes_anchor(hunter_rect, card, view)` in combat_3d.gd. The pattern now opens beside the active hunter's projected AABB, on the side facing the tapped card, at 35% down the rect, NOTE_BESIDE (0.9 target radii) past the edge. `note_pattern(..., lift=false)` keeps the first note on that spot (±8 px) instead of lifting it 75-150 px. It falls back to the card when the hunter has no rect or is off the frame. The reach, rise and floor rules are unchanged, now measured from the hunter.
+- After: note 1 at about (581,308), ~70 px from the Goblin's head. Test `_test_notes_open_beside_the_climbing_hunter` pins it over 40 seeds: the note is within one hunter-height, never on the hunter, on the side facing the card, and falls back to the card with no hunter or an off-frame hunter.
+- Tension: Nick's 11:59 answer on the timing item said "don't have them far from the card". This item moves them to the hunter. The Ask puts that to him.
+- Grader: PASS on the first round.

@@ -1488,6 +1488,7 @@ func _init() -> void:
 	_test_timing_plan_scales_with_cost()
 	_test_timing_plan_keeps_printed_windows_and_climb_drags()
 	_test_note_pattern_stays_near_the_card()
+	_test_notes_open_beside_the_climbing_hunter()
 	_test_hit_circle_taps_then_drag()
 	_test_hit_circle_drag_off_the_ball_lets_go()
 	# backlog #86 duty 3 (twenty-sixth pass): the grip/fall timer itself --
@@ -25371,6 +25372,31 @@ func _test_note_pattern_stays_near_the_card() -> void:
 					"seed %d: notes %d and %d sit on top of each other" % [seed, i, j])
 		firsts[Vector2i(pts[1] / 40.0)] = true
 	_expect(firsts.size() >= 6, "the second note lands in different places from play to play")
+
+
+## The notes open at the hold, beside the climbing hunter, not on the card
+## (2026-09-28 jackal fight analysis): the first note is within a
+## hunter-height of the hunter, on the side facing the card.
+func _test_notes_open_beside_the_climbing_hunter() -> void:
+	var view := Vector2(1280, 720)
+	var hunter := Rect2(612, 410, 50, 60)
+	var card := Vector2(246, 600)
+	var a: Vector2 = Combat3D.notes_anchor(hunter, card, view)
+	_expect(a.x < hunter.position.x, "a card on the left opens the notes on the hunter's left")
+	_expect(Combat3D.notes_anchor(hunter, Vector2(1000, 600), view).x > hunter.end.x,
+		"a card on the right opens them on the hunter's right")
+	for seed in range(40):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed
+		var pts := Combat3D.note_pattern(a, 3, true, rng, view.y - 96.0, false)
+		var near := Vector2(clampf(pts[0].x, hunter.position.x, hunter.end.x),
+			clampf(pts[0].y, hunter.position.y, hunter.end.y))
+		_expect(pts[0].distance_to(near) <= hunter.size.y,
+			"seed %d: first note %.0fpx from the hunter, more than a hunter-height" % [seed, pts[0].distance_to(near)])
+		_expect(not hunter.has_point(pts[0]), "seed %d: the first note sits beside the hunter, not on them" % seed)
+	_expect(Combat3D.notes_anchor(Rect2(), card, view) == card, "no hunter on screen: back to the card")
+	_expect(Combat3D.notes_anchor(Rect2(1500, 410, 50, 60), card, view) == card,
+		"a hunter off the frame: back to the card")
 
 
 ## A 2-cost card: two taps, then press the drag's head on the beat and ride it.
