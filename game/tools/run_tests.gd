@@ -2388,6 +2388,10 @@ func _init() -> void:
 	_test_backlog86_inside_wall_at_leaves_a_point_already_inside_untouched()
 	_test_backlog86_inside_wall_at_pulls_a_point_outside_back_to_exactly_the_reach()
 	_test_backlog86_inside_wall_at_preserves_direction_and_height_while_clamping()
+	# Fog behind the exterior (Nick, 2026-09-29): the jackal's depth fog must
+	# never start close enough to haze the wall and its mountains.
+	_test_fog_behind_range_never_starts_inside_the_wall()
+	_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
 	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
 	# by anything in this file — see the doc comment on the tests themselves.
@@ -30950,3 +30954,20 @@ func _test_cinder_jackal_has_70_hp_so_its_hurt_moves_happen() -> void:
 	b.hp = 27
 	var hurt_ok: bool = int(b.current_move()["value"]) == 12  # hurt_moves[0]
 	_expect(healthy_ok and hurt_ok, "the jackal's hurt moves start below 40%% of 70 (28)")
+
+
+func _test_fog_behind_range_never_starts_inside_the_wall() -> void:
+	var r := Combat3D.fog_behind_range(12.0, [1.0, 2.0])
+	_expect(is_equal_approx(r.x, 12.0 * Combat3D.FOG_BEHIND_MIN_R),
+		"a fog_behind begin nearer than FOG_BEHIND_MIN_R radii is pushed out to it, off the wall")
+	var far_wall := Combat3D.cam_reach_for(12.0) + 12.0 * 2.9
+	_expect(r.x > far_wall, "fog begins past the far wall seen from the camera's furthest reach")
+	var jackal: Dictionary = Combat3D.BIOME["quarry_ember"]
+	_expect(jackal.has("fog_behind"), "the Cinder Jackal's biome keeps its fog behind the exterior")
+
+
+func _test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin() -> void:
+	var a := Combat3D.fog_behind_range(10.0, [6.0, 10.0])
+	_expect(a.is_equal_approx(Vector2(60.0, 100.0)), "fog_behind is measured in arena radii")
+	var b := Combat3D.fog_behind_range(10.0, [8.0, 3.0])
+	_expect(b.y > b.x, "a fog_behind end before its begin still ends past the begin")

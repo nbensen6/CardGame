@@ -990,3 +990,12 @@ Run 2026-09-29 16:04 EDT.
 - Test: `_test_jackal_toon_body_is_matte`.
 - Shot: before and after both `state=3dclimb beast=cinder_jackal` (Nick's own view; at rest the jackal is too far to see the gloss).
 - Grader: VERDICT: PASS.
+
+## Change the fog so it's behind the exterior.
+
+- Cause: the Cinder Jackal's biome (`quarry_ember`) used exponential fog at density 0.014, which washed the whole Meshy rock wall and its lava seams into flat purple. With fog at 0 the mountains render crisp.
+- Fix: new optional biome keys `fog_behind` ([begin, end] in arena radii) and `fog_behind_density` switch that biome to Godot depth fog. `fog_behind_range()` never lets the fog start nearer than `FOG_BEHIND_MIN_R` = 5.5 radii: the wall ring sits near 2.9 radii and the camera may stand up to 2.4 radii out on the other side. Jackal uses [6, 10] at peak opacity 0.6, so only the sky past the wall is hazed. Every other biome is explicitly reset to exponential fog with its own density, unchanged.
+- A first try at [2.2, 4.0] still put a lilac wash on the mountains; that was the wall inside the fog ramp.
+- Tests: `_test_fog_behind_range_never_starts_inside_the_wall`, `_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin`.
+- Shot: before and after both `state=3d beast=cinder_jackal`.
+- Grader: VERDICT: PASS.

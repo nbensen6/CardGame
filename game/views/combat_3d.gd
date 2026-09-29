@@ -2275,6 +2275,14 @@ const BIOME := {
 		# default, so a beast whose horizon never showed this artifact keeps
 		# ProceduralSkyMaterial's normal falloff.
 		"sky_curve": 0.0, "ground_curve": 0.0,
+		# Fog BEHIND the exterior (Nick, 2026-09-29: "Change the fog so it's
+		# behind the exterior. I would like to be able to see the mountains").
+		# Exponential fog at 0.014 turned the lava-lit rock wall into a purple
+		# smear. Depth fog that only starts past the far wall leaves the whole
+		# arena and its mountains clear and hazes the sky behind them. The pair
+		# is [begin, end] in arena radii, see fog_behind_range(); the density
+		# is depth mode's peak opacity (0..1), not an exponential rate.
+		"fog_behind": [6.0, 10.0], "fog_behind_density": 0.6,
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -2382,7 +2390,15 @@ func _light_for(beast_id: String) -> void:
 	var e: Environment = we.environment
 	e.ambient_light_color = b["ambient"]
 	e.fog_light_color = b["fog"]
-	e.fog_density = float(b["density"])
+	if b.has("fog_behind"):
+		var r := fog_behind_range(_arena_r, b["fog_behind"])
+		e.fog_mode = Environment.FOG_MODE_DEPTH
+		e.fog_depth_begin = r.x
+		e.fog_depth_end = r.y
+		e.fog_density = float(b["fog_behind_density"])
+	else:
+		e.fog_mode = Environment.FOG_MODE_EXPONENTIAL
+		e.fog_density = float(b["density"])
 	# The sky still shows above the wall, and a warm horizon over a blue-lit ice
 	# crevasse is the sort of mismatch that reads as "engine default" even when
 	# everything else is right.
@@ -2398,6 +2414,17 @@ func _light_for(beast_id: String) -> void:
 		m.sky_curve = float(b.get("sky_curve", 0.15))
 		m.ground_curve = float(b.get("ground_curve", 0.02))
 	_dev_biome = name
+
+
+## Where a biome's "fog_behind" depth fog starts and ends, in world units from
+## the camera. The wall ring sits near 2.9 radii and the camera may stand up to
+## CAMERA_MAX_R radii out on the opposite side, so no begin is allowed nearer
+## than FOG_BEHIND_MIN_R radii: closer than that, fog lands on the wall itself.
+const FOG_BEHIND_MIN_R := 5.5
+static func fog_behind_range(arena_r: float, radii: Array) -> Vector2:
+	var r := maxf(arena_r, 1.0)
+	var begin := maxf(float(radii[0]), FOG_BEHIND_MIN_R) * r
+	return Vector2(begin, maxf(float(radii[1]) * r, begin + 1.0))
 
 
 func _fit_height(node: Node3D, want: float) -> float:

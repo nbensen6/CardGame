@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T19:11
-working_on: "Make the Jackal be less glossy and more matte."
+updated: 2026-09-29T19:24
+working_on: "Change the fog so it's behind the exterior."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 19:11 EDT
+2026-09-29 19:24 EDT
 
-- **Did:** Took the shiny pale patches off the jackal's face; its skin now reads matte.
-- **Worked?** Yes, the brow and snout gloss is gone, stones and hunters unchanged; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-jackal-matte-before.png]] then ![[frames/builder/2026-09-29-jackal-matte-after.png]]
-- **Ask:** The pale shiny patches on the jackal's face are gone. Matte enough?
+- **Did:** Pushed the jackal arena's fog past the wall, so the lava-lit mountains show clearly.
+- **Worked?** Yes, the mountains went from purple smear to crisp rock and lava; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-fog-behind-before.png]] then ![[frames/builder/2026-09-29-fog-behind-after.png]]
+- **Ask:** The lava-lit mountains are clear now; haze only in the sky. Right?
 
 ## Notes
 
-- **Found:** the jackal's ear tips keep a thin tan rim-light edge.
+- **Found:** every other biome still uses exponential fog that hazes its own arena wall the same way.
 
 ## Log
 
+- 2026-09-29 19:24 EDT — builder: fog behind the exterior: quarry_ember switched to depth fog via fog_behind [6,10] radii (fog_behind_range, min 5.5 R past the far wall), peak 0.6; other biomes reset to exponential; grader PASS; tests green, pushed.
 - 2026-09-29 19:11 EDT — builder: jackal matte: SURFACE_FINISH spec_strength 0 on the jackal's toon body (the hard spec band lit whole head facets pale); rim left; grader PASS; tests green, pushed.
 - 2026-09-29 18:59 EDT — builder: 3dstrike no longer pauses the beat in play (strike_holds_beat); new beat=loop runs lunge/flinch from the ground, labelled 2x2 shot with widened lens; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:44 EDT — builder: timing notes floored at the hand top (notes_floor, _hand_top, pattern_shove floor) and kept off the hunter (note_pattern avoid, NOTE_BESIDE 1.15); harness rest=1 + lowest-note line; old 5/12 rolls over the hand, new 0/14; grader FAIL then PASS; tests green, pushed.
