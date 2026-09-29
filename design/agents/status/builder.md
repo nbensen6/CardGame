@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T12:19
-working_on: "One tap for ordinary timed cards?"
+updated: 2026-09-29T12:30
+working_on: "A missed timed card: keep the card?"
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 12:19 EDT
+2026-09-29 12:30 EDT
 
-- **Did:** Timed cards now ask taps by cost, dearer cards end in a drag, notes scatter around the card.
-- **Worked?** Yes, grader VERDICT: PASS on round two (round one's notes climbed over the hunter).
-- **Look at:** ![[frames/builder/2026-09-29-cost-timing-before.png]] then ![[frames/builder/2026-09-29-cost-timing-after.png]]
-- **Ask:** Cost 0: 1 tap, 1: 2 taps, 2: 2 + drag, 3: 3 + drag. Right?
+- **Did:** A missed timed card now plays its plain value and discards; hitting the timing adds the bonus.
+- **Worked?** Yes, grader VERDICT: PASS on round three (earlier shots never showed the miss or a hit).
+- **Look at:** ![[frames/builder/2026-09-29-miss-keeps-card-before.png]] then ![[frames/builder/2026-09-29-miss-keeps-card-after.png]]
+- **Ask:** A miss now plays plain value (8), a hit adds the bonus (12). Right?
 
 ## Notes
 
-- **Found:** 3dosu without hold= closes the circle before the shot under the cloud's software renderer.
-- **Found:** the sweep-bar timing face (Settings) gets the cost-based tap count but no drag.
+- **Found:** with the log open, the HOLD ON grip banner covers the first letters of each log line.
 
 ## Log
 
+- 2026-09-29 12:30 EDT — builder: a missed timed card resolves at plain value and discards (no Rhythm, counts as played); harness miss=1/nail=1; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-29 12:19 EDT — builder: timing_plan (cost -> taps, drag at cost 2+ or climb 2+), HitCircle taps-then-drag with pointer-follow, notes pinned in screen space around the card (note_pattern, reach 230, rise 150); grader FAIL (notes over the hunter) then PASS; tested, pushed.
 - 2026-09-29 11:58 EDT — builder: TOP_STONE_PULLBACK 6 in top_hold_z_for (whole route follows), stones shallower toward the beast (stone_depth_ratio 2.0 -> 0.9); grader FAIL x2 (12: chest hidden; 12+taper: jackal too small) then PASS at 6; tested, pushed.
 - 2026-09-29 11:10 EDT — builder: menu scroll confirmed by Nick (10:50); marked 👀 for his tick, nothing built.

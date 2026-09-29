@@ -30,6 +30,8 @@ var _beast := ""  # force a specific beast, to check a model that RNG rarely pic
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
 var _endturns := 0  # endturn=N — press End Turn N times before the shot
+var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
+var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
@@ -158,6 +160,10 @@ func _initialize() -> void:
 			load("res://views/combat_3d.gd").toon = true
 		elif a.begins_with("endturn="):
 			_endturns = int(a.substr(8))
+		elif a == "miss=1":
+			_miss = true
+		elif a == "nail=1":
+			_nail = true
 		elif a.begins_with("anim="):
 			_anim = a.substr(5)
 		elif a == "classic":
@@ -859,6 +865,37 @@ func _capture() -> void:
 				await process_frame
 			if _midair <= 0.0:
 				await _await_camera(current_scene)
+
+	# miss=1: play the first timed card in hand and fail its timing, through the
+	# same circle a player taps, so the shot shows what a miss leaves behind:
+	# the beast's HP, the hand and the discard count (Nick, 2026-09-29: a miss
+	# plays the plain value and you keep the card).
+	if (_miss or _nail) and current_scene != null and current_scene.has_method("_on_card_tapped"):
+		var mc: Combat = Session.host._run.combat
+		var mhand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
+		var mi := -1
+		for i in range(mhand.size()):
+			if bool((mhand[i] as Dictionary).get("timed", false)):
+				mi = i
+				break
+		if mi < 0:
+			print("MISS no timed card in hand")
+		else:
+			var mps: PlayerState = mc.players[int(current_scene.call("_cmd_slot"))]
+			var hp0 := mc.boss.hp
+			var disc0 := mps.discard_pile.size()
+			var name0 := String((mhand[mi] as Dictionary).get("name", "?"))
+			current_scene.set("_log_expanded", true)  # the log line is the proof of what happened
+			var mrow: Node = current_scene.get("_hand_row")
+			current_scene.call("_on_card_tapped", mhand[mi], mrow.get_child(mi))
+			await process_frame
+			var mcircle = current_scene.get("_circle")
+			if mcircle != null:
+				mcircle.call("_finish", Combat.TIMING_MISS if _miss else Combat.TIMING_PERFECT)
+			for _i in 20:
+				await process_frame
+			print("MISS %s (%s): beast hp %d -> %d, discard %d -> %d" % [name0, "miss" if _miss else "perfect", hp0, mc.boss.hp,
+				disc0, mps.discard_pile.size()])
 
 	# Carry a card. Driven by calling the view's own drag handlers with real
 	# InputEvents rather than by poking at positions, so what is photographed is

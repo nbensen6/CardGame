@@ -435,7 +435,7 @@ func _init() -> void:
 	_test_satchel_charge_detonates()
 	_test_rhythm_builds_and_scales()
 	_test_backlog86_fumbled_timed_card_does_not_build_rhythm()
-	_test_backlog86_fumbled_timed_card_does_not_count_toward_nth_card()
+	_test_missed_timed_card_counts_toward_nth_card()
 	_test_vine_weaver_poison_and_wound()
 	_test_backlog86_power_triggered_poison_lifts_the_vine_weaver_ally()
 	_test_backlog86_power_triggered_poison_lift_reaches_highest_climb()
@@ -9773,10 +9773,10 @@ func _test_backlog86_fumbled_timed_card_does_not_build_rhythm() -> void:
 	var ps: PlayerState = combat.players[0]
 	ps.hand = [_flick()]
 	ps.energy = 3
-	combat.play_card(0, 0, false)  # fumble the timing bar
-	_expect(ps.rhythm == 0, "a fumbled timed card must not build Rhythm — only a LANDED one does")
-	_expect(ps.hand.is_empty() and ps.discard_pile.is_empty(),
-		"a fumbled timed card slips away entirely — it never reaches the discard pile either")
+	combat.play_card(0, 0, false)  # miss the timing
+	_expect(ps.rhythm == 0, "a missed timed card must not build Rhythm — only a LANDED one does")
+	_expect(ps.hand.is_empty() and ps.discard_pile.size() == 1,
+		"a missed timed card is kept: it discards like any other card (Nick, 2026-09-29)")
 
 
 ## Backlog #86 duty 3 — the Rhythm sibling test above proves a fumbled timed
@@ -9788,24 +9788,21 @@ func _test_backlog86_fumbled_timed_card_does_not_build_rhythm() -> void:
 ## uses" — nothing has ever played a real card through a fumble and then
 ## checked whether a LATER nth_card play still needed its own three real
 ## plays, or whether the fumble quietly counted toward the total.
-func _test_backlog86_fumbled_timed_card_does_not_count_toward_nth_card() -> void:
+func _test_missed_timed_card_counts_toward_nth_card() -> void:
 	var combat := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
 	var ps: PlayerState = combat.players[0]
 	# dagger: base 3, +3 more on the 3rd card this turn or later
 	ps.hand = [_flick(), Content.make_card("dagger"), Content.make_card("dagger"), Content.make_card("dagger")]
 	ps.energy = 5
-	combat.play_card(0, 0, false)  # fumble the timing bar — flick slips away with no effect
-	_expect(ps.cards_played_this_turn == 0, "a fumbled timed card must not bump cards_played_this_turn")
+	combat.play_card(0, 0, false)  # miss the timing — flick still plays its plain 2
+	_expect(ps.cards_played_this_turn == 1, "a missed timed card still resolves, so it counts as a card played")
 	var before: int = combat.boss.hp
-	combat.play_card(0, 0, true)  # 1st real card
+	combat.play_card(0, 0, true)  # 2nd card
 	var after1: int = combat.boss.hp
-	combat.play_card(0, 0, true)  # 2nd real card — if the fumble had counted, the bug would
-	# wrongly treat this as the 3rd card and grant the bonus here instead
+	combat.play_card(0, 0, true)  # 3rd card — the missed flick counted, so this is the trigger
 	var after2: int = combat.boss.hp
-	combat.play_card(0, 0, true)  # 3rd real card — the genuine nth_card trigger
-	var after3: int = combat.boss.hp
-	_expect(before - after1 == 3 and after1 - after2 == 3 and after2 - after3 == 6,
-		"nth_card's bonus fires on the 3rd REAL card played, not a card early because a fumble silently counted toward it")
+	_expect(before - after1 == 3 and after1 - after2 == 6,
+		"nth_card counts a missed timed card: it was played, just without its timed bonus")
 
 
 func _test_meld_carries_special_effects() -> void:
@@ -10440,9 +10437,9 @@ func _test_timed_damage_bonus() -> void:
 	var before: int = combat.boss.hp
 	combat.play_card(0, _first_playable(combat, 0), true)  # timed HIT: 4 + 5 timed_damage
 	var hit_hp: int = combat.boss.hp
-	combat.play_card(0, _first_playable(combat, 0), false)  # fumble: slips away, no damage
-	_expect(before - hit_hp == 9 and combat.boss.hp == hit_hp,
-		"a well-timed strike adds timed_damage; a fumble deals nothing")
+	combat.play_card(0, _first_playable(combat, 0), false)  # miss: plain 4, no timed bonus
+	_expect(before - hit_hp == 9 and hit_hp - combat.boss.hp == 4,
+		"a well-timed strike adds timed_damage; a miss deals the card's plain damage")
 
 
 ## The "sure" enchant's one /core behaviour: a card that would normally fumble
@@ -10825,15 +10822,15 @@ func _test_true_eye_enchant_upgrades_good_to_perfect() -> void:
 		"a True Eye-enchanted card turns a good hit into a perfect one")
 
 
-## A timed defensive card: nail the window and the guard holds; mistime it and the
-## card slips away like any other timed card — so you eat the blow bare.
+## A timed defensive card: nail the window and the guard holds in full; mistime
+## it and you still get the printed Block, just not the timed extra.
 func _test_timed_block_guards_on_a_hit() -> void:
 	var combat := _new_combat([_deck_of(_dig_in, 10), _deck_of(_slash, 10)], 42, _dummy_boss(300))
 	combat.play_card(0, _first_playable(combat, 0), true)   # 4 base + 6 timed
 	var nailed: int = combat.players[0].combatant.block
-	combat.play_card(0, _first_playable(combat, 0), false)  # fumble — no guard at all
-	_expect(nailed == 10 and combat.players[0].combatant.block == 10,
-		"a well-timed brace adds timed_block; a mistimed one grants nothing")
+	combat.play_card(0, _first_playable(combat, 0), false)  # miss — the printed 4 only
+	_expect(nailed == 10 and combat.players[0].combatant.block == 14,
+		"a well-timed brace adds timed_block; a mistimed one grants only its printed block")
 
 
 func _test_timed_ally_block_anchors_the_ally() -> void:
@@ -17456,11 +17453,11 @@ func _test_timed_grapple() -> void:
 	var miss := _new_combat([_deck_of(_grapple, 10), _deck_of(_slash, 10)], 42, _dummy_boss(200))
 	var hand_before: int = miss.players[0].hand.size()
 	var discard_before: int = miss.players[0].discard_pile.size()
-	miss.play_card(0, _first_playable(miss, 0), false)  # fumbled -> slips away
-	_expect(miss.players[0].foothold == 0
+	miss.play_card(0, _first_playable(miss, 0), false)  # missed -> plain Climb 1, kept
+	_expect(miss.players[0].foothold == 1
 		and miss.players[0].hand.size() == hand_before - 1
-		and miss.players[0].discard_pile.size() == discard_before,
-		"a fumbled grapple gives nothing and vanishes (not even discarded)")
+		and miss.players[0].discard_pile.size() == discard_before + 1,
+		"a missed grapple climbs its printed 1 and discards (the card is kept, Nick 2026-09-29)")
 
 
 func _test_content_builds_character() -> void:

@@ -965,13 +965,15 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	ps.energy -= pay
 	ps.light -= card.light_cost  # the Lightbearer's own currency — spent alongside energy, win or fumble (backlog #47)
 	ps.hand.remove_at(ci)
-	# A fumbled timed card slips away — removed with no effect (not even discarded)
-	# — unless the "sure" enchant is attached, which always lands (backlog #12).
-	if card.timed and not timing_hit and enchant_effect != "auto_nail":
-		_log("%s fumbles %s — it slips away." % [ps.combatant.name, card.name])
-		_check_end()
-		return true
-	# "Sure" (auto_nail) carries a genuine miss past the fumble check above, but
+	# A missed timed card still plays: its printed value, no timed bonus, and it
+	# discards like any other card (Nick, 2026-09-29: "i dont like the idea of
+	# losing a card"). It used to slip away with no effect. The "sure" enchant
+	# (backlog #12) still turns a miss into a full hit, below.
+	var landed := not card.timed or timing_hit or enchant_effect == "auto_nail"
+	if not landed:
+		timing_quality = TIMING_MISS
+		_log("%s misses the timing on %s — plain value." % [ps.combatant.name, card.name])
+	# "Sure" (auto_nail) carries a genuine miss up to a full hit, but
 	# every real caller derives `timing_quality` from the same graded result as
 	# `timing_hit` (see combat_3d.gd's play_card() calls), so a true miss also
 	# sends TIMING_MISS — which `preview()` scales to a zero bonus below unless
@@ -1018,8 +1020,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		timing_quality = TIMING_PERFECT
 
 	# Everything numeric this card does, from the one formula the card face also
-	# shows. Only well-timed plays reach here (fumbles slipped away above), so the
-	# preview is taken as nailed, scaled by how well it landed (backlog #33).
+	# shows. A miss previews un-nailed (plain value); a hit is scaled by how
+	# well it landed (backlog #33).
 	# Damage resolves first, so a card that also Exposes doesn't consume its own
 	# stacks. _damage_boss gates on whether THIS hunter reached the sigil.
 	#
@@ -1030,7 +1032,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	# Poison on, rather than always the boss's. Threaded with light_before
 	# (backlog #86 duty 2, same reasoning as x_spent above) so damage_per_light
 	# reads the Light banked before THIS card's own light_cost spent it.
-	var pv := preview(pi, card, true, timing_quality, x_spent, enemy_index, light_before)
+	var pv := preview(pi, card, landed, timing_quality, x_spent, enemy_index, light_before)
 	ps.play_counts[card.id] = int(ps.play_counts.get(card.id, 0)) + 1
 	ps.cards_played_this_turn += 1  # backlog #67 — bumped AFTER the preview this
 	# card itself resolved with, same "counts only earlier plays" idiom as play_counts above
@@ -1227,8 +1229,8 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 		ps.prepared = card.prepare
 		_log("%s plays %s — armed for next turn." % [who, card.name])
 	# A braced guard can be timed too: nail the window as the beast swings and the
-	# guard holds. Only hits reach here — a fumbled brace slipped away above, so
-	# mistiming a defensive card means eating the blow bare.
+	# guard holds. A missed brace still gives its printed Block, just not the
+	# timed extra.
 	var blk: int = int(pv["block"])
 	if blk > 0:
 		# The log must print what the combatant actually ends up with, not the
@@ -1375,7 +1377,7 @@ func play_card(pi: int, ci: int, timing_hit: bool = true, sac_index: int = -1, t
 	if card.rhythm > 0:
 		ps.rhythm += card.rhythm
 		_log("%s plays %s — +%d Rhythm." % [who, card.name, card.rhythm])
-	_fire(MOMENT_CARD_PLAYED, {"player": ps, "card": card})  # e.g. a timed hit builds Rhythm (Frog combo payoff)
+	_fire(MOMENT_CARD_PLAYED, {"player": ps, "card": card, "landed": landed})  # e.g. a timed hit builds Rhythm (Frog combo payoff)
 	# _track_climb() must run BEFORE _check_weakpoint_buck(): a single play can both
 	# climb a hunter to a brand-new peak AND (via this same hit's damage) cross the
 	# sigil's buck threshold, which drops ps.foothold right back down. _track_climb
@@ -2520,8 +2522,8 @@ func _handle_power_effects(ctx: Dictionary) -> void:
 ## exactly the same place a relic-driven card_played handler would.
 func _handle_timed_rhythm(ctx: Dictionary) -> void:
 	var card: Card = ctx["card"]
-	if not card.timed:
-		return
+	if not card.timed or not bool(ctx.get("landed", true)):
+		return  # only a LANDED timed card builds Rhythm; a miss plays plain
 	var ps: PlayerState = ctx["player"]
 	ps.rhythm += 1
 

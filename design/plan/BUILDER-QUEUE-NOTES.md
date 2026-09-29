@@ -766,3 +766,15 @@ Grader: round 1 FAIL. The notes rose over the hunter, and the on-screen shove li
 
 The after frame is a 2x2 grid of four shots, each `state=3dosu beast=cinder_jackal hold=on hand=<card>` with flick (0), lash_out (1), piston_punch (2) and overload_engine (3). The Test line deals those four cards into a normal fight instead, so you can tap each one yourself. `hold=on` would freeze the circle in play mode.
 
+## A missed timed card: keep the card?
+
+2026-09-29 12:30 EDT, builder. Worked from Nick's 12:14 answer: "a miss play can do a plain value of the card, but hitting the timed can have a small bonus".
+
+- `Combat.play_card`: the early return that made a missed timed card vanish is gone. A miss logs "misses the timing on X — plain value", previews un-nailed (timed bonus 0) and resolves every printed effect; the card discards (or exhausts / stays as a power) like any other card. Energy is spent either way, as before.
+- The hit bonus is the existing `timed_*` fields, graded GOOD (half) / PERFECT (full). No card numbers changed.
+- A miss does NOT build Rhythm (Rhythm is "+1 per timed card you LAND"); `landed` rides on the card_played moment for that.
+- A miss now counts as a card played (nth_card, cards_played_total), since it resolved.
+- "Sure" (auto_nail) unchanged: a miss still lands as a perfect hit.
+- Harness: `miss=1` / `nail=1` tap the first timed card and resolve its circle as a miss / perfect, log panel open. Measured on Lash Out at the sigil: miss 8 damage, perfect 12; below the sigil the armoured hide chips both to 1, which is why the Test line climbs first.
+- Tests: six old "fumble slips away" tests rewritten to the new rule (plain damage, printed block, printed climb, discard +1, counts toward nth_card, no Rhythm).
+- Grader: FAIL (shot did not show the miss), FAIL (no hit to compare), PASS with the before frame and a miss | hit strip.

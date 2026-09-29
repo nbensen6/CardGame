@@ -10,10 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **A missed timed card: keep the card?**
+- [ ] 👀 **A missed timed card: keep the card?**
       **Nick, 2026-09-29 12:14 ET:** i dont like the idea of losing a card. a miss play can do a plain value of the card, but hitting the timed can have a small bonus
       **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: A miss deletes the card for the whole fight. Yes = a miss plays the card's plain value and you keep the card. No = leave it. ^a-missed-timed-card-keep-the-card
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dlash_out%2Cpiston_punch%2Coverload_engine%2Cflick%20console%3Dclimb%2B5%20miss%3D1) · [[BUILDER-QUEUE-NOTES#A missed timed card: keep the card?|details]]
+      Ask: A miss now plays plain value (8), a hit adds the bonus (12). Right?
+      Test: state=3d beast=cinder_jackal hand=lash_out,piston_punch,overload_engine,flick console=climb+5 miss=1
+      ![[agents/frames/builder/2026-09-29-miss-keeps-card-after.png|420]] ^a-missed-timed-card-keep-the-card
 - [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
       **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -232,3 +235,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) beast-behind-stone rose 2 -> 6 fails (worst 17.6%) with the stones set back.
 - [ ] (proposed) **3dosu without hold= misses the circle.** Under the cloud's software renderer 26 frames close the window before the shot.
 - [ ] (proposed) **Sweep-bar face has no drag.** The Settings bar face gets the cost-based tap count but not the drag.
+- [ ] (proposed) **HOLD ON banner covers the log.** With the log open, the grip banner hides the first letters of each log line.
