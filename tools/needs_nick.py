@@ -203,8 +203,14 @@ def apply_answers(lines, items, answers):
     to_top = []
     for it in items:
         ticked, note = answers.get(it["id"], [False, ""])
-        # "goblin looks okay at this time" is a yes, not a send-back.
-        if note and re.match(r"^(ok|okay|yes|yep|good|fine|done|approved|looks (good|okay|fine|right)|.* looks (good|okay|fine|right)( at this time| for now)?\.?)$", note.strip(), re.I):
+        # A decision under ## Waiting on Nick: ANY answer, a tick included,
+        # sends it to the builder with his words. A "yes" there means "do the
+        # default", it must not be swallowed as an approval of finished work.
+        if section_of(lines, it["a"]).startswith("## Waiting on Nick"):
+            if ticked and not note:
+                note = "yes, the default"
+            ticked = False
+        elif note and re.match(r"^(ok|okay|yes|yep|good|fine|done|approved|looks (good|okay|fine|right)|.* looks (good|okay|fine|right)( at this time| for now)?\.?)$", note.strip(), re.I):
             ticked, note = True, ""
         if ticked and it["mark"] == "?":
             lines[it["a"]] = lines[it["a"]].replace("- [ ] 👀", "- [x]", 1)
