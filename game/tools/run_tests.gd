@@ -21378,6 +21378,21 @@ func _test_enemy_turn_beats_land_in_order() -> void:
 	_expect(not Combat3D.enemy_turn_starts("", 0, 1, 3, 4), "a new encounter is not a beast turn")
 	_expect(not Combat3D.enemy_turn_starts("landed", 0, 0, 1, 2), "a turn already playing is not restarted")
 	_expect(not Combat3D.enemy_turn_starts("", 0, 0, 2, 2), "a snapshot inside the same round is not a beast turn")
+	# The body carries the bite: rear back in the hold, full reach ON the bite, home by the hand.
+	var bite := float(b["bite"])
+	_expect(Combat3D.beast_lunge(0.3, b) < 0.0, "the beast rears back during the hold")
+	_expect(is_equal_approx(Combat3D.beast_lunge(bite, b), Combat3D.BEAST_REACH),
+		"the beast is at full reach on the bite frame, when the number lands")
+	_expect(Combat3D.beast_lunge(bite - 0.05, b) < Combat3D.BEAST_REACH, "the reach peaks on the bite, not before")
+	_expect(Combat3D.beast_lunge(bite + 0.2, b) < Combat3D.BEAST_REACH, "the beast pulls back after the bite")
+	_expect(is_zero_approx(Combat3D.beast_lunge(float(b["hand"]), b)), "the beast is home when the new hand deals")
+	_expect(is_zero_approx(Combat3D.beast_lunge(0.5, {})), "no staged turn, no lunge")
+	_expect(Combat3D.beast_lunge_pitch(Combat3D.BEAST_REACH) > 0.0, "at full reach the head tips toward the hunters")
+	_expect(Combat3D.beast_lunge_pitch(-Combat3D.BEAST_REAR) < 0.0, "rearing back rocks the head back")
+	_expect(is_zero_approx(Combat3D.beast_lunge_pitch(0.0)), "at home the beast stands straight")
+	var left := Combat3D.hunter_popup_at(Vector3(-5.0, 0.0, 85.0), 2.0)
+	_expect(left.x < -5.0 - 1.0 and left.y > 1.0, "a hunter's damage number opens above it and out to its own side, off its body")
+	_expect(Combat3D.hunter_popup_at(Vector3(3.0, 0.0, 85.0), 2.0).x > 3.0 + 1.0, "the right-hand hunter's number goes right")
 
 
 func _test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync() -> void:

@@ -671,6 +671,9 @@ var _prev_encounter := -1
 var _enemy_stage := ""
 var _enemy_t := 0.0
 var _enemy_beats := {}
+var _lunge_gap := 0.0               # beast -> nearest hunter, world z, for beast_lunge
+var _lunge_x := 0.0                 # world x the lunge drives toward: the hunter it bites
+var _beast_target := -1             # the slot the beast's shown intent is aimed at
 var _prev_round := -1
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
@@ -1554,6 +1557,8 @@ func _process(delta: float) -> void:
 		var home: Vector3 = _float_home[i]
 		st.position.y = home.y + stone_bob(_time, i)
 		st.rotation.y += delta * 0.25
+	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
+	_step_enemy_turn(delta)
 	if _beast != null:
 		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
 		# gets bigger and smaller. we can get rid of that." It was
@@ -1568,9 +1573,17 @@ func _process(delta: float) -> void:
 		# creature.gdshader, which breathes LIGHT rather than size.
 		var recoil := 1.0 - _beast_punch * 0.10
 		_beast.scale = Vector3.ONE * _beast_scale * recoil
-		_beast.position.z = -_beast_punch * 0.35
+		var lunge := 0.0
+		if _enemy_stage != "":
+			lunge = beast_lunge(_enemy_t, _enemy_beats)
+		_beast.position.z = -_beast_punch * 0.35 + lunge * _lunge_gap
+		# Toward the hunter it bites, not straight down the camera's line: seen
+		# from behind a hunter a lunge straight at the lens only grows.
+		_beast.position.x = maxf(lunge, 0.0) / BEAST_REACH * _lunge_x
+		# Pitched about its feet: head back while it rears, head down and jaw
+		# at the hunters while it drives in.
+		_beast.rotation.x = beast_lunge_pitch(lunge)
 	_beast_punch = maxf(0.0, _beast_punch - delta * 3.5)
-	_step_enemy_turn(delta)
 	_last_popup_guard = maxf(0.0, _last_popup_guard - delta)
 	for i in range(_hunters.size()):
 		var h: Dictionary = _hunters[i]
@@ -1785,7 +1798,8 @@ func _refresh() -> void:
 	_refresh_ledge_marks()
 	_update_climb_state(s)
 	_update_gauge(s)
-	_render_party(s, int(boss.get("target", -1)), boss.get("intent", {}),
+	_beast_target = int(boss.get("target", -1))
+	_render_party(s, _beast_target, boss.get("intent", {}),
 		any_add_attacking(boss.get("adds", [])))
 	_update_coach(s)
 	_render_log(s)
@@ -5290,7 +5304,7 @@ func _react(s: Dictionary) -> void:
 				# need to know before deciding next turn.
 				var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
 				_damage_popup(hunter_dmg[i],
-					hnode.position + Vector3(0.0, HUNTER_HEIGHT * 1.4, 0.0), false, true)
+					hunter_popup_at(hnode.position, _hunter_popup_glyph()), false, true)
 				_hunter_play(i, "hit")
 			match String(foot_actions[i]):
 				"reach": Sfx.play("reach_sigil")
@@ -5824,6 +5838,20 @@ static func popup_rise_scale(screen_y_at: float, screen_y_full: float, pad: floa
 	return clampf((screen_y_at - pad) / (screen_y_at - screen_y_full), 0.0, 1.0)
 
 
+## Where a hunter's damage number opens: above the hunter and out to its own
+## side (away from the beast's centre line), so the digit never sits on the
+## hunter or between it and the bite. glyph_h is the digit's world height.
+static func hunter_popup_at(hunter_pos: Vector3, glyph_h: float) -> Vector3:
+	var side := -1.0 if hunter_pos.x < 0.0 else 1.0
+	return hunter_pos + Vector3(side * glyph_h * 0.6, HUNTER_HEIGHT * 1.4 + glyph_h * 0.3, 0.0)
+
+
+## The world height of a hunter's damage digit, as _damage_popup sizes it.
+func _hunter_popup_glyph() -> float:
+	return HUNTER_POPUP_PX * maxf(_beast_box.size.y, 2.0) * 128.0
+
+
+const HUNTER_POPUP_PX := 0.0009
 func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool = false) -> void:
 	if amount <= 0:
 		return
@@ -5843,7 +5871,7 @@ func _damage_popup(amount: int, at: Vector3, weak_point: bool, on_hunter: bool =
 	lbl.fixed_size = false
 	lbl.pixel_size = (0.0010 if not weak_point else 0.0014) * reach
 	if on_hunter:
-		lbl.pixel_size = 0.0009 * reach
+		lbl.pixel_size = HUNTER_POPUP_PX * reach
 		lbl.modulate = Color(1.0, 0.45, 0.38)      # your blood, not the beast's
 	elif weak_point:
 		lbl.modulate = Color(1.0, 0.86, 0.36)      # the sigil hit — the big one
@@ -5889,6 +5917,50 @@ static func enemy_turn_beats(clip_len: float) -> Dictionary:
 	return {"hold": ENEMY_HOLD, "bite": bite, "hand": bite + ENEMY_HAND_AFTER}
 
 
+## How far the beast's body moves toward the hunters at time t of its turn,
+## as a fraction of the gap between them (+ toward the hunters, - rearing
+## back). Seen from behind a hunter the jackal is far, small and front-on and
+## its clip alone does not read as a bite (grader, 2026-09-29), so the whole
+## body carries the beat: it rears back through the hold, drives in to its
+## reach just before the bite, holds there while the number lands, and is
+## home again when the new hand deals.
+const BEAST_REAR := 0.08
+const BEAST_REACH := 0.35
+const BEAST_DRIVE_S := 0.2
+const BEAST_BITE_HOLD_S := 0.15
+## The body's pitch for a lunge fraction, radians: + tips the head toward the
+## hunters, - rocks it back.
+const BEAST_PITCH_IN := 0.15
+const BEAST_PITCH_BACK := 0.2
+static func beast_lunge_pitch(lunge: float) -> float:
+	if lunge >= 0.0:
+		return BEAST_PITCH_IN * lunge / BEAST_REACH
+	return BEAST_PITCH_BACK * lunge / BEAST_REAR
+
+
+static func beast_lunge(t: float, beats: Dictionary) -> float:
+	if beats.is_empty():
+		return 0.0
+	var hold := float(beats["hold"])
+	var bite := float(beats["bite"])
+	var hand := float(beats["hand"])
+	if t <= 0.0 or t >= hand:
+		return 0.0
+	if t < hold:
+		return -BEAST_REAR * sin(t / hold * PI * 0.5)
+	var drive := maxf(hold, bite - BEAST_DRIVE_S)
+	if t < drive:
+		return -BEAST_REAR
+	if t < bite:
+		var k := 1.0 - (t - drive) / maxf(bite - drive, 0.001)
+		return lerpf(-BEAST_REAR, BEAST_REACH, 1.0 - k * k)
+	var settle := minf(bite + BEAST_BITE_HOLD_S, hand)
+	if t < settle:
+		return BEAST_REACH
+	var back := (t - settle) / maxf(hand - settle, 0.001)
+	return BEAST_REACH * (1.0 - back) * (1.0 - back)
+
+
 ## Whether this snapshot is the beast's turn resolving: same fight, the round
 ## advanced, and no staged turn already playing. The first snapshot of a fight
 ## (prev_round -1) and a new encounter never stage.
@@ -5903,6 +5975,17 @@ func _begin_enemy_turn() -> void:
 		clip = _beast_anim.get_animation("attack").length
 	_enemy_beats = enemy_turn_beats(clip)
 	_enemy_t = 0.0
+	# The lunge is measured against the nearest hunter, so it reads the same
+	# for a beast that stands close and one that fills the far distance.
+	_lunge_gap = 0.0
+	_lunge_x = 0.0
+	for i in range(_hunters.size()):
+		var n := (_hunters[i] as Dictionary).get("node") as Node3D
+		if n != null and is_instance_valid(n) and _beast != null:
+			var d := n.global_position.z - _beast.global_position.z
+			_lunge_gap = d if _lunge_gap == 0.0 else minf(_lunge_gap, d)
+			if i == _beast_target:
+				_lunge_x = n.global_position.x * BEAST_REACH
 	_enemy_stage = "windup"
 	_end_btn.disabled = true
 	_set_hand_shown(false)

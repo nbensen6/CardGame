@@ -25,13 +25,13 @@ run failed.
       Ask: Grip is off: no countdown, nobody slips. Does climbing feel right without it?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-grip-off-after.png|420]] ^let-the-frog-hang
-- [ ] **The jackal's turn plays out on screen.**
+- [ ] 👀 **The jackal's turn plays out on screen.**
       **Nick, 2026-09-29 17:14 ET:** re word this question it doesnt make sense
       **Session, 2026-09-29 11:05 ET:** Today the enemy turn resolves in zero seconds and the bite clip plays AFTER the damage number. On End Turn: a 0.4 s hold, the intent badge pulses, the existing `attack` clip plays, the damage and popup land on the bite frame (frame 16 of 40), then the new hand. Same for the sweep, with the shake and both hunters hopping down. No new clips. Done-when: a four-frame strip across one enemy turn shows wind-up, bite, number, new hand in that order. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal's turn plays out on screen.|details]]
-      Ask: Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
+      Ask: Grader failed this: wind-up unseen in stills. Press End Turn: jackal lunges, then damage?
       Test: state=3d beast=cinder_jackal endturn=1
-      ![[agents/frames/builder/2026-09-29-enemy-turn-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
+      ![[agents/frames/builder/2026-09-29-jackal-turn-reads-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
 - [ ] **The grip clock only runs on your own time.**
       **Nick, 2026-09-29 17:14 ET:** remove grip timer for now
       **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -288,3 +288,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin's side covers it (30-47% vs <= 11%).
 - [ ] (proposed) The grip clock item is moot while grip is off; close or park it?
 - [ ] (proposed) enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
+- [ ] (proposed) The jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
+- [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.

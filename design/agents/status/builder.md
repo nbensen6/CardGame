@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T17:42
-working_on: "Played cards fly to their target."
+updated: 2026-09-29T18:09
+working_on: "The jackal's turn plays out on screen."
 ---
 
 # builder
@@ -13,20 +13,26 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 17:42 EDT
+2026-09-29 18:09 EDT
 
-- **Did:** Test link no longer freezes the game; the tapped card flies, lands, and play continues.
-- **Worked?** Partly: stuck card fixed, but VERDICT: FAIL (grader round 3: no panel shows a card in flight).
-- **Look at:** ![[frames/builder/2026-09-29-card-stuck-before.png]] then ![[frames/builder/2026-09-29-card-stuck-after.png]]
-- **Ask:** Press Test this now: does the card still get stuck?
+- **Did:** Jackal now lunges at the bitten hunter on its bite; question reworded; damage number moved off the hunter.
+- **Worked?** Partly: the lunge and number read, but VERDICT: FAIL (round 3: wind-up cannot be told apart from the hold).
+- **Look at:** ![[frames/builder/2026-09-29-jackal-turn-reads-before.png]] then ![[frames/builder/2026-09-29-jackal-turn-reads-after.png]]
+- **Ask:** Press End Turn: does the jackal lunge at the Frog before the damage shows?
 
 ## Notes
+
+- **Found:** the jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
+
+- **Found:** the intent badge switches to next round's intent on the bite frame, before the new hand.
 
 - **Found:** enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
 
 - **Found:** the grip clock item below is now moot while grip is off; the playtest grip check just skips.
 
 ## Log
+
+- 2026-09-29 18:09 EDT — builder: jackal's turn: body lunge (rear back in hold, 35% of gap toward bitten hunter on the bite, home by the hand, pitch + x drift), hunter damage number up and aside; Ask reworded for Nick; grader FAIL x3 (wind-up unreadable), escalated; tests green, pushed.
 
 - 2026-09-29 17:42 EDT — builder: "the card is stuck" was the harness: fly= froze the flight and disabled the view in `play` too; fly_holds_midair(play, flyt) + test; fly=N,M with flyt=1 shoots a mid-flight | landed strip on the real clock; failsafe +5 s per flown card; grader FAIL x3 (flight vs scale-up in stills), escalated; tests green, pushed.
 

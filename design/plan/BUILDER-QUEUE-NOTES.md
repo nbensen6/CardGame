@@ -880,6 +880,15 @@ Built 2026-09-29 14:18 EDT.
 - Playtest waits for `_enemy_stage == ""` after End Turn (polling popups meanwhile) so it judges the settled board. Same three red checks as main; beast-behind-stone varied 3 (main, one run) vs 5-8 (this branch, four runs), all borderline 15.4-17.8% with drifting stones.
 - Grader: FAIL x3. Met: the hold, the number after the hold, the hand last. Not met: the pulse and the clip do not read in stills (the jackal is small and front-on; its head drops ~0.65 s but subtly); the sweep was not shot; the Frog's damage "7" covers the Frog (existing popup placement).
 
+Builder, 2026-09-29 18:09 EDT, on Nick's "re word this question it doesnt make sense" (17:14).
+
+- The old Ask named the grader's complaint, not what to look at. New Ask: press End Turn once (the Test link already ends the Frog's turn, so the next End Turn is the jackal's) and say whether the jackal lunges at the Frog before the damage shows.
+- The complaint itself was real: from behind the hunter the jackal stands 85 units away (20 tall) and its clip alone does not read as a bite. The whole body now carries the beat (`beast_lunge`, `beast_lunge_pitch`, both static and tested): it rears back 8% of the gap through the hold, drives 35% of the gap toward the hunter it bites in the 0.2 s before the bite, holds there 0.15 s while the number lands, and is home when the new hand deals. It pitches about its feet (0.2 rad back, 0.15 forward) and drifts toward the bitten hunter's x. `_step_enemy_turn` now runs before the beast is placed, so the lunge is the frame's own beat.
+- A hunter's damage number opens above the hunter and out to its own side (`hunter_popup_at`), not on its head; the grader flagged the "7" covering the Frog twice.
+- Shots: `state=3d beast=cinder_jackal endturn=2 enemyat=0.1|0.65|0.94|1.6`, composed 2x2. The Test line stays `endturn=1`: enemyat= freezes the view and quits, so it cannot go in Nick's link.
+- Grader: FAIL (bite reads as rearing), FAIL (front-on lunge only grows; "7" on the Frog), FAIL ("wind-up cannot be told apart from the hold"; the bite now MET with a caveat, "7" off the Frog, no penalties). Escalated.
+- Tests green; pitch at 0.35 rad foreshortened the jackal so it looked smaller on the bite, cut to 0.15.
+
 ## The grip clock only runs on your own time.
 
 2026-09-29 14:27 EDT, builder.
