@@ -31,6 +31,7 @@ var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _a
 var _wide := false  # hold the establishing shot — see _capture
 var _endturns := 0  # endturn=N — press End Turn N times before the shot
 var _thenend := 0  # thenend=N — press End Turn N more times AFTER console=, log open
+var _enemyat := -1.0  # enemyat=S — shoot S real seconds after the last End Turn press
 var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
 var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
@@ -163,6 +164,8 @@ func _initialize() -> void:
 			_endturns = int(a.substr(8))
 		elif a.begins_with("thenend="):
 			_thenend = int(a.substr(8))
+		elif a.begins_with("enemyat="):
+			_enemyat = float(a.substr(8))
 		elif a == "miss=1":
 			_miss = true
 		elif a == "nail=1":
@@ -806,6 +809,26 @@ func _capture() -> void:
 		if current_scene == null or not current_scene.has_method("_end_turn"):
 			break
 		current_scene.call("_end_turn")
+		# enemyat=S: a frame from INSIDE the beast's turn (wind-up, bite, number,
+		# new hand), timed on the wall clock the view's own staging runs on.
+		if _enemyat >= 0.0 and _t == _endturns - 1:
+			# On the view's own beast-turn clock while one is playing, so the
+			# frame is the same beat on every machine; wall clock otherwise.
+			var t0 := Time.get_ticks_msec()
+			while true:
+				var st = current_scene.get("_enemy_stage")
+				if st != null and String(st) != "":
+					if float(current_scene.get("_enemy_t")) >= _enemyat:
+						break
+				elif Time.get_ticks_msec() - t0 >= int(_enemyat * 1000.0):
+					break
+				await process_frame
+			# Freeze the view (its clock, tweens, clips) so the capture frame is
+			# this beat and not the next slow software-rendered one.
+			current_scene.process_mode = Node.PROCESS_MODE_DISABLED
+			print("ENEMYAT %.2fs stage=%s beats=%s" % [_enemyat, str(current_scene.get("_enemy_stage")), str(current_scene.get("_enemy_beats"))])
+			await _save_and_quit()
+			return
 		for _i in 90:   # the beast's turn plays out, then the new hand deals
 			await process_frame
 		_hand_geometry(current_scene)
@@ -1585,6 +1608,10 @@ func _capture() -> void:
 	if _play:
 		print("PLAY READY: scenario is live. Close the window when done.")
 		return
+	await _save_and_quit()
+
+
+func _save_and_quit() -> void:
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image()
 	var saved: Error = img.save_png(_out)

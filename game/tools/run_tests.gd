@@ -908,6 +908,7 @@ func _init() -> void:
 	# and a first-turn climb played no sound, because the php (per-hunter hp)
 	# baseline used to be established a whole update LATE, so the update right
 	# after every resync hit a second, hidden resync instead of reacting.
+	_test_enemy_turn_beats_land_in_order()
 	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
 	_test_backlog86_react_plan_still_resyncs_on_a_party_size_change()
 	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
@@ -21330,6 +21331,23 @@ func _test_backlog86_party_card_stats_status_tags_reached_beats_hanging_and_ende
 ## first player action is exactly "the update right after the encounter's
 ## first sync", this silently dropped the boss's first-hit flash/damage
 ## number and the first climb's sound on every single fight.
+## The beast's turn plays out on screen (queue, 2026-09-29): a 0.4 s hold, the
+## attack clip, the damage on its bite frame (16 of 40), then the new hand.
+func _test_enemy_turn_beats_land_in_order() -> void:
+	var b: Dictionary = Combat3D.enemy_turn_beats(4.0 / 3.0)
+	_expect(is_equal_approx(float(b["hold"]), 0.4), "the beast's turn opens on a 0.4 s hold")
+	_expect(is_equal_approx(float(b["bite"]), 0.4 + (4.0 / 3.0) * 16.0 / 40.0),
+		"the damage lands on frame 16 of the 40-frame attack clip")
+	_expect(float(b["hand"]) > float(b["bite"]), "the new hand deals after the number, not before")
+	var none: Dictionary = Combat3D.enemy_turn_beats(0.0)
+	_expect(float(none["bite"]) > float(none["hold"]), "a beast with no attack clip still bites after the hold")
+	_expect(Combat3D.enemy_turn_starts("", 0, 0, 1, 2), "a round advancing in the same fight stages the beast's turn")
+	_expect(not Combat3D.enemy_turn_starts("", -1, 0, -1, 1), "a fight's first snapshot is not a beast turn")
+	_expect(not Combat3D.enemy_turn_starts("", 0, 1, 3, 4), "a new encounter is not a beast turn")
+	_expect(not Combat3D.enemy_turn_starts("landed", 0, 0, 1, 2), "a turn already playing is not restarted")
+	_expect(not Combat3D.enemy_turn_starts("", 0, 0, 2, 2), "a snapshot inside the same round is not a beast turn")
+
+
 func _test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync() -> void:
 	# The encounter's opening snapshot: no prior state at all (matches this
 	# view's own field defaults: _prev_encounter = -1, empty arrays, hp = -1).

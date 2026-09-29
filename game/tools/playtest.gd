@@ -1425,6 +1425,13 @@ func _play() -> void:
 			var eb: Button = v.get("_end_btn")
 			action = "End Turn"
 			await _click(eb.get_global_rect().get_center())
+			# The beast's turn now plays out over ~1.5 s (wind-up, bite, new
+			# hand); judge the board it leaves, not the one mid-bite.
+			var et0 := Time.get_ticks_msec()
+			while is_instance_valid(v) and String(v.get("_enemy_stage")) != "" \
+					and Time.get_ticks_msec() - et0 < 5000:
+				await process_frame
+				_poll_popup(v)                   # the bite's number lands in here
 		# A foothold change is a climb (Combat3D.hunter_move_kind: "was != foot",
 		# nothing else) -- watch the hop itself (frame-strip + in-flight
 		# checks) instead of the blanket wait, so checklist item 3

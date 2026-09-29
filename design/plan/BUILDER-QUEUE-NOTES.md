@@ -814,3 +814,19 @@ Picture: `state=3dgrip`, a hunter hanging with the countdown at 3.
 - Harness: `endturn=N` could not reach round 4 on the cloud's software renderer (10 s failsafe), so the failsafe now grows 15 s per end-turn; new `thenend=N` presses End Turn after `console=`, log open, to shoot a resolution.
 - Frames: before (Sweep 6, both hunters red), after (Claw Sweep badge, only the Frog at 5 red), thrown (`... console=climb+5 thenend=2`: Frog 26 to 20 HP, Height 5 to 2, log line). The strip is after + thrown.
 - Grader: round 1 FAIL (throw not shown, badge silent on it); round 2 PASS.
+
+## The jackal's turn plays out on screen.
+
+Built 2026-09-29 14:18 EDT.
+
+- When a snapshot arrives with `round` advanced in the same fight (`Combat3D.enemy_turn_starts`), the view keeps the OLD board up and plays the turn out (`_enemy_stage`: windup -> attack -> landed -> ""):
+  - 0.0-0.4 s: hold; the intent badge pulses twice (scale 1.25); the hand band is hidden and End Turn disabled.
+  - 0.4 s: the existing `attack` clip starts. No new clips.
+  - bite = 0.4 + 16/40 of the clip (jackal clip 1.333 s, bite at 0.933 s): the new snapshot renders: HP, damage popups, hunter hops/falls (so a sweep's shake and hops land here too), next intent. `_react` no longer restarts the attack clip while a staged turn owns it.
+  - bite + 0.5 s: the new hand deals, End Turn comes back.
+- `enemy_turn_beats(clip_len)` and `enemy_turn_starts(...)` are static and pinned by `_test_enemy_turn_beats_land_in_order`.
+- The item's Test line was `endturn=1`, which only hands the turn to the Goblin; the beast acts on the second End Turn. The shots use `endturn=2`; Nick's Test link stays `endturn=1` so he presses the second End Turn himself and watches.
+- Harness: `enemyat=S` shoots S seconds into the beast's turn on the view's own clock, then freezes the scene so the capture is that beat. Strip = enemyat 0.1, 0.65, 0.94, 1.6. Before strip used wall clock 0.3, 0.8, 1.2, 2.2 (no staging existed).
+- Playtest waits for `_enemy_stage == ""` after End Turn (polling popups meanwhile) so it judges the settled board. Same three red checks as main; beast-behind-stone varied 3 (main, one run) vs 5-8 (this branch, four runs), all borderline 15.4-17.8% with drifting stones.
+- Grader: FAIL x3. Met: the hold, the number after the hold, the hand last. Not met: the pulse and the clip do not read in stills (the jackal is small and front-on; its head drops ~0.65 s but subtly); the sweep was not shot; the Frog's damage "7" covers the Frog (existing popup placement).
+

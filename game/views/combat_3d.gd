@@ -644,6 +644,17 @@ var _intent_kind := ""
 var _rebinding := ""
 var _rebind_btns := {}          # action id → the button showing its key
 var _prev_encounter := -1
+## The beast's turn, played out instead of resolved in zero seconds (queue item
+## "The jackal's turn plays out on screen", 2026-09-29). When a snapshot arrives
+## with the round advanced, the view keeps showing the OLD board while the
+## intent badge pulses and the attack clip winds up; the new snapshot lands on
+## the bite frame, and the new hand deals last. "" when no beast turn is playing;
+## else "windup" (badge pulse), "attack" (clip running), "landed" (number up,
+## hand still hidden). Beat times come from enemy_turn_beats().
+var _enemy_stage := ""
+var _enemy_t := 0.0
+var _enemy_beats := {}
+var _prev_round := -1
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
 var _climb: Dictionary = {}
@@ -1484,6 +1495,7 @@ func _process(delta: float) -> void:
 		_beast.scale = Vector3.ONE * _beast_scale * recoil
 		_beast.position.z = -_beast_punch * 0.35
 	_beast_punch = maxf(0.0, _beast_punch - delta * 3.5)
+	_step_enemy_turn(delta)
 	_last_popup_guard = maxf(0.0, _last_popup_guard - delta)
 	for i in range(_hunters.size()):
 		var h: Dictionary = _hunters[i]
@@ -1657,6 +1669,17 @@ func _refresh() -> void:
 		_coach.visible = false
 		return
 	_hud.visible = true
+	# A new round means the beast just took its turn. Hold the old board on
+	# screen and play the turn out; _step_enemy_turn calls back in on the bite.
+	var rnd := int(s.get("round", 0))
+	var enc_now := int(s.get("encounter", 0))
+	if enemy_turn_starts(_enemy_stage, _prev_encounter, enc_now, _prev_round, rnd):
+		_prev_round = rnd
+		_begin_enemy_turn()
+		return
+	_prev_round = rnd
+	if _enemy_stage in ["windup", "attack"]:
+		return                                   # the old board stays up until the bite
 	var boss: Dictionary = s["boss"]
 	_title.text = String(boss["name"])
 	_hp.text = "%d / %d" % [int(boss["hp"]), int(boss["max_hp"])]
@@ -5171,7 +5194,8 @@ func _react(s: Dictionary) -> void:
 		var hunter_dmg: Array = plan["hunter_dmg"]
 		var foot_actions: Array = plan["foot_actions"]
 		# The beast bit someone: that is its attack landing, so it is seen doing it.
-		if hunter_dmg.any(func(d): return int(d) > 0):
+		# Not when the staged turn already started the clip: this IS its bite frame.
+		if _enemy_stage == "" and hunter_dmg.any(func(d): return int(d) > 0):
 			_beast_play("attack")
 		for i in range(foots.size()):
 			if hunter_dmg[i] > 0 and i < _hunters.size() \
@@ -5765,6 +5789,68 @@ static func _find_anim(n: Node) -> AnimationPlayer:
 	return null
 
 
+## When each beat of the beast's turn lands, in seconds after End Turn resolved
+## it: a 0.4 s hold with the intent badge pulsing, then the attack clip, whose
+## bite is frame 16 of its 40 (0.4 of the clip) — the damage and popups land
+## there — then the new hand half a second later. A beast with no attack clip
+## bites 0.3 s after the hold.
+const ENEMY_HOLD := 0.4
+const ENEMY_BITE_FRAC := 16.0 / 40.0
+const ENEMY_HAND_AFTER := 0.5
+static func enemy_turn_beats(clip_len: float) -> Dictionary:
+	var bite := ENEMY_HOLD + (clip_len * ENEMY_BITE_FRAC if clip_len > 0.0 else 0.3)
+	return {"hold": ENEMY_HOLD, "bite": bite, "hand": bite + ENEMY_HAND_AFTER}
+
+
+## Whether this snapshot is the beast's turn resolving: same fight, the round
+## advanced, and no staged turn already playing. The first snapshot of a fight
+## (prev_round -1) and a new encounter never stage.
+static func enemy_turn_starts(stage: String, prev_enc: int, enc: int,
+		prev_round: int, rnd: int) -> bool:
+	return stage == "" and enc == prev_enc and prev_round >= 0 and rnd > prev_round
+
+
+func _begin_enemy_turn() -> void:
+	var clip := 0.0
+	if _beast_anim != null and _beast_anim.has_animation("attack"):
+		clip = _beast_anim.get_animation("attack").length
+	_enemy_beats = enemy_turn_beats(clip)
+	_enemy_t = 0.0
+	_enemy_stage = "windup"
+	_end_btn.disabled = true
+	_set_hand_shown(false)
+	if _intent_tag != null and _intent_tag.visible:
+		_intent_tag.pivot_offset = _intent_tag.size * 0.5
+		var tw := create_tween()
+		for _k in 2:
+			tw.tween_property(_intent_tag, "scale", Vector2.ONE * 1.25, 0.1)
+			tw.tween_property(_intent_tag, "scale", Vector2.ONE, 0.1)
+
+
+func _step_enemy_turn(delta: float) -> void:
+	if _enemy_stage == "":
+		return
+	_enemy_t += delta
+	if _enemy_stage == "windup" and _enemy_t >= float(_enemy_beats["hold"]):
+		_enemy_stage = "attack"
+		_beast_play("attack")
+	if _enemy_stage == "attack" and _enemy_t >= float(_enemy_beats["bite"]):
+		_enemy_stage = "landed"
+		_refresh()                               # damage, popups, hops, next intent
+	if _enemy_stage == "landed" and _enemy_t >= float(_enemy_beats["hand"]):
+		_enemy_stage = ""
+		_set_hand_shown(true)
+		_refresh()
+
+
+## The hand band, hidden while the beast's turn plays out: the old hand is gone
+## (discarded) and the new one has not been dealt yet.
+func _set_hand_shown(on: bool) -> void:
+	var band := _hand_row.get_parent() as Control if _hand_row != null else null
+	if band != null:
+		band.visible = on
+
+
 ## Play one of the beast's own animations, then settle back into its idle.
 ## A no-op for the unrigged (Python-built) beasts.
 func _beast_play(anim: String) -> void:
@@ -6046,7 +6132,7 @@ func _render_hand() -> void:
 	_status.visible = bool(outcome["status_visible"])   # a transient instruction, not an identity
 	_render_energy(me)
 	_show_switch_target(players)
-	_end_btn.disabled = bool(priv.get("ended", false))
+	_end_btn.disabled = bool(priv.get("ended", false)) or _enemy_stage != ""
 	if bool(outcome["hover_reset"]):
 		_hand_hover = null
 		_timing_card = null

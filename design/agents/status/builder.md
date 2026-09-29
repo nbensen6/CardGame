@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T13:19
-working_on: "Give the jackal a swipe that cares where you are?"
+updated: 2026-09-29T14:18
+working_on: "The jackal's turn plays out on screen."
 ---
 
 # builder
@@ -13,19 +13,23 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 13:19 EDT
+2026-09-29 14:18 EDT
 
-- **Did:** Jackal round 4 is now a Claw Sweep: only hunters at Height 4+ take 6 and get thrown to Height 2.
-- **Worked?** Yes, the badge, red border and throw all show; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-claw-sweep-before.png]] then ![[frames/builder/2026-09-29-claw-sweep-after-strip.png]]
-- **Ask:** Round 4 claw sweep hits and throws only Height 4+ down to Height 2. Right?
+- **Did:** End Turn now holds, pulses the intent, plays the bite, lands the damage, then deals the hand.
+- **Worked?** Partly: the order shows, but the bite pose is too subtle in stills; VERDICT: FAIL.
+- **Look at:** ![[frames/builder/2026-09-29-enemy-turn-before.png]] then ![[frames/builder/2026-09-29-enemy-turn-after.png]]
+- **Ask:** Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
 
 ## Notes
 
-- **Found:** after a claw-sweep throw the Frog's party card reads ↑2/5 but the height gauge reads "3 up".
+- **Found:** a hunter's damage number covers that hunter's body at the rest camera.
+- **Found:** the sweep's staged turn (shake, hops on the bite) has no frame yet.
+- **Found:** playtest beast-behind-stone swings 3 to 8 run to run; stones drift on the 15% line.
+- **Found:** the jackal's attack clip barely reads front-on at rest distance.
 
 ## Log
 
+- 2026-09-29 14:18 EDT — builder: beast turn staged (0.4 s hold + badge pulse, attack clip, damage on frame 16/40, hand 0.5 s later); harness enemyat=; playtest waits the turn out; grader FAIL x3 (bite unreadable in stills), escalated; tests green, pushed.
 - 2026-09-29 13:19 EDT — builder: jackal round 4 attack_all 6 -> claw_sweep 6 (Height 4+, throws to 2); harness thenend=; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 12:53 EDT — builder: Let the Frog hang? reworded for Nick (safe stones 2/4, hanging at 1/3, Frog +1 always lands safe); grip frame embedded; nothing built; tests green, pushed.
 - 2026-09-29 12:39 EDT — builder: cinder_jackal max_hp 42 -> 70 (hurt switch at 28), test pins it; burn rework proposed, not built; grader PASS; tested, pushed.
