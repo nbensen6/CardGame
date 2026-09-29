@@ -10,11 +10,12 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Dev camera never survives a launch.**
+- [ ] 👀 **Dev camera never survives a launch.**
+      **Session, 2026-09-28 20:35 ET:** you saw Dev because that ticket's Test link pressed F8 for you on launch (it was written to prove the flip). Not a conflict with your own game. Test line changed: no key press. The fix itself landed at 19:40.
       **Nick, 2026-09-28 19:59 ET:** i loaded this test now, then pressed f8 to go to player, then pressed test now again and it loaded in dev. do i need to load my own game to stop conflictions?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dev camera never survives a launch.|details]]
-      Ask: Press F8, relaunch: does the game open on the Player camera?
-      Test: state=3d beast=cinder_jackal press=F8
+      Ask: Click Test, press F8 (Dev), close it, click Test again. Player camera now? Tick, or say.
+      Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-28-dev-camera-launch-strip-after.png|420]] ^dev-camera-never-survives-a-launch
 - [x] **Stones: first by the hunter, last in front of the head.**
       **Nick, 2026-09-28 18:44 ET:** this is fine. the other character does not need to be on the screen when you select one. IE goblin does not need to be on the screen while selecting the frog. --- side note the came is crashing while testing.
