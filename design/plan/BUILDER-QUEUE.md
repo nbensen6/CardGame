@@ -150,20 +150,19 @@ into Now.
 
 - [ ] **A missed timed card: keep the card?**
       **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: Today a miss deletes the card for the whole fight with no effect. Yes, no, or your own number? ^a-missed-timed-card-keep-the-card
+      Ask: A miss deletes the card for the whole fight. Yes = a miss plays the card's plain value and you keep the card. No = leave it. ^a-missed-timed-card-keep-the-card
 - [ ] **One tap for ordinary timed cards?**
       **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: Today every timed card needs three taps and one bad tap loses it. Yes, no, or your own number? ^one-tap-for-ordinary-timed-cards
+      Ask: Every timed card needs 3 taps today. Yes = 1 tap, except Satchel Charge keeps 3. No = leave it. ^one-tap-for-ordinary-timed-cards
 - [ ] **Jackal HP 42 to 70?**
       **Session, 2026-09-29 11:05 ET:** With good timing the fight ends in under two rounds and the jackal's hurt pattern and Enrage never happen. Default if you say yes: HP 70, nothing else changes. Say a number if you want a different one. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: With good timing the fight ends in under two rounds and the jackal's hurt pattern and Enrage never happen. Yes, no, or your own number? ^jackal-hp-42-to-70
+      Ask: The fight ends in under 2 rounds. Yes = jackal HP 70 so its later moves happen. Or give a number. ^jackal-hp-42-to-70
 - [ ] **Let the Frog hang?**
       **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Yes, no, or your own number? ^let-the-frog-hang
+      Ask: The Frog never meets the grip bar. Yes = its attacks that climb can land it on a hanging height. No = leave it. ^let-the-frog-hang
 - [ ] **Give the jackal a swipe that cares where you are?**
       **Session, 2026-09-29 11:05 ET:** Its only knockdown is a sweep on round 4 that hits everyone. Default if you say yes: round 4 becomes a high swipe that throws anyone at height 4 or above, so the intent badge makes you ask where you are. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: Its only knockdown is a sweep on round 4 that hits everyone. Yes, no, or your own number? ^give-the-jackal-a-swipe-that-cares-where
-
+      Ask: Yes = round 4 becomes a high swipe that throws anyone at height 4 or above. No = keep the sweep that hits everyone. ^give-the-jackal-a-swipe-that-cares-where
 ## Open decisions, with the default the builder takes if Nick says nothing
 
 - #14 stones: five per hunter, as built.
