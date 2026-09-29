@@ -702,6 +702,26 @@ them from this item (proposed at the bottom of the queue). Grader
 `-rest-before/-rest-tried`. The Test link shows the game as it is
 (nothing shipped), at the top stone.
 
+**Builder, 2026-09-29 17:19 EDT:** one red check left, `beast-behind-stone`, now 21 fails
+(was 3-12). All 21 are in the Goblin's view: since the playtest presses
+Switch (16:37 run) the Goblin's camera is checked for the first time. From
+behind the Goblin, its own first three stones (stones 5, 6, 7; the Goblin's
+line is 5-9) cover 19-33%, 40-47% and 13-24% of the jackal's drawn pixels.
+From behind the Frog, the Frog's own line (0-4) covers at most 11%, and
+steps 5-8 and 13+ pass. The two lines are exact mirror images about the
+jackal's box centre (x -1.07, which is also `_head_x`): Frog x -5.27 to
+-3.87, Goblin 3.13 to 1.73, same y and z (81 to 23). So the geometry is
+Nick's V layout working as drawn; the difference is in the jackal's own
+silhouette, which fills more of the Goblin's line of sight. Nothing to fix
+in the check (the pixel diff is real) and nothing in the layout without
+changing what Nick approved, so no code changed and this is escalated as the
+taste call the Session 14:35 line allows. Levers if Nick wants less cover:
+a wider `ROUTE_FAN_WIDTH` (both lines open further out), or raise
+`BEAST_STONE_COVER_MAX`, which was calibrated from the Frog's view only.
+No grader run: nothing shipped, so before and after are the same frame
+(`2026-09-29-goblin-stairs-cover-jackal.png`, `state=3d slot=1`).
+`run_tests.gd`: ALL TESTS PASSED.
+
 ## Dev camera never survives a launch.
 
 Original item: F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast). Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera.

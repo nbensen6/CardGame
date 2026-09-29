@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T17:04
-working_on: "One tap for ordinary timed cards?"
+updated: 2026-09-29T17:19
+working_on: "playtest.cmd green."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 17:04 EDT
+2026-09-29 17:19 EDT
 
-- **Did:** The drag now lands anywhere in a timed card's chain, and timing notes draw above the hand.
-- **Worked?** Partly: drag order and z-order work; VERDICT: FAIL, drag ends still touch the card tops.
-- **Look at:** ![[frames/builder/2026-09-29-drag-order-before.png]] then ![[frames/builder/2026-09-29-drag-order-after.png]]
-- **Ask:** Drag order is random now; should notes also stay out of the card band?
+- **Did:** Measured the last red check; the Goblin's own stairs hide up to half the jackal.
+- **Worked?** No, nothing changed: how much stone may cover the jackal is Nick's call.
+- **Look at:** ![[frames/builder/2026-09-29-goblin-stairs-cover-jackal.png]] (Goblin's view; before = after, no change shipped)
+- **Ask:** Goblin's own stairs hide up to half the jackal. Accept, or fan them wider?
 
 ## Notes
 
-- **Found:** timing notes can open over the hunter's own body or legs.
-- **Found:** timing notes may dip into the card band; the walk's floor could be the hand's top edge.
+- **Found:** stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin side covers it.
 
 ## Log
 
+- 2026-09-29 17:19 EDT — builder: playtest.cmd green: 1 red check left, beast-behind-stone 21, all in the Goblin's view (new since the playtest presses Switch); stones 5-7 = Goblin's own first three, 19-47% pixel; Frog's own line <= 11%; routes mirror-symmetric (x -5.27..-3.87 vs 3.13..1.73 about box centre -1.07); no code change, escalated as a taste call; tests green, pushed.
 - 2026-09-29 17:04 EDT — builder: drag slot rolled per play (drag_order, note_pattern drag_at), HitCircle tap-drag-tap, circle z 100 over the hand, NOTE_RISE 100, lookahead floor + dark disc; grader FAIL x3 (drag ends touch card tops), escalated; tests green, pushed.
 - 2026-09-29 16:37 EDT — builder: playtest presses Switch once a round mid-turn (first press unconditional, later only while the held hunter hangs); checks grip-drained-away, switch-dead, switch-never-pressed; run: 1 press, grip 0.271 held; grader PASS; tests green, pushed.
 

@@ -109,10 +109,12 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest presses Switch.|details]]
       Ask: Test-only, nothing to look at: the playtest now presses Switch. Tick.
       Test: state=3d beast=cinder_jackal ^playtest-presses-switch
-- [ ] **playtest.cmd green.**
+- [ ] 👀 **playtest.cmd green.**
       **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
-      Shot: none; the proof is `playtest` printing no FAIL. ^playtest-cmd-green
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20slot%3D1) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
+      Ask: Goblin's own stairs hide up to half the jackal. Accept, or fan them wider?
+      Test: state=3d beast=cinder_jackal slot=1
+      ![[agents/frames/builder/2026-09-29-goblin-stairs-cover-jackal.png|420]] ^playtest-cmd-green
 - [x] **Dev camera never survives a launch.**
       **Nick, 2026-09-28 20:44 ET:** goes back to player
       **Session, 2026-09-28 21:12 ET:** that is a yes; closed.
@@ -282,3 +284,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The playtest's grip-while-away check only caught one hanging step in 40; a scripted hang would pin it.
 - [ ] (proposed) Timing notes can still open over the hunter's own body or legs (drag head over the Goblin).
 - [ ] (proposed) Timing notes may dip into the card band; clamp the walk's floor to the hand's top edge.
+- [ ] (proposed) Stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin's side covers it (30-47% vs <= 11%).
