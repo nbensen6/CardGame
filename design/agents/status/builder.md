@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T12:30
-working_on: "A missed timed card: keep the card?"
+updated: 2026-09-29T12:39
+working_on: "Jackal HP 42 to 70?"
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 12:30 EDT
+2026-09-29 12:39 EDT
 
-- **Did:** A missed timed card now plays its plain value and discards; hitting the timing adds the bonus.
-- **Worked?** Yes, grader VERDICT: PASS on round three (earlier shots never showed the miss or a hit).
-- **Look at:** ![[frames/builder/2026-09-29-miss-keeps-card-before.png]] then ![[frames/builder/2026-09-29-miss-keeps-card-after.png]]
-- **Ask:** A miss now plays plain value (8), a hit adds the bonus (12). Right?
+- **Did:** The Cinder Jackal now has 70 HP instead of 42; damage and moves unchanged.
+- **Worked?** Yes, grader VERDICT: PASS (bar reads 70 / 70, nothing else changed).
+- **Look at:** ![[frames/builder/2026-09-29-jackal-hp-70-before.png]] then ![[frames/builder/2026-09-29-jackal-hp-70-after.png]]
+- **Ask:** Jackal is 70 HP now. Burn bite proposed in Proposed; move it up?
 
 ## Notes
 
-- **Found:** with the log open, the HOLD ON grip banner covers the first letters of each log line.
+- **Found:** the damage/burn rework you asked for is not built; a Burn bite proposal waits in Proposed.
 
 ## Log
 
+- 2026-09-29 12:39 EDT — builder: cinder_jackal max_hp 42 -> 70 (hurt switch at 28), test pins it; burn rework proposed, not built; grader PASS; tested, pushed.
 - 2026-09-29 12:30 EDT — builder: a missed timed card resolves at plain value and discards (no Rhythm, counts as played); harness miss=1/nail=1; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-29 12:19 EDT — builder: timing_plan (cost -> taps, drag at cost 2+ or climb 2+), HitCircle taps-then-drag with pointer-follow, notes pinned in screen space around the card (note_pattern, reach 230, rise 150); grader FAIL (notes over the hunter) then PASS; tested, pushed.
 - 2026-09-29 11:58 EDT — builder: TOP_STONE_PULLBACK 6 in top_hold_z_for (whole route follows), stones shallower toward the beast (stone_depth_ratio 2.0 -> 0.9); grader FAIL x2 (12: chest hidden; 12+taper: jackal too small) then PASS at 6; tested, pushed.

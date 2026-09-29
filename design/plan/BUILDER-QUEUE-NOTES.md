@@ -778,3 +778,17 @@ The after frame is a 2x2 grid of four shots, each `state=3dosu beast=cinder_jack
 - Harness: `miss=1` / `nail=1` tap the first timed card and resolve its circle as a miss / perfect, log panel open. Measured on Lash Out at the sigil: miss 8 damage, perfect 12; below the sigil the armoured hide chips both to 1, which is why the Test line climbs first.
 - Tests: six old "fumble slips away" tests rewritten to the new rule (plain damage, printed block, printed climb, discard +1, counts toward nth_card, no Rhythm).
 - Grader: FAIL (shot did not show the miss), FAIL (no hit to compare), PASS with the before frame and a miss | hit strip.
+
+## Jackal HP 42 to 70?
+
+2026-09-29 12:39 EDT. Nick 11:59: "yes, but we need to adjust how the jackal deals damage ...
+special abilities ... potentially bring in a burn mechanic."
+
+- Built: `bosses.json` cinder_jackal `max_hp` 42 -> 70. Nothing else changed
+  (moves, hurt_moves, hurt_pct 0.4, weak point). Hurt switch now at 28 HP.
+- Test: `_test_cinder_jackal_has_70_hp_so_its_hurt_moves_happen` pins 70 HP and
+  the hurt switch between 29 and 27.
+- Not built: the damage rework / burn. Nick said "start thinking", which is a
+  design call, so it went to BUILDER-PROPOSED.md as a proposal (Burn bite) for
+  him to move up or change.
+- Grader: VERDICT: PASS (bar 42/42 -> 70/70, nothing else changed).

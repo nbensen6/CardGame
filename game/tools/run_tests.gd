@@ -24,6 +24,8 @@ func _init() -> void:
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
 	_test_boss_pattern_loops()
+	# builder, 2026-09-29: Nick said yes to Jackal HP 42 to 70
+	_test_cinder_jackal_has_70_hp_so_its_hurt_moves_happen()
 	# backlog #40: beast moves that react to where you are
 	_test_backlog40_min_height_condition_picks_fallback_when_unmet()
 	_test_backlog86_max_height_condition_picks_fallback_when_unmet()
@@ -30579,3 +30581,16 @@ func _test_settings_wheel_on_backdrop_does_not_close() -> void:
 	click.button_index = MOUSE_BUTTON_LEFT
 	_expect(Combat3D._is_wheel(wheel), "a wheel turn reads as a scroll")
 	_expect(not Combat3D._is_wheel(click), "a tap still reads as a tap (closes the menu)")
+
+
+## Nick, 2026-09-29 11:59: yes to "Jackal HP 42 to 70?". At 42 a good-timing
+## fight ended in under two rounds and the hurt pattern (below 40%) and Enrage
+## never came up. 70 HP puts the hurt switch at 28.
+func _test_cinder_jackal_has_70_hp_so_its_hurt_moves_happen() -> void:
+	var b: Boss = Content.build_boss("cinder_jackal")
+	_expect(b.max_hp == 70 and b.hp == 70, "the Cinder Jackal ships at 70 HP [max_hp=%d hp=%d]" % [b.max_hp, b.hp])
+	b.hp = 29
+	var healthy_ok: bool = int(b.current_move()["value"]) == 7  # moves[0]
+	b.hp = 27
+	var hurt_ok: bool = int(b.current_move()["value"]) == 12  # hurt_moves[0]
+	_expect(healthy_ok and hurt_ok, "the jackal's hurt moves start below 40%% of 70 (28)")

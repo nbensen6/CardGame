@@ -24,10 +24,13 @@ run failed.
       Ask: Cost 0: 1 tap, 1: 2 taps, 2: 2 + drag, 3: 3 + drag. Right?
       Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
       ![[agents/frames/builder/2026-09-29-cost-timing-after.png|420]] ^one-tap-for-ordinary-timed-cards
-- [ ] **Jackal HP 42 to 70?**
+- [ ] 👀 **Jackal HP 42 to 70?**
       **Nick, 2026-09-29 11:59 ET:** yes, but we need to adjust how the jackal deals damage. lets start thinking about any special abilities we can give it. potentially bring in a burn mechanic.
       **Session, 2026-09-29 11:05 ET:** With good timing the fight ends in under two rounds and the jackal's hurt pattern and Enrage never happen. Default if you say yes: HP 70, nothing else changes. Say a number if you want a different one. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: The fight ends in under 2 rounds. Yes = jackal HP 70 so its later moves happen. Or give a number. ^jackal-hp-42-to-70
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Jackal HP 42 to 70?|details]]
+      Ask: Jackal is 70 HP now. Burn bite proposed in Proposed; move it up?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-jackal-hp-70-after.png|420]] ^jackal-hp-42-to-70
 - [ ] **Let the Frog hang?**
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
       **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -236,3 +239,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **3dosu without hold= misses the circle.** Under the cloud's software renderer 26 frames close the window before the shot.
 - [ ] (proposed) **Sweep-bar face has no drag.** The Settings bar face gets the cost-based tap count but not the drag.
 - [ ] (proposed) **HOLD ON banner covers the log.** With the log open, the grip banner hides the first letters of each log line.
+- [ ] (proposed) **Jackal damage rework not started.** Nick asked to rethink how the jackal deals damage; only HP changed.

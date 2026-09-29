@@ -686,7 +686,7 @@
     "cinder_jackal": {
       "name": "The Cinder Jackal",
       "art": "res://assets/portraits/cinder_jackal.png",
-      "max_hp": 42,
+      "max_hp": 70,
       "weak_point_height": 5,
       "ledges": [2,4],
       "weak_point_threshold": 16,

@@ -204,3 +204,4 @@ appends here, never to the queue.
 - [ ] **Simple shapes, let the light do the work.** Same video: "don't ask AI for realistic meshes; a house is boxes and a roof, the light does the rest." Our stones are crates today; a low-poly boulder from a Blender script (one line per piece, rerun on a fix) plus the lighting panel above may read better than any generated mesh.
 
 - [ ] (proposed) **midair= samples drift run to run.** The same midair=0.95 lands mid-hop one run and on the stone the next, so before/after midair strips are not comparable.
+- [ ] **Jackal Burn bite.** Nick 2026-09-29: rethink the jackal's damage, maybe burn. One idea: its round-3 bite (9) becomes a 5 bite that applies 3 Burn (lose 1 HP a turn per stack, stacks fall by 1 each turn), so damage lands over time and block alone does not answer it.
