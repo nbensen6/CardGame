@@ -10,8 +10,9 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Dev camera never survives a launch.**
+- [x] **Dev camera never survives a launch.**
       **Nick, 2026-09-28 20:44 ET:** goes back to player
+      **Session, 2026-09-28 21:12 ET:** that is a yes; closed.
       **Session, 2026-09-28 20:35 ET:** you saw Dev because that ticket's Test link pressed F8 for you on launch (it was written to prove the flip). Not a conflict with your own game. Test line changed: no key press. The fix itself landed at 19:40.
       **Nick, 2026-09-28 19:59 ET:** i loaded this test now, then pressed f8 to go to player, then pressed test now again and it loaded in dev. do i need to load my own game to stop conflictions?
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dev camera never survives a launch.|details]]
