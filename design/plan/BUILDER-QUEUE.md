@@ -97,7 +97,7 @@ run failed.
       **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
       Ask: Grader failed this: two checks still red. Keep fixing one per run?
-      ![[agents/frames/builder/2026-09-28-playtest-hop-ceiling-after.png|420]] ^playtest-cmd-green
+      ![[agents/frames/builder/2026-09-28-playtest-fit-squash-after.png|420]] ^playtest-cmd-green
 
 ## Waiting on Nick
 
@@ -148,3 +148,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).
 - [ ] (proposed) **Playtest's hop-leftover-squash check is stale.** It still wants body scale 1 after a hop; hunters now rest at their fit scale (0.61/0.38), so it fails every hop.
 - [ ] (proposed) The fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.
+- [ ] (proposed) **beast-behind-stone is flaky.** The same code gives 10 or 12 fails; stones 5-7 sit at 15-24%, straddling the 15% line.

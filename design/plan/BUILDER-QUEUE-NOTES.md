@@ -626,6 +626,23 @@ jump), beast-behind-stone 4 (stone 7, 18-27%; waits on the stairs
 decision). `run_tests.gd`: ALL TESTS PASSED. No 3D shot for a
 "Shot: none" item; the frames are the playtest summary, before/after.
 
+**Builder, 2026-09-28 20:21 EDT:** `hop-leftover-squash` is now 0 fails (was 10), new
+red since the 18:55 fit-scale fix. The game was right, the check was
+stale: hunters rest at their fit scale (Frog 0.61, Goblin 0.38,
+`Combat3D.hunter_rest_scale`), and the check still compared every landing
+to Vector3.ONE, so each hop "landed 0.39 off". `_scale_dev` now measures
+relative to the body's rest scale (tested in run_tests.gd). The same
+change un-silences `hop-no-squash`: in-flight squash read 0.52 against 1
+(always "squashing"), it now reads 0.21 of rest, a real squash that
+passes. `beast-behind-stone` swings on unchanged code: two before-code
+runs gave 10 and 12, two after-code runs 12 and 12 (stones 5-7 at
+15-24%, straddling the 15% line). Still red: hunter-lost-mid-hop 1
+(step 9, drawn in 5/16 frames; next), beast-behind-stone 12 (waits on
+the stairs decision). `run_tests.gd`: ALL TESTS PASSED. Grader
+`VERDICT: FAIL` twice, on the parent's "zero checks" done-when, which one
+run cannot reach; it scored "one red check cleared this run" MET. Left
+`[ ]` per the Session 14:35 line (one check per run, no escalation).
+
 ## Dev camera never survives a launch.
 
 Original item: F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast). Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera.

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T19:40
-working_on: "Dev camera never survives a launch."
+updated: 2026-09-28T20:21
+working_on: "playtest.cmd green."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 19:40 EDT
+2026-09-28 20:21 EDT
 
-- **Did:** F8's Dev camera now lasts one launch only, with a standing DEV CAMERA tag while on.
-- **Worked?** Yes, the relaunch opens on the Player camera and the tag shows under Dev. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-28-dev-camera-launch-before.png]] then ![[frames/builder/2026-09-28-dev-camera-launch-strip-after.png]]
-- **Ask:** Press F8, relaunch: does the game open on the Player camera?
+- **Did:** Playtest's squash check now measures hunters against their own resting size, not size 1.
+- **Worked?** Partly: that check went 10 fails to 0, two others still red. VERDICT: FAIL (item needs zero checks; one-per-run MET)
+- **Look at:** ![[frames/builder/2026-09-28-playtest-fit-squash-before.png]] then ![[frames/builder/2026-09-28-playtest-fit-squash-after.png]]
+- **Ask:** nothing
 
 ## Notes
 
-- **Found:** the fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.
+- **Found:** beast-behind-stone is flaky: the same code gives 10 or 12 fails, stones straddle 15%.
 
 ## Log
 
+- 2026-09-28 20:21 EDT — builder: playtest hop-leftover-squash measured from the fit scale (10 -> 0 fails), hop-no-squash un-silenced; grader FAIL x2 on the zero-checks done-when; tested, pushed.
 - 2026-09-28 19:40 EDT — builder: Dev camera is per-launch (never saved), DEV CAMERA corner tag; grader PASS; tested, pushed.
 - 2026-09-28 19:30 EDT — builder: climbing camera keeps the rest pitch (0.08) and lens lift; CLIMB_FOCUS_PITCH_MAX deleted; grader FAIL x2 (midair phases, then misread facing), escalated; tested, pushed.
 - 2026-09-28 19:05 EDT — builder: harness play mode (Test this now) no longer arms the 10 s shot failsafe that quit the window; grader FAIL (wanted Goblin view) then PASS; tested, pushed.

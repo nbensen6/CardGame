@@ -1888,8 +1888,9 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3, to_foot: int) -> void:
 	await _check_hop_visibility(node, body, cam, flight, cam_samples, offscreen_samples)
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
+	var rest_scale: Vector3 = Combat3D.hunter_rest_scale(body) if is_instance_valid(body) else Vector3.ONE
 	_check_hop_pop(flight)
-	_check_hop(flight, climb_from, landed, landed_scale)
+	_check_hop(flight, climb_from, landed, landed_scale, rest_scale)
 	if is_instance_valid(v):
 		await _check_hunter_on_stone(v, node, cam, to_foot)
 
@@ -2351,7 +2352,11 @@ func _check_hop_intent_tag(checked_frames: int, overlap_frames: int) -> void:
 ## other half of the gate: below it, judge nothing, whatever the spatial
 ## check says (see the constant's own doc comment for the live case this
 ## closes, 2026-09-23).
-func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale: Vector3) -> void:
+## `rest_scale` is the body's own fit scale (Combat3D.hunter_rest_scale):
+## hunters rest at 0.61/0.38, not 1, since the fit pass (2026-09-28), so
+## every squash deviation is measured against that, never Vector3.ONE.
+func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale: Vector3,
+		rest_scale: Vector3 = Vector3.ONE) -> void:
 	if flight.size() < 2:
 		_note("step %d: hop finished before it could be sampled (too fast for this frame rate) -- not checked" % _step)
 		return
@@ -2359,7 +2364,7 @@ func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale:
 	var max_scale_dev := 0.0
 	for f in flight:
 		peak_y = maxf(peak_y, (f["pos"] as Vector3).y)
-		max_scale_dev = maxf(max_scale_dev, _scale_dev(f["scale"]))
+		max_scale_dev = maxf(max_scale_dev, _scale_dev(f["scale"], rest_scale))
 	var total_dist := from_pos.distance_to(to_pos)
 	var first_dist := (flight[0]["pos"] as Vector3).distance_to(from_pos)
 	var covered_from_start := flight.size() >= MIN_HOP_SAMPLES \
@@ -2370,12 +2375,12 @@ func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale:
 			_fail("hop-flat", "step %d: hop peak y=%.2f never rose above its endpoints (%.2f -> %.2f) -- reads as a slide, not a jump"
 				% [_step, peak_y, from_pos.y, to_pos.y])
 		if max_scale_dev < 0.03:
-			_fail("hop-no-squash", "step %d: hunter body scale never left Vector3.ONE (max deviation %.3f) during the hop -- no anticipation/impact squash"
+			_fail("hop-no-squash", "step %d: hunter body scale never left its rest scale (max deviation %.3f) during the hop -- no anticipation/impact squash"
 				% [_step, max_scale_dev])
-	var end_dev: float = _scale_dev(landed_scale)
+	var end_dev: float = _scale_dev(landed_scale, rest_scale)
 	if end_dev > 0.03:
-		_fail("hop-leftover-squash", "step %d: landed with body scale %v, %.3f off Vector3.ONE -- squash never recovered (a pop at the end)"
-			% [_step, landed_scale, end_dev])
+		_fail("hop-leftover-squash", "step %d: landed with body scale %v, %.3f off its rest scale %v -- squash never recovered (a pop at the end)"
+			% [_step, landed_scale, end_dev, rest_scale])
 	var coverage_note := "from the start"
 	if not covered_from_start:
 		coverage_note = "too few samples, arc/squash not judged" if flight.size() < MIN_HOP_SAMPLES \
@@ -2384,8 +2389,10 @@ func _check_hop(flight: Array, from_pos: Vector3, to_pos: Vector3, landed_scale:
 		% [_step, flight.size(), coverage_note, peak_y, from_pos.y, to_pos.y, max_scale_dev])
 
 
-func _scale_dev(s: Vector3) -> float:
-	var d := (s - Vector3.ONE).abs()
+## Relative deviation from `rest` per axis (0.03 = 3% squash, whatever the
+## body's fit scale is).
+static func _scale_dev(s: Vector3, rest: Vector3 = Vector3.ONE) -> float:
+	var d := (s / rest - Vector3.ONE).abs()
 	return maxf(d.x, maxf(d.y, d.z))
 
 

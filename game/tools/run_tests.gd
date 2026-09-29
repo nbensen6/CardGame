@@ -928,6 +928,7 @@ func _init() -> void:
 	_test_backlog86_cancel_pending_tween_kills_the_old_tween_and_body_scale()
 	_test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running()
 	_test_cancel_pending_tween_restores_the_fit_scale_not_one()
+	_test_playtest_squash_is_measured_from_the_fit_scale()
 	_test_hunter_on_a_stone_rides_its_drift()
 	# backlog #86 duty 2 (this turn): the per-frame idle sway raced those same
 	# tweens from the other side, rewriting node.position.y every frame with
@@ -21886,6 +21887,20 @@ func _test_cancel_pending_tween_restores_the_fit_scale_not_one() -> void:
 	_expect(Combat3D.hunter_rest_scale(plain).is_equal_approx(Vector3.ONE),
 		"a body with no stored fit scale rests at 1")
 	plain.free()
+
+
+## playtest.gd's hop-leftover-squash compared a landed body to Vector3.ONE,
+## so every hop failed once hunters rested at their fit scale (0.61/0.38).
+## Squash is now measured relative to the body's own rest scale.
+func _test_playtest_squash_is_measured_from_the_fit_scale() -> void:
+	var pt: GDScript = load("res://tools/playtest.gd")
+	var rest := Vector3.ONE * 0.38
+	_expect(is_zero_approx(pt._scale_dev(rest, rest)),
+		"a hunter landed at its own fit scale has no leftover squash")
+	_expect(absf(pt._scale_dev(Vector3(0.38, 0.38 * 0.8, 0.38), rest) - 0.2) < 0.001,
+		"a 20% squash reads 0.2 whatever the fit scale")
+	_expect(absf(pt._scale_dev(Vector3.ONE * 1.1) - 0.1) < 0.001,
+		"a body with no fit scale is still measured against 1")
 
 
 ## A hunter standing on a stone moves with that stone's drift; one on the
