@@ -940,6 +940,14 @@ Builder, 2026-09-29 15:02 EDT.
 - Test: `_test_hunters_lunge_on_attack_and_flinch_on_hit` pins both beats and the attribution rule.
 - Grader: FAIL (lunge not visible, hit direction unclear, Goblin unjudgeable), then PASS.
 
+Builder, 2026-09-29 18:59 EDT, on Nick's "the scenario doesn't show this properly also frog is stuck" (17:14).
+
+- Cause: the `3dstrike` harness seeked the lunge to its peak and PAUSED the tween so a still could catch it. In `play` (Test this now) nothing ever unpaused it, so the Frog hung in its lunge against the jackal's face for good. It also snapped both hunters up to the sigil first, so the one pose Nick saw was a close-up of the Frog clipping the head. The game's own lunge was never stuck.
+- Fix: `strike_holds_beat(play, beat)`: only an unattended shot holds a beat; test pins it. New `beat=loop`: hunters stay on the ground (no sigil snap), the Frog lunges (the beast takes a strike), comes home, flinches white, comes home. In `play` it runs three rounds on the real clock and then the fight is his, live. Unattended it seeks each beat with `custom_step` (a software-rendered frame is longer than the whole 0.35 s lunge; a real-clock shutter caught nothing) and writes a labelled 2x2: rest, strike peak, home again, hit peak.
+- The shot widens the lens 1.6x (the view never writes fov) so the Goblin's stone is in frame: LOOP log shows the Goblin at (1163, 397) +-2 px in all four frames; Frog body 0 -> (0, 0.55, -1.6) scale 0.61 -> 0.79 -> home 0 -> (0, 0, 1.0) scale 0.55 -> home.
+- Test link and Test line now carry `beat=loop`.
+- Grader: FAIL (panels unlabelled, no rest-then-strike order, Goblin out of frame), then PASS.
+
 ## Played cards fly to their target.
 
 Builder, 2026-09-29 15:30 EDT.

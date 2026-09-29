@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T18:44
-working_on: "Timing notes open at the hold on the beast."
+updated: 2026-09-29T18:59
+working_on: "Hunters lunge when they attack and flinch when hit."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 18:44 EDT
+2026-09-29 18:59 EDT
 
-- **Did:** Timing notes now stop above the top of the hand and steer around the hunter.
-- **Worked?** Yes, 0 of 14 rolls over the cards, was 5 of 12; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-notes-off-hand-before.png]] then ![[frames/builder/2026-09-29-notes-off-hand-after.png]]
-- **Ask:** Notes now stay above the cards and off the hunter. Still see any over cards?
+- **Did:** Strike test no longer freezes the Frog; it lunges, flinches, comes home, then hands you the fight.
+- **Worked?** Yes, frog moves and returns, Goblin stays still; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-strike-stuck-before.png]] then ![[frames/builder/2026-09-29-strike-live-after.png]]
+- **Ask:** Frog no longer freezes: it lunges, flinches white, three times, then yours. Right?
 
 ## Notes
 
-- **Found:** mid-climb, note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
+- **Found:** on the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
 
 ## Log
 
+- 2026-09-29 18:59 EDT — builder: 3dstrike no longer pauses the beat in play (strike_holds_beat); new beat=loop runs lunge/flinch from the ground, labelled 2x2 shot with widened lens; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:44 EDT — builder: timing notes floored at the hand top (notes_floor, _hand_top, pattern_shove floor) and kept off the hunter (note_pattern avoid, NOTE_BESIDE 1.15); harness rest=1 + lowest-note line; old 5/12 rolls over the hand, new 0/14; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:23 EDT — builder: grip clock item: grip timer already off since 17:26 (GRIP_TIMER_ON=false); verified 3dgrip GRIP-OFF OK, no bar, no slip; no code change; grader PASS; tests green, pushed.
 

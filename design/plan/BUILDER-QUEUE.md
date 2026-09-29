@@ -46,13 +46,13 @@ run failed.
       Ask: Notes now stay above the cards and off the hunter. Still see any over cards?
       Test: state=3dosu beast=cinder_jackal hold=on
       ![[agents/frames/builder/2026-09-29-notes-off-hand-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
-- [ ] **Hunters lunge when they attack and flinch when hit.**
+- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
       **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Ask: The hunter who played the card leaps at the beast; hit flashes white. Right?
-      Test: state=3dstrike beast=cinder_jackal beat=attack
-      ![[agents/frames/builder/2026-09-29-hunter-lunge-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
+      Ask: Frog no longer freezes: it lunges, flinches white, three times, then yours. Right?
+      Test: state=3dstrike beast=cinder_jackal beat=loop
+      ![[agents/frames/builder/2026-09-29-strike-live-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
@@ -291,3 +291,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
 - [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.
 - [ ] (proposed) Mid-climb, timing note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
+- [ ] (proposed) On the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.

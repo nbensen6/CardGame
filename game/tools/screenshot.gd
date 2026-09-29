@@ -21,6 +21,9 @@
 ##   beat=attack|hit|rest actor=N (3dstrike: hunter N lunges, flinches, or
 ##     neither; default hunter 0 lunging. Camera shake is zeroed so the three
 ##     frames share one camera and the other hunter can be checked for stillness)
+##   beat=loop (3dstrike: hunters stay on the ground and hunter N lunges, comes
+##     home, flinches, comes home, on the real clock; the shot is a 2x2 strip.
+##     In play it runs a few rounds and hands the fight over live)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 ##   fly=N (tap the Nth card of the hand and freeze it on the way to its target)
 ##   flyt=F (how far through that flight, default 0.7; 1 or more lands it)
@@ -348,7 +351,7 @@ func _initialize() -> void:
 						break
 		print("MAP at row %d, phase %s" % [rm.map_row, rm.phase])
 		Session.host._broadcast_state()
-	if _state == "3dstrike":  # mid-ascent AND mid-hit, to check the 3D juice
+	if _state == "3dstrike" and _beat != "loop":  # mid-ascent AND mid-hit, to check the 3D juice
 		var cs: Combat = Session.host._run.combat
 		cs.players[0].foothold = cs.boss.weak_point_height
 		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
@@ -1610,6 +1613,9 @@ func _capture() -> void:
 			vi.call("_show_card_detail", hand[0])
 		for _i in 4:
 			await process_frame
+	if _state == "3dstrike" and _beat == "loop" and current_scene.has_method("_hunter_play"):
+		await _strike_loop(current_scene)
+		return
 	if _state == "3dstrike":  # fire the 3D strike and catch the flash + dust
 		var v3 := current_scene
 		if v3 != null and v3.has_method("_strike"):
@@ -1631,7 +1637,7 @@ func _capture() -> void:
 			var at_rest := cam.unproject_position(body.global_position) if cam != null and body != null else Vector2.ZERO
 			v3.call("_hunter_play", _actor, _beat)
 			var tw: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
-			if tw != null:
+			if tw != null and strike_holds_beat(_play, _beat):
 				tw.pause()
 				tw.custom_step(float((v3.call("hunter_act_beat", _beat) as Dictionary)["out"]))
 			if cam != null and body != null:
@@ -1843,6 +1849,89 @@ static func arms_failsafe(user_args: PackedStringArray) -> bool:
 ## the tapped card flies and lands on its own clock and the fight stays live.
 static func fly_holds_midair(play: bool, flyt: float) -> bool:
 	return not play and flyt < 1.0
+
+
+## 3dstrike freezes the hunter at the peak of its beat only for an unattended
+## shot. In `play` a paused beat left the Frog hanging in its lunge for good,
+## the "frog is stuck" Nick reported (2026-09-29 17:14).
+static func strike_holds_beat(play: bool, beat: String) -> bool:
+	return not play and beat in ["attack", "hit"]
+
+
+## beat=loop: the beats from the ground, the way a fight shows them, with the
+## hunter seen coming home. In play: three rounds on the real clock, then the
+## fight is his. Unattended: one round, each beat seeked with custom_step (a
+## software renderer's frames are longer than the whole lunge, so a real-clock
+## shutter lands on nothing), four labelled frames on a 2x2 grid: rest, peak of
+## the lunge, home again, peak of the flinch, from a camera backed off enough
+## to keep the other hunter in frame.
+func _strike_loop(v3: Node) -> void:
+	var cam: Camera3D = v3.get("_cam")
+	for _i in 30:  # let the rest camera settle
+		await process_frame
+	if not _play and cam != null:
+		# Widen the lens (the view never writes fov) so the other hunter's
+		# stone is in frame too: the proof includes that hunter NOT moving.
+		cam.fov *= 1.6
+		for _i in 3:
+			await process_frame
+	var tag := Label.new()
+	var tag_layer := CanvasLayer.new()
+	tag_layer.layer = 100
+	tag.position = Vector2(24, 170)
+	tag.add_theme_font_size_override("font_size", 44)
+	tag.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
+	tag.add_theme_color_override("font_outline_color", Color.BLACK)
+	tag.add_theme_constant_override("outline_size", 10)
+	tag_layer.add_child(tag)
+	root.add_child(tag_layer)
+	tag_layer.visible = not _play
+	var shots: Array[Image] = []
+	var snap := func(label: String) -> void:
+		tag.text = label
+		v3.set("_shake", 0.0)
+		for _i in 2:
+			await process_frame
+		await RenderingServer.frame_post_draw
+		var body: Node3D = ((v3.get("_hunters") as Array)[_actor] as Dictionary).get("body")
+		var other: Node3D = ((v3.get("_hunters") as Array)[1 - _actor] as Dictionary).get("body")
+		print("LOOP %s: slot=%d screen %s body.pos %s scale %s | other hunter screen %s" % [label, _actor,
+			cam.unproject_position(body.global_position) if cam != null else Vector2.ZERO, body.position, body.scale,
+			cam.unproject_position(other.global_position) if cam != null else Vector2.ZERO])
+		shots.append(root.get_viewport().get_texture().get_image())
+	if not _play:
+		await snap.call("1 rest")
+	for _r in (3 if _play else 1):
+		for beat in ["attack", "hit"]:
+			var d: Dictionary = v3.call("hunter_act_beat", beat)
+			v3.call("_hunter_play", _actor, beat)
+			if beat == "attack" and v3.has_method("_strike"):
+				v3.call("_strike", false)  # the beast takes the blow it lunged at
+			if _play:
+				var t0 := Time.get_ticks_msec()
+				while Time.get_ticks_msec() - t0 < int((float(d["out"]) + float(d["back"]) + 0.8) * 1000.0):
+					await process_frame
+				continue
+			var tw: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
+			tw.pause()
+			tw.custom_step(float(d["out"]))
+			await snap.call("2 strike peak" if beat == "attack" else "4 hit peak")
+			tw.custom_step(float(d["back"]) + 0.05)
+			if beat == "attack":
+				await snap.call("3 home again")
+	tag_layer.queue_free()
+	if _play:
+		print("PLAY READY: scenario is live. Close the window when done.")
+		return
+	var w := 640
+	var h := 360
+	_strip = Image.create(w * 2, h * 2, false, Image.FORMAT_RGBA8)
+	for i in shots.size():
+		var im: Image = shots[i]
+		im.convert(Image.FORMAT_RGBA8)
+		im.resize(w, h, Image.INTERPOLATE_BILINEAR)
+		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % 2) * w, (i / 2) * h))
+	await _save_and_quit()
 
 
 func _failsafe() -> void:

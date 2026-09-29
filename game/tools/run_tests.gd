@@ -1511,6 +1511,7 @@ func _init() -> void:
 	_test_hunters_lunge_on_attack_and_flinch_on_hit()
 	_test_played_cards_fly_to_their_target()
 	_test_play_mode_never_holds_a_card_midair()
+	_test_play_mode_never_holds_a_strike_beat()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
 	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
@@ -30890,6 +30891,16 @@ func _test_play_mode_never_holds_a_card_midair() -> void:
 	_expect(shot.fly_holds_midair(false, 0.7), "an unattended fly= shot still holds the card mid-flight")
 	_expect(not shot.fly_holds_midair(false, 1.0), "flyt=1 lets the card land")
 	_expect(not shot.fly_holds_midair(true, 0.7), "play mode (Test this now) never holds a card in the air")
+
+
+## Nick, 2026-09-29 17:14: "the scenario doesn't show this properly also frog
+## is stuck." 3dstrike paused the lunge at its peak, in play too.
+func _test_play_mode_never_holds_a_strike_beat() -> void:
+	var shot := preload("res://tools/screenshot.gd")
+	_expect(shot.strike_holds_beat(false, "attack"), "an unattended 3dstrike still holds the lunge at its peak")
+	_expect(shot.strike_holds_beat(false, "hit"), "an unattended 3dstrike still holds the flinch at its peak")
+	_expect(not shot.strike_holds_beat(true, "attack"), "play mode (Test this now) never leaves a hunter frozen mid-lunge")
+	_expect(not shot.strike_holds_beat(false, "loop"), "beat=loop runs the beats through, home each time")
 
 
 func _test_settings_scroll_height_caps_at_the_window() -> void:
