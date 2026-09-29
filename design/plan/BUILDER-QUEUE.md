@@ -10,6 +10,42 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Let the Frog hang?**
+      **Nick, 2026-09-29 17:14 ET:** lets get rid of the grip mechanic for now
+      **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
+      **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Let the Frog hang?|details]]
+      Ask: Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
+      Test: state=3dgrip beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-frog-hang-grip.png|420]] ^let-the-frog-hang
+- [ ] **The jackal's turn plays out on screen.**
+      **Nick, 2026-09-29 17:14 ET:** re word this question it doesnt make sense
+      **Session, 2026-09-29 11:05 ET:** Today the enemy turn resolves in zero seconds and the bite clip plays AFTER the damage number. On End Turn: a 0.4 s hold, the intent badge pulses, the existing `attack` clip plays, the damage and popup land on the bite frame (frame 16 of 40), then the new hand. Same for the sweep, with the shake and both hunters hopping down. No new clips. Done-when: a four-frame strip across one enemy turn shows wind-up, bite, number, new hand in that order. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal's turn plays out on screen.|details]]
+      Ask: Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
+      Test: state=3d beast=cinder_jackal endturn=1
+      ![[agents/frames/builder/2026-09-29-enemy-turn-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
+- [ ] **The grip clock only runs on your own time.**
+      **Nick, 2026-09-29 17:14 ET:** remove grip timer for now
+      **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The grip clock only runs on your own time.|details]]
+      Ask: Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
+      Test: state=3dgrip beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-grip-clock-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
+- [ ] **Timing notes open at the hold on the beast.**
+      **Nick, 2026-09-29 17:14 ET:** this question doesnt make sense. i do see timing over the cards still
+      **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dosu%20beast%3Dcinder_jackal%20hold%3Don) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
+      Ask: Notes now open beside the hunter, not the card. Keep it there?
+      Test: state=3dosu beast=cinder_jackal hold=on
+      ![[agents/frames/builder/2026-09-29-notes-at-hold-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
+- [ ] **Hunters lunge when they attack and flinch when hit.**
+      **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
+      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
+      Ask: The hunter who played the card leaps at the beast; hit flashes white. Right?
+      Test: state=3dstrike beast=cinder_jackal beat=attack
+      ![[agents/frames/builder/2026-09-29-hunter-lunge-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
@@ -20,28 +56,21 @@ run failed.
       Ask: Grader failed this: drag ends touch card tops. Drag order random now; right?
       Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
       ![[agents/frames/builder/2026-09-29-drag-order-after.png|420]] ^one-tap-for-ordinary-timed-cards
-- [ ] 👀 **A missed timed card: keep the card?**
+- [x] **A missed timed card: keep the card?**
       **Nick, 2026-09-29 12:14 ET:** i dont like the idea of losing a card. a miss play can do a plain value of the card, but hitting the timed can have a small bonus
       **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dlash_out%2Cpiston_punch%2Coverload_engine%2Cflick%20console%3Dclimb%2B5%20miss%3D1) · [[BUILDER-QUEUE-NOTES#A missed timed card: keep the card?|details]]
       Ask: A miss now plays plain value (8), a hit adds the bonus (12). Right?
       Test: state=3d beast=cinder_jackal hand=lash_out,piston_punch,overload_engine,flick console=climb+5 miss=1
       ![[agents/frames/builder/2026-09-29-miss-keeps-card-after.png|420]] ^a-missed-timed-card-keep-the-card
-- [ ] 👀 **Jackal HP 42 to 70?**
+- [x] **Jackal HP 42 to 70?**
       **Nick, 2026-09-29 11:59 ET:** yes, but we need to adjust how the jackal deals damage. lets start thinking about any special abilities we can give it. potentially bring in a burn mechanic.
       **Session, 2026-09-29 11:05 ET:** With good timing the fight ends in under two rounds and the jackal's hurt pattern and Enrage never happen. Default if you say yes: HP 70, nothing else changes. Say a number if you want a different one. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Jackal HP 42 to 70?|details]]
       Ask: Jackal is 70 HP now. Burn bite proposed in Proposed; move it up?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-jackal-hp-70-after.png|420]] ^jackal-hp-42-to-70
-- [ ] 👀 **Let the Frog hang?**
-      **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
-      **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Let the Frog hang?|details]]
-      Ask: Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
-      Test: state=3dgrip beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-frog-hang-grip.png|420]] ^let-the-frog-hang
-- [ ] 👀 **Give the jackal a swipe that cares where you are?**
+- [x] **Give the jackal a swipe that cares where you are?**
       **Nick, 2026-09-29 11:59 ET:** yes this sounds great. the attack can be a claw sweep attack and knocks players back that are close.
       **Session, 2026-09-29 11:05 ET:** Its only knockdown is a sweep on round 4 that hits everyone. Default if you say yes: round 4 becomes a high swipe that throws anyone at height 4 or above, so the intent badge makes you ask where you are. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D6%20console%3Dclimb%2B5) · [[BUILDER-QUEUE-NOTES#Give the jackal a swipe that cares where you are?|details]]
@@ -63,30 +92,6 @@ run failed.
       Ask: On the last stone, do you see the jackal's head and chest now?
       Test: state=3d beast=cinder_jackal console=climb+5
       ![[agents/frames/builder/2026-09-29-stones-back-after.png|420]] ^move-the-stones-and-the-hunters-back
-- [ ] 👀 **The jackal's turn plays out on screen.**
-      **Session, 2026-09-29 11:05 ET:** Today the enemy turn resolves in zero seconds and the bite clip plays AFTER the damage number. On End Turn: a 0.4 s hold, the intent badge pulses, the existing `attack` clip plays, the damage and popup land on the bite frame (frame 16 of 40), then the new hand. Same for the sweep, with the shake and both hunters hopping down. No new clips. Done-when: a four-frame strip across one enemy turn shows wind-up, bite, number, new hand in that order. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal's turn plays out on screen.|details]]
-      Ask: Grader failed this: bite pose unreadable in stills. Press End Turn; does it read?
-      Test: state=3d beast=cinder_jackal endturn=1
-      ![[agents/frames/builder/2026-09-29-enemy-turn-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
-- [ ] 👀 **The grip clock only runs on your own time.**
-      **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The grip clock only runs on your own time.|details]]
-      Ask: Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
-      Test: state=3dgrip beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-grip-clock-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
-- [ ] 👀 **Timing notes open at the hold on the beast.**
-      **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dosu%20beast%3Dcinder_jackal%20hold%3Don) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
-      Ask: Notes now open beside the hunter, not the card. Keep it there?
-      Test: state=3dosu beast=cinder_jackal hold=on
-      ![[agents/frames/builder/2026-09-29-notes-at-hold-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
-- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
-      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Ask: The hunter who played the card leaps at the beast; hit flashes white. Right?
-      Test: state=3dstrike beast=cinder_jackal beat=attack
-      ![[agents/frames/builder/2026-09-29-hunter-lunge-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [ ] 👀 **Played cards fly to their target.**
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
