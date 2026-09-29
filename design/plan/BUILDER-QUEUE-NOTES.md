@@ -792,3 +792,14 @@ special abilities ... potentially bring in a burn mechanic."
   design call, so it went to BUILDER-PROPOSED.md as a proposal (Burn bite) for
   him to move up or change.
 - Grader: VERDICT: PASS (bar 42/42 -> 70/70, nothing else changed).
+
+## Let the Frog hang?
+
+Reworded 2026-09-29 for Nick, who asked what the question meant. Nothing in the game changed.
+
+In plain words: on the jackal the stones at height 2 and 4 are safe, and the sigil is 5. If a climb stops you at 1 or 3 you are hanging: the big red countdown in the picture starts, and when it hits zero you slip down. The Frog adds +1 to every climb, and its starter climbs are all odd numbers, so every Frog climb ends on 2 or 4 and the Frog never hangs. Only the Goblin ever sees the countdown.
+
+The proposal: keep the +1 on the Frog's Climb cards (Leap, Scramble), but not on its attacks that also climb (Tongue Snap, Pounce). Then, for example, a Tongue Snap from stone 2 lands on 3 and the Frog has to hang. Yes = make that change. No = leave the Frog as it is.
+
+Picture: `state=3dgrip`, a hunter hanging with the countdown at 3.
+

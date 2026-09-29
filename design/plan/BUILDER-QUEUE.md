@@ -31,10 +31,13 @@ run failed.
       Ask: Jackal is 70 HP now. Burn bite proposed in Proposed; move it up?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-jackal-hp-70-after.png|420]] ^jackal-hp-42-to-70
-- [ ] **Let the Frog hang?**
+- [ ] 👀 **Let the Frog hang?**
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
       **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: The Frog never meets the grip bar. Yes = its attacks that climb can land it on a hanging height. No = leave it. ^let-the-frog-hang
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Let the Frog hang?|details]]
+      Ask: Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
+      Test: state=3dgrip beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-frog-hang-grip.png|420]] ^let-the-frog-hang
 - [ ] **Give the jackal a swipe that cares where you are?**
       **Nick, 2026-09-29 11:59 ET:** yes this sounds great. the attack can be a claw sweep attack and knocks players back that are close.
       **Session, 2026-09-29 11:05 ET:** Its only knockdown is a sweep on round 4 that hits everyone. Default if you say yes: round 4 becomes a high swipe that throws anyone at height 4 or above, so the intent badge makes you ask where you are. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].

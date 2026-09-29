@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T12:39
-working_on: "Jackal HP 42 to 70?"
+updated: 2026-09-29T12:53
+working_on: "Let the Frog hang?"
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 12:39 EDT
+2026-09-29 12:53 EDT
 
-- **Did:** The Cinder Jackal now has 70 HP instead of 42; damage and moves unchanged.
-- **Worked?** Yes, grader VERDICT: PASS (bar reads 70 / 70, nothing else changed).
-- **Look at:** ![[frames/builder/2026-09-29-jackal-hp-70-before.png]] then ![[frames/builder/2026-09-29-jackal-hp-70-after.png]]
-- **Ask:** Jackal is 70 HP now. Burn bite proposed in Proposed; move it up?
+- **Did:** Reworded the Frog hanging question in plain words with a picture of the countdown; no game change.
+- **Worked?** Partly: nothing to build until you answer; grader not run, no before/after change to judge.
+- **Look at:** ![[frames/builder/2026-09-29-frog-hang-grip.png]]
+- **Ask:** Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
 
 ## Notes
 
-- **Found:** the damage/burn rework you asked for is not built; a Burn bite proposal waits in Proposed.
+- **Found:** nothing new.
 
 ## Log
 
+- 2026-09-29 12:53 EDT — builder: Let the Frog hang? reworded for Nick (safe stones 2/4, hanging at 1/3, Frog +1 always lands safe); grip frame embedded; nothing built; tests green, pushed.
 - 2026-09-29 12:39 EDT — builder: cinder_jackal max_hp 42 -> 70 (hurt switch at 28), test pins it; burn rework proposed, not built; grader PASS; tested, pushed.
 - 2026-09-29 12:30 EDT — builder: a missed timed card resolves at plain value and discards (no Rhythm, counts as played); harness miss=1/nail=1; grader FAIL x2 then PASS; tested, pushed.
 - 2026-09-29 12:19 EDT — builder: timing_plan (cost -> taps, drag at cost 2+ or climb 2+), HitCircle taps-then-drag with pointer-follow, notes pinned in screen space around the card (note_pattern, reach 230, rise 150); grader FAIL (notes over the hunter) then PASS; tested, pushed.
