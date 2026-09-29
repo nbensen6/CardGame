@@ -10,6 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Played cards fly to their target.**
+      **Nick, 2026-09-29 17:29 ET:** the card is stuck
+      **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
+      Ask: Cards now fly to the jackal or the Frog before resolving. Feel right?
+      Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0
+      ![[agents/frames/builder/2026-09-29-card-fly-after.png|420]] ^played-cards-fly-to-their-target
 - [ ] 👀 **Let the Frog hang?**
       **Nick, 2026-09-29 17:14 ET:** lets get rid of the grip mechanic for now
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
@@ -92,19 +99,13 @@ run failed.
       Ask: On the last stone, do you see the jackal's head and chest now?
       Test: state=3d beast=cinder_jackal console=climb+5
       ![[agents/frames/builder/2026-09-29-stones-back-after.png|420]] ^move-the-stones-and-the-hunters-back
-- [ ] 👀 **Played cards fly to their target.**
-      **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
-      Ask: Cards now fly to the jackal or the Frog before resolving. Feel right?
-      Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0
-      ![[agents/frames/builder/2026-09-29-card-fly-after.png|420]] ^played-cards-fly-to-their-target
 - [ ] 👀 **The jackal dies on screen.**
       **Session, 2026-09-29 11:05 ET:** The killing blow plays `hit` and the scene cuts to the reward screen. Add a `death` clip with the same Blender script that made idle, attack and hit (`tools/blender/ai_beast.py`), a 0.6 s slow-motion on the final hit, the fall, then the cut. Done-when: a three-frame strip shows the last hit, the fall, the body down, all before the reward screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dreward%20beast%3Dcinder_jackal%20console%3Dclimb%2B5%20deathat%3D0.3%2C1.6%2C2.6%2C3.6) · [[BUILDER-QUEUE-NOTES#The jackal dies on screen.|details]]
       Ask: Grader failed this: slow-motion unseen in stills. Kill from top: slow hit, fall?
       Test: state=3dreward beast=cinder_jackal console=climb+5 deathat=0.3,1.6,2.6,3.6
       ![[agents/frames/builder/2026-09-29-jackal-death-after-strip.png|420]] ^the-jackal-dies-on-screen
-- [ ] 👀 **Playtest presses Switch.**
+- [x] **Playtest presses Switch.**
       **Session, 2026-09-29 11:05 ET:** The scripted playtest never switches hunters, so the co-op half of the loop has no coverage. Press Switch at least once per run and add one check: the second hunter's grip did not drain during the first hunter's turn (it depends on the grip item above). Shot: none; the proof is the playtest log showing the switch and the check passing. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest presses Switch.|details]]
       Ask: Test-only, nothing to look at: the playtest now presses Switch. Tick.
