@@ -61,7 +61,7 @@ def parse(text):
         title = " ".join(m.group(3).split())
         mark = "?" if m.group(2) else m.group(1)
         bid = re.search(r" \^([\w-]+)\s*$", block, re.M)
-        ask = re.search(r"^\s{6}Ask: (.+)$", block, re.M)
+        ask = re.search(r"^\s{6}Ask: (.+?)(?: \^[\w-]+)?\s*$", block, re.M)
         test = re.search(r"^\s{6}Test: (.+?)(?: \^[\w-]+)?\s*$", block, re.M)
         items.append({"a": a, "b": b, "mark": mark, "title": title,
                       "body": block, "id": bid.group(1) if bid else "",
