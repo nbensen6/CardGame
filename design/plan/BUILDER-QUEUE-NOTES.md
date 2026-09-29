@@ -925,6 +925,16 @@ Builder, 2026-09-29 15:30 EDT.
 - Playtest FAIL lines: 74 before and after the change.
 - Not covered: cards played through a pick (exhaust/cheapen/meld) still resolve instantly.
 
+Builder, 2026-09-29 17:39 EDT, on Nick's "the card is stuck" (17:29).
+
+- Cause: the Test link carried `fly=0`, and the harness froze that flight on purpose (tween paused, then the whole view set to PROCESS_MODE_DISABLED) so a still could catch it mid-air. In `play` Nick holds that window, so Slash hung over the Frog forever and nothing else moved. The game's own flight was never stuck.
+- Fix: `fly_holds_midair(play, flyt)` in the harness: only an unattended shot with `flyt` < 1 holds the card; in `play` the view is never disabled. A landing (`flyt=1`) now flies on the real clock and waits for `_card_flying` to clear instead of stepping the tween, so the after frame proves a real tap lands. Test pins the rule.
+- `fly=N,M` taps each card in turn. With `flyt=1` each is caught once at half flight, then released to finish and land on the real clock; the frame is a strip, mid-flight | landed per card. In `play` the same taps just fly and land.
+- After frame (`fly=0,0,0 flyt=1`, 852x720): each card caught a quarter into its flight (its 1.2x peak, bigger than the fan) | landed. Slash toward the jackal, 70 -> 69; Brace toward the Frog, lands with the pale ring and Block 5; Rope Up toward the Frog, lands and he climbs. Energy 9 -> 6.
+- Grader round 2 FAIL: caught at half flight the card had already shrunk below hand size; no climb card. Round 3: caught at the peak, Rope Up added, failsafe gets 5 s per flown card.
+- Grader round 3 FAIL: "none of the panels shows a card in flight" (at the quarter mark the card is still over its slot and reads as raised). Round 2 (half flight) showed the flight but not the scale-up. Escalated: the real game was never stuck; the frames can prove the flight or the scale-up, not both in one still.
+- Grader round 1 FAIL: the landed-only frame showed no card in the air and no ring.
+
 ## The jackal dies on screen.
 
 Run 2026-09-29 16:04 EDT.

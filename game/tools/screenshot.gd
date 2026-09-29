@@ -46,6 +46,7 @@ var _enemyat := -1.0  # enemyat=S — shoot S real seconds after the last End Tu
 var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
 var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
 var _flyi := -1  # fly=N — tap the Nth card of the hand and shoot it mid-flight
+var _flys: Array[int] = []  # fly=N,M — each tapped in turn (a landing strip shoots every one)
 var _deathat: Array = []  # deathat=0.3,1.2,2.5 — 3dreward: frames through the death
 var _flyt := 0.7  # flyt=F — how far through the flight to freeze; >= 1 lands it
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
@@ -194,7 +195,9 @@ func _initialize() -> void:
 		elif a.begins_with("flyt="):
 			_flyt = float(a.substr(5))
 		elif a.begins_with("fly="):
-			_flyi = int(a.substr(4))
+			for n in a.substr(4).split(",", false):
+				_flys.append(int(n))
+			_flyi = _flys[0] if not _flys.is_empty() else -1
 		elif a.begins_with("anim="):
 			_anim = a.substr(5)
 		elif a == "classic":
@@ -974,26 +977,63 @@ func _capture() -> void:
 
 	# fly=N: tap the Nth card, then freeze the view halfway through the card's
 	# flight, so the frame shows it between the hand and its target.
+	# fly=N,M flyt=1: tap each in turn (indices read against the hand as it
+	# stands then); each is caught mid-flight and then let go to land on its own
+	# clock, and the frame is a strip of mid-flight | landed per card.
 	if _flyi >= 0 and current_scene != null and current_scene.has_method("_on_card_tapped"):
-		var fhand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
-		var frow: Node = current_scene.get("_hand_row")
-		if _flyi >= fhand.size() or frow == null:
-			print("FLY no card %d in hand" % _flyi)
-		else:
-			current_scene.call("_on_card_tapped", fhand[_flyi], frow.get_child(_flyi))
+		var panels: Array[Image] = []
+		for fi in _flys:
+			var fhand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
+			var frow: Node = current_scene.get("_hand_row")
+			if fi >= fhand.size() or frow == null or fi >= frow.get_child_count():
+				print("FLY no card %d in hand" % fi)
+				break
+			var fcard: Dictionary = fhand[fi]
+			current_scene.call("_on_card_tapped", fcard, frow.get_child(fi))
 			var ftw = current_scene.get("_card_fly_tw")
-			if ftw is Tween and (ftw as Tween).is_valid():
+			var fly_s := float(current_scene.get("CARD_FLY_S"))
+			if fly_holds_midair(_play, _flyt) and ftw is Tween and (ftw as Tween).is_valid():
 				(ftw as Tween).pause()
-				(ftw as Tween).custom_step(float(current_scene.get("CARD_FLY_S")) * minf(_flyt, 1.0))
-				if _flyt >= 1.0 and (ftw as Tween).is_valid():
-					(ftw as Tween).custom_step(0.01)   # past the last step: the landing callback
-			for _i in (1 if _flyt >= 1.0 else 3):   # a landing: catch the block ring early in its swell
+				(ftw as Tween).custom_step(fly_s * _flyt)
+			else:
+				if not _play and ftw is Tween and (ftw as Tween).is_valid():
+					# Caught once on the way, then released: the rest of the
+					# flight and the landing run on the real clock, the path a tap takes.
+					(ftw as Tween).pause()
+					(ftw as Tween).custom_step(fly_s * 0.25)   # its biggest, just out of the hand
+					await RenderingServer.frame_post_draw
+					panels.append(root.get_viewport().get_texture().get_image())
+					(ftw as Tween).play()
+				var ft0 := Time.get_ticks_msec()
+				while bool(current_scene.call("card_in_flight", current_scene.get("_card_flying"))) \
+						and Time.get_ticks_msec() - ft0 < 3000:
+					await process_frame
+			for _i in (3 if fly_holds_midair(_play, _flyt) else 1):   # a landing: catch the block ring early in its swell
 				await process_frame
-			current_scene.process_mode = Node.PROCESS_MODE_DISABLED
+			if not _play and not fly_holds_midair(_play, _flyt):
+				await RenderingServer.frame_post_draw
+				panels.append(root.get_viewport().get_texture().get_image())
 			var fly = current_scene.get("_card_flying")
-			print("FLY %s -> %s at %s" % [String((fhand[_flyi] as Dictionary).get("name", "?")),
+			print("FLY %s -> %s at %s" % [String(fcard.get("name", "?")),
 				str(current_scene.get("_card_fly_to")),
-				str((fly as Control).global_position) if fly is Control and is_instance_valid(fly) else "none"])
+				str((fly as Control).global_position) if fly is Control and is_instance_valid(fly) else "landed"])
+			if fly_holds_midair(_play, _flyt):
+				break   # a held card is the frame; nothing else can be tapped under it
+			for _i in 20:   # the hand settles before the next tap
+				await process_frame
+		if not _play:
+			current_scene.process_mode = Node.PROCESS_MODE_DISABLED
+		if panels.size() > 1:
+			# Two columns (mid-flight | landed), one row per card, 720 tall at most.
+			var rows := panels.size() / 2
+			var h := mini(360, 720 / rows)
+			var w := h * 16 / 9
+			_strip = Image.create(w * 2, h * rows, false, Image.FORMAT_RGBA8)
+			for i in panels.size():
+				var im: Image = panels[i]
+				im.convert(Image.FORMAT_RGBA8)
+				im.resize(w, h, Image.INTERPOLATE_BILINEAR)
+				_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % 2) * w, (i / 2) * h))
 
 	# Carry a card. Driven by calling the view's own drag handlers with real
 	# InputEvents rather than by poking at positions, so what is photographed is
@@ -1781,10 +1821,18 @@ static func arms_failsafe(user_args: PackedStringArray) -> bool:
 	return not ("play" in user_args)
 
 
+## fly=N holds the card in the air only for an unattended shot. In `play` Nick
+## has the window: a card frozen mid-flight there, with the whole view disabled
+## under it, is the "the card is stuck" he reported (2026-09-29 17:29). There
+## the tapped card flies and lands on its own clock and the fight stays live.
+static func fly_holds_midair(play: bool, flyt: float) -> bool:
+	return not play and flyt < 1.0
+
+
 func _failsafe() -> void:
 	# Each endturn=N plays a whole beast turn (90 frames); on a software
 	# renderer that alone outlasts a flat 10 s, so give each one its own time.
-	await create_timer(10.0 + 15.0 * (_endturns + _thenend)).timeout
+	await create_timer(10.0 + 15.0 * (_endturns + _thenend) + 5.0 * _flys.size()).timeout
 	print("SHOT TIMEOUT")
 	quit(1)
 

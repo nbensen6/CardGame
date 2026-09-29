@@ -1509,6 +1509,7 @@ func _init() -> void:
 	_test_grip_clock_runs_only_on_the_held_hunters_own_time()
 	_test_hunters_lunge_on_attack_and_flinch_on_hit()
 	_test_played_cards_fly_to_their_target()
+	_test_play_mode_never_holds_a_card_midair()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
 	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
@@ -30826,6 +30827,15 @@ func _test_play_mode_never_arms_the_shot_failsafe() -> void:
 		"an unattended shot still arms the 10 s failsafe")
 	_expect(not shot.arms_failsafe(PackedStringArray(["play", "state=3d", "beast=cinder_jackal"])),
 		"play mode (Test this now) never arms the failsafe that closes the window")
+
+
+## Nick, 2026-09-29 17:29: "the card is stuck." Test this now carried fly=0,
+## and the harness froze the card mid-flight and disabled the view under him.
+func _test_play_mode_never_holds_a_card_midair() -> void:
+	var shot := preload("res://tools/screenshot.gd")
+	_expect(shot.fly_holds_midair(false, 0.7), "an unattended fly= shot still holds the card mid-flight")
+	_expect(not shot.fly_holds_midair(false, 1.0), "flyt=1 lets the card land")
+	_expect(not shot.fly_holds_midair(true, 0.7), "play mode (Test this now) never holds a card in the air")
 
 
 func _test_settings_scroll_height_caps_at_the_window() -> void:

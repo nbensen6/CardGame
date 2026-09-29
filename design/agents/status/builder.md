@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T17:26
-working_on: "Let the Frog hang?"
+updated: 2026-09-29T17:42
+working_on: "Played cards fly to their target."
 ---
 
 # builder
@@ -13,18 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 17:26 EDT
+2026-09-29 17:42 EDT
 
-- **Did:** Turned the grip timer off: no countdown bar, no slip, no "hanging!" tag, no grip coach tip.
-- **Worked?** Yes, the Frog now stays at Height 1; VERDICT: PASS (grader, round 2).
-- **Look at:** ![[frames/builder/2026-09-29-grip-off-before.png]] then ![[frames/builder/2026-09-29-grip-off-after.png]]
-- **Ask:** Grip is off. Does climbing feel right without it?
+- **Did:** Test link no longer freezes the game; the tapped card flies, lands, and play continues.
+- **Worked?** Partly: stuck card fixed, but VERDICT: FAIL (grader round 3: no panel shows a card in flight).
+- **Look at:** ![[frames/builder/2026-09-29-card-stuck-before.png]] then ![[frames/builder/2026-09-29-card-stuck-after.png]]
+- **Ask:** Press Test this now: does the card still get stuck?
 
 ## Notes
+
+- **Found:** enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
 
 - **Found:** the grip clock item below is now moot while grip is off; the playtest grip check just skips.
 
 ## Log
+
+- 2026-09-29 17:42 EDT — builder: "the card is stuck" was the harness: fly= froze the flight and disabled the view in `play` too; fly_holds_midair(play, flyt) + test; fly=N,M with flyt=1 shoots a mid-flight | landed strip on the real clock; failsafe +5 s per flown card; grader FAIL x3 (flight vs scale-up in stills), escalated; tests green, pushed.
 
 - 2026-09-29 17:26 EDT — builder: grip mechanic off (Nick 17:14): Coach.GRIP_TIMER_ON=false read by combat_3d; no timer starts, bar hidden, no fall, "hanging!" and coach grip tip gated; timer code kept; harness 3dgrip prints GRIP-OFF; grader FAIL (hanging! tag) then PASS; tests green, pushed.
 - 2026-09-29 17:19 EDT — builder: playtest.cmd green: 1 red check left, beast-behind-stone 21, all in the Goblin's view (new since the playtest presses Switch); stones 5-7 = Goblin's own first three, 19-47% pixel; Frog's own line <= 11%; routes mirror-symmetric (x -5.27..-3.87 vs 3.13..1.73 about box centre -1.07); no code change, escalated as a taste call; tests green, pushed.
