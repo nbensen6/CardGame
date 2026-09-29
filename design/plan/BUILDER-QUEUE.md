@@ -10,16 +10,16 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **One tap for ordinary timed cards?**
+- [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
       **Session, 2026-09-29 16:50 ET:** these three answers were stuck on Nick's PC since 12:44 (its sync was jammed) and never reached the builder. Read them in time order, oldest last.
       **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
       **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dflick%2Clash_out%2Cpiston_punch%2Coverload_engine) · [[BUILDER-QUEUE-NOTES#One tap for ordinary timed cards?|details]]
-      Ask: Cost 0: 1 tap, 1: 2 taps, 2: 2 + drag, 3: 3 + drag. Right?
+      Ask: Grader failed this: drag ends touch card tops. Drag order random now; right?
       Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
-      ![[agents/frames/builder/2026-09-29-cost-timing-after.png|420]] ^one-tap-for-ordinary-timed-cards
+      ![[agents/frames/builder/2026-09-29-drag-order-after.png|420]] ^one-tap-for-ordinary-timed-cards
 - [ ] 👀 **A missed timed card: keep the card?**
       **Nick, 2026-09-29 12:14 ET:** i dont like the idea of losing a card. a miss play can do a plain value of the card, but hitting the timed can have a small bonus
       **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -275,3 +275,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The reward screen lays the jackal on its back; the death clip leaves it on its side.
 - [ ] (proposed) Beasts with no rig get the slow last hit and the pause, but no fall.
 - [ ] (proposed) The playtest's grip-while-away check only caught one hanging step in 40; a scripted hang would pin it.
+- [ ] (proposed) Timing notes can still open over the hunter's own body or legs (drag head over the Goblin).
+- [ ] (proposed) Timing notes may dip into the card band; clamp the walk's floor to the hand's top edge.

@@ -738,6 +738,8 @@ static func _let_drags_through(root: Node) -> void:
 ## cards are unaffected: each CardView sets its own mouse_filter back to STOP
 ## when it is added, after this subtree walk has already run once in _ready().
 const DRAG_THROUGH_PATHS := ["TopBar", "HandScroll"]
+## Draw order of the timing circle, above every card in the hand.
+const CIRCLE_Z := 100
 
 
 func _ready() -> void:
@@ -749,6 +751,12 @@ func _ready() -> void:
 	var hud := get_node_or_null("Hud/Root") as Control
 	if hud != null:
 		hud.add_child(_circle)
+		# Above the hand. A card's z_index is 0..10 (10 when raised) and the
+		# circle's was 0, so notes that fell over the hand band drew under the
+		# cards (Nick, 2026-09-29: "some of the time events are going behind
+		# the cards"). Under the card being dragged (200), over the one in
+		# flight (50).
+		_circle.z_index = CIRCLE_Z
 		# Connected once, not per card: there is one circle and it is told which
 		# card it is holding a window open for.
 		_circle.resolved.connect(_on_circle_resolved)
@@ -1043,9 +1051,21 @@ const NOTE_STEP := 92.0
 const NOTE_REACH := 230.0
 ## And none rises more than this above the card's middle -- so the pattern
 ## hugs the hand instead of climbing into the scene over the hunter's head.
-const NOTE_RISE := 150.0
+## 100, not 150: opened beside the hunter, 150 put notes up at the beast's head
+## and over its intent badge (grader, 2026-09-29).
+const NOTE_RISE := 100.0
 ## Points along the drag's path. Two legs, so it bends.
 const DRAG_POINTS := 3
+
+
+## How many taps come before the drag: any number from none (the drag opens
+## the chain) to all of them (it closes it), rolled fresh every play. Nick,
+## 2026-09-29: "randomize the order for drag. sometimes on one sometimes
+## others." -1 when the card has no drag.
+static func drag_order(plan: Vector2i, rng: RandomNumberGenerator) -> int:
+	if plan.y <= 0:
+		return -1
+	return rng.randi_range(0, plan.x)
 
 
 ## Where each note goes, in screen pixels, around `anchor` (the card's middle).
@@ -1054,12 +1074,15 @@ const DRAG_POINTS := 3
 ## changes every note, never back on top of an earlier one, never outside
 ## NOTE_REACH of the card and never more than NOTE_RISE above it. `floor_y` is
 ## the lowest a note may sit (the bottom of the frame, less a margin): a walk
-## that ran off the bottom used to be shoved up whole, over the hunter's head. The drag, if there is one, carries on from the last
-## tap. Pure (the RNG is passed in) so a test can pin the reach.
+## that ran off the bottom used to be shoved up whole, over the hunter's head.
+## The drag, if there is one, is DRAG_POINTS in a row after `drag_at` taps
+## (-1: after all of them). Pure (the RNG is passed in) so a test can pin the reach.
 static func note_pattern(anchor: Vector2, taps: int, drag: bool,
-		rng: RandomNumberGenerator, floor_y: float = INF, lift: bool = true) -> PackedVector2Array:
+		rng: RandomNumberGenerator, floor_y: float = INF, lift: bool = true,
+		drag_at: int = -1) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	var count := taps + (DRAG_POINTS if drag else 0)
+	var drag_from := taps if drag_at < 0 else mini(drag_at, taps)
 	# The first note sits on or beside the card, not always dead above it. From
 	# the hunter (`lift` false, see notes_anchor) the anchor already IS the
 	# spot beside them, so the first note stays on it.
@@ -1069,7 +1092,7 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 	out.append(at)
 	var heading := 0.0 if rng.randf() < 0.5 else PI         # off to one side
 	for i in range(1, count):
-		var in_drag := drag and i >= taps
+		var in_drag := drag and i > drag_from and i < drag_from + DRAG_POINTS
 		var step := NOTE_STEP * (0.8 if in_drag else rng.randf_range(0.95, 1.2))
 		var best := Vector2.ZERO
 		var found := false
@@ -1138,8 +1161,10 @@ static func note_clamp(anchor: Vector2, p: Vector2, floor_y: float = INF) -> Vec
 
 ## The pattern this card asks you to play, in screen points, shoved back inside
 ## the frame as a whole rather than bent out of shape.
-func _hold_points(plan: Vector2i, from_screen: Vector2) -> PackedVector2Array:
-	var rng := RandomNumberGenerator.new()
+func _hold_points(plan: Vector2i, from_screen: Vector2, drag_at: int = -1,
+		rng: RandomNumberGenerator = null) -> PackedVector2Array:
+	if rng == null:
+		rng = RandomNumberGenerator.new()
 	var view := get_viewport().get_visible_rect().size
 	var pad := 96.0
 	var hunter_rect := Rect2()
@@ -1148,7 +1173,7 @@ func _hold_points(plan: Vector2i, from_screen: Vector2) -> PackedVector2Array:
 		if hnode != null and is_instance_valid(hnode) and (_hunters[_active_slot] as Dictionary).get("body") != null:
 			hunter_rect = hunter_screen_rect(_cam, _merged_aabb(hnode))
 	var anchor := notes_anchor(hunter_rect, from_screen, view)
-	var pattern := note_pattern(anchor, plan.x, plan.y > 0, rng, view.y - pad, anchor == from_screen)
+	var pattern := note_pattern(anchor, plan.x, plan.y > 0, rng, view.y - pad, anchor == from_screen, drag_at)
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
 	for at in pattern:
@@ -6426,8 +6451,10 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 			# on a dear card) right beside the card you tapped.
 			_circle_index = index
 			var anchor := cv.get_global_rect().get_center()
-			_circle.begin_flat(bonus, _hold_points(plan, anchor),
-				plan.x if plan.y > 0 else -1)
+			var rng := RandomNumberGenerator.new()
+			var drag_at := drag_order(plan, rng)
+			_circle.begin_flat(bonus, _hold_points(plan, anchor, drag_at, rng),
+				drag_at, DRAG_POINTS)
 			return
 		cv.zone_bonus = bonus
 		# Raise the card the same way hover would -- a handheld tap never fires

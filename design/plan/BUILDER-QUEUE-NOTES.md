@@ -760,6 +760,16 @@ have to be so close to the head."
 
 ## One tap for ordinary timed cards?
 
+2026-09-29 17:04 EDT, builder. Worked from Nick's 12:44 ("yes and randomize the order for drag. sometimes on one sometimes others") and 12:59 ("some of the time events are going behind the cards").
+
+- **Drag anywhere in the chain** (`Combat3D.drag_order`): on a card with a drag, the number of taps before it is rolled fresh every play, 0 to all of them, so the drag opens, sits inside or closes the chain. `note_pattern(..., drag_at)` keeps the drag's road in one piece wherever it falls.
+- **HitCircle** now takes `begin_flat(bonus, points, drag_from, drag_len)`: taps, the drag, then taps again. Riding the drag to its end (or letting go past the rescue mark, which caps the chain at GOOD) moves on to the tap after it instead of closing the window. Numbers skip the road points (tap, drag, tap reads 1, 2, 3). The 3D `begin(..., slider)` path is unchanged.
+- **Notes above the cards**: the circle's `z_index` was 0 and a raised card's is 10, so any note over the hand band drew under the cards. Now `CIRCLE_Z` 100 (under the dragged card at 200). Play A in the after grid shows note 3 drawn over the Overload Engine card.
+- Grader-driven, same item: `NOTE_RISE` 150 -> 100 (notes were reaching the jackal's head and intent badge), queued notes fade by steps not indices with a floor (`LOOKAHEAD_FLOOR` 0.24), and a queued note's dark disc never fades below 0.7 (a faded disc vanished on the pale stone and the grader counted a step as missing).
+- Tests: drag slot rolled across all four places over 60 seeds, road stays whole; tap-drag-tap resolves in order and a rescued drag carries on; circle z above a raised card and below a dragged one; lookahead floor.
+- Grader: FAIL (cost 0/1 not shown; notes up at the head), FAIL (a cost-3 step unreadable on the stone), FAIL (drag ends touch the card tops; wants every note kept out of the card band). Three rounds, so escalated. The z fix means a note in the band now draws over the card, not behind it; keeping notes out of the band entirely is proposed.
+- After frame: 3x2 grid, each `state=3dosu beast=cinder_jackal hold=on hand=<card>`: flick, lash_out, piston_punch (drag 1st), overload_engine x3 (drag 2nd, 3rd, last). The drag slot is random per play, so the shots were retaken until the slots differed. The Test line stays the four-card deal so Nick taps them himself (`hold=on` freezes the circle).
+
 2026-09-29 12:19 EDT, builder.
 
 Worked from Nick's 11:59 answer: "make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card."

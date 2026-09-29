@@ -73,6 +73,11 @@ const EARLY_ALPHA := 0.34
 ## just the same prompt three times (Nick, 2026-08-25: "it should be a fluid
 ## function mimicing how osu has multiple clicks for timing not just one").
 const LOOKAHEAD_ALPHA := 0.34
+## ...but never dimmer than this, or the fourth step of a dear card is a ring
+## nobody can count (grader, 2026-09-29: "the fourth step is missing").
+const LOOKAHEAD_FLOOR := 0.24
+## The least a note's dark disc ever fades to, so its rim and number have a ground.
+const NOTE_DISC_MIN := 0.7
 ## Seconds of head start the next note's approach ring gets, so it is already
 ## closing when the current one resolves. Over half the approach, so the first
 ## note gives you time to read the pattern and the rest come in quick succession
@@ -119,6 +124,7 @@ var _combo := 0               # notes landed in a row, reset by a miss
 var _approach := APPROACH_SECONDS   # this note's own approach length
 var _slider := false          # this window ends in a drag rather than a last tap
 var _drag_from := -1          # note index the drag starts at; the notes before it are taps
+var _drag_to := -1            # one past the drag's last path point; the notes from here on are taps again
 var _holding := false         # the press has landed and the follower is running
 var _slide := 0.0             # 0..1 along the path
 var _press_quality := Combat.TIMING_PERFECT
@@ -156,20 +162,27 @@ func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
 
 
 ## The same window, drawn at fixed SCREEN points: taps at `points[0..drag_from)`,
-## then a drag along the rest. `drag_from` -1 is taps only.
-func begin_flat(bonus: float, points: PackedVector2Array, drag_from: int = -1) -> void:
+## then a drag along the next `drag_len` points (all the rest when -1), then
+## taps again. `drag_from` -1 is taps only. The drag can sit anywhere in the
+## chain (Nick, 2026-09-29: "randomize the order for drag").
+func begin_flat(bonus: float, points: PackedVector2Array, drag_from: int = -1,
+		drag_len: int = -1) -> void:
 	if _live or points.is_empty():
 		return
 	_flat = points
 	var dummy := PackedVector3Array()
 	dummy.resize(points.size())
-	_open(bonus, null, dummy, drag_from)
+	_open(bonus, null, dummy, drag_from, drag_len)
 
 
 ## A drag needs a path: at least two points from where it starts.
-func _open(bonus: float, cam: Camera3D, points: PackedVector3Array, drag_from: int) -> void:
+func _open(bonus: float, cam: Camera3D, points: PackedVector3Array, drag_from: int,
+		drag_len: int = -1) -> void:
 	_live = true
-	_drag_from = drag_from if drag_from >= 0 and points.size() - drag_from >= 2 else -1
+	_drag_to = points.size() if drag_len < 0 else mini(drag_from + drag_len, points.size())
+	_drag_from = drag_from if drag_from >= 0 and _drag_to - drag_from >= 2 else -1
+	if _drag_from < 0:
+		_drag_to = -1
 	_slider = _drag_from >= 0
 	_holding = false
 	_slide = 0.0
@@ -177,7 +190,9 @@ func _open(bonus: float, cam: Camera3D, points: PackedVector3Array, drag_from: i
 	_slider_note_hit = false
 	_burst_dropped = false
 	_notes = points
-	_hits_needed = _drag_from + 1 if _slider else points.size()
+	# Every note is one thing to hit, except the drag's path: its head is the
+	# press, and the points after it are the road, not more taps.
+	_hits_needed = points.size() - (_drag_to - _drag_from - 1 if _slider else 0)
 	_hits_done = 0
 	_worst = Combat.TIMING_PERFECT
 	_approach = APPROACH_SECONDS
@@ -195,9 +210,48 @@ func is_live() -> bool:
 	return _live
 
 
-## The taps are done and the next thing is the drag.
+## The taps before it are done and the next thing is the drag.
 func _in_drag() -> bool:
-	return _slider and _hits_done >= _drag_from
+	return _slider and _hits_done >= _drag_from and _hits_done < _drag_to
+
+
+## The number printed on note `i`: the drag's road points are not notes, so
+## the taps after a drag carry on counting from the drag's head.
+func _label(i: int) -> int:
+	if _slider and i >= _drag_to:
+		return i + 1 - (_drag_to - _drag_from - 1)
+	return i + 1
+
+
+## How bright a note `depth` steps ahead of the live one draws. Counted in
+## steps, not note indices: a drag's road points are not steps.
+func _lookahead(depth: int) -> float:
+	return maxf(LOOKAHEAD_ALPHA * pow(0.62, depth - 1), LOOKAHEAD_FLOOR)
+
+
+## The drag's road as screen points, head to tail.
+func _drag_path() -> PackedVector2Array:
+	if not _slider:
+		return PackedVector2Array()
+	return _screen_path(_drag_from, _drag_to)
+
+
+## Rode the drag to its end (or let go past the rescue mark, `quality`
+## already downgraded). The chain is done if nothing follows it; otherwise
+## the taps after the drag come on at stream tempo.
+func _drag_done(quality: int) -> void:
+	_holding = false
+	_worst = mini(_worst, quality)
+	_hits_done = _drag_to
+	_slider_note_hit = false
+	if _hits_done >= _notes.size():
+		_finish(_worst)
+		return
+	_burst_note = _drag_to - 1
+	_burst_grade = quality
+	_flash = 1.0
+	_approach = STREAM_BEAT
+	_t = 0.0
 
 
 
@@ -206,7 +260,7 @@ func _process(delta: float) -> void:
 	if _live and _holding:
 		_slide += delta / SLIDE_SECONDS
 		if _slide >= 1.0:
-			_finish(_press_quality)   # held it all the way
+			_drag_done(_press_quality)   # held it all the way
 		queue_redraw()
 		return
 	if _live:
@@ -228,7 +282,7 @@ func _gui_input(event: InputEvent) -> void:
 	if _live and _holding and event is InputEventMouseMotion:
 		# The drag: keep the pointer on the ball. Wander off it and you have let
 		# go, exactly as if you had lifted your finger.
-		var path := _screen_path(_drag_from)
+		var path := _drag_path()
 		if path.size() > 1 and (event as InputEventMouseMotion).position.distance_to(
 				_path_point(path, _slide)) > DRAG_RADIUS:
 			accept_event()
@@ -268,6 +322,8 @@ func _release() -> void:
 		# happened instead of inheriting a timing verdict from the press.
 		if _slide < SLIDE_RESCUE:
 			_finish(Combat.TIMING_MISS, true, true)
+		elif _drag_to < _notes.size():
+			_drag_done(mini(_press_quality, Combat.TIMING_GOOD))   # taps still to come
 		else:
 			_finish(mini(_press_quality, Combat.TIMING_GOOD), false, true)
 
@@ -315,7 +371,7 @@ func _fire() -> void:
 	_burst_grade = Combat.TIMING_PERFECT if off <= PERFECT_WINDOW else Combat.TIMING_GOOD
 	_flash = 1.0
 	note_hit.emit(_hits_done - 1, Combat.TIMING_PERFECT if off <= PERFECT_WINDOW else Combat.TIMING_GOOD)
-	if _hits_done >= _hits_needed:
+	if _hits_done >= _notes.size():
 		_finish(_worst)
 		return
 	# The rest of the stream comes at tempo: a shorter approach, but the SAME hit
@@ -377,7 +433,9 @@ func _visible_note(i: int) -> bool:
 
 ## One osu note: filled disc, bright rim, number.
 func _note(at: Vector2, n: int, alpha: float) -> void:
-	draw_circle(at, TARGET_RADIUS, Color(0.10, 0.09, 0.13, 0.80 * alpha))
+	# The disc stays dark even on a note far ahead: over a pale stone a faded
+	# disc faded into it, and the step read as missing (grader, 2026-09-29).
+	draw_circle(at, TARGET_RADIUS, Color(0.10, 0.09, 0.13, 0.80 * maxf(alpha, NOTE_DISC_MIN)))
 	draw_arc(at, TARGET_RADIUS, 0.0, TAU, 56, Color(GOLD.r, GOLD.g, GOLD.b, alpha), 4.0, true)
 	var font := ThemeDB.fallback_font
 	var label := str(n)
@@ -405,12 +463,12 @@ func _follow(a: Vector2, bb: Vector2, alpha: float) -> void:
 		draw_circle(p, 2.8, Color(RING.r, RING.g, RING.b, 0.5 * maxf(alpha, 0.55)))
 
 
-## Every note from `from` on as a screen point, in order.
-func _screen_path(from: int = 0) -> PackedVector2Array:
+## Every note from `from` up to `to` (the end when -1) as a screen point, in order.
+func _screen_path(from: int = 0, to: int = -1) -> PackedVector2Array:
 	var out := PackedVector2Array()
 	if _cam == null and _flat.is_empty():
 		return out
-	for i in range(maxi(from, 0), _notes.size()):
+	for i in range(maxi(from, 0), _notes.size() if to < 0 else mini(to, _notes.size())):
 		if not _visible_note(i):
 			return PackedVector2Array()   # any point behind us and the path is a lie
 		out.append(_screen(i))
@@ -569,41 +627,46 @@ func _draw() -> void:
 		return
 
 	if _in_drag():
-		var path := _screen_path(_drag_from)
+		var path := _drag_path()
 		if path.size() > 1:
 			_draw_slider(path)
+		# The taps after the drag, dim, so you know the chain is not over.
+		for i in range(_notes.size() - 1, _drag_to - 1, -1):
+			if not _visible_note(i):
+				continue
+			var after := _lookahead(_label(i) - _label(_drag_to) + 1)
+			if _visible_note(i - 1):
+				_follow(_screen(i - 1), _screen(i), after)
+			_note(_screen(i), _label(i), after)
 		return
 
 	var fade := _ready_alpha()
 
-	# The drag this chain ends in, dim until the taps before it are done, so you
-	# can see where your finger will have to go.
-	var last_tap := _notes.size() - 1
-	if _slider:
-		last_tap = _drag_from - 1
-		var road := _screen_path(_drag_from)
-		if road.size() > 1:
-			var ahead := LOOKAHEAD_ALPHA * pow(0.62, maxi(_drag_from - _hits_done - 1, 0))
-			if _visible_note(last_tap):
-				_follow(_screen(last_tap), road[0], ahead)
-			_draw_slider(road, maxf(ahead, 0.55), true)
-
 	# The notes you have not hit yet, furthest first so the current one draws on
 	# top. Each is dimmer than the last: the pattern is legible ahead of time,
-	# but there is never any doubt which one is yours right now.
-	for i in range(last_tap, _hits_done, -1):
+	# but there is never any doubt which one is yours right now. A drag still
+	# ahead is drawn as its road, dim, where its head falls in the order, so
+	# you can see where your finger will have to go.
+	for i in range(_notes.size() - 1, _hits_done, -1):
+		if _slider and i > _drag_from and i < _drag_to:
+			continue                              # a road point, not a note
 		if not _visible_note(i):
 			continue
-		var depth := i - _hits_done
-		var alpha := LOOKAHEAD_ALPHA * pow(0.62, depth - 1)
-		if _visible_note(i - 1):
-			_follow(_screen(i - 1), _screen(i), alpha)
-		_note(_screen(i), i + 1, alpha)
+		var alpha := _lookahead(_label(i) - _label(_hits_done))
+		var prev := i - 1
+		if _visible_note(prev):
+			_follow(_screen(prev), _screen(i), alpha)
+		if _slider and i == _drag_from:
+			var road := _drag_path()
+			if road.size() > 1:
+				_draw_slider(road, maxf(alpha, 0.55), true)
+			continue
+		_note(_screen(i), _label(i), alpha)
 
 	if not _visible_note(_hits_done):
 		return
 	_at = _screen(_hits_done)
-	_note(_at, _hits_done + 1, fade)
+	_note(_at, _label(_hits_done), fade)
 	# Inside the window: a halo. "The circle is glowing" is a rule you learn in
 	# one note, where "the ring has reached the rim" takes a dozen.
 	if absf(_offset()) <= GOOD_WINDOW + zone_bonus * 0.35:

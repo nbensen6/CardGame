@@ -1488,6 +1488,9 @@ func _init() -> void:
 	_test_timing_plan_scales_with_cost()
 	_test_timing_plan_keeps_printed_windows_and_climb_drags()
 	_test_note_pattern_stays_near_the_card()
+	_test_drag_order_is_rolled_every_play()
+	_test_hit_circle_drag_in_the_middle_then_taps()
+	_test_hit_circle_draws_above_the_hand()
 	_test_notes_open_beside_the_climbing_hunter()
 	_test_hit_circle_taps_then_drag()
 	_test_hit_circle_drag_off_the_ball_lets_go()
@@ -25468,6 +25471,81 @@ func _test_hit_circle_taps_then_drag() -> void:
 	hc._process(1.0)
 	_expect(int(got[0]) == Combat.TIMING_PERFECT, "riding the drag to the end pays the press quality")
 	hc.free()
+
+
+## Nick, 2026-09-29: "randomize the order for drag. sometimes on one sometimes
+## others." The drag opens, sits inside or closes the chain, rolled per play,
+## and the pattern still keeps its drag's road in one piece.
+func _test_drag_order_is_rolled_every_play() -> void:
+	_expect(Combat3D.drag_order(Vector2i(2, 0), RandomNumberGenerator.new()) == -1,
+		"a card with no drag has no drag slot")
+	var seen := {}
+	for seed in range(60):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed
+		var at := Combat3D.drag_order(Vector2i(3, 1), rng)
+		_expect(at >= 0 and at <= 3, "seed %d: drag after %d of 3 taps is out of range" % [seed, at])
+		seen[at] = true
+		var pts := Combat3D.note_pattern(Vector2(640, 430), 3, true, rng, 624.0, true, at)
+		_expect(pts.size() == 3 + Combat3D.DRAG_POINTS, "seed %d: the drag's slot does not change the note count" % seed)
+		for i in range(at + 1, at + Combat3D.DRAG_POINTS):
+			var leg := pts[i].distance_to(pts[i - 1])
+			_expect(leg <= Combat3D.NOTE_STEP * 1.2 + 0.5,
+				"seed %d: the drag's road breaks (%.0fpx leg)" % [seed, leg])
+	_expect(seen.size() == 4, "over 60 plays the drag lands first, second, third and last (got %s)" % str(seen.keys()))
+
+
+## A drag in the middle: tap, ride the drag, and the chain carries on to the
+## tap after it instead of ending when the drag does.
+func _test_hit_circle_drag_in_the_middle_then_taps() -> void:
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)
+	hc.begin_flat(0.0, PackedVector2Array([Vector2(100, 100), Vector2(190, 100),
+		Vector2(260, 100), Vector2(330, 100), Vector2(420, 200)]), 1, 3)
+	_expect(hc._hits_needed == 3, "tap, drag, tap is three things to hit")
+	_expect(hc._label(4) == 3, "the tap after the drag is numbered 3, not 5")
+	_expect(hc._lookahead(3) >= HitCircle.LOOKAHEAD_FLOOR, "a step three ahead is still a ring you can count")
+	var hits := []
+	hc.note_hit.connect(func(i: int, _q: int) -> void: hits.append(i))
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	hc._t = hc._approach
+	hc._fire()
+	_expect(hc._in_drag() and not hc._holding, "after the first tap the drag waits for its press")
+	hc._t = hc._approach
+	hc._fire()
+	_expect(hc._holding, "pressing the drag's head starts it")
+	hc._process(1.0)
+	_expect(int(got[0]) == -1 and hc.is_live(), "riding the drag to its end does not end the chain")
+	_expect(not hc._in_drag() and hc._hits_done == 4, "the next note is the tap after the drag")
+	hc._t = hc._approach
+	hc._fire()
+	_expect(int(got[0]) == Combat.TIMING_PERFECT, "the last tap closes the chain")
+	_expect(hits == [0, 1, 4], "each tap and the drag's press report their own note index")
+	var hc2 := HitCircle.new()
+	hc2.size = Vector2(1280, 720)
+	hc2.begin_flat(0.0, PackedVector2Array([Vector2(100, 300), Vector2(200, 300),
+		Vector2(300, 300), Vector2(420, 200)]), 0, 3)
+	var got2 := [-1]
+	hc2.resolved.connect(func(q: int) -> void: got2[0] = q)
+	hc2._t = hc2._approach
+	hc2._fire()
+	hc2._slide = HitCircle.SLIDE_RESCUE + 0.05
+	hc2._release()
+	_expect(int(got2[0]) == -1 and hc2._hits_done == 3,
+		"letting go past the rescue mark still moves on to the tap after the drag")
+	hc2._t = hc2._approach
+	hc2._fire()
+	_expect(int(got2[0]) == Combat.TIMING_GOOD, "and the chain pays at most GOOD for the slip")
+	hc.free()
+	hc2.free()
+
+
+## Nick, 2026-09-29: "some of the time events are going behind the cards." The
+## circle draws above every card in the hand (raised cards are z 10).
+func _test_hit_circle_draws_above_the_hand() -> void:
+	_expect(Combat3D.CIRCLE_Z > 10, "the timing circle draws above a raised card")
+	_expect(Combat3D.CIRCLE_Z < 200, "and under the card you are dragging")
 
 
 ## The drag is a drag: the pointer has to stay with the ball.
