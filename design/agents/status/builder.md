@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T18:09
-working_on: "The jackal's turn plays out on screen."
+updated: 2026-09-29T18:23
+working_on: "The grip clock only runs on your own time."
 ---
 
 # builder
@@ -13,24 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 18:09 EDT
+2026-09-29 18:23 EDT
 
-- **Did:** Jackal now lunges at the bitten hunter on its bite; question reworded; damage number moved off the hunter.
-- **Worked?** Partly: the lunge and number read, but VERDICT: FAIL (round 3: wind-up cannot be told apart from the hold).
-- **Look at:** ![[frames/builder/2026-09-29-jackal-turn-reads-before.png]] then ![[frames/builder/2026-09-29-jackal-turn-reads-after.png]]
-- **Ask:** Press End Turn: does the jackal lunge at the Frog before the damage shows?
+- **Did:** Confirmed the grip timer is gone (switched off at 17:26); no code change needed.
+- **Worked?** Yes: no HOLD ON bar, nobody slips; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-grip-timer-removed-before.png]] then ![[frames/builder/2026-09-29-grip-timer-removed-after.png]]
+- **Ask:** Grip timer is gone: no HOLD ON bar, nobody slips. Tick to close?
 
 ## Notes
 
-- **Found:** the jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
-
-- **Found:** the intent badge switches to next round's intent on the bite frame, before the new hand.
-
-- **Found:** enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
-
-- **Found:** the grip clock item below is now moot while grip is off; the playtest grip check just skips.
+- **Found:** nothing new.
 
 ## Log
+
+- 2026-09-29 18:23 EDT — builder: grip clock item: grip timer already off since 17:26 (GRIP_TIMER_ON=false); verified 3dgrip GRIP-OFF OK, no bar, no slip; no code change; grader PASS; tests green, pushed.
 
 - 2026-09-29 18:09 EDT — builder: jackal's turn: body lunge (rear back in hold, 35% of gap toward bitten hunter on the bite, home by the hand, pitch + x drift), hunter damage number up and aside; Ask reworded for Nick; grader FAIL x3 (wind-up unreadable), escalated; tests green, pushed.
 

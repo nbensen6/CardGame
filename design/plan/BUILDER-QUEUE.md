@@ -32,13 +32,13 @@ run failed.
       Ask: Grader failed this: wind-up unseen in stills. Press End Turn: jackal lunges, then damage?
       Test: state=3d beast=cinder_jackal endturn=1
       ![[agents/frames/builder/2026-09-29-jackal-turn-reads-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
-- [ ] **The grip clock only runs on your own time.**
+- [ ] 👀 **The grip clock only runs on your own time.**
       **Nick, 2026-09-29 17:14 ET:** remove grip timer for now
       **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The grip clock only runs on your own time.|details]]
-      Ask: Grader failed this: hop/timing pauses unseen in stills. Hang, Switch away: grip holds?
+      Ask: Grip timer is gone: no HOLD ON bar, nobody slips. Tick to close?
       Test: state=3dgrip beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-grip-clock-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
+      ![[agents/frames/builder/2026-09-29-grip-timer-removed-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
 - [ ] **Timing notes open at the hold on the beast.**
       **Nick, 2026-09-29 17:14 ET:** this question doesnt make sense. i do see timing over the cards still
       **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].

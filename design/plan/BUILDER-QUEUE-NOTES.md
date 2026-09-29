@@ -898,6 +898,14 @@ Builder, 2026-09-29 18:09 EDT, on Nick's "re word this question it doesnt make s
 - Harness: `state=3dgrip` now hangs the Goblin too (between holds, above the Frog), shows the Goblin's bar, runs the Frog's clock out, shows the Goblin's bar again, and saves a 1280x360 before|after strip. It prints `GRIP-PAUSE OK/FAIL`. Old code: 0.58 -> fell. New: 0.98 -> 0.98.
 - Grader round 1 FAIL (pair could not show a before/after value); round 2 FAIL only on hop/timing pauses and the 5 s, which a still cannot show; the done-when read as MET.
 
+Builder, 2026-09-29 18:23 EDT, on Nick's "remove grip timer for now" (17:14).
+
+- Already done: the 17:26 run ("Let the Frog hang?") set `Coach.GRIP_TIMER_ON := false`, which removes the timer for both items. No code changed this run.
+- Verified on current main: `state=3dgrip` prints `GRIP-OFF OK: foothold 1 -> 1 after 1 s, bar shown=false`; no HOLD ON banner, no "hanging!" tag. Tests green.
+- Before = the 14:27 pause-rule frame (banner + bar + "hanging!"); after = the same scenario now.
+- The pause rule (`grip_paused`) and its test stay in the code, dormant, for when grip comes back.
+- Grader: PASS on the first round.
+
 ## Timing notes open at the hold on the beast.
 
 2026-09-29 14:41 EDT, builder.
