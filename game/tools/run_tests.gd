@@ -977,6 +977,8 @@ func _init() -> void:
 	_test_stand_needs_hull_clearance_is_false_on_an_exact_rung()
 	_test_top_hold_z_for_clears_the_face_when_the_anchor_is_behind_it()
 	_test_top_hold_z_for_keeps_the_anchor_when_it_is_already_in_front()
+	_test_top_stone_stands_back_from_the_head()
+	_test_stone_depth_tapers_toward_the_beast()
 	_test_stand_needs_hull_clearance_is_true_strictly_between_two_rungs()
 	_test_stand_needs_hull_clearance_is_false_below_the_lowest_rung()
 	_test_stand_needs_hull_clearance_is_false_above_the_highest_rung()
@@ -22206,11 +22208,29 @@ func _test_backlog86_stand_z_for_keeps_the_anchor_off_anchor_when_the_hull_reads
 ## sigil anchor sits at z=0.53, the muzzle at that height reaches ~13.6.
 func _test_top_hold_z_for_clears_the_face_when_the_anchor_is_behind_it() -> void:
 	var z := Combat3D.top_hold_z_for(0.53, 13.6)
-	_expect(is_equal_approx(z, 13.6 + Combat3D.HUNTER_HEIGHT * 0.45), "anchor behind the muzzle: stand a hunter's clearance in front of the face, got %s" % z)
+	_expect(is_equal_approx(z, 13.6 + Combat3D.HUNTER_HEIGHT * 0.45 + Combat3D.TOP_STONE_PULLBACK), "anchor behind the muzzle: stand a hunter's clearance (plus the pullback) in front of the face, got %s" % z)
 
 
 func _test_top_hold_z_for_keeps_the_anchor_when_it_is_already_in_front() -> void:
-	_expect(is_equal_approx(Combat3D.top_hold_z_for(9.0, 8.0), 9.0), "an anchor already proud of the local face is kept as authored")
+	_expect(is_equal_approx(Combat3D.top_hold_z_for(9.0, 8.0), 9.0 + Combat3D.TOP_STONE_PULLBACK), "an anchor already proud of the local face is kept as authored, plus the pullback")
+
+
+## Nick, 2026-09-29 10:44 ET: "move the stones back. they don't have to be so
+## close to the head." The top stone stands well clear of the face, so from
+## it the jackal's head and chest are in view, not its snout.
+func _test_top_stone_stands_back_from_the_head() -> void:
+	_expect(Combat3D.TOP_STONE_PULLBACK >= 5.0, "the top stone must stand back from the face, got pullback %s" % Combat3D.TOP_STONE_PULLBACK)
+	var z := Combat3D.top_hold_z_for(0.53, 13.6)
+	_expect(z - 13.6 >= 5.0, "top stone only %.2f in front of the muzzle" % (z - 13.6))
+
+
+## The top stone is shallow so the jackal's chest, under the hunter's feet
+## from the level climb camera, is not hidden by the stone's own body; the
+## near stones keep their full boulder depth.
+func _test_stone_depth_tapers_toward_the_beast() -> void:
+	_expect(is_equal_approx(Combat3D.stone_depth_ratio(0.0), 2.0), "the near stone keeps its full depth, got %s" % Combat3D.stone_depth_ratio(0.0))
+	_expect(Combat3D.stone_depth_ratio(1.0) < 1.0, "the top stone must be shallower than it is wide, got %s" % Combat3D.stone_depth_ratio(1.0))
+	_expect(Combat3D.stone_depth_ratio(0.5) < Combat3D.stone_depth_ratio(0.0) and Combat3D.stone_depth_ratio(0.5) > Combat3D.stone_depth_ratio(1.0), "depth must fall steadily toward the beast")
 
 
 func _test_stand_needs_hull_clearance_is_false_on_an_exact_rung() -> void:

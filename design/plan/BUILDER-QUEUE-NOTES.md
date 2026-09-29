@@ -719,3 +719,32 @@ scrolled-to-bottom frame as extra proof; the shot harness has no scroll arg).
 
 2026-09-29 11:10 EDT, builder. Nick answered 10:50: "Yes the scroll bar works now". Nothing
 left to build; re-marked 👀 so he can tick it (the builder never writes `[x]`).
+
+## Move the stones and the hunters back from the jackal.
+
+2026-09-29 11:58 EDT, builder. Nick 10:44: "move the stones back. they don't
+have to be so close to the head."
+
+- `top_hold_z_for` now adds `TOP_STONE_PULLBACK` (6 units) after its face
+  clearance. Every stone follows, because `route_pos` lerps from the ground
+  spot to the top hold; the ground spot, the camera, the jackal are unchanged.
+  playtest.gd calls the same function, so its expectations moved with it.
+- The float stones flatten toward the beast: `stone_depth_ratio(recede)`,
+  2.0x radius near the hunters to 0.9x at the top, and the rock mesh's y scale
+  now follows `rock_height` (it was uniform, so `rock_height` only placed it).
+  Why: the climb camera looks level from just behind the hunter, so the chest,
+  under the hunter's feet, was hidden by the top stone's own body at any
+  pullback (00:21 run's finding).
+- Tried: pullback 8/12/16/20 without the taper (12: chest a thin strip; 16+:
+  Frog over the face), 12 with the taper (grader: jackal too small). 6 with
+  the taper passed.
+- Playtest, 40 steps, same run: main `beast-behind-stone` 2 (max 15.6%),
+  this change 6 (max 17.6%); route-reversal 64 and damage-popup-offscreen 2-3
+  on both.
+- Tests: the two `top_hold_z_for` tests include the pullback;
+  `_test_top_stone_stands_back_from_the_head`,
+  `_test_stone_depth_tapers_toward_the_beast`. ALL TESTS PASSED.
+- Grader: FAIL (12, chest hidden), FAIL (12 + taper, jackal too small), then
+  `VERDICT: PASS`.
+- Note: in `tools/shot.sh`, `console=climb+5` runs nothing ('+' is decoded in
+  play mode only); the frames used `"console=climb 5"`.

@@ -2760,16 +2760,24 @@ static func top_pair_front_of(fronts: PackedFloat32Array) -> float:
 ## ground between them. Only the ROUTES read this; a hunter on a shared ledge
 ## still uses stand_offset_x.
 const ROUTE_PAIR_HALF_GAP := HUNTER_HEIGHT * 4.0
+## How far the top stone stands back from the face, toward the hunters.
+## Nick, 2026-09-29 10:44 ET: "move the stones back. they don't have to be so
+## close to the head." Every stone follows, because route_pos lerps to the
+## top hold. 6 on the jackal: from the top stone the head, the eye and the
+## chest show around the hunter at a size that still reads; 12+ shrinks the
+## jackal behind the hunter, 16+ puts the hunter over the face.
+const TOP_STONE_PULLBACK := 6.0
 static func route_offset_x(anchor_x: float, side: float, beast_width: float) -> float:
 	var half: float = maxf(stand_offset_x(anchor_x, 1.0, beast_width) - anchor_x, ROUTE_PAIR_HALF_GAP)
 	return anchor_x + side * half
 
 
 ## The top stone's z: the sigil's own anchor, or the local face plus a hunter's
-## worth of standing room, whichever is further forward. Static so the one
+## worth of standing room, whichever is further forward, then set back by
+## TOP_STONE_PULLBACK. Static so the one
 ## rule is provable headless.
 static func top_hold_z_for(anchor_z: float, hull_front: float) -> float:
-	return maxf(anchor_z, hull_front + HUNTER_HEIGHT * 0.45)
+	return maxf(anchor_z, hull_front + HUNTER_HEIGHT * 0.45) + TOP_STONE_PULLBACK
 
 
 func _rung_index(foot: int) -> int:
@@ -4749,6 +4757,19 @@ func _build_float_stones() -> void:
 			_add_float_stone(pos, index, n)
 
 
+## How deep a stone's rock runs under its cap, as a multiple of its radius,
+## `recede` of the way from the hunters to the beast. Deep near the hunters
+## (the boulders Nick asked for), shallow at the top: on the top stone the
+## camera looks level from just behind the hunter, so everything under the
+## hunter's feet is hidden by that stone's own body, and the jackal's chest
+## sits there (Nick, 2026-09-28 23:44: "if you are on the last stone you can
+## see the chest of the beast").
+const STONE_DEPTH_NEAR := 2.0
+const STONE_DEPTH_TOP := 0.9
+static func stone_depth_ratio(recede: float) -> float:
+	return lerpf(STONE_DEPTH_NEAR, STONE_DEPTH_TOP, clampf(recede, 0.0, 1.0))
+
+
 ## One decorative rock+cap+rim at `pos`, sized by how far along its own route
 ## (`index` of `count`) it sits -- big near the hunter, smaller toward the
 ## beast (Nick, 2026-09-24, with a drawing). Pulled out of _build_float_stones
@@ -4780,7 +4801,7 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# the beast, landing by landing, not a flat size for every stone.
 	var recede: float = float(index) / float(maxi(count - 1, 1))
 	var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
-	var rock_height := rock_radius * 2.0
+	var rock_height := rock_radius * stone_depth_ratio(recede)
 	# Sunk enough that the CAP below (not the bare rock) is what a
 	# hunter visually lands on, with no gap between the two.
 	var cap_height := HUNTER_HEIGHT * 0.22
@@ -4796,7 +4817,9 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# rock's flat top half a cap ABOVE the cap, where it hid the feet of a
 	# hunter standing on the cap (Frog half-sunk, 2026-09-28).
 	body.position = Vector3(0.0, -cap_height * 0.5 - rock_height, 0.0)
-	body.scale = Vector3.ONE * body_scale
+	# Flatter toward the beast (stone_depth_ratio): y follows rock_height,
+	# so the top reaches the cap at every depth.
+	body.scale = Vector3(body_scale, rock_height / 1.74, body_scale)
 	# Y-axis spin only (no per-instance tilt/squash, unlike the old
 	# sphere): a hull mesh's irregular shape already reads as a
 	# different rock at each facet a spin lands on, and the artist's
