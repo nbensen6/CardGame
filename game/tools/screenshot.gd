@@ -18,6 +18,9 @@
 ##   hover=N (lift the Nth card in the hand — the fan hides rules until hover)
 ##   hand=leap,hop,brace (deal exactly these cards, instead of trusting the shuffle)
 ##   console="hand crescendo;foil on" (run dev-console commands, semicolon separated)
+##   beat=attack|hit|rest actor=N (3dstrike: hunter N lunges, flinches, or
+##     neither; default hunter 0 lunging. Camera shake is zeroed so the three
+##     frames share one camera and the other hunter can be checked for stillness)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 ##   press=F8 (feed one real key press before the shot — for a live-toggle key
 ##     whose only visible effect is a HUD note, not a layout change)
@@ -27,6 +30,8 @@ var _out := "shot.png"
 var _strip: Image = null  # a state that composes its own frame (3dgrip) saves this instead
 var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
+var _beat := "attack"  # 3dstrike beat=attack|hit|rest: the beat hunter _actor takes
+var _actor := 0
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
@@ -149,6 +154,10 @@ func _initialize() -> void:
 			_state = a.substr(6)
 		elif a.begins_with("hold="):
 			_hold = a.substr(5)
+		elif a.begins_with("beat="):
+			_beat = a.substr(5)
+		elif a.begins_with("actor="):
+			_actor = int(a.substr(6))
 		elif a.begins_with("beast="):
 			_beast = a.substr(6)
 		elif a.begins_with("shade="):
@@ -1511,7 +1520,24 @@ func _capture() -> void:
 			var where: Vector3 = sig.position if sig != null else Vector3.ZERO
 			v3.call("_damage_popup", 34, where, true, false)
 			v3.call("_damage_popup", 11, where + Vector3(-1.6, -1.2, 0.0), false, true)
-		for _i in 8:  # let the popup rise a little before the shutter
+		# The hunter's side of the same beat, seeked to its extreme and held
+		# there rather than hoping the shutter lands on it.
+		if v3 != null and v3.has_method("_hunter_play") and _beat != "rest":
+			var hs: Array = v3.get("_hunters")
+			var cam: Camera3D = v3.get("_cam")
+			var body: Node3D = (hs[_actor] as Dictionary).get("body") if _actor < hs.size() else null
+			var at_rest := cam.unproject_position(body.global_position) if cam != null and body != null else Vector2.ZERO
+			v3.call("_hunter_play", _actor, _beat)
+			var tw: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
+			if tw != null:
+				tw.pause()
+				tw.custom_step(float((v3.call("hunter_act_beat", _beat) as Dictionary)["out"]))
+			if cam != null and body != null:
+				print("ACT %s slot=%d screen %s -> %s (scale %s)" % [_beat, _actor, at_rest,
+					cam.unproject_position(body.global_position), body.scale])
+		if v3 != null:
+			v3.set("_shake", 0.0)
+		for _i in 3:
 			await process_frame
 	if _state == "3dloop":  # walk the router through a whole lap of the run
 		var router := current_scene

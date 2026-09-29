@@ -849,3 +849,17 @@ Built 2026-09-29 14:18 EDT.
 - After: note 1 at about (581,308), ~70 px from the Goblin's head. Test `_test_notes_open_beside_the_climbing_hunter` pins it over 40 seeds: the note is within one hunter-height, never on the hunter, on the side facing the card, and falls back to the card with no hunter or an off-frame hunter.
 - Tension: Nick's 11:59 answer on the timing item said "don't have them far from the card". This item moves them to the hunter. The Ask puts that to him.
 - Grader: PASS on the first round.
+
+## Hunters lunge when they attack and flinch when hit.
+
+Builder, 2026-09-29 15:02 EDT.
+
+- `_hunter_play` still plays a rig clip when one exists; with no clip (every hunter today) it falls back to `_hunter_tween_act`, a tween on the BODY (never the holder, so the climb hop and the pip are untouched).
+- Numbers live in static `hunter_act_beat(anim)`: attack = 0.15 s out, 0.2 s back, 1.6 m toward the beast plus 0.55 m lift, scale punch 1.3, lean 0.4 rad into the beast. Hit = 0.2 s out, 0.25 s back, 1.0 m away, scale 0.9, lean -0.5 rad, white overlay at alpha 0.85 fading on the way home.
+- The first try (0.9 m, no lift, punch 1.22) failed the grader: from the rest camera the beast sits straight behind the Frog, so "toward the beast" is into the screen and barely moves it (12 px). The lift is what makes it read (67 px at the new numbers).
+- Only the hunter who played the card lunges: `strike_slots(prev_energy, energy, fallback)` picks whoever spent energy in the snapshot diff; a 0-cost card falls back to the hunter this client drives. The old code made every hunter take the attack beat together.
+- The flash fade is part of the same tween, and killing a beat mid-flight clears its overlay, so a second hit never leaves a hunter stuck white.
+- Harness: `3dstrike beat=rest|attack|hit actor=N` seeks the beat to its extreme with `custom_step` and zeroes camera shake, so the three frames share one camera. The after frame is a 2x2 sheet of full frames at half size.
+- Test: `_test_hunters_lunge_on_attack_and_flinch_on_hit` pins both beats and the attribution rule.
+- Grader: FAIL (lunge not visible, hit direction unclear, Goblin unjudgeable), then PASS.
+

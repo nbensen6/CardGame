@@ -1503,6 +1503,7 @@ func _init() -> void:
 	_test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero()
 	_test_backlog86_grip_after_tick_can_go_negative_past_the_fall_threshold()
 	_test_grip_clock_runs_only_on_the_held_hunters_own_time()
+	_test_hunters_lunge_on_attack_and_flinch_on_hit()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
 	# doubles it" -- but nothing ever proved a real grip_seconds relic actually
@@ -23012,6 +23013,26 @@ func _test_grip_clock_runs_only_on_the_held_hunters_own_time() -> void:
 		"the grip holds while a timing window is open")
 	_expect(Combat3D.grip_paused(0, 0, false, false, true),
 		"the grip holds while the beast's turn plays out")
+
+
+## Session 2026-09-29: hunters lunge when they attack and flinch when hit, and
+## only the hunter that played the card lunges.
+func _test_hunters_lunge_on_attack_and_flinch_on_hit() -> void:
+	var a: Dictionary = Combat3D.hunter_act_beat("attack")
+	_expect(float(a["dir"]) > 0.0 and is_equal_approx(float(a["out"]), 0.15)
+		and float(a["punch"]) > 1.0,
+		"an attack is a 0.15 s lunge toward the beast with a scale punch")
+	var h: Dictionary = Combat3D.hunter_act_beat("hit")
+	_expect(float(h["dir"]) < 0.0 and is_equal_approx(float(h["out"]), 0.2)
+		and float(h["flash"]) > 0.0 and float(h["lean"]) != 0.0,
+		"a hit is a 0.2 s knock-back away from the beast, with a white flash and a lean")
+	_expect(Combat3D.hunter_act_beat("idle").is_empty(), "no other clip name moves a rigless hunter")
+	_expect(Combat3D.strike_slots([3, 3], [2, 3], 1) == [0],
+		"the hunter who spent energy is the one who lunges, not the one this client drives")
+	_expect(Combat3D.strike_slots([3, 3], [3, 3], 1) == [1],
+		"a 0-cost card spends nothing, so the lunge falls back to the driving hunter")
+	_expect(Combat3D.strike_slots([], [3, 3], 0) == [0],
+		"with no previous snapshot the driving hunter lunges alone")
 
 
 func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:

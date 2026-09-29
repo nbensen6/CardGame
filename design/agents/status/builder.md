@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T14:41
-working_on: "Timing notes open at the hold on the beast."
+updated: 2026-09-29T15:02
+working_on: "Hunters lunge when they attack and flinch when hit."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 14:41 EDT
+2026-09-29 15:02 EDT
 
-- **Did:** A timed card's notes now open beside the climbing hunter instead of on the tapped card.
-- **Worked?** Yes: note 1 sits ~70 px from the Goblin, down from ~400 px; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-notes-at-hold-before.png]] then ![[frames/builder/2026-09-29-notes-at-hold-after.png]]
-- **Ask:** Notes now open beside the hunter, not the card. Keep it there?
+- **Did:** The hunter who plays an attack now leaps at the beast; a hit hunter flashes white and flinches back.
+- **Worked?** Yes, after the lunge got a lift so it reads from behind; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-hunter-lunge-before.png]] then ![[frames/builder/2026-09-29-hunter-lunge-after.png]]
+- **Ask:** The hunter who played the card leaps at the beast; hit flashes white. Right?
 
 ## Notes
 
-- **Found:** timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
+- **Found:** the Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
 
 ## Log
 
+- 2026-09-29 15:02 EDT — builder: rigless hunters get tween beats (attack lunge + lift + scale punch toward the beast, hit white flash + knock-back + lean), only the hunter who spent energy lunges (strike_slots); harness 3dstrike beat=/actor=; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 14:41 EDT — builder: timing notes open beside the active hunter (notes_anchor, side facing the card; note_pattern lift=false), card fallback; test pins the first note within a hunter-height; grader PASS; tests green, pushed.
 - 2026-09-29 14:27 EDT — builder: grip clock pauses unless the hanging hunter is held, and during hops, timing windows and the beast's turn (grip_paused + test); harness 3dgrip hangs both hunters and shoots a before|after strip; grader FAIL x2 (hop/timing pauses not visible in stills), escalated; tests green, pushed.
 - 2026-09-29 14:18 EDT — builder: beast turn staged (0.4 s hold + badge pulse, attack clip, damage on frame 16/40, hand 0.5 s later); harness enemyat=; playtest waits the turn out; grader FAIL x3 (bite unreadable in stills), escalated; tests green, pushed.

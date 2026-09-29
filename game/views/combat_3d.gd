@@ -634,6 +634,8 @@ var _prev_hp := -1
 var _prev_foot: Array = []
 var _prev_reached: Array = []
 var _prev_php: Array = []   # per-hunter hp last frame, so a hit on YOU pops a number too
+var _prev_energy: Array = []  # per-hunter energy last frame: who spent it is who struck
+var _act_tw: Dictionary = {}  # slot -> the lunge / flinch tween on that hunter's body
 var _detail: ColorRect = null   # the card inspector overlay, when one is open
 ## The climb gauge on the right edge, and the snapshot it draws from.
 var _gauge: Control = null
@@ -5210,10 +5212,12 @@ func _react(s: Dictionary) -> void:
 	var foots: Array = []
 	var reached: Array = []
 	var php: Array = []
+	var energy: Array = []
 	for p in players:
 		foots.append(int(p.get("foothold", 0)))
 		reached.append(bool(p.get("reached", false)))
 		php.append(int(p.get("hp", 0)))
+		energy.append(int(p.get("energy", 0)))
 	var plan := react_plan(_prev_encounter, _prev_foot, _prev_reached, _prev_php,
 		_prev_hp, enc, hp, foots, reached, php)
 	if not bool(plan["resync"]):
@@ -5221,15 +5225,11 @@ func _react(s: Dictionary) -> void:
 			_strike(plan["weak"])
 			_damage_popup(plan["boss_dmg"],
 				_sigil.position if plan["weak"] else _beast_box.get_center(), plan["weak"])
-			# A hunter's card just landed on the beast. The shared diff this
-			# reacts to (same as _strike above) carries no per-hunter attribution
-			# for WHICH hunter's play connected — only that the boss took a hit —
-			# so every hunter takes its own "attack" beat together, at the same
-			# granularity _beast_play("attack") below already uses for the
-			# beast's side of a hit. A no-op for any hunter without a
-			# HUNTER_AI_ART model wired to an AnimationPlayer (every hunter today).
-			for hi in range(_hunters.size()):
-				_hunter_play(hi, "attack")
+			# A hunter's card just landed on the beast: that hunter lunges, and
+			# only that one. strike_slots reads who spent energy in this diff.
+			for hi in strike_slots(_prev_energy, energy, _cmd_slot()):
+				if int(hi) < _hunters.size():
+					_hunter_play(int(hi), "attack")
 		var hunter_dmg: Array = plan["hunter_dmg"]
 		var foot_actions: Array = plan["foot_actions"]
 		# The beast bit someone: that is its attack landing, so it is seen doing it.
@@ -5249,6 +5249,7 @@ func _react(s: Dictionary) -> void:
 				"reach": Sfx.play("reach_sigil")
 				"climb": Sfx.play("climb")
 				"fall": _beast_shake()
+	_prev_energy = energy
 	_sync(enc, hp, foots, reached, php)
 
 
@@ -5910,10 +5911,119 @@ func _hunter_play(slot: int, anim: String) -> void:
 		return
 	var player := (_hunters[slot] as Dictionary).get("anim") as AnimationPlayer
 	if player == null or not player.has_animation(anim):
+		# No rig (every hunter today): the beat is a tween on the body, the
+		# same way the climb hop already is.
+		_hunter_tween_act(slot, anim)
 		return
 	player.play(anim, 0.08)
 	if player.has_animation("idle"):
 		player.queue("idle")
+
+
+## How far a hunter's body moves, and for how long, for each act beat. Pulled
+## out static so the numbers the queue asked for (a 0.15 s lunge toward the
+## beast, a 0.2 s knock-back) are pinned by a test and not only by eye.
+##   dir  +1 toward the beast, -1 away from it
+##   out  seconds to the extreme, back  seconds home again
+##   reach  world units the body travels
+##   lift  world units it rises (a lunge into the screen reads by its hop)
+##   punch  body scale multiplier at the extreme
+##   lean  radians of pitch at the extreme (+ leans into the beast)
+##   flash  starting alpha of a white overlay, 0 for none
+static func hunter_act_beat(anim: String) -> Dictionary:
+	match anim:
+		"attack":
+			return {"dir": 1.0, "out": 0.15, "back": 0.2, "reach": 1.6, "lift": 0.55,
+				"punch": 1.3, "lean": 0.4, "flash": 0.0}
+		"hit":
+			return {"dir": -1.0, "out": 0.2, "back": 0.25, "reach": 1.0, "lift": 0.0,
+				"punch": 0.9, "lean": -0.5, "flash": 0.85}
+	return {}
+
+
+## Which hunters take the "attack" beat when the beast is hit: the ones whose
+## energy dropped in this snapshot, which is the hunter that played the card.
+## A 0-cost card spends nothing, so then it is `fallback`, the hunter this
+## client is driving. Never both hunters for one card (queue, 2026-09-29:
+## "only on the hunter that played the card").
+static func strike_slots(prev_energy: Array, energy: Array, fallback: int) -> Array:
+	var out: Array = []
+	if prev_energy.size() == energy.size():
+		for i in range(energy.size()):
+			if int(energy[i]) < int(prev_energy[i]):
+				out.append(i)
+	if out.is_empty() and fallback >= 0 and fallback < energy.size():
+		out.append(fallback)
+	return out
+
+
+## The rigless act beat: a lunge (attack) or a flinch (hit) on the BODY, never
+## the holder, so the climb hop that owns the holder's position and the pip
+## that rides the holder are untouched, and the body always comes home to the
+## same spot however the two overlap.
+func _hunter_tween_act(slot: int, anim: String) -> void:
+	var beat := hunter_act_beat(anim)
+	if beat.is_empty():
+		return
+	var h: Dictionary = _hunters[slot]
+	var holder := h.get("node") as Node3D
+	var body := h.get("body") as Node3D
+	if holder == null or body == null or not is_instance_valid(body) \
+			or not is_instance_valid(holder):
+		return
+	var old: Tween = _act_tw.get(slot) as Tween
+	if old != null and old.is_valid():
+		old.kill()
+		# A killed beat never reaches its own cleanup: take its flash off here.
+		for mi in body.find_children("*", "MeshInstance3D", true, false):
+			(mi as MeshInstance3D).material_overlay = null
+		if body is MeshInstance3D:
+			(body as MeshInstance3D).material_overlay = null
+	var rest := hunter_rest_scale(body)
+	body.rotation.x = 0.0
+	var at := _beast_box.get_center() - holder.position if _beast != null else Vector3.FORWARD
+	at.y = 0.0
+	if at.length() < 0.01:
+		at = Vector3.FORWARD
+	# The body is a child of the holder, whose yaw the glide sets; move it in
+	# the holder's own frame.
+	var local_dir: Vector3 = holder.basis.inverse() * at.normalized()
+	var reach: float = float(beat["reach"]) * float(beat["dir"])
+	var tip: Vector3 = local_dir * reach + Vector3(0.0, float(beat["lift"]), 0.0)
+	var out: float = beat["out"]
+	var back: float = beat["back"]
+	body.position = Vector3.ZERO
+	var tw := create_tween()
+	_act_tw[slot] = tw
+	tw.tween_property(body, "position", tip, out) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(body, "scale", rest * float(beat["punch"]), out) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(body, "rotation:x", float(beat["lean"]), out) \
+		.set_ease(Tween.EASE_OUT)
+	tw.tween_property(body, "position", Vector3.ZERO, back) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(body, "scale", rest, back).set_ease(Tween.EASE_IN_OUT)
+	tw.parallel().tween_property(body, "rotation:x", 0.0, back).set_ease(Tween.EASE_IN_OUT)
+	var flash: float = beat["flash"]
+	if flash > 0.0:
+		var white := StandardMaterial3D.new()
+		white.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		white.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		white.albedo_color = Color(1, 1, 1, flash)
+		var meshes := body.find_children("*", "MeshInstance3D", true, false)
+		if body is MeshInstance3D:
+			meshes.append(body)
+		for mi in meshes:
+			(mi as MeshInstance3D).material_overlay = white
+		# Part of the same tween, so killing or seeking the beat takes the
+		# flash with it.
+		tw.parallel().tween_property(white, "albedo_color:a", 0.0, back) \
+			.set_ease(Tween.EASE_IN)
+		tw.tween_callback(func() -> void:
+			for mi in meshes:
+				if is_instance_valid(mi) and (mi as MeshInstance3D).material_overlay == white:
+					(mi as MeshInstance3D).material_overlay = null)
 
 
 ## A hit on the beast: recoil, a flash of light, a kick of camera shake — much

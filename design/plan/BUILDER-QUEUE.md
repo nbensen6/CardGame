@@ -78,10 +78,12 @@ run failed.
       Ask: Notes now open beside the hunter, not the card. Keep it there?
       Test: state=3dosu beast=cinder_jackal hold=on
       ![[agents/frames/builder/2026-09-29-notes-at-hold-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
-- [ ] **Hunters lunge when they attack and flinch when hit.**
+- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
       **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Test: state=3dstrike beast=cinder_jackal ^hunters-lunge-when-they-attack-and-flinc
+      Ask: The hunter who played the card leaps at the beast; hit flashes white. Right?
+      Test: state=3dstrike beast=cinder_jackal beat=attack
+      ![[agents/frames/builder/2026-09-29-hunter-lunge-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [ ] **Played cards fly to their target.**
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
@@ -259,3 +261,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The jackal's attack clip barely reads front-on at rest distance; the bite needs a lunge or a side view.
 - [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.
 - [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
+- [ ] (proposed) The Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
