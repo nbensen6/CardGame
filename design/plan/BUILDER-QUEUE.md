@@ -10,6 +10,10 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **A missed timed card: keep the card?**
+      **Nick, 2026-09-29 12:14 ET:** i dont like the idea of losing a card. a miss play can do a plain value of the card, but hitting the timed can have a small bonus
+      **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
+      Ask: A miss deletes the card for the whole fight. Yes = a miss plays the card's plain value and you keep the card. No = leave it. ^a-missed-timed-card-keep-the-card
 - [ ] **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
       **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -33,7 +37,7 @@ run failed.
       Ask: You said the scroll bar works now. Tick to close it?
       Test: state=3dsettings beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-settings-scroll-after.png|420]] ^can-t-scroll-on-the-menu
-- [ ] 👀 **Move the stones and the hunters back from the jackal.**
+- [x] **Move the stones and the hunters back from the jackal.**
       **Nick, 2026-09-29 10:44 ET:** No move the stones back. they don't have to be so close to the head
       **Nick, 2026-09-28 23:44 ET:** its ok, but you can move the stones back. the last stone doesnt need to be right in front of the boss. you can move the stones and the characters back enough that if you are on the last stone you can see the chest of the beast
       **Session, 2026-09-29 10:55 ET:** split off the playtest item, where these notes had landed. What Nick wants: the whole staircase, hunters included, slides AWAY from the jackal, so that standing on the last stone you see the jackal's chest and head in front of you, not its snout in your face. The last stone does not have to touch the head. Do not raise the camera, do not move the jackal, do not change the camera distance. The 00:21 run tried two ways that hid the jackal more and reverted; the difference this time is that the top stone itself moves back (further from the beast), it is not the hunters alone.
@@ -158,6 +162,14 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
+- [ ] **Make the Jackal be less glossy and more matte.**
+      **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
+      Test: state=3d ^make-the-jackal-be-less-glossy-and-more-
+- [ ] **Change the fog so it's behind the exterior.**
+      **Nick, 2026-09-29 12:14 ET:** Change the fog so it's behind the exterior. I would like to be able to see the mountains (where: environment)
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Change the fog so it's behind the exterior.|details]]
+      Test: state=3d ^change-the-fog-so-it-s-behind-the-exteri
 
 
 ## Waiting on Nick
@@ -165,9 +177,6 @@ run failed.
 The builder skips this section. Answer here or in Home; the item then moves
 into Now.
 
-- [ ] **A missed timed card: keep the card?**
-      **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: A miss deletes the card for the whole fight. Yes = a miss plays the card's plain value and you keep the card. No = leave it. ^a-missed-timed-card-keep-the-card
 ## Open decisions, with the default the builder takes if Nick says nothing
 
 - #14 stones: five per hunter, as built.
