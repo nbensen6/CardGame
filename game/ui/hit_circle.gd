@@ -93,6 +93,11 @@ const TICK_STEP := 0.2
 ## drops it the instant you let go. It is the clearest "you still have this"
 ## signal in the game.
 const FOLLOW_SCALE := 1.55
+## A drag, not a hold: stray this far from the ball while it runs and you have
+## let go of it. Generous -- the ball is a thumb's width, and a thumb is not a
+## cursor -- but far enough that pressing and then parking does not pass
+## (Nick, 2026-09-29: "add a mechanic of click and drag").
+const DRAG_RADIUS := TARGET_RADIUS * FOLLOW_SCALE * 1.4
 
 const GOLD := Color(1.0, 0.83, 0.36)
 const RING := Color(0.98, 0.93, 0.72)
@@ -112,13 +117,18 @@ var _burst_note := 0          # which note it belongs to, so it follows the came
 var _burst_dropped := false   # this MISS/downgrade came from letting go a slider hold, not a mistimed tap -- _offset()'s early/late sign is stale for it
 var _combo := 0               # notes landed in a row, reset by a miss
 var _approach := APPROACH_SECONDS   # this note's own approach length
-var _slider := false          # this window is held, not tapped
+var _slider := false          # this window ends in a drag rather than a last tap
+var _drag_from := -1          # note index the drag starts at; the notes before it are taps
 var _holding := false         # the press has landed and the follower is running
 var _slide := 0.0             # 0..1 along the path
 var _press_quality := Combat.TIMING_PERFECT
 var _slider_note_hit := false # note_hit already told a slider's one note its press quality; _finish() must not report it again with a conflicting one if the hold later breaks
 var _cam: Camera3D
 var _notes: PackedVector3Array = PackedVector3Array()   # one world point per hit
+## Screen points instead of world points, for a pattern pinned beside the card
+## you tapped. A world point drifts every time the camera eases, which is how a
+## stream that opened on the card ended up under the grip banner.
+var _flat: PackedVector2Array = PackedVector2Array()
 var _at := Vector2.ZERO
 
 
@@ -138,18 +148,36 @@ func _ready() -> void:
 ## `slider` makes the whole window one held note travelling the path, instead of
 ## a tap at each point.
 func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
-		slider: bool = false) -> void:
+		slider: bool = false, drag_from: int = -1) -> void:
 	if _live or points.is_empty():
 		return
+	_flat = PackedVector2Array()
+	_open(bonus, cam, points, 0 if slider else drag_from)
+
+
+## The same window, drawn at fixed SCREEN points: taps at `points[0..drag_from)`,
+## then a drag along the rest. `drag_from` -1 is taps only.
+func begin_flat(bonus: float, points: PackedVector2Array, drag_from: int = -1) -> void:
+	if _live or points.is_empty():
+		return
+	_flat = points
+	var dummy := PackedVector3Array()
+	dummy.resize(points.size())
+	_open(bonus, null, dummy, drag_from)
+
+
+## A drag needs a path: at least two points from where it starts.
+func _open(bonus: float, cam: Camera3D, points: PackedVector3Array, drag_from: int) -> void:
 	_live = true
-	_slider = slider and points.size() > 1
+	_drag_from = drag_from if drag_from >= 0 and points.size() - drag_from >= 2 else -1
+	_slider = _drag_from >= 0
 	_holding = false
 	_slide = 0.0
 	_press_quality = Combat.TIMING_PERFECT
 	_slider_note_hit = false
 	_burst_dropped = false
 	_notes = points
-	_hits_needed = 1 if _slider else points.size()
+	_hits_needed = _drag_from + 1 if _slider else points.size()
 	_hits_done = 0
 	_worst = Combat.TIMING_PERFECT
 	_approach = APPROACH_SECONDS
@@ -165,6 +193,12 @@ func begin(bonus: float, cam: Camera3D, points: PackedVector3Array,
 
 func is_live() -> bool:
 	return _live
+
+
+## The taps are done and the next thing is the drag.
+func _in_drag() -> bool:
+	return _slider and _hits_done >= _drag_from
+
 
 
 func _process(delta: float) -> void:
@@ -191,6 +225,15 @@ func _process(delta: float) -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if _live and _holding and event is InputEventMouseMotion:
+		# The drag: keep the pointer on the ball. Wander off it and you have let
+		# go, exactly as if you had lifted your finger.
+		var path := _screen_path(_drag_from)
+		if path.size() > 1 and (event as InputEventMouseMotion).position.distance_to(
+				_path_point(path, _slide)) > DRAG_RADIUS:
+			accept_event()
+			_release()
+		return
 	if not _live or not (event is InputEventMouseButton):
 		return
 	var mb := event as InputEventMouseButton
@@ -213,6 +256,10 @@ func _gui_input(event: InputEvent) -> void:
 		_fire()
 		return
 	accept_event()
+	_release()
+
+
+func _release() -> void:
 	if _holding:
 		# Let go. Near the end is a slip and still pays something; letting go at
 		# the start means you did not hold it at all. Either way the press was
@@ -248,17 +295,17 @@ func _fire() -> void:
 		return
 	if off > PERFECT_WINDOW:
 		_worst = mini(_worst, Combat.TIMING_GOOD)
-	if _slider:
+	if _in_drag():
 		# The press was on time. Now keep hold of it: the note is not done until
 		# the follower reaches the end of the path.
 		_press_quality = _worst
 		_holding = true
 		_slide = 0.0
 		_combo += 1
-		_burst_note = 0
+		_burst_note = _hits_done
 		_burst_grade = _worst
 		_flash = 1.0
-		note_hit.emit(0, _worst)
+		note_hit.emit(_hits_done, _worst)
 		_slider_note_hit = true
 		return
 
@@ -294,7 +341,7 @@ func _finish(quality: int, dropped: bool = false, released: bool = false) -> voi
 		# landed; only the hold that followed it broke. The visual MISS burst
 		# below still plays, since a player who dropped the hold needs to see
 		# why, same as any other miss.
-		if not (_slider and _slider_note_hit):
+		if not _slider_note_hit:
 			note_hit.emit(_hits_done, Combat.TIMING_MISS)
 		_combo = 0
 	if _live and (quality == Combat.TIMING_MISS or released):
@@ -316,14 +363,16 @@ func _finish(quality: int, dropped: bool = false, released: bool = false) -> voi
 ## stays true while the camera moves under it, and every reader — notes, follow
 ## points, slider body, judgement bursts — gets the corrected position for free.
 func _screen(i: int) -> Vector2:
-	var at := _cam.unproject_position(_notes[i])
+	var at := _flat[i] if not _flat.is_empty() else _cam.unproject_position(_notes[i])
 	var pad := TARGET_RADIUS * START_SCALE * 0.5 + 8.0   # room for the approach ring
 	return Vector2(clampf(at.x, pad, maxf(size.x - pad, pad)),
 		clampf(at.y, pad, maxf(size.y - pad, pad)))
 
 
 func _visible_note(i: int) -> bool:
-	return i >= 0 and i < _notes.size() and not _cam.is_position_behind(_notes[i])
+	if i < 0 or i >= _notes.size():
+		return false
+	return not _flat.is_empty() or not _cam.is_position_behind(_notes[i])
 
 
 ## One osu note: filled disc, bright rim, number.
@@ -356,11 +405,13 @@ func _follow(a: Vector2, bb: Vector2, alpha: float) -> void:
 		draw_circle(p, 2.8, Color(RING.r, RING.g, RING.b, 0.5 * maxf(alpha, 0.55)))
 
 
-## Every note as a screen point, in order.
-func _screen_path() -> PackedVector2Array:
+## Every note from `from` on as a screen point, in order.
+func _screen_path(from: int = 0) -> PackedVector2Array:
 	var out := PackedVector2Array()
-	for i in range(_notes.size()):
-		if _cam.is_position_behind(_notes[i]):
+	if _cam == null and _flat.is_empty():
+		return out
+	for i in range(maxi(from, 0), _notes.size()):
+		if not _visible_note(i):
 			return PackedVector2Array()   # any point behind us and the path is a lie
 		out.append(_screen(i))
 	return out
@@ -390,8 +441,9 @@ func _path_point(path: PackedVector2Array, t: float) -> Vector2:
 ## A slider: press on the beat, then hold while the follower runs the track.
 ## Drawn as a road rather than as separate targets, because that is what it asks
 ## of you — one sustained motion, not several decisions.
-func _draw_slider(path: PackedVector2Array) -> void:
-	var fade := _ready_alpha()
+func _draw_slider(path: PackedVector2Array, fade: float = -1.0, preview: bool = false) -> void:
+	if fade < 0.0:
+		fade = _ready_alpha()
 	draw_polyline(path, Color(0.10, 0.09, 0.13, 0.40 * fade), TARGET_RADIUS * 1.05, true)
 	draw_polyline(path, Color(GOLD.r, GOLD.g, GOLD.b, 0.72 * fade), 2.5, true)
 	var tail := path[path.size() - 1]
@@ -431,7 +483,16 @@ func _draw_slider(path: PackedVector2Array) -> void:
 		draw_arc(rescue, 7.0, 0.0, TAU, 20, Color(GOLD.r, GOLD.g, GOLD.b, 0.6), 2.0, true)
 		return
 
-	_note(path[0], 1, fade)
+	_note(path[0], _drag_from + 1, fade)
+	# Say it once, on the head: a road you have never seen before is otherwise
+	# just a thicker follow line.
+	var font := ThemeDB.fallback_font
+	var word := "DRAG"
+	var ws := font.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, 15)
+	draw_string(font, path[0] + Vector2(-ws.x * 0.5, TARGET_RADIUS + 18.0), word,
+		HORIZONTAL_ALIGNMENT_LEFT, -1, 15, Color(GOLD.r, GOLD.g, GOLD.b, fade))
+	if preview:
+		return      # still tapping: show the road ahead, not its approach ring
 	var core_r := TARGET_RADIUS * (1.0 + (PERFECT_WINDOW / maxf(_approach, 0.001)) * START_SCALE)
 	draw_arc(path[0], core_r, 0.0, TAU, 48, Color(CORE.r, CORE.g, CORE.b, 0.5 * fade), 2.0, true)
 	var near := 1.0 - clampf(absf(_offset()) / GOOD_WINDOW, 0.0, 1.0)
@@ -497,7 +558,7 @@ func _ready_alpha() -> float:
 
 
 func _draw() -> void:
-	if _cam == null or not is_instance_valid(_cam) or _notes.is_empty():
+	if _notes.is_empty() or (_flat.is_empty() and (_cam == null or not is_instance_valid(_cam))):
 		return
 
 	if _flash > 0.0 and _burst_grade >= 0:
@@ -507,18 +568,30 @@ func _draw() -> void:
 	if not _live:
 		return
 
-	if _slider:
-		var path := _screen_path()
+	if _in_drag():
+		var path := _screen_path(_drag_from)
 		if path.size() > 1:
 			_draw_slider(path)
 		return
 
 	var fade := _ready_alpha()
 
+	# The drag this chain ends in, dim until the taps before it are done, so you
+	# can see where your finger will have to go.
+	var last_tap := _notes.size() - 1
+	if _slider:
+		last_tap = _drag_from - 1
+		var road := _screen_path(_drag_from)
+		if road.size() > 1:
+			var ahead := LOOKAHEAD_ALPHA * pow(0.62, maxi(_drag_from - _hits_done - 1, 0))
+			if _visible_note(last_tap):
+				_follow(_screen(last_tap), road[0], ahead)
+			_draw_slider(road, maxf(ahead, 0.55), true)
+
 	# The notes you have not hit yet, furthest first so the current one draws on
 	# top. Each is dimmer than the last: the pattern is legible ahead of time,
 	# but there is never any doubt which one is yours right now.
-	for i in range(_notes.size() - 1, _hits_done, -1):
+	for i in range(last_tap, _hits_done, -1):
 		if not _visible_note(i):
 			continue
 		var depth := i - _hits_done

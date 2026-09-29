@@ -988,7 +988,10 @@ func _capture() -> void:
 			var row: Node = tv.get("_hand_row")
 			var cv: Node = row.get_child(timed_at)
 			tv.call("_on_card_tapped", hand[timed_at], cv)
-			for _i in 26:                # part-way through the approach
+			# hold= parks the note straight away: under a software renderer a
+			# frame can take a tenth of a second, and 26 of them closed the
+			# whole window before the shot was taken.
+			for _i in (1 if _hold != "" else 26):   # part-way through the approach
 				await process_frame
 			var circle = tv.get("_circle")
 			# Park the note at a chosen point in its life so a shot can show the
@@ -1002,6 +1005,7 @@ func _capture() -> void:
 				elif _hold == "late":
 					park = HitCircle.APPROACH_SECONDS + HitCircle.GOOD_WINDOW * 0.8
 				circle.set("_t", park)
+				circle.set_process(false)   # and keep it there for the shot
 				circle.queue_redraw()
 				await process_frame
 			print("TIMING style=%s card=%s windows=%d circle_live=%s"
@@ -1009,11 +1013,13 @@ func _capture() -> void:
 				   int((hand[timed_at] as Dictionary).get("timed_hits", 1)),
 				   str(circle != null and circle.call("is_live"))])
 			if _state == "3dosu" and circle != null:
-				# The complaint was that most cards showed ONE circle. Prove the
-				# floor by asking for a one-window card's path directly.
-				var one: PackedVector3Array = tv.call("_hold_points", hand[timed_at], 1, Vector2(640, 600))
-				print("TIMING notes: live=%d  a one-window card would get %d"
-					% [(circle.get("_notes") as PackedVector3Array).size(), one.size()])
+				# How many taps and whether a drag, by the card's cost (Nick, 2026-09-29).
+				var card_open: Dictionary = hand[timed_at]
+				var plan: Vector2i = tv.call("timing_plan", int(card_open.get("cost", 0)),
+					int(card_open.get("timed_hits", 1)), int(tv.call("card_climb_for", card_open)))
+				print("TIMING notes: live=%d  plan=%d taps%s  drag_from=%d"
+					% [(circle.get("_notes") as PackedVector3Array).size(), plan.x,
+					   " + drag" if plan.y > 0 else "", int(circle.get("_drag_from"))])
 				# Every note must be ON the screen. One you cannot see is not a
 				# timing test, it is a guaranteed miss.
 				var frame := Rect2(Vector2.ZERO, (circle as Control).size)
@@ -1025,7 +1031,8 @@ func _capture() -> void:
 					var drawn: Vector2 = circle.call("_screen", i)
 					if not frame.has_point(drawn):
 						off.append(str(i + 1))
-					if not frame.has_point(cam3.unproject_position(live_notes[i])):
+					if circle.get("_flat").is_empty() \
+							and not frame.has_point(cam3.unproject_position(live_notes[i])):
 						raw_off.append(str(i + 1))
 				print("TIMING on screen: %s  (unclamped would lose: %s)" % [
 					"all" if off.is_empty() else "MISSING " + ", ".join(off),

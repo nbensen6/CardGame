@@ -965,22 +965,33 @@ func _on_circle_resolved(quality: int) -> void:
 	_circle_index = -1
 
 
-## How much Climb makes a card a HOLD rather than a tap. A long haul up the body
-## should feel sustained; a short hop should not.
-## Fewest notes a timed card ever asks for.
+## How many taps a timed card asks for, and whether it ends in a drag.
 ##
-## This is the whole reason the osu face did not feel like osu: `timed_hits` is 1
-## for 28 of the 41 timed cards, so almost every card showed ONE circle and one
-## circle is not a rhythm (Nick, 2026-08-25: "the osu circles still only have 1
-## circle"). In osu you are always hitting a sequence — the pattern IS the
-## instrument. A card that wants more windows still gets them; this is a floor,
-## not an override, so Satchel Charge keeps its three.
-const NOTE_MIN := 3
+## Every timed card used to ask for at least three taps, and one bad tap lost
+## the card. Nick, 2026-09-29: "make it more complex dependent on how much the
+## card cost. add a mechanic of click and drag." So the price is the difficulty:
+##
+##   cost 0  -> 1 tap
+##   cost 1  -> 2 taps
+##   cost 2  -> 2 taps, then a drag
+##   cost 3+ -> 3 taps, then a drag
+##
+## A card that prints more windows (`timed_hits`, Satchel Charge's 3) keeps
+## them: the cost sets a floor, never a ceiling. A long climb (SLIDER_CLIMB and
+## up) is a drag at any price, because a haul up the body should feel like one.
+## Returns Vector2i(taps, drag) with drag 0 or 1.
+static func timing_plan(cost: int, hits: int, climb: int) -> Vector2i:
+	var taps := 1
+	if cost >= 3:
+		taps = 3
+	elif cost >= 1:
+		taps = 2
+	taps = maxi(taps, hits)
+	var drag := 1 if cost >= 2 or climb >= SLIDER_CLIMB else 0
+	return Vector2i(taps, drag)
 
 
-## Climb 2 and up. At 3 only two cards in the whole game would ever have been a
-## slider, so the feature would have shipped effectively dead; at 2 it is five,
-## and the rule still reads honestly — a real haul is a hold, a hop is a tap.
+## Climb 2 and up is a drag whatever the card costs.
 const SLIDER_CLIMB := 2
 
 
@@ -995,86 +1006,105 @@ static func card_climb_for(card: Dictionary) -> int:
 	return int((card.get("base", {}) as Dictionary).get("grip", 0))
 
 
-## Should this timed card's HitCircle window be one held slider, or a tap chain?
-##
-## `card_climb_for` and `hits` (timed_hits) are printed independently and no
-## shipped, un-melded card carries both a slider-eligible climb AND more than
-## one real timing window -- but Meld sums `grip` and takes the max of
-## `timed_hits` across its two cards (combat.gd's `_meld_cards`), so fusing a
-## climb card (e.g. Winch, grip 2) with a multi-hit card (e.g. Satchel Charge,
-## timed_hits 3) reaches it for real. `HitCircle.begin()` used to let `slider`
-## win outright, collapsing `_hits_needed` to 1 regardless of `points.size()`
-## -- a card that should demand 3 separately-graded windows instead resolved
-## as a single 0.85s hold with SLIDE_RESCUE forgiveness, a much easier check
-## than its own `timed_hits` promises and than the sweep-bar CardView face
-## (`start_timing(hits)`, unconditional on grip) already gives the identical
-## melded card. Only a genuinely single-window climb stays a slider; anything
-## melded past one window falls back to the tap chain both faces otherwise
-## agree on.
-static func card_is_slider(card: Dictionary, hits: int) -> bool:
-	return card_climb_for(card) >= SLIDER_CLIMB and hits <= 1
-
-
-## Screen-space spacing between consecutive notes, in pixels.
-##
-## About a circle and a half apart — an osu stream, where the next note is close
-## enough that you flick to it rather than travel to it. The first version ran
-## the chain from the card all the way up to the hold, which was a journey across
-## the frame and put notes off the edge of it (Nick, 2026-08-25: "dont make them
-## acros the screen. they should be in quick succesion").
+## Screen-space spacing between consecutive notes, in pixels. About a circle
+## and a half apart -- the next note is a flick, not a journey.
 const NOTE_STEP := 92.0
-## How far the zigzag swings either side of the line.
-const NOTE_SWAY := 42.0
+## No note is ever further than this from the card you tapped (Nick,
+## 2026-09-29: "add variety of where the clicks are, but don't have them far
+## from the card"). Two and a half steps: enough room for four places to be
+## genuinely different, never so far that your eye leaves the card.
+const NOTE_REACH := 230.0
+## And none rises more than this above the card's middle -- so the pattern
+## hugs the hand instead of climbing into the scene over the hunter's head.
+const NOTE_RISE := 150.0
+## Points along the drag's path. Two legs, so it bends.
+const DRAG_POINTS := 3
 
 
-## The pattern this card asks you to tap: a short stream rising from the card you
-## tapped, in screen space so the spacing is the same whatever the camera is
-## doing and whatever you are fighting.
+## Where each note goes, in screen pixels, around `anchor` (the card's middle).
 ##
-## Built as screen offsets and projected into the world, because HitCircle draws
-## from world points — project_position is the exact inverse of the unproject it
-## uses, so a note lands where the arithmetic says it will.
-func _hold_points(card: Dictionary, hits: int, from_screen: Vector2) -> PackedVector3Array:
-	var out := PackedVector3Array()
-	if _cam == null:
-		return out
-	var count := maxi(hits, NOTE_MIN)
-	if card_climb_for(card) >= SLIDER_CLIMB:
-		count = maxi(count, 3)      # a slider needs a path to travel along
-	# One depth for the whole pattern, so the spacing stays in pixels rather than
-	# stretching with perspective.
-	var depth := maxf(_dist * 0.55, 3.0)
-	# Keep the stream inside the frame even when the card that started it sits in
-	# a corner: shove the whole pattern, rather than bending it out of shape.
-	# A different shape every time. The same three positions on every card turned
-	# a rhythm test into muscle memory you only had to learn once (Nick,
-	# 2026-08-25: "the circles are in the same position everytime"). The stream
-	# still rises — you are climbing — but it leans, curves and steps differently
-	# on each play.
+## A short random walk: each note one step from the last, in a direction that
+## changes every note, never back on top of an earlier one, never outside
+## NOTE_REACH of the card and never more than NOTE_RISE above it. `floor_y` is
+## the lowest a note may sit (the bottom of the frame, less a margin): a walk
+## that ran off the bottom used to be shoved up whole, over the hunter's head. The drag, if there is one, carries on from the last
+## tap. Pure (the RNG is passed in) so a test can pin the reach.
+static func note_pattern(anchor: Vector2, taps: int, drag: bool,
+		rng: RandomNumberGenerator, floor_y: float = INF) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	var count := taps + (DRAG_POINTS if drag else 0)
+	# The first note sits on or beside the card, not always dead above it.
+	var at := note_clamp(anchor, anchor + Vector2(rng.randf_range(-70.0, 70.0),
+		rng.randf_range(-NOTE_RISE, -NOTE_RISE * 0.5)), floor_y)
+	out.append(at)
+	var heading := 0.0 if rng.randf() < 0.5 else PI         # off to one side
+	for i in range(1, count):
+		var in_drag := drag and i >= taps
+		var step := NOTE_STEP * (0.8 if in_drag else rng.randf_range(0.95, 1.2))
+		var best := Vector2.ZERO
+		var found := false
+		for _try in 16:
+			var turn := rng.randf_range(-0.6, 0.6) if in_drag else rng.randf_range(-1.6, 1.6)
+			var h := heading + turn
+			var p := at + Vector2(cos(h), sin(h)) * step
+			if not note_in_reach(anchor, p, floor_y):
+				continue
+			var clear := true
+			for q in out:
+				if q.distance_to(p) < NOTE_STEP * 0.75:
+					clear = false
+					break
+			if clear:
+				best = p
+				heading = h
+				found = true
+				break
+		if not found:
+			# Boxed in: look all the way round and take the open ground furthest
+			# from every earlier note that is still inside the reach.
+			var room := -1.0
+			var spin := rng.randf() * TAU
+			for k in 24:
+				var h := spin + TAU * float(k) / 24.0
+				var p := at + Vector2(cos(h), sin(h)) * step
+				p = note_clamp(anchor, p, floor_y)
+				var gap := 1e9
+				for q in out:
+					gap = minf(gap, q.distance_to(p))
+				if gap > room:
+					room = gap
+					best = p
+					heading = h
+		at = best
+		out.append(at)
+	return out
+
+
+static func note_in_reach(anchor: Vector2, p: Vector2, floor_y: float = INF) -> bool:
+	return p.distance_to(anchor) <= NOTE_REACH and p.y >= anchor.y - NOTE_RISE and p.y <= floor_y
+
+
+static func note_clamp(anchor: Vector2, p: Vector2, floor_y: float = INF) -> Vector2:
+	var q := anchor + (p - anchor).limit_length(NOTE_REACH)
+	return Vector2(q.x, clampf(q.y, anchor.y - NOTE_RISE, maxf(floor_y, anchor.y - NOTE_RISE)))
+
+
+## The pattern this card asks you to play, in screen points, shoved back inside
+## the frame as a whole rather than bent out of shape.
+func _hold_points(plan: Vector2i, from_screen: Vector2) -> PackedVector2Array:
 	var rng := RandomNumberGenerator.new()
-	var lean := rng.randf_range(-0.55, 0.55)          # radians off vertical
-	var curve := rng.randf_range(-0.9, 0.9)           # how much the line bends
-	var flip := 1.0 if rng.randf() < 0.5 else -1.0    # which side the zigzag starts
-	var pattern := PackedVector2Array()
+	var view := get_viewport().get_visible_rect().size
+	var pad := 96.0
+	var pattern := note_pattern(from_screen, plan.x, plan.y > 0, rng, view.y - pad)
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
-	for i in range(count):
-		var step := float(i)
-		var along := Vector2(sin(lean), -cos(lean)) * (NOTE_STEP * step)
-		var side := Vector2(cos(lean), sin(lean))
-		var wobble := flip * (1.0 if i % 2 == 0 else -1.0) * NOTE_SWAY
-		var bend := curve * NOTE_SWAY * sin(step / maxf(float(count - 1), 1.0) * PI)
-		var at := from_screen + along + side * (wobble + bend)
-		pattern.append(at)
+	for at in pattern:
 		lo = Vector2(minf(lo.x, at.x), minf(lo.y, at.y))
 		hi = Vector2(maxf(hi.x, at.x), maxf(hi.y, at.y))
-
-	# Shove the whole pattern back on screen rather than bending it out of shape.
-	var pad := 96.0
-	var view := get_viewport().get_visible_rect().size
 	var shove := pattern_shove(lo, hi, view, pad)
+	var out := PackedVector2Array()
 	for at in pattern:
-		out.append(_cam.project_position(at + shove, depth))
+		out.append(at + shove)
 	return out
 
 
@@ -6084,15 +6114,16 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		# HitCircle/CardView actually read.
 		var bonus := timing_zone_bonus(int(_client.shared.get("mods", {}).get("timing_zone", 0)),
 			String(card.get("enchant_effect", "")), int(card.get("enchant_value", 0)))
-		var hits := int(card.get("timed_hits", 1))
+		var plan := timing_plan(int(card.get("cost", 0)), int(card.get("timed_hits", 1)),
+			card_climb_for(card))
+		var hits := plan.x
 		if Progress.timing_style() == Progress.TIMING_CIRCLE and _circle != null:
-			# Same grading, a different face: the circle opens ON the beast at the
-			# hold this card is reaching for, so the tensest moment of the turn
-			# happens where you are looking instead of in a strip under the cards.
+			# Same grading, a different face: a short pattern of taps (and a drag,
+			# on a dear card) right beside the card you tapped.
 			_circle_index = index
-			var anchor := cv.get_global_rect().get_center() - Vector2(0.0, cv.size.y * 0.62)
-			_circle.begin(bonus, _cam, _hold_points(card, hits, anchor),
-				card_is_slider(card, hits))
+			var anchor := cv.get_global_rect().get_center()
+			_circle.begin_flat(bonus, _hold_points(plan, anchor),
+				plan.x if plan.y > 0 else -1)
 			return
 		cv.zone_bonus = bonus
 		# Raise the card the same way hover would -- a handheld tap never fires

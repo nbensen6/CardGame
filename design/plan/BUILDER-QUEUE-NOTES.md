@@ -748,3 +748,21 @@ have to be so close to the head."
   `VERDICT: PASS`.
 - Note: in `tools/shot.sh`, `console=climb+5` runs nothing ('+' is decoded in
   play mode only); the frames used `"console=climb 5"`.
+
+## One tap for ordinary timed cards?
+
+2026-09-29 12:19 EDT, builder.
+
+Worked from Nick's 11:59 answer: "make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card."
+
+What changed:
+
+- **Taps by cost** (`Combat3D.timing_plan`): cost 0 = 1 tap, cost 1 = 2 taps, cost 2 = 2 taps then a drag, cost 3+ = 3 taps then a drag. A card that prints more windows keeps them (Satchel Charge 3 taps + drag, Bomb 2 taps at cost 0). A climb of 2+ is a drag at any cost (Winch = 1 tap + drag). Replaces the old floor of 3 notes on every card (`NOTE_MIN`) and `card_is_slider`; the melded-card case that guarded is now a test on `timing_plan` (taps never collapse into one hold). The sweep-bar face uses the same tap count.
+- **Click and drag** (`HitCircle`): a chain can now be taps followed by a drag. Press the drag's head on the beat, then keep the pointer on the ball as it runs the road; wander more than `DRAG_RADIUS` (87 px) off it, or lift, and it counts as letting go (same rescue rule as the old hold). The road ahead is drawn dim with a DRAG label while you are still tapping.
+- **Where the notes go** (`Combat3D.note_pattern`): a random walk around the card's middle, one step (92-110 px) at a time, turning every note, never on top of an earlier note, never more than 230 px from the card, never more than 150 px above its middle, never below the frame's bottom margin. Notes are pinned in screen space (`HitCircle.begin_flat`), so the camera easing no longer drags them off the card: in the before frame the three notes had drifted up under the grip banner.
+- Harness: `hold=` now parks the circle one frame after the tap and freezes it. Under the software renderer, 26 frames had already closed the window before the shot.
+
+Grader: round 1 FAIL. The notes rose over the hunter, and the on-screen shove lifted the whole pattern when a drag ran off the bottom. Fix: the rise cap and the floor inside the walk. Round 2: `VERDICT: PASS`.
+
+The after frame is a 2x2 grid of four shots, each `state=3dosu beast=cinder_jackal hold=on hand=<card>` with flick (0), lash_out (1), piston_punch (2) and overload_engine (3). The Test line deals those four cards into a normal fight instead, so you can tap each one yourself. `hold=on` would freeze the circle in play mode.
+

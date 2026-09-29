@@ -1481,10 +1481,11 @@ func _init() -> void:
 	_test_backlog86_card_climb_for_threshold_matches_slider_cutoff()
 	# fixer: card_is_slider -- a melded card can be BOTH slider-eligible (grip)
 	# and multi-window (timed_hits), which used to collapse to a single hold.
-	_test_backlog86_card_is_slider_a_plain_climb_card_stays_a_slider()
-	_test_backlog86_card_is_slider_a_plain_attack_card_is_never_a_slider()
-	_test_backlog86_card_is_slider_a_melded_multi_hit_climb_falls_back_to_a_tap_chain()
-	_test_backlog86_card_is_slider_high_hits_with_no_climb_is_still_a_tap_chain()
+	_test_timing_plan_scales_with_cost()
+	_test_timing_plan_keeps_printed_windows_and_climb_drags()
+	_test_note_pattern_stays_near_the_card()
+	_test_hit_circle_taps_then_drag()
+	_test_hit_circle_drag_off_the_ball_lets_go()
 	# backlog #86 duty 3 (twenty-sixth pass): the grip/fall timer itself --
 	# Nick's own example is the jump, and this is the OTHER half of it: whether
 	# a hunter who is climbing actually falls in time. grip_after_tick is the
@@ -25258,40 +25259,95 @@ func _test_backlog86_card_climb_for_threshold_matches_slider_cutoff() -> void:
 	_expect(Combat3D.card_climb_for({"base": {"grip": 5}}) >= Combat3D.SLIDER_CLIMB, "a high climb stays a slider")
 
 
-## fixer: card_is_slider decides the boolean HitCircle.begin() actually grades
-## against -- `_slider = slider and points.size() > 1`, then `_hits_needed = 1
-## if _slider else points.size()`. Before this existed, `_on_card_tapped`
-## passed `climb >= SLIDER_CLIMB` straight through with no regard for `hits`
-## (timed_hits), so a card that was BOTH slider-eligible (grip >= SLIDER_CLIMB)
-## AND had more than one real timing window collapsed to a single held note --
-## unreachable on any single shipped card, but real the moment Meld fuses one
-## of each: `_meld_cards` (combat.gd) sums `grip` and takes `maxi(timed_hits)`
-## independently, so melding Winch (grip 2) with Satchel Charge (timed_hits 3)
-## -- both in the Goblin Engineer's own pool, via the "meld" starter card --
-## produces exactly this: grip 2, timed_hits 3. The sweep-bar CardView face
-## (`start_timing(hits)`) already demands all 3 windows for the identical
-## melded card with no such collapse; only the HitCircle face disagreed.
-func _test_backlog86_card_is_slider_a_plain_climb_card_stays_a_slider() -> void:
-	_expect(Combat3D.card_is_slider({"base": {"grip": 2}}, 1),
-		"a genuine single-window climb card (every shipped slider today) is still a held slider")
+## Nick, 2026-09-29: timed cards get harder with their price -- 1 tap at 0,
+## 2 at 1, 2 and a drag at 2, 3 and a drag at 3+.
+func _test_timing_plan_scales_with_cost() -> void:
+	_expect(Combat3D.timing_plan(0, 1, 0) == Vector2i(1, 0), "a 0-cost timed card is one tap")
+	_expect(Combat3D.timing_plan(1, 1, 0) == Vector2i(2, 0), "a 1-cost timed card is two taps")
+	_expect(Combat3D.timing_plan(2, 1, 0) == Vector2i(2, 1), "a 2-cost timed card is two taps and a drag")
+	_expect(Combat3D.timing_plan(3, 1, 0) == Vector2i(3, 1), "a 3-cost timed card is three taps and a drag")
+	_expect(Combat3D.timing_plan(-1, 1, 0) == Vector2i(1, 0), "an X cost reads as 0, never below one tap")
 
 
-func _test_backlog86_card_is_slider_a_plain_attack_card_is_never_a_slider() -> void:
-	_expect(not Combat3D.card_is_slider({"base": {"grip": 0}}, 1),
-		"a card with no climb at all is a plain tap, not a slider")
+## The cost is a floor, not a ceiling: a card printing more windows keeps them
+## (Satchel Charge's 3, and a melded card's max -- the case card_is_slider used
+## to guard), and a long climb is a drag at any price.
+func _test_timing_plan_keeps_printed_windows_and_climb_drags() -> void:
+	_expect(Combat3D.timing_plan(2, 3, 0).x == 3, "Satchel Charge keeps its three taps")
+	_expect(Combat3D.timing_plan(0, 2, 0) == Vector2i(2, 0), "Bomb keeps its two taps at cost 0")
+	_expect(Combat3D.timing_plan(1, 3, 2) == Vector2i(3, 1),
+		"a melded multi-window climb card keeps every tap AND ends in a drag, never collapses to one hold")
+	_expect(Combat3D.timing_plan(0, 1, 2) == Vector2i(1, 1), "Winch (climb 2, cost 0) is one tap then a drag")
+	_expect(Combat3D.timing_plan(0, 1, 1).y == 0, "climb 1 at cost 0 is no drag")
 
 
-func _test_backlog86_card_is_slider_a_melded_multi_hit_climb_falls_back_to_a_tap_chain() -> void:
-	# Winch (grip 2) melded with Satchel Charge (timed_hits 3): grip stays 2
-	# (SLIDER_CLIMB-eligible) but the card now genuinely needs 3 separately-
-	# graded windows, not one hold that silently drops two of them.
-	_expect(not Combat3D.card_is_slider({"base": {"grip": 2}}, 3),
-		"a melded card with real multiple timing windows must not collapse to a single-hold slider")
+## "add variety of where the clicks are, but don't have them far from the card"
+func _test_note_pattern_stays_near_the_card() -> void:
+	var anchor := Vector2(640, 430)
+	var firsts := {}
+	for seed in range(40):
+		var rng := RandomNumberGenerator.new()
+		rng.seed = seed
+		var pts := Combat3D.note_pattern(anchor, 3, true, rng, anchor.y + 60.0)
+		_expect(pts.size() == 3 + Combat3D.DRAG_POINTS, "3 taps + a drag is 3 notes plus the drag's path")
+		for p in pts:
+			_expect(p.distance_to(anchor) <= Combat3D.NOTE_REACH + 0.5,
+				"seed %d: a note %.0fpx from the card is too far" % [seed, p.distance_to(anchor)])
+			_expect(p.y <= anchor.y + 60.5, "seed %d: a note below the floor gets the whole pattern shoved up" % seed)
+			_expect(p.y >= anchor.y - Combat3D.NOTE_RISE - 0.5,
+				"seed %d: a note %.0fpx above the card climbs into the scene" % [seed, anchor.y - p.y])
+		for i in range(pts.size()):
+			for j in range(i + 1, pts.size()):
+				_expect(pts[i].distance_to(pts[j]) > HitCircle.TARGET_RADIUS * 0.9,
+					"seed %d: notes %d and %d sit on top of each other" % [seed, i, j])
+		firsts[Vector2i(pts[1] / 40.0)] = true
+	_expect(firsts.size() >= 6, "the second note lands in different places from play to play")
 
 
-func _test_backlog86_card_is_slider_high_hits_with_no_climb_is_still_a_tap_chain() -> void:
-	_expect(not Combat3D.card_is_slider({"base": {"grip": 0}}, 3),
-		"Satchel Charge alone (timed_hits 3, grip 0) was already a correct tap chain -- guard it stays one")
+## A 2-cost card: two taps, then press the drag's head on the beat and ride it.
+func _test_hit_circle_taps_then_drag() -> void:
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)   # off the tree a Control is 0x0 and every point clamps to one corner
+	hc.begin_flat(0.0, PackedVector2Array([Vector2(100, 100), Vector2(190, 100),
+		Vector2(280, 100), Vector2(350, 100), Vector2(420, 100)]), 2)
+	_expect(hc._hits_needed == 3, "two taps and a drag is three things to hit")
+	var hits := []
+	hc.note_hit.connect(func(i: int, _q: int) -> void: hits.append(i))
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	hc._t = hc._approach
+	hc._fire()
+	_expect(not hc._holding and hc.is_live(), "the first tap is a tap, not the drag")
+	hc._t = hc._approach
+	hc._fire()
+	_expect(hc._in_drag() and not hc._holding, "after the taps the drag waits for its press")
+	hc._t = hc._approach
+	hc._fire()
+	_expect(hc._holding, "pressing the drag's head on the beat starts the drag")
+	_expect(hits == [0, 1, 2], "each tap and the drag's press report their own note index")
+	hc._process(1.0)
+	_expect(int(got[0]) == Combat.TIMING_PERFECT, "riding the drag to the end pays the press quality")
+	hc.free()
+
+
+## The drag is a drag: the pointer has to stay with the ball.
+func _test_hit_circle_drag_off_the_ball_lets_go() -> void:
+	var hc := HitCircle.new()
+	hc.size = Vector2(1280, 720)   # off the tree a Control is 0x0 and every point clamps to one corner
+	hc.begin_flat(0.0, PackedVector2Array([Vector2(100, 300), Vector2(200, 300), Vector2(300, 300)]), 0)
+	var got := [-1]
+	hc.resolved.connect(func(q: int) -> void: got[0] = q)
+	hc._t = hc._approach
+	hc._fire()
+	var near := InputEventMouseMotion.new()
+	near.position = Vector2(110, 305)
+	hc._gui_input(near)
+	_expect(hc._holding and int(got[0]) == -1, "moving with the ball keeps the drag")
+	var off := InputEventMouseMotion.new()
+	off.position = Vector2(100, 300 + HitCircle.DRAG_RADIUS + 40.0)
+	hc._gui_input(off)
+	_expect(int(got[0]) == Combat.TIMING_MISS, "wandering off the ball early drops the drag")
+	hc.free()
 
 
 ## backlog #86 duty 3: Progress's keybind rule -- "binding a key steals it from
