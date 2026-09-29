@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T18:59
-working_on: "Hunters lunge when they attack and flinch when hit."
+updated: 2026-09-29T19:11
+working_on: "Make the Jackal be less glossy and more matte."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 18:59 EDT
+2026-09-29 19:11 EDT
 
-- **Did:** Strike test no longer freezes the Frog; it lunges, flinches, comes home, then hands you the fight.
-- **Worked?** Yes, frog moves and returns, Goblin stays still; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-strike-stuck-before.png]] then ![[frames/builder/2026-09-29-strike-live-after.png]]
-- **Ask:** Frog no longer freezes: it lunges, flinches white, three times, then yours. Right?
+- **Did:** Took the shiny pale patches off the jackal's face; its skin now reads matte.
+- **Worked?** Yes, the brow and snout gloss is gone, stones and hunters unchanged; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-jackal-matte-before.png]] then ![[frames/builder/2026-09-29-jackal-matte-after.png]]
+- **Ask:** The pale shiny patches on the jackal's face are gone. Matte enough?
 
 ## Notes
 
-- **Found:** on the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
+- **Found:** the jackal's ear tips keep a thin tan rim-light edge.
 
 ## Log
 
+- 2026-09-29 19:11 EDT — builder: jackal matte: SURFACE_FINISH spec_strength 0 on the jackal's toon body (the hard spec band lit whole head facets pale); rim left; grader PASS; tests green, pushed.
 - 2026-09-29 18:59 EDT — builder: 3dstrike no longer pauses the beat in play (strike_holds_beat); new beat=loop runs lunge/flinch from the ground, labelled 2x2 shot with widened lens; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:44 EDT — builder: timing notes floored at the hand top (notes_floor, _hand_top, pattern_shove floor) and kept off the hunter (note_pattern avoid, NOTE_BESIDE 1.15); harness rest=1 + lowest-note line; old 5/12 rolls over the hand, new 0/14; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 18:23 EDT — builder: grip clock item: grip timer already off since 17:26 (GRIP_TIMER_ON=false); verified 3dgrip GRIP-OFF OK, no bar, no slip; no code change; grader PASS; tests green, pushed.

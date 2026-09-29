@@ -1071,6 +1071,7 @@ func _init() -> void:
 	_test_wants_toon_false_for_a_plain_beast_even_when_a_hunter_nearby_is_tagged()
 	_test_wants_toon_true_for_a_tagged_hunter_even_when_the_beast_itself_is_not_toon()
 	_test_wants_toon_false_for_an_untagged_hunter()
+	_test_jackal_toon_body_is_matte()
 	# backlog #86 duty 3 (this turn): hull_index_for, lifted out of
 	# _build_hull's own vertex scatter and _front_of_beast's lookup — the last
 	# untested piece of that family flagged by the previous duty-3 pass. The
@@ -25196,6 +25197,22 @@ func _test_wants_toon_true_for_a_tagged_hunter_even_when_the_beast_itself_is_not
 func _test_wants_toon_false_for_an_untagged_hunter() -> void:
 	_expect(not Combat3D.wants_toon(false, true, false),
 		"an ordinary hunter (not in HUNTER_AI_ART, so force_toon false) must keep rendering on the plain CREATURE shader even while the beast it stands beside is a toon-shaded AI_ART build -- beast_toon must never leak onto a hunter's own material")
+
+
+## Nick, 2026-09-29: "Make the Jackal be less glossy and more matte." The
+## jackal's painted body gets zero toon specular; the Frog keeps the default.
+func _test_jackal_toon_body_is_matte() -> void:
+	_expect(float(Combat3D.surface_finish("cinder_jackal").get("spec_strength", -1.0)) == 0.0,
+		"the jackal's toon body must carry spec_strength 0 -- the hard specular band lit whole head facets pale, which is the gloss Nick asked to lose")
+	_expect(Combat3D.surface_finish("frog").is_empty(),
+		"a model with no SURFACE_FINISH entry keeps toon.gdshader's own defaults")
+	var mi := MeshInstance3D.new()
+	mi.mesh = BoxMesh.new()
+	var tex := ImageTexture.create_from_image(Image.create(1, 1, false, Image.FORMAT_RGB8))
+	var mat := Combat3D.toon_material(mi, tex, {}, 1.0, Combat3D.surface_finish("cinder_jackal"))
+	_expect(float(mat.get_shader_parameter("spec_strength")) == 0.0,
+		"toon_material must apply the finish to the painted body's material")
+	mi.free()
 
 
 func _test_backlog86_intent_text_for_frail_is_no_longer_blank() -> void:

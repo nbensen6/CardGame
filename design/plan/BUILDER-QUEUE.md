@@ -201,10 +201,12 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
-- [ ] **Make the Jackal be less glossy and more matte.**
+- [ ] 👀 **Make the Jackal be less glossy and more matte.**
       **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
-      Test: state=3d ^make-the-jackal-be-less-glossy-and-more-
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
+      Ask: The pale shiny patches on the jackal's face are gone. Matte enough?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-jackal-matte-after.png|420]] ^make-the-jackal-be-less-glossy-and-more-
 - [ ] **Change the fog so it's behind the exterior.**
       **Nick, 2026-09-29 12:14 ET:** Change the fog so it's behind the exterior. I would like to be able to see the mountains (where: environment)
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Change the fog so it's behind the exterior.|details]]
@@ -292,3 +294,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.
 - [ ] (proposed) Mid-climb, timing note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
 - [ ] (proposed) On the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
+- [ ] (proposed) The jackal's ear tips keep a thin tan rim-light edge; drop toon rim for it too if Nick wants flatter.

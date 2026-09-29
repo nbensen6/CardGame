@@ -979,3 +979,14 @@ Run 2026-09-29 16:04 EDT.
 - **Harness.** `deathat=0.3,1.6,2.6,3.6` on `3dreward`: leaves the beast at 6 HP, loads the router, runs `console=`, then kills it through the real path and grabs one frame per time (real seconds after the blow) into a 2x2 grid. Software rendering makes the times land ~0.2 s late; the mid-fall panel is narrow, 1.6 catches it.
 - **Grader.** Round 1 FAIL (strip cropped, no reward frame): fixed to whole frames and a 4th panel after the cut. Round 2 FAIL (middle panel still standing): slowed the fall 14→32 frames and reshot. Round 3 FAIL only on the 0.6 s slow-motion, which stills cannot show; hit, fall, body down and the cut all MET.
 - Tests: `_test_router_holds_the_fight_for_the_beasts_death_only`, `_test_death_hold_covers_the_slow_hit_the_fall_and_the_rest` (also checks the glb carries `death`). Playtest unchanged: 3 failing checks before and after (route-reversal, beast-behind-stone, damage-popup-offscreen).
+
+## Make the Jackal be less glossy and more matte.
+
+2026-09-29 19:11 EDT, builder.
+
+- Nick's screenshot: pale peach triangles across the jackal's brow and snout, the Frog at the sigil.
+- Cause, isolated by shooting 3dclimb three ways: toon.gdshader's hard specular band (`step(spec_cut, N.H)`, strength 0.12) lights a whole flat facet at once on the low-poly head. Spec off removed the patches; rim off only dimmed the ear edges a little.
+- Fix: `SURFACE_FINISH` in combat_3d.gd, `{"cinder_jackal": {"spec_strength": 0.0}}`, applied by `toon_material` to the painted body only (not the outline, not footholds). The felled jackal on the reward screen (`toon_all`) gets the same finish. Frog and Goblin untouched.
+- Test: `_test_jackal_toon_body_is_matte`.
+- Shot: before and after both `state=3dclimb beast=cinder_jackal` (Nick's own view; at rest the jackal is too far to see the gloss).
+- Grader: VERDICT: PASS.

@@ -80,6 +80,20 @@ const AI_MOTION := {
 	# hot orange as its markings, and at full gain they read as two flames.
 	"cinder_jackal": {"glow_pulse": 0.25, "glow_gain": 0.55},
 }
+## Surface finish per toon-shaded model, set on the painted body only (never
+## the outline, never an untextured foothold). Nick, 2026-09-29: "Make the
+## Jackal be less glossy and more matte." toon.gdshader's hard specular band
+## lights a whole flat facet at once, so on the jackal's low-poly head it drew
+## pale peach triangles across the brow and snout: that was the gloss. Zero
+## specular takes them off; every other model keeps the shader's default.
+const SURFACE_FINISH := {
+	"cinder_jackal": {"spec_strength": 0.0},
+}
+
+
+## The finish uniforms for one model id; empty when it keeps the defaults.
+static func surface_finish(model_id: String) -> Dictionary:
+	return SURFACE_FINISH.get(model_id, {})
 ## Harness switches. `model_variant` loads <beast><variant>.glb when it exists
 ## (e.g. "_ai"); `toon` shades the beast with TOON instead of CREATURE.
 ## `classic` forces the old Python-built model, for before/after shots.
@@ -3654,7 +3668,8 @@ var _hull: PackedFloat32Array = PackedFloat32Array()
 ## OUTLINE_WIDTH_SCALE. 1.0 (the default) sets nothing, so the jackal and the
 ## Frog draw exactly as they did before this parameter existed.
 static func toon_material(mi: MeshInstance3D, tex: Texture2D,
-		motion: Dictionary = {}, outline_scale: float = 1.0) -> ShaderMaterial:
+		motion: Dictionary = {}, outline_scale: float = 1.0,
+		finish: Dictionary = {}) -> ShaderMaterial:
 	var mat := ShaderMaterial.new()
 	mat.shader = TOON
 	var line := ShaderMaterial.new()
@@ -3669,6 +3684,8 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 			mat.set_shader_parameter(k, motion[k])
 			if not k.begins_with("glow_"):
 				line.set_shader_parameter(k, motion[k])
+		for k in finish:
+			mat.set_shader_parameter(k, finish[k])
 	else:
 		# An untextured part (the footholds) keeps its flat colour.
 		var had0 := mi.mesh.surface_get_material(0)
@@ -3697,7 +3714,8 @@ static func toon_all(root: Node, model_id: String = "") -> void:
 			if had is StandardMaterial3D and (had as StandardMaterial3D).albedo_texture != null:
 				tex = (had as StandardMaterial3D).albedo_texture
 				break
-		mi.material_override = toon_material(mi, tex, {}, outline_scale)
+		mi.material_override = toon_material(mi, tex, {}, outline_scale,
+			surface_finish(model_id))
 
 
 ## Whether a mesh under `root` takes the toon-shaded, rigged path instead of
@@ -3738,7 +3756,8 @@ func _shade_model(root: Node, is_ground := false, force_toon := false,
 			# its motion comes off its own AnimationPlayer instead (_spawn_hunter)
 			# and it takes the toon material with nothing pumped into it here.
 			mi.material_override = toon_material(mi, tex,
-				AI_MOTION.get(_beast_id, {}) if beast_here else {}, outline_scale)
+				AI_MOTION.get(_beast_id, {}) if beast_here else {}, outline_scale,
+				surface_finish(_beast_id if beast_here else model_id))
 			continue
 		var mat := ShaderMaterial.new()
 		mat.shader = CREATURE
