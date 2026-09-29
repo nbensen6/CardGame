@@ -10,14 +10,24 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **playtest.cmd green.**
+- [ ] **Can't scroll on the menu.**
+      **Nick, 2026-09-29 10:50 ET:** Yes the scroll bar works now
+      **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dsettings%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Can't scroll on the menu.|details]]
+      Ask: Open Menu and scroll to the bottom: can you reach Back?
+      Test: state=3dsettings beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-settings-scroll-after.png|420]] ^can-t-scroll-on-the-menu
+- [ ] **Move the stones and the hunters back from the jackal.**
       **Nick, 2026-09-29 10:44 ET:** No move the stones back. they don't have to be so close to the head
       **Nick, 2026-09-28 23:44 ET:** its ok, but you can move the stones back. the last stone doesnt need to be right in front of the boss. you can move the stones and the characters back enough that if you are on the last stone you can see the chest of the beast
+      **Session, 2026-09-29 10:55 ET:** split off the playtest item, where these notes had landed. What Nick wants: the whole staircase, hunters included, slides AWAY from the jackal, so that standing on the last stone you see the jackal's chest and head in front of you, not its snout in your face. The last stone does not have to touch the head. Do not raise the camera, do not move the jackal, do not change the camera distance. The 00:21 run tried two ways that hid the jackal more and reverted; the difference this time is that the top stone itself moves back (further from the beast), it is not the hunters alone.
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B5) · [[BUILDER-QUEUE-NOTES#Move the stones and the hunters back from the jackal.|details]]
+      Test: state=3d beast=cinder_jackal console=climb+5
+      ![[agents/frames/builder/2026-09-29-stones-back-top-tried.png|420]] ^move-the-stones-and-the-hunters-back
+- [ ] **playtest.cmd green.**
       **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
-      Ask: Grader failed this: chest still hidden by your stone. Raise the camera instead?
-      Test: state=3d beast=cinder_jackal console=climb+5
-      ![[agents/frames/builder/2026-09-29-stones-back-top-tried.png|420]] ^playtest-cmd-green
+      Shot: none; the proof is `playtest` printing no FAIL. ^playtest-cmd-green
 - [x] **Dev camera never survives a launch.**
       **Nick, 2026-09-28 20:44 ET:** goes back to player
       **Session, 2026-09-28 21:12 ET:** that is a yes; closed.
@@ -103,12 +113,6 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
-- [ ] 👀 **Can't scroll on the menu.**
-      **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=when%20clicking%20menu%20in%20the%20top%20right) · [[BUILDER-QUEUE-NOTES#Can't scroll on the menu.|details]]
-      Ask: Open Menu and scroll to the bottom: can you reach Back?
-      Test: state=3dsettings beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-settings-scroll-after.png|420]] ^can-t-scroll-on-the-menu
 
 
 ## Waiting on Nick
