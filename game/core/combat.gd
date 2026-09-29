@@ -851,6 +851,10 @@ func incoming_for(pi: int) -> Dictionary:
 			if ps.foothold <= 0:
 				raw = value
 				hits.append(value)
+		"claw_sweep":  # only reaches hunters climbed close to its face
+			if Boss.claw_catches(move, ps.foothold):
+				raw = value
+				hits.append(value)
 		"rift":        # hits BOTH, and harder the further apart they are
 			# Missing here until 2026-08-16, so the one move whose damage the
 			# player controls was the one move the HUD showed nothing for.
@@ -1979,6 +1983,26 @@ func _enemy_turn() -> void:
 				# gap noted on "attack_all" above -- dh is the nominal swing, not
 				# necessarily what each caught hunter's own Block/Buffer/Intangible let through.
 				_log("%s lashes its flank for %d — %s caught on it." % [boss.name, dh, ", ".join(caught_high)])
+		"claw_sweep":  # a claw across its face — throws anyone climbed close back down
+			var dc := value + boss.strength
+			var reach := Boss.claw_reach(move)
+			var thrown: Array = []
+			for i in range(players.size()):
+				var pc: PlayerState = players[i]
+				if not Boss.claw_catches(move, pc.foothold):
+					continue
+				_boss_hits(pc, dc)
+				thrown.append(pc.combatant.name)
+				if _mod("shake_resist") <= 0:  # the same relic that anchors you against a Sweep
+					pc.foothold = _hold_below(reach)
+					pc.weak_point_damage = 0
+					pc.sigil_rounds = 0  # same fatigue-clock reset as attack_all above
+				if boss.is_dead():  # backlog #86 duty 2 — same lethal-Thorns-mid-loop gap
+					break
+			if thrown.is_empty():
+				_log("%s rakes its claw past its face — nobody is close enough." % boss.name)
+			else:
+				_log("%s rakes its claw for %d and throws %s back down." % [boss.name, dc, ", ".join(thrown)])
 		"swipe_low":  # it stamps the ground — safe only if you're ON the beast
 			var dl := value + boss.strength
 			var caught_low: Array = []

@@ -172,6 +172,10 @@
       "name": "Lash the flank",
       "text": "Only catches hunters off the ground. Standing at the base is the safe place to be this round."
     },
+    "claw_sweep": {
+      "name": "Claw Sweep",
+      "text": "Only reaches hunters climbed to the Height on the badge or higher, and throws each one back down below it. Anyone lower is out of reach."
+    },
     "swipe_low": {
       "name": "Stamp",
       "text": "Only catches hunters still on the ground. Anyone already climbing is above it."

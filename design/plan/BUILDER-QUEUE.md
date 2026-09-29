@@ -38,10 +38,13 @@ run failed.
       Ask: Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-frog-hang-grip.png|420]] ^let-the-frog-hang
-- [ ] **Give the jackal a swipe that cares where you are?**
+- [ ] 👀 **Give the jackal a swipe that cares where you are?**
       **Nick, 2026-09-29 11:59 ET:** yes this sounds great. the attack can be a claw sweep attack and knocks players back that are close.
       **Session, 2026-09-29 11:05 ET:** Its only knockdown is a sweep on round 4 that hits everyone. Default if you say yes: round 4 becomes a high swipe that throws anyone at height 4 or above, so the intent badge makes you ask where you are. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      Ask: Yes = round 4 becomes a high swipe that throws anyone at height 4 or above. No = keep the sweep that hits everyone. ^give-the-jackal-a-swipe-that-cares-where
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D6%20console%3Dclimb%2B5) · [[BUILDER-QUEUE-NOTES#Give the jackal a swipe that cares where you are?|details]]
+      Ask: Round 4 claw sweep hits and throws only Height 4+ down to Height 2. Right?
+      Test: state=3d beast=cinder_jackal endturn=6 console=climb+5
+      ![[agents/frames/builder/2026-09-29-claw-sweep-after-strip.png|420]] ^give-the-jackal-a-swipe-that-cares-where
 - [x] **Can't scroll on the menu.**
       **Nick, 2026-09-29 10:50 ET:** Yes the scroll bar works now
       **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
@@ -243,3 +246,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Sweep-bar face has no drag.** The Settings bar face gets the cost-based tap count but not the drag.
 - [ ] (proposed) **HOLD ON banner covers the log.** With the log open, the grip banner hides the first letters of each log line.
 - [ ] (proposed) **Jackal damage rework not started.** Nick asked to rethink how the jackal deals damage; only HP changed.
+- [ ] (proposed) After a claw-sweep throw the Frog's party card reads ↑2/5 but the height gauge reads "3 up".

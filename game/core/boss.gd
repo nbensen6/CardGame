@@ -37,6 +37,20 @@ var _move_index: int = 0
 ## not hold, the move's own "fallback" Dictionary is used instead (or a bare
 ## attack for 0 if a move sets "when" without a "fallback"). A move with no
 ## "when" always fires, exactly as before this existed.
+## "claw_sweep" (Nick, 2026-09-29): a claw raked across the beast's own face.
+## It only reaches hunters who have climbed close, at or above the move's
+## "min_height" (4 when a move leaves it out), and throws each one it catches
+## back down below that reach. The intent badge makes you ask where you are.
+const CLAW_REACH_DEFAULT := 4
+
+static func claw_reach(move: Dictionary) -> int:
+	return int(move.get("min_height", CLAW_REACH_DEFAULT))
+
+## Whether a claw sweep `move` catches a hunter standing at `foothold`. Every
+## reader (the hit, the incoming preview, the red border) asks this one.
+static func claw_catches(move: Dictionary, foothold: int) -> bool:
+	return foothold >= claw_reach(move)
+
 const COND_MIN_HEIGHT := "min_height"
 const COND_MAX_HEIGHT := "max_height"
 const COND_AT_SIGIL := "at_sigil"

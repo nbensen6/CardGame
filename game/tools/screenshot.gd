@@ -30,6 +30,7 @@ var _beast := ""  # force a specific beast, to check a model that RNG rarely pic
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
 var _endturns := 0  # endturn=N — press End Turn N times before the shot
+var _thenend := 0  # thenend=N — press End Turn N more times AFTER console=, log open
 var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
 var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
@@ -160,6 +161,8 @@ func _initialize() -> void:
 			load("res://views/combat_3d.gd").toon = true
 		elif a.begins_with("endturn="):
 			_endturns = int(a.substr(8))
+		elif a.begins_with("thenend="):
+			_thenend = int(a.substr(8))
 		elif a == "miss=1":
 			_miss = true
 		elif a == "nail=1":
@@ -865,6 +868,16 @@ func _capture() -> void:
 				await process_frame
 			if _midair <= 0.0:
 				await _await_camera(current_scene)
+
+	# thenend=N: the beast's turn resolved against a board console= set up (say,
+	# a hunter climbed into a move's reach), with the log open as the proof.
+	if _thenend > 0 and current_scene != null and current_scene.has_method("_end_turn"):
+		current_scene.set("_log_expanded", true)
+		for _t in _thenend:
+			current_scene.call("_end_turn")
+			for _i in 90:
+				await process_frame
+		await _await_camera(current_scene)
 
 	# miss=1: play the first timed card in hand and fail its timing, through the
 	# same circle a player taps, so the shot shows what a miss leaves behind:
@@ -1594,7 +1607,9 @@ static func arms_failsafe(user_args: PackedStringArray) -> bool:
 
 
 func _failsafe() -> void:
-	await create_timer(10.0).timeout
+	# Each endturn=N plays a whole beast turn (90 frames); on a software
+	# renderer that alone outlasts a flat 10 s, so give each one its own time.
+	await create_timer(10.0 + 15.0 * (_endturns + _thenend)).timeout
 	print("SHOT TIMEOUT")
 	quit(1)
 

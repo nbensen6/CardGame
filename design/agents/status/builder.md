@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T12:53
-working_on: "Let the Frog hang?"
+updated: 2026-09-29T13:19
+working_on: "Give the jackal a swipe that cares where you are?"
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 12:53 EDT
+2026-09-29 13:19 EDT
 
-- **Did:** Reworded the Frog hanging question in plain words with a picture of the countdown; no game change.
-- **Worked?** Partly: nothing to build until you answer; grader not run, no before/after change to judge.
-- **Look at:** ![[frames/builder/2026-09-29-frog-hang-grip.png]]
-- **Ask:** Should Frog attacks skip its +1 climb, so it sometimes hangs like this?
+- **Did:** Jackal round 4 is now a Claw Sweep: only hunters at Height 4+ take 6 and get thrown to Height 2.
+- **Worked?** Yes, the badge, red border and throw all show; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-29-claw-sweep-before.png]] then ![[frames/builder/2026-09-29-claw-sweep-after-strip.png]]
+- **Ask:** Round 4 claw sweep hits and throws only Height 4+ down to Height 2. Right?
 
 ## Notes
 
-- **Found:** nothing new.
+- **Found:** after a claw-sweep throw the Frog's party card reads ↑2/5 but the height gauge reads "3 up".
 
 ## Log
 
+- 2026-09-29 13:19 EDT — builder: jackal round 4 attack_all 6 -> claw_sweep 6 (Height 4+, throws to 2); harness thenend=; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 12:53 EDT — builder: Let the Frog hang? reworded for Nick (safe stones 2/4, hanging at 1/3, Frog +1 always lands safe); grip frame embedded; nothing built; tests green, pushed.
 - 2026-09-29 12:39 EDT — builder: cinder_jackal max_hp 42 -> 70 (hurt switch at 28), test pins it; burn rework proposed, not built; grader PASS; tested, pushed.
 - 2026-09-29 12:30 EDT — builder: a missed timed card resolves at plain value and discards (no Rhythm, counts as played); harness miss=1/nail=1; grader FAIL x2 then PASS; tested, pushed.

@@ -1674,7 +1674,7 @@ func _refresh() -> void:
 	_refresh_ledge_marks()
 	_update_climb_state(s)
 	_update_gauge(s)
-	_render_party(s, int(boss.get("target", -1)), String(boss.get("intent", {}).get("type", "")),
+	_render_party(s, int(boss.get("target", -1)), boss.get("intent", {}),
 		any_add_attacking(boss.get("adds", [])))
 	_update_coach(s)
 	_render_log(s)
@@ -1850,7 +1850,7 @@ func _position_intent_tag() -> void:
 ## (what to print) got fixed for frail/curse, the sibling list (how alarming
 ## to make it look) did not.
 static func intent_is_hostile(kind: String) -> bool:
-	return kind in ["attack", "attack_all", "swipe_high", "swipe_low", "leech", "rift", "frail", "curse"]
+	return kind in ["attack", "attack_all", "swipe_high", "swipe_low", "claw_sweep", "leech", "rift", "frail", "curse"]
 
 
 ## "⚔" (U+2694 CROSSED SWORDS) has no glyph in Godot's fallback font chain on
@@ -1891,6 +1891,9 @@ static func intent_text_for(boss: Dictionary, height_gap: int) -> String:
 	match kind:
 		"attack", "attack_all", "swipe_high", "swipe_low", "leech":
 			return "%s %s %d" % [ATTACK_GLYPH, term, v]
+		"claw_sweep":
+			# The reach is the whole question this move asks, so it rides the badge.
+			return "%s %s %d — throws Height %d+" % [ATTACK_GLYPH, term, v, Boss.claw_reach(move)]
 		"rift":
 			# The real total, gap included, the same way a card face shows what it
 			# will actually do rather than the formula behind it.
@@ -6292,10 +6295,11 @@ static func move_hits_every_hunter(move_type: String) -> bool:
 ## Whether THIS hunter is the one a foothold-gated swipe actually catches —
 ## the same condition Combat._enemy_turn()/incoming_for() price the hit with,
 ## re-read here so the red border and the ⚔ number never disagree again.
-static func swipe_catches(move_type: String, foothold: int) -> bool:
+static func swipe_catches(move_type: String, foothold: int, move: Dictionary = {}) -> bool:
 	match move_type:
 		"swipe_high": return foothold > 0   # only hunters off the ground
 		"swipe_low": return foothold <= 0   # only hunters still on the ground
+		"claw_sweep": return Boss.claw_catches(move, foothold)  # only hunters climbed close
 		_: return false
 
 
@@ -6336,8 +6340,8 @@ const SINGLE_TARGET_KINDS: Array[String] = ["attack", "leech", "frail", "curse"]
 ## target of their own (_adds_turn(), Combat.incoming_for()'s own add
 ## branch), they always land on whoever boss_target already names.
 static func hunter_is_aimed_at(move_type: String, boss_target: int, i: int, foothold: int,
-		add_attacking: bool = false) -> bool:
-	return move_hits_every_hunter(move_type) or swipe_catches(move_type, foothold) \
+		add_attacking: bool = false, move: Dictionary = {}) -> bool:
+	return move_hits_every_hunter(move_type) or swipe_catches(move_type, foothold, move) \
 		or (i == boss_target and (move_type in SINGLE_TARGET_KINDS or add_attacking))
 
 
@@ -6360,14 +6364,15 @@ static func any_add_attacking(adds: Array) -> bool:
 ## Energy, how high they've climbed, whether they're hanging, and whether the
 ## beast is about to hit them. The 3D scene shows WHERE they are; this says how
 ## they're doing.
-func _render_party(s: Dictionary, boss_target: int, move_type: String, add_attacking: bool) -> void:
+func _render_party(s: Dictionary, boss_target: int, move: Dictionary, add_attacking: bool) -> void:
+	var move_type := String(move.get("type", ""))
 	for c in _party.get_children():
 		c.queue_free()
 	var players: Array = s.get("players", [])
 	for i in range(players.size()):
 		var p: Dictionary = players[i]
 		var aimed: bool = hunter_is_aimed_at(move_type, boss_target, i, int(p.get("foothold", 0)),
-			add_attacking)
+			add_attacking, move)
 		_party.add_child(_party_card(p, i, aimed))
 	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
 	var relics: Array = s.get("relics", [])

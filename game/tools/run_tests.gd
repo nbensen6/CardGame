@@ -227,6 +227,7 @@ func _init() -> void:
 	_test_backlog13_six_relics_change_a_rule()
 	_test_relics_all_load()
 	_test_climb_twisting_moves()
+	_test_claw_sweep()
 	_test_per_class_reward_pools()
 	_test_rhythm_card_grants_combo()
 	_test_ascension_makes_the_run_harder()
@@ -6494,6 +6495,42 @@ func _test_backlog13_six_relics_change_a_rule() -> void:
 		if rule_changing_effects.has(String(r.get("effect", ""))):
 			found += 1
 	_expect(found >= 6, "at least 6 relics alter a rule rather than a number (found %d)" % found)
+
+
+func _test_claw_sweep() -> void:
+	# Nick, 2026-09-29: the jackal's round-4 claw sweep only reaches hunters
+	# climbed close (Height 4+) and throws them back down below its reach.
+	var b := Boss.new("Clawer", 300)
+	b.moves = [{"type": "claw_sweep", "value": 6, "min_height": 4}]
+	b.weak_point_height = 5
+	b.ledges = [2, 4]
+	var c := _new_combat([_deck_of(_slash, 10), _deck_of(_slash, 10)], 42, b)
+	c.players[0].foothold = 5   # at the sigil — caught
+	c.players[1].foothold = 2   # low ledge — out of reach
+	var r0 := int(c.incoming_for(0).get("raw", -1))
+	var r1 := int(c.incoming_for(1).get("raw", -1))
+	_expect(r0 == 6 and r1 == 0,
+		"claw_sweep preview prices only the hunter at or above its reach (got %d / %d)" % [r0, r1])
+	var h0: int = c.players[0].combatant.hp
+	var h1: int = c.players[1].combatant.hp
+	c.end_turn(0)
+	c.end_turn(1)
+	_expect(c.players[0].combatant.hp == h0 - 6 and c.players[1].combatant.hp == h1,
+		"claw_sweep hits the close hunter for 6 and spares the low one")
+	_expect(c.players[0].foothold == 2, "claw_sweep throws the close hunter down to the hold below its reach (got %d)" % c.players[0].foothold)
+	_expect(c.players[1].foothold == 2, "claw_sweep leaves the out-of-reach hunter where they stood")
+	# One rule for every reader: Boss, the red border, the default reach.
+	var m := {"type": "claw_sweep", "value": 6, "min_height": 4}
+	_expect(Boss.claw_catches(m, 4) and not Boss.claw_catches(m, 3), "claw_catches is inclusive at its reach")
+	_expect(Boss.claw_reach({"type": "claw_sweep"}) == 4, "claw_sweep reach defaults to 4")
+	_expect(Combat3D.hunter_is_aimed_at("claw_sweep", -1, 0, 5, false, m)
+		and not Combat3D.hunter_is_aimed_at("claw_sweep", -1, 1, 2, false, m),
+		"red border matches the claw's reach")
+	_expect(Combat3D.intent_is_hostile("claw_sweep"), "claw_sweep reads as hostile")
+	_expect(Combat3D.intent_text_for({"intent": m}, 0).contains("throws Height 4+"), "claw_sweep badge names its throw and reach")
+	# The jackal's own pattern carries it on round 4.
+	var jackal: Boss = Content.build_boss("cinder_jackal")
+	_expect(String((jackal.moves[3] as Dictionary).get("type", "")) == "claw_sweep", "Cinder Jackal round 4 is the claw sweep")
 
 
 func _test_climb_twisting_moves() -> void:

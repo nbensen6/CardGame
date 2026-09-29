@@ -803,3 +803,14 @@ The proposal: keep the +1 on the Frog's Climb cards (Leap, Scramble), but not on
 
 Picture: `state=3dgrip`, a hunter hanging with the countdown at 3.
 
+## Give the jackal a swipe that cares where you are?
+
+2026-09-29 13:19 EDT, builder.
+
+- Worked from Nick 11:59: "a claw sweep attack and knocks players back that are close", on the session default (round 4, Height 4+).
+- New beast move `claw_sweep` in bosses.json: `{"type": "claw_sweep", "value": 6, "min_height": 4}` replaces the jackal's round-4 `attack_all 6`. Damage 6 unchanged. Hurt pattern (the `attack_all 9` there) untouched.
+- It hits only hunters at or above `min_height` and throws each one to the safe hold below that reach (jackal: Height 4 or 5 goes to Height 2). Same Sweep-anchor relic (`shake_resist`) still holds you in place. Hunters below 4 take nothing.
+- One rule (`Boss.claw_catches`) drives the hit, the incoming-damage number and the red party-card border; the badge reads "Claw Sweep 6 — throws Height 4+". Keyword entry added for tap-to-inspect.
+- Harness: `endturn=N` could not reach round 4 on the cloud's software renderer (10 s failsafe), so the failsafe now grows 15 s per end-turn; new `thenend=N` presses End Turn after `console=`, log open, to shoot a resolution.
+- Frames: before (Sweep 6, both hunters red), after (Claw Sweep badge, only the Frog at 5 red), thrown (`... console=climb+5 thenend=2`: Frog 26 to 20 HP, Height 5 to 2, log line). The strip is after + thrown.
+- Grader: round 1 FAIL (throw not shown, badge silent on it); round 2 PASS.
