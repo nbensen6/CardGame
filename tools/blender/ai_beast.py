@@ -16,7 +16,7 @@ repeatable pass, so the builder lane can run it without a live Blender:
      for every boss (Nick, 2026-09-23), so a beast that grows its own would
      have two.
   4. 20-bone rig from the measured feet and topline, region-gated weights
-  5. idle / attack / hit actions
+  5. idle / attack / hit / death actions (death: beast_clips.py)
   6. export game/assets/3d/cast/<id>_ai.glb, save tools/blender/ai/<id>_ai.blend
 
 Prints REPORT lines the builder reads back. --dry stops after the gate.
@@ -26,6 +26,7 @@ import bpy, bmesh, math, os, random, sys
 from mathutils import Vector as V, Matrix
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from beast_clips import death
 from route import (route_direction, route_progress, keep_route_going,
                     enforce_hop_floor, HOP_MIN_WORLD, HOP_MAX_WORLD, HUNTER_HEIGHT)
 
@@ -485,6 +486,7 @@ make("hit", [(0, {}),
              (4, {"neck": (-22, 0, -10), "head": (-18, 0, -12), "chest": (-5, 0, 0), "tail1": (14, 0, 8), "tail2": (10, 0, 10)}),
              (10, {"neck": (-6, 0, 8), "head": (-4, 0, 10), "tail1": (4, 0, -6)}),
              (20, {})])
+make("death", death(legs))
 rest()
 bpy.context.scene.frame_set(0)
 

@@ -90,10 +90,12 @@ run failed.
       Ask: Cards now fly to the jackal or the Frog before resolving. Feel right?
       Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0
       ![[agents/frames/builder/2026-09-29-card-fly-after.png|420]] ^played-cards-fly-to-their-target
-- [ ] **The jackal dies on screen.**
+- [ ] 👀 **The jackal dies on screen.**
       **Session, 2026-09-29 11:05 ET:** The killing blow plays `hit` and the scene cuts to the reward screen. Add a `death` clip with the same Blender script that made idle, attack and hit (`tools/blender/ai_beast.py`), a 0.6 s slow-motion on the final hit, the fall, then the cut. Done-when: a three-frame strip shows the last hit, the fall, the body down, all before the reward screen. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dreward%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The jackal dies on screen.|details]]
-      Test: state=3dreward beast=cinder_jackal ^the-jackal-dies-on-screen
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dreward%20beast%3Dcinder_jackal%20console%3Dclimb%2B5%20deathat%3D0.3%2C1.6%2C2.6%2C3.6) · [[BUILDER-QUEUE-NOTES#The jackal dies on screen.|details]]
+      Ask: Grader failed this: slow-motion unseen in stills. Kill from top: slow hit, fall?
+      Test: state=3dreward beast=cinder_jackal console=climb+5 deathat=0.3,1.6,2.6,3.6
+      ![[agents/frames/builder/2026-09-29-jackal-death-after-strip.png|420]] ^the-jackal-dies-on-screen
 - [ ] **Playtest presses Switch.**
       **Session, 2026-09-29 11:05 ET:** The scripted playtest never switches hunters, so the co-op half of the loop has no coverage. Press Switch at least once per run and add one check: the second hunter's grip did not drain during the first hunter's turn (it depends on the grip item above). Shot: none; the proof is the playtest log showing the switch and the check passing. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest presses Switch.|details]]
@@ -265,3 +267,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
 - [ ] (proposed) The Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
 - [ ] (proposed) Cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
+- [ ] (proposed) A kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
+- [ ] (proposed) The reward screen lays the jackal on its back; the death clip leaves it on its side.
+- [ ] (proposed) Beasts with no rig get the slow last hit and the pause, but no fall.

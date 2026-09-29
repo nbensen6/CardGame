@@ -35,6 +35,8 @@ const MUSIC_AMBIENT := "menu"
 var _client: GameClient
 var _current := ""   # the scene path on screen, so identical phases don't churn
 var _view: Node
+var _dying := false      # the fight view is playing the beast's death; hold it
+var _death_done := false # ...and has played it: the next _sync swaps
 
 
 func _ready() -> void:
@@ -55,8 +57,20 @@ func _sync() -> void:
 		push_error("game_3d: no 3D client for phase '%s' — staying on %s" % [phase, _current])
 		return
 	var want: String = String(SCENES[phase])
-	if want == _current:
+	if want == _current or _dying:
 		return
+	if holds_for_death(_current, phase) and not _death_done \
+			and _view != null and _view.has_method("play_death"):
+		var hold := float(_view.call("play_death"))
+		if hold > 0.0:
+			_dying = true
+			# real seconds: the death's own slow motion must not stretch the hold
+			await get_tree().create_timer(hold, true, false, true).timeout
+			_dying = false
+			_death_done = true
+			_sync()
+			return
+	_death_done = false
 	_current = want
 	if _view != null:
 		# drop it out of the tree NOW, not at the end of the frame — otherwise
@@ -69,6 +83,12 @@ func _sync() -> void:
 		return
 	_view = scene.instantiate()
 	add_child(_view)
+
+
+## Whether leaving `from` for `phase` means the beast just fell, so the fight
+## stays on screen long enough to show it (combat_3d.play_death).
+static func holds_for_death(from: String, phase: String) -> bool:
+	return from == String(SCENES["combat"]) and phase in ["reward", "won"]
 
 
 ## Which track a phase's screen should be playing. Only two tracks exist

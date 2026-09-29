@@ -1699,6 +1699,10 @@ func _init() -> void:
 	# provable without a display.
 	_test_backlog86_music_for_phase_picks_combat_track_in_combat()
 	_test_backlog86_music_for_phase_picks_ambient_track_everywhere_else()
+	# The jackal dies on screen (2026-09-29): the router holds the fight view
+	# for the death only when the beast fell, and for the whole of it.
+	_test_router_holds_the_fight_for_the_beasts_death_only()
+	_test_death_hold_covers_the_slow_hit_the_fall_and_the_rest()
 	# backlog #86 duty 3: music_for_phase (above) only proves the ROUTING is
 	# right; nothing had ever proven the settings-menu Music toggle
 	# (combat_3d.gd:2571) actually does what its own comment on
@@ -26159,6 +26163,31 @@ func _test_backlog86_phase_string_for_never_produces_a_screen_game_3d_lacks() ->
 ## assets/music/combat.ogg shipped and was never once reachable by a player,
 ## since the only Music.play() call anywhere was menu.gd's own "menu" on the
 ## title screen. Static and pure, same as SCENES itself, so provable headless.
+func _test_router_holds_the_fight_for_the_beasts_death_only() -> void:
+	var fight := String(Game3D.SCENES["combat"])
+	_expect(Game3D.holds_for_death(fight, "reward"),
+		"a kill that opens the reward must hold the fight up for the death")
+	_expect(Game3D.holds_for_death(fight, "won"),
+		"the last Titan falling must be seen falling too")
+	_expect(not Game3D.holds_for_death(fight, "lost"),
+		"a lost fight is not the beast dying")
+	_expect(not Game3D.holds_for_death(String(Game3D.SCENES["map"]), "combat"),
+		"only leaving a fight can hold for a death")
+
+
+func _test_death_hold_covers_the_slow_hit_the_fall_and_the_rest() -> void:
+	var clip := 40.0 / 30.0   # the jackal's death clip
+	var hold := Combat3D.death_hold_secs(clip)
+	_expect(is_equal_approx(hold, Combat3D.DEATH_SLOWMO + clip + Combat3D.DEATH_REST),
+		"the hold is the slow last hit, the whole fall, then the body down (got %.2f)" % hold)
+	_expect(Combat3D.death_hold_secs(0.0) >= Combat3D.DEATH_SLOWMO,
+		"a beast with no death clip still gets its slow last hit before the cut")
+	var jackal: PackedScene = load("res://assets/3d/cast/cinder_jackal_ai.glb")
+	var ap := jackal.instantiate().find_child("AnimationPlayer", true, false) as AnimationPlayer
+	_expect(ap != null and ap.has_animation("death"),
+		"cinder_jackal_ai.glb carries the death clip (tools/blender/ai_beast_clip.py)")
+
+
 func _test_backlog86_music_for_phase_picks_combat_track_in_combat() -> void:
 	_expect(Game3D.music_for_phase("combat") == "combat",
 		"the combat screen plays assets/music/combat.ogg, not the ambient track it inherited from the title screen")

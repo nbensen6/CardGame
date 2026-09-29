@@ -24,6 +24,9 @@
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 ##   fly=N (tap the Nth card of the hand and freeze it on the way to its target)
 ##   flyt=F (how far through that flight, default 0.7; 1 or more lands it)
+##   deathat=0.3,1.2,2.5 (3dreward: land the killing blow in the fight and
+##     shoot a grid of frames that many real seconds after it; a time past the
+##     hold shows the cut to the reward screen)
 ##   press=F8 (feed one real key press before the shot — for a live-toggle key
 ##     whose only visible effect is a HUD note, not a layout change)
 extends SceneTree
@@ -43,6 +46,7 @@ var _enemyat := -1.0  # enemyat=S — shoot S real seconds after the last End Tu
 var _miss := false  # miss=1 — tap the first timed card and let its timing MISS
 var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a miss
 var _flyi := -1  # fly=N — tap the Nth card of the hand and shoot it mid-flight
+var _deathat: Array = []  # deathat=0.3,1.2,2.5 — 3dreward: frames through the death
 var _flyt := 0.7  # flyt=F — how far through the flight to freeze; >= 1 lands it
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
@@ -184,6 +188,9 @@ func _initialize() -> void:
 			_miss = true
 		elif a == "nail=1":
 			_nail = true
+		elif a.begins_with("deathat="):
+			for t in a.substr(8).split(","):
+				_deathat.append(float(t))
 		elif a.begins_with("flyt="):
 			_flyt = float(a.substr(5))
 		elif a.begins_with("fly="):
@@ -342,7 +349,11 @@ func _initialize() -> void:
 	if _beast != "" and Session.host._run.combat != null:
 		Session.host._run.combat.boss = Content.build_boss(_beast)
 		Session.host._broadcast_state()
-	if _state in ["3dreward", "3dwon"]:  # fell the beast so the phase after opens
+	if _state == "3dreward" and not _deathat.is_empty():
+		# The fight stays up with a sliver of HP; _capture lands the blow.
+		Session.host._run.combat.boss.hp = 6
+		Session.host._broadcast_state()
+	elif _state in ["3dreward", "3dwon"]:  # fell the beast so the phase after opens
 		var rr2: Run = Session.host._run
 		rr2.combat.boss.hp = 0
 		rr2.combat.phase = Combat.Phase.OVER
@@ -915,6 +926,10 @@ func _capture() -> void:
 				await process_frame
 			if _midair <= 0.0:
 				await _await_camera(current_scene)
+
+	if not _deathat.is_empty():
+		await _shoot_death()
+		return
 
 	# thenend=N: the beast's turn resolved against a board console= set up (say,
 	# a hunter climbed into a move's reach), with the log open as the proof.
@@ -1694,6 +1709,45 @@ func _capture() -> void:
 	if _play:
 		print("PLAY READY: scenario is live. Close the window when done.")
 		return
+	await _save_and_quit()
+
+
+## deathat=: the killing blow lands through the real kill path (boss to 0, the
+## run moves on to its reward), and the router's own death hold plays out. One
+## frame per listed time, real seconds after the blow, side by side.
+func _shoot_death() -> void:
+	var fight: Node = current_scene.get("_view")
+	var ta := Time.get_ticks_msec()
+	while fight.has_method("_followed_is_airborne") and bool(fight.call("_followed_is_airborne")) \
+			and Time.get_ticks_msec() - ta < 20000:
+		await process_frame
+	await _await_camera(fight)
+	var rr: Run = Session.host._run
+	rr.combat.boss.hp = 0
+	rr.combat.phase = Combat.Phase.OVER
+	rr.sync()
+	Session.host._broadcast_state()
+	var t0 := Time.get_ticks_msec()
+	var shots: Array[Image] = []
+	for t in _deathat:
+		while Time.get_ticks_msec() - t0 < int(float(t) * 1000.0):
+			await process_frame
+		await RenderingServer.frame_post_draw
+		var img := root.get_viewport().get_texture().get_image()
+		print("DEATHAT %.2fs (real %.2fs) on=%s anim=%s" % [float(t), (Time.get_ticks_msec() - t0) / 1000.0, str(current_scene.get("_current")),
+			str((fight.get("_beast_anim") as AnimationPlayer).current_animation) if is_instance_valid(fight) and fight.get("_beast_anim") != null else "-"])
+		shots.append(img)
+	# Whole frames on a grid (2x2 for four), so nothing the strip proves is cropped.
+	var cols := ceili(sqrt(float(shots.size())))
+	var rows := ceili(float(shots.size()) / cols)
+	var w := 1280 / cols
+	var h := 720 / cols
+	_strip = Image.create(w * cols, h * rows, false, Image.FORMAT_RGBA8)
+	for i in shots.size():
+		var im: Image = shots[i]
+		im.convert(Image.FORMAT_RGBA8)
+		im.resize(w, h, Image.INTERPOLATE_BILINEAR)
+		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % cols) * w, (i / cols) * h))
 	await _save_and_quit()
 
 

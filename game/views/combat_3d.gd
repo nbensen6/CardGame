@@ -6055,6 +6055,53 @@ func _strike(weak_point: bool) -> void:
 		_dust.restart()
 
 
+## The killing blow, played out before the router cuts to the reward screen.
+## Real seconds, whatever Engine.time_scale is doing: the last hit lands in slow
+## motion for DEATH_SLOWMO, the `death` clip plays (the fall), and the body stays
+## down for DEATH_REST. A beast with no clip gets the slow hit and the rest.
+const DEATH_SLOWMO := 0.6
+const DEATH_TIME_SCALE := 0.3
+const DEATH_REST := 0.8
+
+
+## How long the router holds this view on screen for the death, in real seconds.
+static func death_hold_secs(clip_len: float) -> float:
+	return DEATH_SLOWMO + maxf(clip_len, 0.0) + DEATH_REST
+
+
+## Called by game_3d's router when the phase leaves combat because the beast
+## fell. Starts the death and answers how long to keep this view up. The HUD
+## hides itself on the same snapshot (_refresh: phase is no longer combat).
+func play_death() -> float:
+	if _beast == null or not is_inside_tree():
+		return 0.0
+	var weak := _prev_reached.has(true)
+	_strike(weak)
+	if _prev_hp > 0:
+		_damage_popup(_prev_hp, _sigil.position if weak else _beast_box.get_center(), weak)
+	var clip_len := 0.0
+	if _beast_anim != null and _beast_anim.has_animation("death"):
+		clip_len = _beast_anim.get_animation("death").length
+	# Up on the body the camera is too close to see it go down: pull back to the
+	# establishing wide. From the ground the rest shot already holds it whole.
+	if anyone_off_ground(_hunters):
+		_take_manual_control()
+		_free_dist_target = maxf(_dist, _dist_for_window(_window_for(maxf(_beast_box.size.y, 1.0) * 1.35)))
+	Engine.time_scale = DEATH_TIME_SCALE
+	get_tree().create_timer(DEATH_SLOWMO, true, false, true).timeout.connect(func() -> void:
+		Engine.time_scale = 1.0
+		if is_instance_valid(_beast_anim) and _beast_anim.has_animation("death"):
+			_beast_anim.clear_queue()
+			_beast_anim.play("death", 0.1))
+	return death_hold_secs(clip_len)
+
+
+## Never leave the game in play_death's slow motion if this view goes early.
+func _exit_tree() -> void:
+	if Engine.time_scale == DEATH_TIME_SCALE:
+		Engine.time_scale = 1.0
+
+
 ## The beast bucks: a heavy jolt and dust off its hide.
 func _beast_shake() -> void:
 	Sfx.play("shake")

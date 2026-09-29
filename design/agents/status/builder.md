@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T15:30
-working_on: "Played cards fly to their target."
+updated: 2026-09-29T16:04
+working_on: "The jackal dies on screen."
 ---
 
 # builder
@@ -13,18 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 15:30 EDT
+2026-09-29 16:04 EDT
 
-- **Did:** Played cards now grow out of the hand and fly to the jackal or the hunter before resolving.
-- **Worked?** Yes, after the flight was retimed and shrinks on the way; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-card-fly-before.png]] then ![[frames/builder/2026-09-29-card-fly-after.png]]
-- **Ask:** Cards now fly to the jackal or the Frog before resolving. Feel right?
+- **Did:** The killing blow now lands in slow motion, the jackal falls onto its side, then the reward.
+- **Worked?** Partly: hit, fall, body down and cut all show; VERDICT: FAIL (slow-motion unprovable in stills).
+- **Look at:** ![[frames/builder/2026-09-29-jackal-death-before.png]] then ![[frames/builder/2026-09-29-jackal-death-after-strip.png]]
+- **Ask:** Kill the jackal from the top stone: slow hit, fall, then reward. Right?
 
 ## Notes
 
-- **Found:** cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
+- **Found:** a kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
+- **Found:** the reward screen lays the jackal on its back; the death clip leaves it on its side.
+- **Found:** beasts with no rig get the slow last hit and the pause, but no fall.
 
 ## Log
+
+- 2026-09-29 16:04 EDT — builder: jackal death: `death` clip (beast_clips.py, added via new ai_beast_clip.py from the saved .blend; ai_beast.py makes it too), router holds the fight for slow last hit 0.6 s + fall + 0.8 s rest, camera pulls wide if climbing; harness deathat=; grader FAIL x3 (slow-mo not visible in stills); tests green, pushed.
 
 - 2026-09-29 15:30 EDT — builder: played cards fly (0.25 s, grow then shrink) to the beast for attacks, the hunter otherwise, effect on landing; Block landing plays `block` + ring; harness fly=/flyt=; grader FAIL x2 then PASS; tests green, pushed.
 
