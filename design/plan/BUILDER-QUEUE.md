@@ -10,11 +10,11 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Can't scroll on the menu.**
+- [ ] 👀 **Can't scroll on the menu.**
       **Nick, 2026-09-29 10:50 ET:** Yes the scroll bar works now
       **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dsettings%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Can't scroll on the menu.|details]]
-      Ask: Open Menu and scroll to the bottom: can you reach Back?
+      Ask: You said the scroll bar works now. Tick to close it?
       Test: state=3dsettings beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-settings-scroll-after.png|420]] ^can-t-scroll-on-the-menu
 - [ ] **Move the stones and the hunters back from the jackal.**

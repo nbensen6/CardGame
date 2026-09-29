@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T00:39
+updated: 2026-09-29T11:10
 working_on: "Can't scroll on the menu."
 ---
 
@@ -13,12 +13,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 00:39 EDT
+2026-09-29 11:10 EDT
 
-- **Did:** The settings menu now scrolls inside the window, so Abandon and Back are reachable.
-- **Worked?** Yes, panel fits the window with a scrollbar. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-29-settings-scroll-before.png]] then ![[frames/builder/2026-09-29-settings-scroll-after.png]]
-- **Ask:** Open Menu and scroll to the bottom: can you reach Back?
+- **Did:** Nothing to build; you confirmed menu scrolling works, so it waits for your tick.
+- **Worked?** Yes, your 10:50 answer confirms the 00:39 fix; no code changed, no grader run.
+- **Look at:** ![[frames/builder/2026-09-29-settings-scroll-after.png]]
+- **Ask:** You said the scroll bar works now. Tick to close it?
 
 ## Notes
 
@@ -28,6 +28,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-29 11:10 EDT — builder: menu scroll confirmed by Nick (10:50); marked 👀 for his tick, nothing built.
 - 2026-09-29 00:39 EDT — builder: settings column wrapped in a ScrollContainer capped at the window (settings_scroll_height); wheel on the backdrop no longer closes the menu; grader PASS.
 - 2026-09-29 00:21 EDT — builder: stones-back tried (whole route +20, then top stone only +20); both push beast-behind-stone 3 -> 31 and the chest stays hidden behind the hunter's own stone; grader FAIL; reverted, asked.
 

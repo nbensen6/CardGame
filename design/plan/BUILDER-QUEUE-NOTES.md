@@ -716,3 +716,6 @@ the dimmed backdrop no longer counts as a tap that closes the menu. Touch drag
 scrolls the same box. Tests: `_test_settings_scroll_height_caps_at_the_window`,
 `_test_settings_wheel_on_backdrop_does_not_close`. Grader: PASS (asked for a
 scrolled-to-bottom frame as extra proof; the shot harness has no scroll arg).
+
+2026-09-29 11:10 EDT, builder. Nick answered 10:50: "Yes the scroll bar works now". Nothing
+left to build; re-marked 👀 so he can tick it (the builder never writes `[x]`).
