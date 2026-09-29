@@ -10,6 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **playtest.cmd green.**
+      **Nick, 2026-09-28 23:44 ET:** its ok, but you can move the stones back. the last stone doesnt need to be right in front of the boss. you can move the stones and the characters back enough that if you are on the last stone you can see the chest of the beast
+      **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
+      Ask: Grader failed this: one check still red. Stones hide up to a third of the jackal. Fine, or move them?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-playtest-lost-mid-hop-after.png|420]] ^playtest-cmd-green
 - [x] **Dev camera never survives a launch.**
       **Nick, 2026-09-28 20:44 ET:** goes back to player
       **Session, 2026-09-28 21:12 ET:** that is a yes; closed.
@@ -96,12 +103,6 @@ run failed.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
 
-- [ ] 👀 **playtest.cmd green.**
-      **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
-      Ask: Grader failed this: one check still red. Stones hide up to a third of the jackal. Fine, or move them?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-playtest-lost-mid-hop-after.png|420]] ^playtest-cmd-green
 
 ## Waiting on Nick
 
