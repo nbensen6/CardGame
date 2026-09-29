@@ -162,8 +162,18 @@ def apply_requests(lines, reqs):
         first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
         title = (first[:1].upper() + first[1:])[:70].rstrip() + "."
         slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:40]
-        test = WHERE.get(r["where"].split()[0] if r["where"] else "rest", r["where"] or "state=3d")
-        note = attach_images(r["what"] + (" " + r["picture"] if r["picture"] else ""))
+        # Where is one of the known shots, or harness args (they contain '=').
+        # Anything else is Nick describing the place in words: keep his words
+        # on the note and test from the resting shot.
+        where = r["where"]
+        key = where.split()[0] if where else "rest"
+        if key in WHERE:
+            test, where_note = WHERE[key], ""
+        elif "=" in where:
+            test, where_note = where, ""
+        else:
+            test, where_note = "state=3d", f" (where: {where})"
+        note = attach_images(r["what"] + where_note + (" " + r["picture"] if r["picture"] else ""))
         block = [f"- [ ] **{title}**",
                  f"      **Nick, {STAMP}:** {note}",
                  f"      {test_link(test)} · [[BUILDER-QUEUE-NOTES#{title}|details]]",
