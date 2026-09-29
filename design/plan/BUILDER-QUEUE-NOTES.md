@@ -643,6 +643,26 @@ the stairs decision). `run_tests.gd`: ALL TESTS PASSED. Grader
 run cannot reach; it scored "one red check cleared this run" MET. Left
 `[ ]` per the Session 14:35 line (one check per run, no escalation).
 
+**Builder, 2026-09-28 21:41 EDT:** `hunter-lost-mid-hop` is now 0 fails (was 1, step 9).
+The game was right, the check was wrong. Step 9 is a Pounce: the Frog
+drops from y 17.5 to 11.6. The live hop frames show it on screen the
+whole way down, but the replay said "drawn in 6/16". A debug dump showed
+why: the replay set the hunter's recorded mid-air `pos`, then Combat3D's
+own `_process` (the idle / stone-ride line, which runs whenever no hop
+tween is live) rewrote `position.y` to the stone height before the
+render. Every sample the replay drew had the hunter at y ~11.6 while the
+replay camera aimed at y 16-17.5, so it fell below the frame (rect empty,
+"NOT DRAWN"). Ascents hid this because their mid-air heights sit close
+to the landing stone. Fix: `_check_hop_visibility` now stops the view's
+`_process` for the length of the replay and hands it back
+(`_hold_view`, tested). After: all 8 hops in the 40-step run are 100%
+drawn, step 9 16/16. Still red: `beast-behind-stone` 12 (11 before;
+it swings 10-12 on unchanged code, stones 5-7 at 15-37%). That is the
+last red check and a taste call (how much stone may cover the jackal),
+so it is asked on the item. `run_tests.gd`: ALL TESTS PASSED. Grader
+`VERDICT: FAIL` twice, on the parent's "zero checks" done-when; it scored
+"one red check cleared this run" MET.
+
 ## Dev camera never survives a launch.
 
 Original item: F8 into Dev is for this launch only; every launch starts on the Player camera, whatever was saved. While Dev is on, a small "DEV CAMERA" tag stays in a corner so Nick knows. Why: Nick pressed F8 to test it, the flag was saved, and every game since opened in the wide Dev view (his 2026-09-28 14:20 screenshot: tiny hunters, no beast). Done-when: launch twice with `Test: state=3d press=F8`; the second launch's frame is the Player camera.

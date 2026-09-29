@@ -1885,7 +1885,7 @@ func _watch_hop(v: Node, me: int, climb_from: Vector3, to_foot: int) -> void:
 		return
 	Engine.time_scale = 1.0
 	await _frames(8)   # back at real speed: let the landing recoil (0.06s + 0.16s) settle
-	await _check_hop_visibility(node, body, cam, flight, cam_samples, offscreen_samples)
+	await _check_hop_visibility(v, node, body, cam, flight, cam_samples, offscreen_samples)
 	var landed := node.position
 	var landed_scale: Vector3 = body.scale if is_instance_valid(body) else Vector3.ONE
 	var rest_scale: Vector3 = Combat3D.hunter_rest_scale(body) if is_instance_valid(body) else Vector3.ONE
@@ -1956,7 +1956,15 @@ func _check_hop_camera(cam_samples: int, offscreen_samples: int) -> void:
 ## with/without pairs to disk and looking at them). A throwaway camera that
 ## nothing else in the scene touches sidesteps this entirely: it renders
 ## from the REAL recorded pose, not a re-derived guess at it.
-func _check_hop_visibility(node: Node3D, body: Node3D, cam: Camera3D, flight: Array,
+##
+## The replay also has to stop the view's own `_process` for its length
+## (2026-09-29): once the hop tween is gone, Combat3D's idle/stone-ride line
+## rewrites every hunter's `position.y` to its home height each frame, so a
+## mid-air `pos` set here was back on the stone before the render. A descent
+## (Pounce, step 9: flight at y 17.5, home 11.6) then drew the hunter a
+## stone's height below the replay camera's recorded aim -- off the frame in
+## 10/16 samples, while the live frames show it all the way down.
+func _check_hop_visibility(view: Node, node: Node3D, body: Node3D, cam: Camera3D, flight: Array,
 		cam_samples: int, offscreen_samples: int) -> void:
 	if cam_samples < MIN_HOP_SAMPLES or not (flight is Array) or (flight as Array).is_empty() \
 			or cam == null or not is_instance_valid(node):
@@ -1975,6 +1983,7 @@ func _check_hop_visibility(node: Node3D, body: Node3D, cam: Camera3D, flight: Ar
 	replay_cam.projection = cam.projection
 	replay_cam.keep_aspect = cam.keep_aspect
 	cam.get_parent().add_child(replay_cam)
+	var was_processing := _hold_view(view, true)
 	var n: int = (flight as Array).size()
 	var stride: int = maxi(1, int(ceil(float(n) / float(HOP_VIS_SAMPLES))))
 	var checked := 0
@@ -2003,6 +2012,7 @@ func _check_hop_visibility(node: Node3D, body: Node3D, cam: Camera3D, flight: Ar
 		i += stride
 	cam.make_current()
 	replay_cam.queue_free()
+	_hold_view(view, not was_processing)
 	node.position = true_pos
 	if is_instance_valid(body):
 		body.scale = true_scale
@@ -2018,6 +2028,17 @@ func _check_hop_visibility(node: Node3D, body: Node3D, cam: Camera3D, flight: Ar
 	else:
 		_note("step %d: mid-hop pixel coverage -- %d/%d replayed frames actually drew the hunter (%.0f%% off; rect-only test said %.0f%% off)"
 			% [_step, drawn, checked, frac * 100.0, rect_frac * 100.0])
+
+
+## Stops (hold = true) or resumes (hold = false) `view`'s per-frame
+## `_process`, so a pose the replay writes survives to the render. Returns
+## whether it was processing before, for the caller to hand back.
+static func _hold_view(view: Node, hold: bool) -> bool:
+	if not is_instance_valid(view):
+		return false
+	var was := view.is_processing()
+	view.set_process(not hold)
+	return was
 
 
 ## The real-vs-background test _check_hop_visibility relies on: two renders of

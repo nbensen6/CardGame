@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-28T20:21
+updated: 2026-09-28T21:41
 working_on: "playtest.cmd green."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-28 20:21 EDT
+2026-09-28 21:41 EDT
 
-- **Did:** Playtest's squash check now measures hunters against their own resting size, not size 1.
-- **Worked?** Partly: that check went 10 fails to 0, two others still red. VERDICT: FAIL (item needs zero checks; one-per-run MET)
-- **Look at:** ![[frames/builder/2026-09-28-playtest-fit-squash-before.png]] then ![[frames/builder/2026-09-28-playtest-fit-squash-after.png]]
-- **Ask:** nothing
+- **Did:** Playtest's mid-hop check now holds the Frog in the air while it replays the jump.
+- **Worked?** Partly: that check went red to 0 fails, one stone check still red. VERDICT: FAIL (item needs zero checks; one-per-run MET)
+- **Look at:** ![[frames/builder/2026-09-29-playtest-lost-mid-hop-before.png]] then ![[frames/builder/2026-09-29-playtest-lost-mid-hop-after.png]]
+- **Ask:** Stones hide up to a third of the jackal at times. Fine, or move them?
 
 ## Notes
 
-- **Found:** beast-behind-stone is flaky: the same code gives 10 or 12 fails, stones straddle 15%.
+- **Found:** beast-behind-stone swings 10-12 fails run to run on unchanged code; stones 5-7 cover 15-37%.
 
 ## Log
 
+- 2026-09-28 21:41 EDT — builder: playtest hunter-lost-mid-hop replay holds Combat3D's _process so the posed hunter survives to the render (1 -> 0 fails); grader FAIL x2 on the zero-checks done-when; tested, pushed.
 - 2026-09-28 20:21 EDT — builder: playtest hop-leftover-squash measured from the fit scale (10 -> 0 fails), hop-no-squash un-silenced; grader FAIL x2 on the zero-checks done-when; tested, pushed.
 - 2026-09-28 19:40 EDT — builder: Dev camera is per-launch (never saved), DEV CAMERA corner tag; grader PASS; tested, pushed.
 - 2026-09-28 19:30 EDT — builder: climbing camera keeps the rest pitch (0.08) and lens lift; CLIMB_FOCUS_PITCH_MAX deleted; grader FAIL x2 (midair phases, then misread facing), escalated; tested, pushed.

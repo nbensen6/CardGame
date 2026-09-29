@@ -929,6 +929,7 @@ func _init() -> void:
 	_test_backlog86_cancel_pending_tween_is_a_noop_with_nothing_running()
 	_test_cancel_pending_tween_restores_the_fit_scale_not_one()
 	_test_playtest_squash_is_measured_from_the_fit_scale()
+	_test_playtest_replay_holds_the_view()
 	_test_hunter_on_a_stone_rides_its_drift()
 	# backlog #86 duty 2 (this turn): the per-frame idle sway raced those same
 	# tweens from the other side, rewriting node.position.y every frame with
@@ -21901,6 +21902,25 @@ func _test_playtest_squash_is_measured_from_the_fit_scale() -> void:
 		"a 20% squash reads 0.2 whatever the fit scale")
 	_expect(absf(pt._scale_dev(Vector3.ONE * 1.1) - 0.1) < 0.001,
 		"a body with no fit scale is still measured against 1")
+
+
+## playtest.gd's mid-hop replay set a hunter mid-air, then the view's own
+## _process put it back on its stone before the render (a Pounce descent read
+## "drawn in 6/16 frames" while the live frames showed it throughout). The
+## replay now holds the view's _process for its length and hands it back.
+func _test_playtest_replay_holds_the_view() -> void:
+	var pt: GDScript = load("res://tools/playtest.gd")
+	var view := Node3D.new()
+	view.set_process(true)
+	var was: bool = pt._hold_view(view, true)
+	_expect(was and not view.is_processing(), "the replay stops the view's _process")
+	pt._hold_view(view, not was)
+	_expect(view.is_processing(), "and hands it back running when it was running")
+	view.set_process(false)
+	was = pt._hold_view(view, true)
+	pt._hold_view(view, not was)
+	_expect(not view.is_processing(), "and leaves a stopped view stopped")
+	view.free()
 
 
 ## A hunter standing on a stone moves with that stone's drift; one on the
