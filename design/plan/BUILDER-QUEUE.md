@@ -102,6 +102,10 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
+- [ ] **Can't scroll on the menu.**
+      **Nick, 2026-09-29 00:29 ET:** can't scroll on the menu ![[art/references/Pasted image 20260929001531.png|420]]
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=when%20clicking%20menu%20in%20the%20top%20right) · [[BUILDER-QUEUE-NOTES#Can't scroll on the menu.|details]]
+      Test: when clicking menu in the top right ^can-t-scroll-on-the-menu
 
 
 ## Waiting on Nick
