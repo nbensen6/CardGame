@@ -806,11 +806,8 @@ var _lunge_x := 0.0                 # world x the lunge drives toward: the hunte
 var _beast_target := -1             # the slot the beast's shown intent is aimed at
 var _prev_round := -1
 var _glow_mats: Array = []          # [ShaderMaterial, uniform name, base value]
-var _low_me := 0.0                  # 1 while the hunter you watch is under LOW_HP_FRAC
-var _low_beast := 0.0               # 1 while the beast is; _step_low_health reads it
-var _low_me_shown := 0.0
+var _low_beast := 0.0               # 1 while the beast is under LOW_HP_FRAC; _step_low_health reads it
 var _low_beast_shown := 0.0
-var _vignette: ColorRect
 var _beast_stream: CPUParticles3D
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
@@ -6853,12 +6850,10 @@ func _rig_glow() -> void:
 				_glow_mats.append([mat, u, float(base)])
 
 
-## Low health (queue item "Low health shows on screen", 2026-09-29). A hunter
-## under LOW_HP_FRAC gets a red edge vignette beating like a heart; the beast
-## under it streams embers, breathes its cracks faster and glows hotter.
+## Low health (queue item "Low health shows on screen", 2026-09-29). The beast
+## under LOW_HP_FRAC streams embers, breathes its cracks faster and glows
+## hotter. The hunter's red heartbeat vignette is gone (Nick, 2026-09-30).
 const LOW_HP_FRAC := 0.3
-const LOW_HEART_HZ := 1.2           # beats a second, a fast resting pulse
-const LOW_VIGNETTE := 0.8           # edge alpha at the top of a beat
 const LOW_BEAST_GLOW := 1.5         # extra crack glow when low, x the beast's own
 const LOW_BEAST_BREATH_HZ := 2.4    # a fast breath
 const LOW_BEAST_BREATH := 0.35
@@ -6868,19 +6863,6 @@ static func is_low_hp(hp: int, max_hp: int) -> bool:
 	return hp > 0 and max_hp > 0 and float(hp) < LOW_HP_FRAC * float(max_hp)
 
 
-## A double-thump heartbeat, 0..1, at time t: lub, dub, rest.
-static func heartbeat(t: float) -> float:
-	var ph := fposmod(t * LOW_HEART_HZ, 1.0)
-	var lub := exp(-pow((ph - 0.08) / 0.06, 2.0))
-	var dub := 0.7 * exp(-pow((ph - 0.30) / 0.06, 2.0))
-	return clampf(lub + dub, 0.0, 1.0)
-
-
-## The vignette's edge alpha: a floor that never lets it vanish, plus the beat.
-static func vignette_alpha(low: float, t: float) -> float:
-	return low * LOW_VIGNETTE * (0.55 + 0.45 * heartbeat(t))
-
-
 ## The beast's crack-glow multiplier when low: hotter, and a faster breath.
 static func beast_low_glow(low: float, t: float) -> float:
 	return 1.0 + low * (LOW_BEAST_GLOW
@@ -6888,33 +6870,8 @@ static func beast_low_glow(low: float, t: float) -> float:
 
 
 func _update_low_health(s: Dictionary) -> void:
-	var players: Array = s.get("players", [])
-	var me := _me()
-	_low_me = 0.0
-	if me >= 0 and me < players.size():
-		var p := players[me] as Dictionary
-		_low_me = 1.0 if is_low_hp(int(p.get("hp", 0)), int(p.get("max_hp", 0))) else 0.0
 	var boss: Dictionary = s.get("boss", {})
 	_low_beast = 1.0 if is_low_hp(int(boss.get("hp", 0)), int(boss.get("max_hp", 0))) else 0.0
-	if _low_me > 0.0 and _vignette == null:
-		_vignette = ColorRect.new()
-		_vignette.name = "LowHpVignette"
-		_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
-		var sh := Shader.new()
-		sh.code = """shader_type canvas_item;
-uniform float alpha = 0.0;
-void fragment() {
-	vec2 d = (UV - 0.5) * vec2(1.0, 0.8) * 2.0;
-	float e = smoothstep(0.45, 1.15, length(d));
-	COLOR = vec4(0.75, 0.02, 0.02, e * alpha);
-}"""
-		var mat := ShaderMaterial.new()
-		mat.shader = sh
-		_vignette.material = mat
-		# Behind every HUD panel: it tints the world, never the cards.
-		_hud.add_child(_vignette)
-		_hud.move_child(_vignette, 0)
 	if _low_beast > 0.0 and _beast_stream == null and _beast != null:
 		_beast_stream = CPUParticles3D.new()
 		_beast_stream.name = "LowHpEmbers"
@@ -6967,15 +6924,10 @@ void fragment() {
 
 func _step_low_health(delta: float) -> void:
 	var k := 1.0 - exp(-delta * 5.0)
-	_low_me_shown = lerpf(_low_me_shown, _low_me, k)
 	_low_beast_shown = lerpf(_low_beast_shown, _low_beast, k)
 	var glow := beast_low_glow(_low_beast_shown, _time)
 	for g in _glow_mats:
 		(g[0] as ShaderMaterial).set_shader_parameter(String(g[1]), float(g[2]) * glow)
-	if _vignette != null:
-		_vignette.visible = _low_me_shown > 0.01
-		(_vignette.material as ShaderMaterial).set_shader_parameter("alpha",
-			vignette_alpha(_low_me_shown, _time))
 
 
 ## The hand band, hidden while the beast's turn plays out: the old hand is gone

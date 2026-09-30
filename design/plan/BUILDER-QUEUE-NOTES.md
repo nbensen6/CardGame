@@ -1154,6 +1154,13 @@ Reverted 2026-09-30 10:25 EDT (Nick, 09:44: "no revert this as the game is co op
 - Grader: VERDICT: PASS (heartbeat and breath rate not judgeable from stills).
 - Tests: `_test_low_health_shows_on_screen`.
 
+2026-09-30 10:39 EDT, builder. Nick (09:44): "no remove the heartbeat".
+
+- Read as: the red heartbeat edge is rejected outright, as with his other "no, remove" answers on this item list. Removed the hunter vignette (the full-screen ColorRect, its shader, `heartbeat`, `vignette_alpha`, `LOW_HEART_HZ`, `LOW_VIGNETTE`, `_low_me*`). Kept: the jackal's low-HP ember stream and hotter, faster crack breath, and the `hp` console command.
+- Frames: Frog at 10/42, before (red wash on every edge) and after (none): ![[agents/frames/builder/2026-09-30-heartbeat-remove-before.png|420]] ![[agents/frames/builder/2026-09-30-heartbeat-remove-after.png|420]]
+- Grader: VERDICT: FAIL. It read "remove the heartbeat" as "remove the pulse, keep a steady red edge". Not reworked: a steady edge contradicts the reading above and would leave the frame almost unchanged. Shipped as 👀 so Nick decides; a steady tint is a one-constant change if he wants it.
+- Tests: `_test_low_health_shows_on_screen` now asserts no vignette rule or constant remains.
+
 ## One HUD style: carved obsidian.
 
 2026-09-30 01:13 EDT, builder.

@@ -31,13 +31,13 @@ run failed.
       Ask: Reverted: no head turn, crack heat, badge beat or growl. Gone for good?
       Test: state=3d beast=cinder_jackal endturn=1
       ![[agents/frames/builder/2026-09-30-threat-revert-after.png|420]] ^the-jackal-threatens-between-turns
-- [ ] **Low health shows on screen.**
+- [ ] 👀 **Low health shows on screen.**
       **Nick, 2026-09-30 09:44 ET:** no remove the heartbeat
       **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dhp%2B10) · [[BUILDER-QUEUE-NOTES#Low health shows on screen.|details]]
-      Ask: Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
+      Ask: Grader failed this: wanted a steady red edge kept. Keep the edge unpulsed?
       Test: state=3d beast=cinder_jackal console=hp+10
-      ![[agents/frames/builder/2026-09-30-low-health-after.png|420]] ^low-health-shows-on-screen
+      ![[agents/frames/builder/2026-09-30-heartbeat-remove-after.png|420]] ^low-health-shows-on-screen
 - [ ] **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].

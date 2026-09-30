@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T10:25
-working_on: "The jackal threatens between turns."
+updated: 2026-09-30T10:39
+working_on: "Low health shows on screen."
 ---
 
 # builder
@@ -13,12 +13,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 10:25 EDT
+2026-09-30 10:39 EDT
 
-- **Did:** Reverted the jackal's between-turn threat: head tracking, crack heat, badge pulse and growl, as Nick asked.
-- **Worked?** Yes; VERDICT: PASS, badge back to rest size and cracks no hotter after End Turn.
-- **Look at:** ![[frames/builder/2026-09-30-threat-revert-before.png]] then ![[frames/builder/2026-09-30-threat-revert-after.png]]
-- **Ask:** nothing
+- **Did:** Removed the red heartbeat edge on a hunter at low health; the jackal's low-health embers stay.
+- **Worked?** Partly; VERDICT: FAIL, grader wanted a steady red edge kept, which Nick's "remove" seems to reject.
+- **Look at:** ![[frames/builder/2026-09-30-heartbeat-remove-before.png]] then ![[frames/builder/2026-09-30-heartbeat-remove-after.png]]
+- **Ask:** Keep a steady, unpulsed red edge at low health, or nothing at all?
 
 ## Notes
 
@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-30 10:39 EDT — builder: low-health heartbeat vignette removed on Nick's word (09:44); jackal ember stream and `hp` command kept; grader FAIL (wanted a steady edge), shipped 👀 for Nick; tests green, pushed.
 - 2026-09-30 10:25 EDT — builder: jackal threat reverted on Nick's word (09:44): c5c33bd undone by hand (threat statics, _update/_step_threat, HeadTrack, toon heat, growl sfx+ogg, test); low health keeps the glow list via _rig_glow/_step_low_health; grader PASS; tests green, pushed.
 - 2026-09-30 10:11 EDT — builder: hits stop time removed on Nick's word (09:44): reverse of 991b33c in combat_3d.gd and run_tests.gd (hit-stop, slow motion, ember burst, hit_shake/tilt, _hunter_struck); beat=impact harness rewritten for the plain strike; grader FAIL on the pre-existing strike shake, shipped 👀; tests green, pushed.
 - 2026-09-30 09:56 EDT — builder: hop swing reverted on Nick's word (09:44): swing state, HOP_SWING_*, hop_swing/hop_swing_vec/_hop_landed and its test removed, _apply_orbit back on _pivot; harness touch= kept; grader FAIL then PASS; tests green, pushed.

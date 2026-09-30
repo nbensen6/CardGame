@@ -31236,17 +31236,13 @@ func _test_low_health_shows_on_screen() -> void:
 	_expect(Combat3D.is_low_hp(10, 42), "10 of 42 is low health")
 	_expect(Combat3D.is_low_hp(15, 70), "the jackal at 15 of 70 is low health")
 	_expect(not Combat3D.is_low_hp(13, 42), "13 of 42 (31%) is not low yet")
-	_expect(not Combat3D.is_low_hp(0, 42), "a dead hunter shows no heartbeat")
+	_expect(not Combat3D.is_low_hp(0, 42), "a dead beast streams no embers")
 	_expect(not Combat3D.is_low_hp(42, 42), "full health is not low")
-	_expect(Combat3D.vignette_alpha(0.0, 0.3) == 0.0, "no vignette above the line")
-	var lo := 1.0
-	var hi := 0.0
-	for i in 100:
-		var a := Combat3D.vignette_alpha(1.0, i * 0.01)
-		lo = minf(lo, a)
-		hi = maxf(hi, a)
-	_expect(lo > 0.2, "the vignette never vanishes between beats")
-	_expect(hi - lo > 0.15, "the vignette beats like a heart")
+	# The hunter's heartbeat vignette is removed (Nick, 2026-09-30): nothing may
+	# bring it back.
+	var fns: Array = (Combat3D as Script).get_script_method_list().map(func(m): return String(m["name"]))
+	_expect(not fns.has("vignette_alpha") and not fns.has("heartbeat"), "no heartbeat vignette rule remains")
+	_expect(not (Combat3D as Script).get_script_constant_map().has("LOW_VIGNETTE"), "no heartbeat vignette constant remains")
 	_expect(Combat3D.beast_low_glow(0.0, 0.2) == 1.0, "a healthy beast glows as it always did")
 	for t in [0.0, 0.1, 0.2, 0.3]:
 		_expect(Combat3D.beast_low_glow(1.0, t) > 1.5, "a low beast glows hotter on every breath")
