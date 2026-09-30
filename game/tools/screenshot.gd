@@ -1984,6 +1984,8 @@ func _strike_loop(v3: Node) -> void:
 			v3.call("_hunter_play", _actor, beat)
 			if beat == "attack" and v3.has_method("_strike"):
 				v3.call("_strike", false)  # the beast takes the blow it lunged at
+				if not _play:
+					await _strike_bar_blow(v3)
 			if _play:
 				var t0 := Time.get_ticks_msec()
 				while Time.get_ticks_msec() - t0 < int((float(d["out"]) + float(d["back"]) + 0.8) * 1000.0):
@@ -1992,9 +1994,12 @@ func _strike_loop(v3: Node) -> void:
 			var tw: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
 			tw.pause()
 			tw.custom_step(float(d["out"]))
+			if beat == "hit":
+				_bar_clock(v3, 2.0)  # the ghost gone
 			await snap.call("2 strike peak" if beat == "attack" else "4 hit peak")
 			tw.custom_step(float(d["back"]) + 0.05)
 			if beat == "attack":
+				_bar_clock(v3, 0.6)  # the ghost halfway through its drain
 				await snap.call("3 home again")
 	tag_layer.queue_free()
 	if _play:
@@ -2017,6 +2022,37 @@ func _strike_loop(v3: Node) -> void:
 			im.resize(w, h, Image.INTERPOLATE_BILINEAR)
 		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % cols) * w, (i / cols) * h))
 	await _save_and_quit()
+
+
+## beat=loop (unattended): the lunge lands a real blow on the beast, through
+## the dev console's `hp beast` so the snapshot carries it the way a card's
+## damage does. 18 is more than a hunter's hit, on purpose: the jackal's first
+## notch is 16 below full, so one frame shows the ghost AND the crack. The bar's
+## own clock is then frozen so a slow software frame cannot drain the ghost
+## before the shutter; _bar_clock sets it by hand for the later frames.
+const STRIKE_BAR_BLOW := 18
+
+func _strike_bar_blow(v3: Node) -> void:
+	var dc := current_scene.find_child("DevConsole", true, false)
+	var shared: Dictionary = (v3.get("_client") as Object).get("shared")
+	if dc == null or not shared.has("boss"):
+		return
+	var hp := int(shared["boss"]["hp"])
+	print("CONSOLE -> ", dc.call("run", "hp beast %d" % maxi(hp - STRIKE_BAR_BLOW, 1)))
+	for _i in 2:
+		await process_frame
+	_bar_clock(v3, 0.1)
+
+
+func _bar_clock(v3: Node, at: float) -> void:
+	var bar: Control = v3.get("_beast_bar")
+	if bar == null:
+		return
+	bar.set_process(false)
+	bar.set("t", at)
+	bar.queue_redraw()
+	print("BEAST BAR t=%.2f size=%s hp=%d ghost_from=%d crack=%d" % [at, bar.size, int(bar.get("hp")),
+		int(bar.get("ghost_from")), int(bar.get("crack_hp"))])
 
 
 ## beat=impact (unattended): the hit-stop on a fixed clock, six frames. 1 rest;

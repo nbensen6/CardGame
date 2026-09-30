@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T01:13
-working_on: "One HUD style: carved obsidian."
+updated: 2026-09-30T01:25
+working_on: "The beast's health bar reacts."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 01:13 EDT
+2026-09-30 01:25 EDT
 
-- **Did:** Re-themed the fight HUD in one carved-obsidian material: dark glassy panels, ember rims, bevel, display-font names.
-- **Worked?** Yes; VERDICT: PASS, every listed panel is in the new material and no text clips.
-- **Look at:** ![[frames/builder/2026-09-30-obsidian-hud-before.png]] then ![[frames/builder/2026-09-30-obsidian-hud-after.png]]
-- **Ask:** HUD is now dark obsidian with ember rims and display caps. Keep this look?
+- **Did:** Beast health bar now has notches, a pale ghost of lost HP that lingers then drains, and a crack flash.
+- **Worked?** Yes; VERDICT: PASS, strike frame shows the ghost behind 52/70 and the crack at the crossed notch.
+- **Look at:** ![[frames/builder/2026-09-30-beast-bar-before.png]] then ![[frames/builder/2026-09-30-beast-bar-after.png]]
+- **Ask:** Notches every 16 HP, ember line at the hurt pattern. Readable at a glance?
 
 ## Notes
 
-- **Found:** the display font draws "7" like a hook; the badge number may want the body font.
-- **Found:** Log, Menu, pile counts and hunter HP bars still use the old style.
+- **Found:** the hurt-pattern notch's ember line is 1 px and faint at 1280x720.
 
 ## Log
 
+- 2026-09-30 01:25 EDT — builder: beast HP bar reacts (beast_bar.gd overlay: notches per weak_point_threshold + hurt_pct line, 0.4 s ghost + drain, crack on crossing; hurt_pct in snapshot; beat=loop lands an 18 blow; tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:13 EDT — builder: carved-obsidian HUD (obsidian_style + ObsidianBox bevel wrapper `carved`, hud_font FontVariation w/ fallback; top bar, party cards, intent badge, energy orb, End Turn/Switch + test); grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 00:56 EDT — builder: low health (console `hp N` / `hp beast N`; is_low_hp <30 %, vignette_alpha heartbeat ColorRect under the HUD, beast_low_glow hotter+2.4 Hz breath in _step_threat, LowHpEmbers CPUParticles3D stream over the beast box + test); grader PASS; tests green, pushed.
 - 2026-09-30 00:48 EDT — builder: jackal threat between turns (beast_threat/threat_focus/head_yaw_to/intent_badge_scale/growl_now + test; HeadTrack neck/head modifier, gain 8; toon `heat` uniform + glow_gain x(1+3t); badge 1+0.18t heartbeat; growl.ogg); grader FAIL x3 (head unseen behind stones; body-turn try reverted), escalated 👀; tests green, pushed.

@@ -589,6 +589,8 @@ func _build_shared() -> Dictionary:
 			# never forwarded — a client had no way to know a fight even HAS a
 			# bent rule, let alone which one or its threshold.
 			"limiter": b.limiter,
+			# Where the beast turns to its hurt pattern; the HP bar notches it.
+			"hurt_pct": b.hurt_pct,
 			"art": b.art, "adds": add_views,
 		}
 		s["round"] = c.round_num

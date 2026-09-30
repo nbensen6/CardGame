@@ -1145,3 +1145,27 @@ Built 2026-09-30 00:48 EDT.
 - Grader: FAIL (badge unchanged, no bevel) → added the bevel wrapper and an ember badge rim; FAIL (badge still looked the same) → badge label into the display font; PASS.
 - Test: `_test_obsidian_hud_style_is_one_material`.
 
+## The beast's health bar reacts.
+
+2026-09-30 01:25 EDT. Built as an overlay (`game/ui/beast_bar.gd`) drawn over the
+existing `HpBar` ProgressBar, so the bar's size, place and obsidian style are
+unchanged.
+
+- **Notches.** "Weak-point threshold" in the data is sigil damage per visit
+  before the beast bucks you off (16 on the jackal), not an HP line. Read it as:
+  a notch every 16 HP down from full (54, 38, 22, 6), i.e. one full sigil
+  visit's worth each. Plus a taller ember notch at `hurt_pct` (28 HP), where
+  the jackal switches to its hurt pattern. `hurt_pct` is now forwarded in the
+  boss snapshot (`game_host.gd`).
+- **Ghost.** A drop leaves a pale cream segment from the old value to the new;
+  it holds 0.4 s then eases down over 0.35 s. A second blow inside the ghost
+  keeps the ghost's current top. A heal or new fight clears it.
+- **Crack.** A drop that crosses a notch flashes a white jagged crack at the
+  highest crossed notch, fading over 0.5 s.
+- **Harness.** `beat=loop` (unattended) now lands a real 18-damage blow via the
+  console's `hp beast`, so 70 to 52 crosses the 54 notch; the bar's clock is
+  frozen and set by hand per frame (0.1 s, 0.6 s, 2.0 s) so slow software
+  frames cannot drain the ghost before the shutter.
+- **Tests.** `_test_beast_bar_reacts`: notch placement, major notch, crossing,
+  ghost hold/drain curve, bar state on blow and heal.
+- **Grader:** VERDICT: PASS.

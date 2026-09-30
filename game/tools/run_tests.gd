@@ -913,6 +913,7 @@ func _init() -> void:
 	_test_enemy_turn_beats_land_in_order()
 	_test_beast_threat_builds_between_turns()
 	_test_low_health_shows_on_screen()
+	_test_beast_bar_reacts()
 	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
 	_test_backlog86_react_plan_still_resyncs_on_a_party_size_change()
 	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
@@ -31189,6 +31190,40 @@ func _test_low_health_shows_on_screen() -> void:
 	for t in [0.0, 0.1, 0.2, 0.3]:
 		_expect(Combat3D.beast_low_glow(1.0, t) > 1.5, "a low beast glows hotter on every breath")
 	_expect(Combat3D.LOW_BEAST_BREATH_HZ > Combat3D.THREAT_BEAT_HZ, "a low beast breathes faster")
+
+
+## The beast's health bar reacts (queue, 2026-09-29): notches, the ghost of
+## lost HP, and the crack when a blow crosses a notch.
+func _test_beast_bar_reacts() -> void:
+	var BB := preload("res://ui/beast_bar.gd")
+	var marks: Array = BB.notch_marks(70, 16, 0.4)
+	var hps: Array = marks.map(func(m): return int(m["hp"]))
+	_expect(hps == [54, 38, 28, 22, 6], "jackal notches: every 16 down from 70, and the hurt line at 28 (got %s)" % [hps])
+	_expect(marks.filter(func(m): return m["major"]).map(func(m): return int(m["hp"])) == [28],
+		"only the hurt line is a major notch")
+	_expect(BB.notch_marks(70, 0, 0.0).is_empty(), "no threshold, no hurt pattern: no notches")
+	_expect(BB.notch_marks(40, 12, 0.4).map(func(m): return int(m["hp"])) == [28, 16, 4],
+		"a threshold notch on the hurt line gives way to it")
+	_expect(BB.crossed_notch(70, 52, marks) == 54, "70 to 52 crosses the 54 notch")
+	_expect(BB.crossed_notch(70, 54, marks) == 54, "landing on a notch crosses it")
+	_expect(BB.crossed_notch(60, 55, marks) == -1, "a blow between notches cracks nothing")
+	_expect(BB.crossed_notch(60, 20, marks) == 54, "a blow across several notches cracks the highest")
+	_expect(BB.ghost_value(70, 52, 0.0) == 70.0, "the ghost starts at the old value")
+	_expect(BB.ghost_value(70, 52, BB.GHOST_HOLD) == 70.0, "the ghost lingers for the hold")
+	var mid: float = BB.ghost_value(70, 52, BB.GHOST_HOLD + BB.GHOST_DRAIN * 0.5)
+	_expect(mid < 70.0 and mid > 52.0, "the ghost drains after the hold (mid %.1f)" % mid)
+	_expect(BB.ghost_value(70, 52, BB.GHOST_HOLD + BB.GHOST_DRAIN) == 52.0, "the ghost reaches the new value")
+	_expect(BB.ghost_value(40, 52, 0.0) == 52.0, "a heal leaves no ghost")
+	_expect(is_equal_approx(BB.GHOST_HOLD, 0.4), "the ghost lingers 0.4 s")
+	var bar: Control = BB.new()
+	bar.set_marks(70, 16, 0.4)
+	bar.set_hp(70, 70)
+	_expect(bar.ghost_from == 0 and bar.crack_hp == -1, "a fresh bar has no ghost and no crack")
+	bar.set_hp(52, 70)
+	_expect(bar.ghost_from == 70 and bar.crack_hp == 54, "a blow leaves a ghost at 70 and cracks 54")
+	bar.set_hp(60, 70)
+	_expect(bar.ghost_from == 0, "a heal clears the ghost")
+	bar.free()
 
 
 ## One HUD style (queue, 2026-09-29): every fight-screen panel is built from

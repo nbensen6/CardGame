@@ -260,9 +260,12 @@ run failed.
       Ask: HUD is now dark obsidian with ember rims and display caps. Keep this look?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-obsidian-hud-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] **The beast's health bar reacts.**
+- [ ] 👀 **The beast's health bar reacts.**
       **Session, 2026-09-29 22:35 ET:** The beast bar is a plain progress bar. Give it notch marks at each weak-point threshold, a pale ghost segment that lingers 0.4 s after damage and drains, and a crack flash when a threshold is crossed. Done-when: a strike frame shows the ghost segment behind the new value. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dstrike beast=cinder_jackal beat=loop ^the-beast-s-health-bar-reacts
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#The beast's health bar reacts.|details]]
+      Ask: Notches every 16 HP, ember line at the hurt pattern. Readable at a glance?
+      Test: state=3dstrike beast=cinder_jackal beat=loop
+      ![[agents/frames/builder/2026-09-30-beast-bar-after.png|420]] ^the-beast-s-health-bar-reacts
 - [ ] **Cards fan and glow.**
       **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal hover=1 ^cards-fan-and-glow
@@ -390,3 +393,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Floating stones cover the jackal's head and chest from the rest camera, so any head or face change is hidden.
 - [ ] (proposed) The jackal's leg flame markings sit outside the toon glow mask; only the ears responded to glow_gain.
 - [ ] (proposed) Shots take `console=hp 10` with a real space; `+` only decodes in play mode, so a Test line pasted into shot.sh silently fails.
+- [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.

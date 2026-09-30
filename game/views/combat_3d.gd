@@ -507,6 +507,7 @@ const OBSIDIAN_FILL := Color(0.05, 0.043, 0.05, 0.92)
 const EMBER_RIM := Color(0.96, 0.47, 0.16)
 const HUD_DISPLAY_FONT := preload("res://assets/fonts/KenneyFutureNarrow.ttf")
 const ObsidianBox := preload("res://ui/obsidian_box.gd")
+const BeastBar := preload("res://ui/beast_bar.gd")
 var _hud_font: Font = null
 
 
@@ -583,6 +584,9 @@ func _apply_obsidian_hud() -> void:
 		top.add_theme_stylebox_override("panel", carved(st))
 	_title.add_theme_font_override("font", _hud_font)
 	_intent.add_theme_font_override("normal_font", _hud_font)
+	_beast_bar = BeastBar.new()
+	_beast_bar.name = "BeastBarFx"
+	_hp_bar.add_child(_beast_bar)
 	_title.add_theme_color_override("font_color", Color(1, 0.9, 0.74))
 	var styles := obsidian_button_styles()
 	for b in [_end_btn, _switch_btn]:
@@ -839,6 +843,8 @@ var _log_expanded := false
 @onready var _title: Label = %Title
 @onready var _hp: Label = %HpLabel
 @onready var _hp_bar: ProgressBar = %HpBar
+## Notches, the ghost of lost HP and the crack flash, drawn over _hp_bar.
+var _beast_bar: Control
 ## RichTextLabel, not Label: the move's NAME is a keyword, and a keyword has to
 ## be able to wear an underline and carry the id a right-click looks up.
 @onready var _intent: RichTextLabel = %Intent
@@ -2081,6 +2087,9 @@ func _refresh() -> void:
 	_hp.text = "%d / %d" % [int(boss["hp"]), int(boss["max_hp"])]
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
+	_beast_bar.call("set_marks", int(boss["max_hp"]),
+		int(boss.get("weak_point_threshold", 0)), float(boss.get("hurt_pct", 0.0)))
+	_beast_bar.call("set_hp", int(boss["hp"]), int(boss["max_hp"]))
 	_set_intent(boss, s)
 	# Before _show_beast, which needs it ready for _build_ledge_marks.
 	_safe_ledges = safe_ledge_heights(boss.get("ledges", []))
