@@ -10,7 +10,77 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
+- [ ] **The camera swings with each hop.**
+      **Nick, 2026-09-30 09:44 ET:** no i dont like this change
+      **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B1) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
+      Ask: Camera now overshoots each sideways landing a little, then settles. Big enough?
+      Test: state=3d beast=cinder_jackal console=climb+1
+      ![[agents/frames/builder/2026-09-30-hop-swing-strip-after.png|420]] ^the-camera-swings-with-each-hop
+- [ ] **Hits stop time.**
+      **Nick, 2026-09-30 09:44 ET:** no remove this for now
+      **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dimpact) · [[BUILDER-QUEUE-NOTES#Hits stop time.|details]]
+      Ask: Grader failed this: shake too small in stills. Is the hit kick strong enough?
+      Test: state=3dstrike beast=cinder_jackal beat=impact
+      ![[agents/frames/builder/2026-09-30-hit-stop-after.png|420]] ^hits-stop-time
+- [ ] **The jackal threatens between turns.**
+      **Nick, 2026-09-30 09:44 ET:** no revert this as the game is co op and we cannot make this work in multiplayer
+      **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal threatens between turns.|details]]
+      Ask: Grader failed this: head turn unreadable behind stones. End Turn: does the jackal read as angrier?
+      Test: state=3d beast=cinder_jackal endturn=1
+      ![[agents/frames/builder/2026-09-30-jackal-threatens-after.png|420]] ^the-jackal-threatens-between-turns
+- [ ] **Low health shows on screen.**
+      **Nick, 2026-09-30 09:44 ET:** no remove the heartbeat
+      **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dhp%2B10) · [[BUILDER-QUEUE-NOTES#Low health shows on screen.|details]]
+      Ask: Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
+      Test: state=3d beast=cinder_jackal console=hp+10
+      ![[agents/frames/builder/2026-09-30-low-health-after.png|420]] ^low-health-shows-on-screen
+- [ ] **One HUD style: carved obsidian.**
+      **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
+      **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
+      Ask: HUD is now dark obsidian with ember rims and display caps. Keep this look?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-obsidian-hud-after.png|420]] ^one-hud-style-carved-obsidian
+- [ ] **Cards fan and glow.**
+      **Nick, 2026-09-30 09:44 ET:** remove this
+      **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hover%3D1) · [[BUILDER-QUEUE-NOTES#Cards fan and glow.|details]]
+      Ask: Lifted card now glows ember-gold at its edge. Too strong?
+      Test: state=3d beast=cinder_jackal hover=1
+      ![[agents/frames/builder/2026-09-30-cards-fan-after.png|420]] ^cards-fan-and-glow
+- [ ] **The intent badge reads like a warning.**
+      **Nick, 2026-09-30 09:44 ET:** remove damage badge and put it somewhere else in the hud.
+      **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
+      Ask: Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-intent-badge-after.png|420]] ^the-intent-badge-reads-like-a-warning
+- [ ] **Obsidian floor.**
+      **Nick, 2026-09-30 09:44 ET:** remove the band
+      **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Obsidian floor.|details]]
+      Ask: Floor is black glass with a sheen band. Band too bright or right?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-obsidian-floor-after.png|420]] ^obsidian-floor
+- [ ] **Embers in the air.**
+      **Nick, 2026-09-30 09:44 ET:** glow a little too strong and should not be rising on the lava rock everyone is standing on. only from the lava surrounding them.
+      **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Embers in the air.|details]]
+      Ask: Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-embers-after.png|420]] ^embers-in-the-air
+- [ ] **A sky with ash.**
+      **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
+      **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
+      Ask: Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-ash-sky-after.png|420]] ^a-sky-with-ash
+- [x] **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 22:29 ET:** slow down the animation by about 25 %
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
@@ -218,102 +288,42 @@ run failed.
       Ask: The lava-lit mountains are clear now; haze only in the sky. Right?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-fog-behind-after.png|420]] ^change-the-fog-so-it-s-behind-the-exteri
-- [ ] 👀 **More free unrestriced camera movement at higher speed.**
+- [x] **More free unrestriced camera movement at higher speed.**
       **Nick, 2026-09-29 21:14 ET:** more free unrestriced camera movement at higher speed. cant zoom in more past picture. (where: in dev movde) ![[art/references/Pasted image 20260929210409.png|420]]
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B5%20devzoom%3D16%20devorbit%3D-35) · [[BUILDER-QUEUE-NOTES#More free unrestriced camera movement at higher speed.|details]]
       Ask: Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
       Test: state=3d beast=cinder_jackal console=climb+5 devzoom=16 devorbit=-35
       ![[agents/frames/builder/2026-09-30-devcam-free-after.png|420]] ^more-free-unrestriced-camera-movement-at
-- [ ] 👀 **The climb zigzags side to side.**
+- [x] **The climb zigzags side to side.**
       **Session, 2026-09-29 22:35 ET:** `route_pos` puts all five stones on one straight line, so a climb reads as a staircase. Alternate the rungs LEFT and RIGHT of that line by about one hunter height, ledges on the outer edges, so each hop is a diagonal traverse across the flank. Keep the even hop length and both endpoints (ground gap and sigil, #14). The hunter turns to face the stone it hops to. Done-when: from the resting camera the stones form a zigzag, each on the opposite side of the last, and a test pins alternation plus even hop length. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The climb zigzags side to side.|details]]
       Ask: Grader failed this: zigzag faint from rest camera. Stones zigzag enough for you?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-zigzag-rest-after.png|420]] ^the-climb-zigzags-side-to-side
-- [ ] 👀 **The camera swings with each hop.**
-      **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B1) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
-      Ask: Camera now overshoots each sideways landing a little, then settles. Big enough?
-      Test: state=3d beast=cinder_jackal console=climb+1
-      ![[agents/frames/builder/2026-09-30-hop-swing-strip-after.png|420]] ^the-camera-swings-with-each-hop
-- [ ] 👀 **Hits stop time.**
-      **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dimpact) · [[BUILDER-QUEUE-NOTES#Hits stop time.|details]]
-      Ask: Grader failed this: shake too small in stills. Is the hit kick strong enough?
-      Test: state=3dstrike beast=cinder_jackal beat=impact
-      ![[agents/frames/builder/2026-09-30-hit-stop-after.png|420]] ^hits-stop-time
-- [ ] 👀 **The jackal threatens between turns.**
-      **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal threatens between turns.|details]]
-      Ask: Grader failed this: head turn unreadable behind stones. End Turn: does the jackal read as angrier?
-      Test: state=3d beast=cinder_jackal endturn=1
-      ![[agents/frames/builder/2026-09-30-jackal-threatens-after.png|420]] ^the-jackal-threatens-between-turns
-- [ ] 👀 **Low health shows on screen.**
-      **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dhp%2B10) · [[BUILDER-QUEUE-NOTES#Low health shows on screen.|details]]
-      Ask: Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
-      Test: state=3d beast=cinder_jackal console=hp+10
-      ![[agents/frames/builder/2026-09-30-low-health-after.png|420]] ^low-health-shows-on-screen
-- [ ] 👀 **One HUD style: carved obsidian.**
-      **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
-      Ask: HUD is now dark obsidian with ember rims and display caps. Keep this look?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-obsidian-hud-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] 👀 **The beast's health bar reacts.**
+- [x] **The beast's health bar reacts.**
       **Session, 2026-09-29 22:35 ET:** The beast bar is a plain progress bar. Give it notch marks at each weak-point threshold, a pale ghost segment that lingers 0.4 s after damage and drains, and a crack flash when a threshold is crossed. Done-when: a strike frame shows the ghost segment behind the new value. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#The beast's health bar reacts.|details]]
       Ask: Notches every 16 HP, ember line at the hurt pattern. Readable at a glance?
       Test: state=3dstrike beast=cinder_jackal beat=loop
       ![[agents/frames/builder/2026-09-30-beast-bar-after.png|420]] ^the-beast-s-health-bar-reacts
-- [ ] 👀 **Cards fan and glow.**
-      **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hover%3D1) · [[BUILDER-QUEUE-NOTES#Cards fan and glow.|details]]
-      Ask: Lifted card now glows ember-gold at its edge. Too strong?
-      Test: state=3d beast=cinder_jackal hover=1
-      ![[agents/frames/builder/2026-09-30-cards-fan-after.png|420]] ^cards-fan-and-glow
-- [ ] 👀 **The intent badge reads like a warning.**
-      **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
-      Ask: Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
-      Test: state=3dclimb beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-intent-badge-after.png|420]] ^the-intent-badge-reads-like-a-warning
-- [ ] 👀 **The climb gauge stands beside the beast.**
+- [x] **The climb gauge stands beside the beast.**
       **Session, 2026-09-29 22:35 ET:** The right-rail ladder is a thin line with ticks. Make it a gauge beside the stage: a portrait pip per hunter at their height, glowing notches at the ledges, the sigil burning at the top, in the obsidian style. Done-when: the climb frame shows both pips at their heights and the sigil glow at the top. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The climb gauge stands beside the beast.|details]]
       Ask: Gauge has faces and a burning sigil now. Pips big enough to read?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-climb-gauge-after.png|420]] ^the-climb-gauge-stands-beside-the-beast
-- [ ] 👀 **Obsidian floor.**
-      **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Obsidian floor.|details]]
-      Ask: Floor is black glass with a sheen band. Band too bright or right?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-obsidian-floor-after.png|420]] ^obsidian-floor
-- [ ] 👀 **Lava rock under the hunters.**
+- [x] **Lava rock under the hunters.**
       **Session, 2026-09-29 22:35 ET:** The climb stones and the hunters' standing slabs are tan boxes. Make them dark basalt with an ember glow at the underside and edges, scoped to the jackal fight. Done-when: the climb frame shows dark stones with orange edge glow under both hunters. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Lava rock under the hunters.|details]]
       Ask: Grader failed this: Goblin's stone off-frame. Stones read as lava rock to you?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-lava-rock-after.png|420]] ^lava-rock-under-the-hunters
-- [ ] 👀 **Lava flows around the arena.**
+- [x] **Lava flows around the arena.**
       **Session, 2026-09-29 22:35 ET:** Add a lava ring between the floor and the wall: an emissive scrolling shader with noise, slow flow, orange omni lights along it, heat shimmer above it. It must not reach the hunters' slabs. Done-when: the rest frame shows glowing lava between the floor edge and the wall, lighting the floor orange at the rim. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Lava flows around the arena.|details]]
       Ask: Grader failed this: rim floor not visibly orange. Does the lava ring read?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
-- [ ] 👀 **Embers in the air.**
-      **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Embers in the air.|details]]
-      Ask: Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-embers-after.png|420]] ^embers-in-the-air
-- [ ] 👀 **A sky with ash.**
-      **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
-      Ask: Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-ash-sky-after.png|420]] ^a-sky-with-ash
 
 
 ## Waiting on Nick
