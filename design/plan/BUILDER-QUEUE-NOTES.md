@@ -1217,6 +1217,14 @@ obsidian material above is gone.
 - Grader: FAIL (bob not provable in one still; bare plate) -> idleat grid + glass plate; FAIL (Goblin not in frame) -> slot=1 grid; PASS.
 - Test: `_test_intent_badge_sits_in_a_fixed_hud_slot` rewritten for the new layout.
 
+2026-09-30 17:12 EDT, builder, on Nick's 16:59 answer ("game crashes a second after opening").
+
+- Not a crash: the window quit. `Test:` carries `idleat=0,0.4,0.8,1.2`, and `_shoot_idle` (like `_shoot_death` and the enemyat path) ends in `_save_and_quit()` even in `play`, so the game saved `game/shot.png` and quit 1.4 s after the fight settled. The sky item's `idleat=0,3,6` quit at about 6 s: the same bug is Nick's "crashes after a few seconds" there.
+- Fix at the root: `_save_and_quit()` returns early with "PLAY READY" when `quits_after_shot(args)` is false (`play` in the args). That covers every shot path at once. Same rule as `arms_failsafe` (2026-09-28).
+- Proof: Xvfb framebuffer dumped at +2/+4/+6/+8 s after the last idleat frame, as a 2x2 grid. Before: exited, all black. After: alive, fight on screen in all four, hunter y 0.0000 throughout.
+- Grader: FAIL (one still cannot show it stays open or that the hunters hold still) -> 2x2 grid over 8 s; VERDICT: PASS.
+- Test: `_test_play_mode_never_arms_the_shot_failsafe` gains `quits_after_shot` checks.
+
 ## The beast's health bar reacts.
 
 2026-09-30 01:25 EDT. Built as an overlay (`game/ui/beast_bar.gd`) drawn over the

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T12:55
-working_on: "A sky with ash."
+updated: 2026-09-30T17:12
+working_on: "One HUD style: carved obsidian."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 12:55 EDT
+2026-09-30 17:12 EDT
 
-- **Did:** Ash clouds now drift and churn visibly, about fifteen times faster than before.
-- **Worked?** Yes, clouds move across three frames 3 s apart. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-sky-drift-before.png]] then ![[frames/builder/2026-09-30-sky-drift-after.png]]
-- **Ask:** Clouds now drift and churn, a cell every few seconds. Speed right?
+- **Did:** Test-this-now no longer closes the game after its idle frames; that was the "crash".
+- **Worked?** Yes, the game stays open 8 s after the frames where it used to quit. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-play-stays-open-before.png]] then ![[frames/builder/2026-09-30-play-stays-open-after.png]]
+- **Ask:** Window no longer closes after the idle frames. Does it stay open now?
 
 ## Notes
 
-- **Found:** The half-size idleat grid is too small to judge the sky notch; motion needed 4x crops.
+- **Found:** The sky item's crash is the same bug (idleat=0,3,6 quit at 6 s); this fixes it too.
+- **Found:** Test links still carry idleat=, which does nothing useful in play.
 
 ## Log
 
+- 2026-09-30 17:12 EDT — builder: HUD "crash" answered (Nick 16:59): play mode quit after idleat/deathat/enemyat shots via _save_and_quit; now returns PLAY READY when quits_after_shot is false + test; grader FAIL (one still) then PASS on 8 s grid; tests green, pushed.
 - 2026-09-30 12:55 EDT — builder: sky clouds move on Nick's word (09:44): ash wind 0.018 -> (0.3, 0.1) cells/s via BIOME ash_wind + static ash_wind() + test; grader FAIL on half-size grid then PASS on 4x sky strips; tests green, pushed.
 - 2026-09-30 12:43 EDT — builder: Embers answered (Nick 09:44): rising field emits from the lava ring only (ember_band = lava_ring, RING emission), glow down (alpha 0.75, seam lights 95) + test; grader FAIL x2 (origin unjudgeable from a still), shipped 👀; tests green, pushed.
 - 2026-09-30 12:24 EDT — builder: Obsidian floor answered (Nick 09:44 "remove the band"): specular band deleted from obsidian.gdshader, test asserts no band uniform; grader PASS; tests green, pushed.

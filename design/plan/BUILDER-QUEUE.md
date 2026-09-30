@@ -10,15 +10,15 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **One HUD style: carved obsidian.**
+- [ ] 👀 **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes a second after opening
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20slot%3D1%20idleat%3D0%2C0.4%2C0.8%2C1.2) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
-      Ask: Jackal bar top-left, small intent beside it, party panel gone. Good?
+      Ask: Window no longer closes after the idle frames. Does it stay open now?
       Test: state=3d beast=cinder_jackal slot=1 idleat=0,0.4,0.8,1.2
-      ![[agents/frames/builder/2026-09-30-hud-trim-after.png|420]] ^one-hud-style-carved-obsidian
+      ![[agents/frames/builder/2026-09-30-play-stays-open-after.png|420]] ^one-hud-style-carved-obsidian
 - [ ] **A sky with ash.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes after a few seconds
       **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
@@ -462,3 +462,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.
 - [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
 - [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.
+- [ ] (proposed) **Test this now links still carry idleat=.** The shot-only grid argument is harmless now but does nothing in play.

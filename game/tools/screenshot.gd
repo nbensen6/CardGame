@@ -1924,6 +1924,9 @@ func _grid(shots: Array[Image]) -> void:
 
 
 func _save_and_quit() -> void:
+	if not quits_after_shot(OS.get_cmdline_user_args()):
+		print("PLAY READY: scenario is live. Close the window when done.")
+		return
 	await RenderingServer.frame_post_draw
 	var img := root.get_viewport().get_texture().get_image() if _strip == null else _strip
 	var saved: Error = img.save_png(_out)
@@ -1942,6 +1945,13 @@ func _save_and_quit() -> void:
 ## window; arming it there closed the game under him ten seconds in, which he
 ## reported as "the game is crashing while testing" (2026-09-28 18:44).
 static func arms_failsafe(user_args: PackedStringArray) -> bool:
+	return not ("play" in user_args)
+
+
+## Same rule for the end of a shot. idleat= and deathat= saved and quit when
+## their last frame was taken, even in `play`, so Nick's window closed 1.2 s
+## (or 6 s) after it opened, which he reported as a crash (2026-09-30 16:59).
+static func quits_after_shot(user_args: PackedStringArray) -> bool:
 	return not ("play" in user_args)
 
 

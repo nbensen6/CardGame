@@ -31040,6 +31040,10 @@ func _test_play_mode_never_arms_the_shot_failsafe() -> void:
 		"an unattended shot still arms the 10 s failsafe")
 	_expect(not shot.arms_failsafe(PackedStringArray(["play", "state=3d", "beast=cinder_jackal"])),
 		"play mode (Test this now) never arms the failsafe that closes the window")
+	_expect(shot.quits_after_shot(PackedStringArray(["out=/tmp/a.png", "idleat=0,0.4"])),
+		"an unattended idleat shot still saves and quits")
+	_expect(not shot.quits_after_shot(PackedStringArray(["play", "state=3d", "idleat=0,0.4,0.8,1.2"])),
+		"play mode with idleat= keeps the window open after the last frame (Nick, 2026-09-30 16:59)")
 
 
 ## Nick, 2026-09-29 17:14: "the scenario doesn't show this properly also frog
