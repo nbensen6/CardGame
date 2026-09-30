@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T22:41
-working_on: "Hunters lunge when they attack and flinch when hit."
+updated: 2026-09-29T23:14
+working_on: "The climb zigzags side to side."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 22:41 EDT
+2026-09-29 23:14 EDT
 
-- **Did:** Slowed the hunters' lunge and flinch by 25%, tongue included, as Nick asked.
-- **Worked?** Yes; grader VERDICT: PASS, at 0.36 s the old lunge is home, the new still lashes.
-- **Look at:** ![[frames/builder/2026-09-30-lunge-slower-before.png]] then ![[frames/builder/2026-09-30-lunge-slower-after.png]]
-- **Ask:** Lunge and flinch now 25% slower. Pace right?
+- **Did:** Stones now zigzag left and right on the way up, hops still even, hunter turns to each stone.
+- **Worked?** Partly; grader VERDICT: FAIL, the zigzag reads as a V from the resting camera, not one path.
+- **Look at:** ![[frames/builder/2026-09-30-zigzag-rest-before.png]] then ![[frames/builder/2026-09-30-zigzag-rest-after.png]]
+- **Ask:** Stones zigzag enough for you, or wider?
 
 ## Notes
 
-- **Found:** the beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
+- **Found:** the zigzag's second stones sit over the jackal's chest from the rest camera.
+- **Found:** the named 3dclimb shot starts at the sigil, so it cannot show the stones below.
 
 ## Log
 
+- 2026-09-29 23:14 EDT — builder: climb zigzag (route_pos inner rungs +-ZIGZAG_WIDTH 2.0 H, outward first; zigzag_along keeps hops even; _turn_toward faces the next stone); graded on state=3d; grader FAIL x2, escalated 👀; tests green, pushed.
 - 2026-09-29 22:51 EDT — builder: top item (lunge 25% slower) was already pushed in a460aed but left without 👀; marked 👀, no rebuild so it is not slowed twice.
 - 2026-09-29 22:41 EDT — builder: lunge/flinch 25% slower (hunter_act_beat x1.25, test pinned); harness beatat= fixed-clock cropped strip; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 22:32 EDT — builder: dev camera freed: wheel floor 4.0 to 0.5 then dolly past it (dev_zoom, dev_dolly), WASD 1.0 x max(dist,6) + Shift x3 (dev_fly_speed), pivot clamp to the wall and 1.5R up (dev_pan_clamp); harness devzoom=/devorbit=/devfly=; grader FAIL x3 (speed unseen in stills), escalated; tests green, pushed.

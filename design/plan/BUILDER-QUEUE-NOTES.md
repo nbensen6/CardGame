@@ -1053,3 +1053,31 @@ Builder, 2026-09-29 22:32 EDT. Dev camera only; the Player camera and the rest s
 - Harness: `devzoom=N` (Dev on, N wheel-ups), `devorbit=deg`, `devfly=secs` (hold W in real time); all show the DEV CAMERA tag.
 - Grader: round 1 FAIL (no dev tag in frame, before not at old max); round 2 zoom MET, speed/freedom "not visible in stills"; round 3 (strip: zoom + 2 s fly) FAIL, wants an off-axis position the old camera could not reach and read the zoom as no tighter than Nick's picture. Frames: `2026-09-30-devcam-free-{before,after}.png` and `-strip-{before,after}.png`.
 - Tests: `_test_dev_camera_is_freer_and_faster` (six checks).
+
+
+## The climb zigzags side to side.
+
+2026-09-29 23:14 EDT, builder.
+
+- `route_pos` keeps both end rungs on the straight line (ground gap and
+  sigil) and steps every inner rung sideways by `ZIGZAG_WIDTH`, alternating,
+  in the horizontal perpendicular of the line. The first inner rung steps
+  OUTWARD (away from the other hunter's line); stepping inward first piled
+  both lines' second stones together over the jackal's chest.
+- Even hops: `zigzag_along` re-spaces the rungs along the line so every hop
+  is the same 3D length (a hop that crosses twice as far sideways moves less
+  far along it; bisection on the hop length). Tests pin alternation, even
+  hops for n=3,5,6, and the no-offset case.
+- The hunter turns to the stone it hops to during the crouch (`_turn_toward`,
+  0.09 s, shortest way round). After a climb it keeps facing its last hop.
+- Width tried: 1.0, 1.5, 2.0, 3.0 hunter heights. 1.0 barely moved the
+  frame; 3.0 made the two lines cross. Shipped 2.0 with outward-first.
+- Shot: the item's named `state=3dclimb` starts at the sigil and only the top
+  stone shows, so it could not change. Graded on `state=3d` (the resting
+  camera the done-when names) instead.
+- Grader: FAIL twice. Round 1 (1.5, inward-first): "reads as a slightly
+  reshuffled cluster". Round 2 (2.0, outward-first): "two mirrored rows, a V,
+  not one alternating path"; the far rungs shrink with depth. The rest camera
+  looks down the route, so any sideways step foreshortens; a clearer zigzag
+  needs a wider step (which crowds the beast) or a camera off the line.
+

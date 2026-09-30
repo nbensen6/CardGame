@@ -224,9 +224,12 @@ run failed.
       Ask: Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
       Test: state=3d beast=cinder_jackal console=climb+5 devzoom=16 devorbit=-35
       ![[agents/frames/builder/2026-09-30-devcam-free-after.png|420]] ^more-free-unrestriced-camera-movement-at
-- [ ] **The climb zigzags side to side.**
+- [ ] 👀 **The climb zigzags side to side.**
       **Session, 2026-09-29 22:35 ET:** `route_pos` puts all five stones on one straight line, so a climb reads as a staircase. Alternate the rungs LEFT and RIGHT of that line by about one hunter height, ledges on the outer edges, so each hop is a diagonal traverse across the flank. Keep the even hop length and both endpoints (ground gap and sigil, #14). The hunter turns to face the stone it hops to. Done-when: from the resting camera the stones form a zigzag, each on the opposite side of the last, and a test pins alternation plus even hop length. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dclimb beast=cinder_jackal ^the-climb-zigzags-side-to-side
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The climb zigzags side to side.|details]]
+      Ask: Grader failed this: zigzag faint from rest camera. Stones zigzag enough for you?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-zigzag-rest-after.png|420]] ^the-climb-zigzags-side-to-side
 - [ ] **The camera swings with each hop.**
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dclimb beast=cinder_jackal console=climb+3 ^the-camera-swings-with-each-hop
@@ -361,3 +364,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
 - [ ] (proposed) **Grader penalises dev-camera frames by rest-shot rules.** It docked the dev zoom for a hidden Frog and cut-off ears, which Dev is meant to allow.
 - [ ] (proposed) The beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
+- [ ] (proposed) The zigzag's second stones sit over the jackal's chest from the rest camera, partly hiding it.
+- [ ] (proposed) The named 3dclimb shot starts at the sigil, so it cannot show the stones below the Frog.

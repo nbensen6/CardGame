@@ -4355,6 +4355,14 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	# shorter cannot be seen, longer reads as input lag.
 	if live:
 		tw.tween_property(body, "scale", rest * Vector3(1.10, 0.86, 1.10), 0.09) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	# TURN to face the stone this hop lands on, during the crouch: with the
+	# zigzag every hop is a diagonal, and a hunter jumping sideways while
+	# looking straight ahead reads as sliding on a rail.
+	var yaw := hunter_facing_y(0.0, 0.0, from, to)
+	if live:
+		tw.parallel().tween_method(_turn_toward.bind(node, yaw), 0.0, 1.0, 0.09)
+	else:
+		tw.tween_method(_turn_toward.bind(node, yaw), 0.0, 1.0, 0.09)
 
 	# THE ARC, one axis at a time.
 	#
@@ -4396,6 +4404,13 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 		tw.chain().tween_property(body, "scale", rest * Vector3(1.18, 0.78, 1.18), 0.05) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.parallel().tween_property(body, "rotation:x", 0.0, 0.05)
 		tw.tween_property(body, "scale", rest, 0.17) 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## Tween step for _hop's turn: swing `node` the shortest way round toward
+## `yaw`; `w` runs 0..1 and lands exactly on `yaw` at 1.
+static func _turn_toward(w: float, node: Node3D, yaw: float) -> void:
+	if is_instance_valid(node):
+		node.rotation.y = lerp_angle(node.rotation.y, yaw, w)
 
 
 ## Pure form of the arc above: the apex the hop rises to and the two halves'
@@ -5030,7 +5045,67 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 	# floating rock, not a first step.
 	var start := Vector3(top.x - half_width, HUNTER_HEIGHT * 1.6,
 		ground_z - HUNTER_HEIGHT * 6.0)
-	return start.lerp(top, t)
+	if n <= 2:
+		return start.lerp(top, t)
+	# The zigzag (2026-09-29-intense-fight-plan): every rung between the two
+	# ends steps off the line, alternating sides, so each hop is a diagonal
+	# traverse across the flank rather than a step up a straight staircase.
+	# The ends stay on the line (ground gap and sigil, #14). The rungs are
+	# re-spaced along the line so every hop is still the same length: a hop
+	# that crosses the line twice as far sideways moves less far along it.
+	var line := top - start
+	var side_dir := Vector3(-line.z, 0.0, line.x).normalized()
+	# The first inner rung steps OUTWARD, away from the other hunter's line
+	# (the line starts `half_width` left of the top hold, so outward is -sign):
+	# stepping inward first put both lines' second stones in one pile over
+	# the jackal's chest.
+	var offsets := zigzag_offsets(n, -signf(half_width) if half_width != 0.0 else -1.0)
+	var along := zigzag_along(offsets, line.length())
+	return start.lerp(top, along[i]) + side_dir * offsets[i]
+
+
+## How far off route_pos()'s straight line each rung steps sideways: 0 at both
+## ends, then +-ZIGZAG_WIDTH alternating, the first inner rung on `sign`'s side.
+const ZIGZAG_WIDTH := HUNTER_HEIGHT * 2.0
+static func zigzag_offsets(n: int, sign: float) -> Array[float]:
+	var out: Array[float] = []
+	for i in range(n):
+		if i == 0 or i == n - 1:
+			out.append(0.0)
+		else:
+			out.append(ZIGZAG_WIDTH * sign * (1.0 if i % 2 == 1 else -1.0))
+	return out
+
+
+## Where each rung sits along the line (0..1) so that, with `offsets` added
+## sideways, every hop has the same length. Hop k is sqrt(s_k^2 + d_k^2) with
+## d_k the sideways change; find the one hop length L whose along-line parts
+## s_k add up to the line's own `length` (bisection -- the sum rises with L).
+static func zigzag_along(offsets: Array[float], length: float) -> Array[float]:
+	var n := offsets.size()
+	var d: Array[float] = []
+	var lo := 0.0
+	for k in range(n - 1):
+		d.append(absf(offsets[k + 1] - offsets[k]))
+		lo = maxf(lo, d[k])
+	var hi := length + lo * float(n)
+	for _it in range(60):
+		var mid := (lo + hi) * 0.5
+		var sum := 0.0
+		for dk in d:
+			sum += sqrt(maxf(mid * mid - dk * dk, 0.0))
+		if sum < length:
+			lo = mid
+		else:
+			hi = mid
+	var hop := (lo + hi) * 0.5
+	var out: Array[float] = [0.0]
+	var acc := 0.0
+	for dk in d:
+		acc += sqrt(maxf(hop * hop - dk * dk, 0.0))
+		out.append(clampf(acc / maxf(length, 0.0001), 0.0, 1.0))
+	out[n - 1] = 1.0
+	return out
 
 
 ## Extra sideways clearance for the low-to-mid stretch of the approach, on

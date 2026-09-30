@@ -1008,7 +1008,11 @@ func _init() -> void:
 	_test_route_sweep_for_opens_the_two_lines_into_a_v()
 	_test_rest_pos_for_stands_each_hunter_in_front_of_its_first_stone()
 	_test_play_mode_never_arms_the_shot_failsafe()
-	_test_route_pos_sweeps_monotonically_left_to_right()
+	_test_route_pos_sweeps_left_to_right_end_to_end()
+	# builder, 2026-09-30: the climb zigzags side to side.
+	_test_route_pos_inner_rungs_alternate_sides_of_the_line()
+	_test_route_pos_zigzag_keeps_every_hop_the_same_length()
+	_test_zigzag_along_is_a_straight_line_with_no_offsets()
 	_test_route_pos_still_climbs_as_it_sweeps()
 	_test_route_pos_keeps_even_spacing_along_the_swept_line()
 	_test_route_pos_zero_half_width_matches_a_centred_straight_line()
@@ -22476,14 +22480,55 @@ func _test_route_pos_first_rung_sits_left_of_the_top_hold() -> void:
 	_expect(p.x < top.x, "the first approach stone must sit left of the top hold's own x, or the sweep the director asked for (left low, right and high toward the head) never happens")
 
 
-func _test_route_pos_sweeps_monotonically_left_to_right() -> void:
+func _test_route_pos_sweeps_left_to_right_end_to_end() -> void:
+	# The zigzag steps the inner rungs either side, so x no longer rises at
+	# every rung; the route as a whole still sweeps left low to right high.
 	var top := Vector3(0.4, 12.0, 2.0)
 	var n := 5
-	var prev := -INF
-	for i in range(n):
-		var p: Vector3 = Combat3D.route_pos(top, -20.0, i, n, 6.0)
-		_expect(p.x > prev, "each rung must sit further right (higher x) than the one before it -- a lateral sweep that doubles back reads as scattered stones, not a path")
-		prev = p.x
+	var first: Vector3 = Combat3D.route_pos(top, -20.0, 0, n, 6.0)
+	var last: Vector3 = Combat3D.route_pos(top, -20.0, n - 1, n, 6.0)
+	_expect(last.x > first.x, "the route must still sweep left to right from the first rung to the top hold")
+
+
+func _route_line_side(top: Vector3, ground_z: float, n: int, half_width: float, i: int) -> float:
+	# Signed sideways distance of rung i from the straight line between the
+	# two end rungs (which the zigzag never moves), in the horizontal plane.
+	var a: Vector3 = Combat3D.route_pos(top, ground_z, 0, n, half_width)
+	var b: Vector3 = Combat3D.route_pos(top, ground_z, n - 1, n, half_width)
+	var line := b - a
+	var side_dir := Vector3(-line.z, 0.0, line.x).normalized()
+	return (Combat3D.route_pos(top, ground_z, i, n, half_width) - a).dot(side_dir)
+
+
+func _test_route_pos_inner_rungs_alternate_sides_of_the_line() -> void:
+	for n in [4, 5, 6]:
+		for hw in [-1.4, 1.4]:
+			var top := Vector3(0.4, 6.0, 2.0)
+			var prev := 0.0
+			for i in range(1, n - 1):
+				var off: float = _route_line_side(top, 20.0, n, hw, i)
+				_expect(absf(off) > Combat3D.HUNTER_HEIGHT * 0.9, "n=%d rung %d must step about a hunter height off the line (%.2f)" % [n, i, off])
+				if i > 1:
+					_expect(signf(off) == -signf(prev), "n=%d rung %d must sit on the opposite side of the line from rung %d" % [n, i, i - 1])
+				prev = off
+			_expect(is_zero_approx(_route_line_side(top, 20.0, n, hw, 0)) and is_zero_approx(_route_line_side(top, 20.0, n, hw, n - 1)), "both end rungs stay on the line")
+
+
+func _test_route_pos_zigzag_keeps_every_hop_the_same_length() -> void:
+	for n in [3, 5, 6]:
+		var top := Vector3(1.2, 6.0, 2.0)
+		var legs: Array[float] = []
+		for i in range(n - 1):
+			legs.append(Combat3D.route_pos(top, 20.0, i, n, -1.4).distance_to(Combat3D.route_pos(top, 20.0, i + 1, n, -1.4)))
+		for k in range(1, legs.size()):
+			_expect(absf(legs[k] - legs[0]) < 0.001, "n=%d hop %d is %.3f, hop 0 is %.3f -- every hop must be the same length" % [n, k, legs[k], legs[0]])
+
+
+func _test_zigzag_along_is_a_straight_line_with_no_offsets() -> void:
+	var zero: Array[float] = [0.0, 0.0, 0.0, 0.0, 0.0]
+	var along: Array[float] = Combat3D.zigzag_along(zero, 10.0)
+	for i in range(5):
+		_expect(absf(along[i] - float(i) / 4.0) < 0.0001, "no sideways offsets must give evenly spaced rungs")
 
 
 func _test_route_pos_still_climbs_as_it_sweeps() -> void:
@@ -22505,10 +22550,12 @@ func _test_route_pos_keeps_even_spacing_along_the_swept_line() -> void:
 	var p1: Vector3 = Combat3D.route_pos(top, -20.0, 1, n, 6.0)
 	var p2: Vector3 = Combat3D.route_pos(top, -20.0, 2, n, 6.0)
 	var p3: Vector3 = Combat3D.route_pos(top, -20.0, 3, n, 6.0)
+	var p4: Vector3 = Combat3D.route_pos(top, -20.0, 4, n, 6.0)
 	var d0: float = p0.distance_to(p1)
 	var d1: float = p1.distance_to(p2)
 	var d2: float = p2.distance_to(p3)
-	_expect(is_equal_approx(d0, d1) and is_equal_approx(d1, d2), "every leg of the swept line must be the same length -- an uneven sweep breaks the hop-distance band exactly like the pre-b0648db per-rung anchors did")
+	var d3: float = p3.distance_to(p4)
+	_expect(absf(d0 - d1) < 0.001 and absf(d1 - d2) < 0.001 and absf(d2 - d3) < 0.001, "every leg of the swept line must be the same length -- an uneven sweep breaks the hop-distance band exactly like the pre-b0648db per-rung anchors did")
 
 
 func _test_route_pos_zero_half_width_matches_a_centred_straight_line() -> void:
