@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **One tap for ordinary timed cards?**
+- [x] **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 21:14 ET:** drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
@@ -28,7 +28,7 @@ run failed.
       Ask: You said matte enough, so nothing changed. Tick it off?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-jackal-matte-after.png|420]] ^make-the-jackal-be-less-glossy-and-more-
-- [ ] 👀 **Played cards fly to their target.**
+- [x] **Played cards fly to their target.**
       **Nick, 2026-09-29 20:59 ET:** the played cards flying feel really bad please revert.
       **Nick, 2026-09-29 17:29 ET:** the card is stuck
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
