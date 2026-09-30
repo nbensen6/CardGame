@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T09:56
-working_on: "The camera swings with each hop."
+updated: 2026-09-30T10:11
+working_on: "Hits stop time."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 09:56 EDT
+2026-09-30 10:11 EDT
 
-- **Did:** Removed the camera's sideways overshoot after each hop, as Nick asked.
-- **Worked?** Yes; VERDICT: PASS, Frog centred right after landing (x 640, was 588).
-- **Look at:** ![[frames/builder/2026-09-30-hop-swing-revert-before.png]] then ![[frames/builder/2026-09-30-hop-swing-revert-after.png]]
-- **Ask:** nothing.
+- **Did:** Removed hit-stop, the impact ember burst and the damage-scaled, tilting shake, as Nick asked.
+- **Worked?** Partly; VERDICT: FAIL, grader wants the old pre-existing strike shake (0.18 m) gone too.
+- **Look at:** ![[frames/builder/2026-09-30-hit-stop-remove-before.png]] then ![[frames/builder/2026-09-30-hit-stop-remove-after.png]]
+- **Ask:** The original strike shake still kicks the lens. Remove that too?
 
 ## Notes
 
-- **Found:** just after the climb 3 landing, the right-hand stone looks as near the lens as the Frog's own.
+- **Found:** nothing new.
 
 ## Log
 
+- 2026-09-30 10:11 EDT — builder: hits stop time removed on Nick's word (09:44): reverse of 991b33c in combat_3d.gd and run_tests.gd (hit-stop, slow motion, ember burst, hit_shake/tilt, _hunter_struck); beat=impact harness rewritten for the plain strike; grader FAIL on the pre-existing strike shake, shipped 👀; tests green, pushed.
 - 2026-09-30 09:56 EDT — builder: hop swing reverted on Nick's word (09:44): swing state, HOP_SWING_*, hop_swing/hop_swing_vec/_hop_landed and its test removed, _apply_orbit back on _pivot; harness touch= kept; grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:29 EDT — builder: a sky with ash (quarry_ember `ash_sky`; ash_sky.gdshader sky shader: fbm ash on a flat ceiling, red lower rims, 9 s glow swell, gradient-only cubemap pass; _light_for swaps it in and restores the plain sky; 1 test); grader FAIL x3 (sky notch too small to read clouds), shipped 👀; tests green, pushed.
 - 2026-09-30 03:15 EDT — builder: embers in the air (quarry_ember `embers`; ember_field/seam_points; EmberField: 500 rising soft sparks, 8 seam omni lights at 3.4 R on a new SEAM_LIT_LAYER that takes the Wall off LAVA_LIT_LAYER (Compatibility 8-light cap), a spark drip per seam + 2 tests); grader FAIL then PASS; tests green, pushed.

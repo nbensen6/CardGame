@@ -1114,6 +1114,15 @@ Grader: three rounds. Round 1 FAIL: offset invisible (positional only) -> added 
 
 Tests: `_test_hits_stop_time` pins hit_shake, shake_offset, shake_tilt, impact_point, ember_reach and the distinct clock scales. ALL TESTS PASSED. Playtest (30 steps) shows `beast-behind-stone` failing 7 times; it was 6 on main before this change, so it is not from this change.
 
+
+Builder, 2026-09-30 10:11 EDT — removed on Nick's word (09:44, "no remove this for now").
+
+- Reverse of 991b33c's combat code and test: `_strike(weak)` is back to its old fixed kick (0.3, weak point 0.85, positional only, no tilt); no `_hit_stop`, no clock freeze or weak-point slow motion, no impact ember burst, no `_hunter_struck` (the bite is popup + flinch, no shake, as before). `hit_shake`, `shake_offset`, `shake_tilt`, `impact_point`, `ember_reach`, `HIT_*` consts, `_cam_basis_home` and `_test_hits_stop_time` are gone. The arena's ambient embers (`_add_embers`) are a different item and untouched.
+- Harness `state=3dstrike beat=impact` kept, rewritten to shoot the same six moments with the plain strike; tilt is now measured against the rest frame's aim.
+- After: clock x1.00 in every panel; cam offset 0.02 m (blow +0.10 s), 0.18 m (weak point +0.10 s), 0.00 m (bite); 0.0° tilt throughout. Before: x0.01 / x0.25 clocks, 0.19 / 0.36 / 0.21 m and 1-2° tilt, ember bursts.
+- Grader: FAIL, "Camera shake removed: NOT MET" on the 0.18 m weak-point offset. That shake predates this item (the original strike kick), so it stays until Nick says otherwise; hence the Ask.
+- ALL TESTS PASSED.
+
 ## The jackal threatens between turns.
 
 Built 2026-09-30 00:48 EDT.

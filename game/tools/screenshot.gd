@@ -2055,45 +2055,32 @@ func _bar_clock(v3: Node, at: float) -> void:
 		int(bar.get("ghost_from")), int(bar.get("crack_hp"))])
 
 
-## beat=impact (unattended): the hit-stop on a fixed clock, six frames. 1 rest;
-## 2 a 6-damage blow lands (embers at the impact point, the clock held);
-## 3 0.10 s later, the camera kicked off its home; 4 and 5 the same for a
-## 14-damage weak-point blow, whose +0.10 s frame is in slow motion; 6 the
-## jackal's 7-damage bite on the hunter, 0.10 s in. Each label carries the
-## clock's rate and the camera's offset, the parts a still cannot show. The
-## view's _process is stepped by hand past the stop, since a software
-## renderer's frame is longer than the whole shake.
+## beat=impact (unattended): a blow landing on a fixed clock, six frames.
+## 1 rest; 2 a 6-damage blow lands; 3 0.10 s later; 4 and 5 the same for a
+## 14-damage weak-point blow; 6 the jackal's 7-damage bite on the hunter,
+## 0.10 s in. Each label carries the clock's rate and the camera's offset, the
+## parts a still cannot show. The view's _process is stepped by hand, since a
+## software renderer's frame is longer than the whole shake.
 func _strike_impact(v3: Node, cam: Camera3D, snap: Callable) -> void:
 	seed(2)  # the shake's dice, the same on every run of this shot
 	await snap.call("1 rest")
-	var stop := float(v3.get("HIT_STOP"))
+	var home_q := cam.basis.get_rotation_quaternion()
 	var clock := func() -> String:
 		return "clock x%.2f" % Engine.time_scale
 	var off := func() -> String:
-		var q := (v3.get("_cam_basis_home") as Basis).get_rotation_quaternion()
 		return "cam %.2f m %.1f°" % [(cam.position - (v3.get("_cam_home") as Vector3)).length(),
-			rad_to_deg(q.angle_to(cam.basis.get_rotation_quaternion()))]
-	# A software frame outlasts the whole stop: hold the view's clock at the
-	# blow and step it by hand to +0.10 s, the way 60 fps would have run it.
+			rad_to_deg(home_q.angle_to(cam.basis.get_rotation_quaternion()))]
+	# A software frame outlasts the whole shake: hold the view's clock at the
+	# blow and step it by hand to +secs, the way 60 fps would have run it.
 	var hold := func() -> void:
 		v3.set_process(false)
 		v3.call("_process", 0.0)
-		paused = true  # holds the stop's own timers and the embers for the shutter
+		paused = true
 	var step := func(secs: float) -> void:
-		# Out of the freeze the moment the view's own timer lets go, so a
-		# weak point's slow motion is caught before its 0.15 s runs out.
-		# Drawing off meanwhile: a drawn software frame outlasts the whole slow
-		# motion, and the timers only tick once a frame.
-		RenderingServer.render_loop_enabled = false
-		paused = false
-		while Engine.time_scale == float(v3.get("HIT_STOP_SCALE")):
-			await process_frame
-		RenderingServer.render_loop_enabled = true
-		var left := secs - stop
+		var left := secs
 		while left > 0.0:
 			v3.call("_process", minf(left, 1.0 / 60.0))
 			left -= 1.0 / 60.0
-		paused = true
 	var settle := func() -> void:
 		paused = false
 		v3.set_process(true)
@@ -2110,7 +2097,7 @@ func _strike_impact(v3: Node, cam: Camera3D, snap: Callable) -> void:
 		tw.pause()
 		tw.custom_step(float((v3.call("hunter_act_beat", "attack") as Dictionary)["out"]))
 		# What _react does with a blow: the strike, then its number.
-		v3.call("_strike", weak, dmg)
+		v3.call("_strike", weak)
 		var at: Vector3 = (v3.get("_sigil") as Node3D).position if weak \
 			else (v3.get("_beast_box") as AABB).get_center()
 		v3.call("_damage_popup", dmg, at, weak)
@@ -2118,18 +2105,22 @@ func _strike_impact(v3: Node, cam: Camera3D, snap: Callable) -> void:
 		var what := "weak point %d" % dmg if weak else "blow %d" % dmg
 		print("IMPACT %s lands: %s shake %.2f" % [what, clock.call(), float(v3.get("_shake"))])
 		await snap.call("%d %s lands  %s" % [n, what, clock.call()], true)
-		await step.call(0.10)
+		step.call(0.10)
 		print("IMPACT %s +0.10 s: %s %s" % [what, clock.call(), off.call()])
 		await snap.call("%d +0.10 s  %s  %s" % [n + 1, clock.call(), off.call()], true)
 		n += 2
 		tw.custom_step(10.0)
 		await settle.call()
-	v3.call("_hunter_struck", _actor, 7)
+	# What _react does with the beast's blow on a hunter: the number, the flinch.
+	var hnode: Node3D = ((v3.get("_hunters") as Array)[_actor] as Dictionary)["node"]
+	v3.call("_damage_popup", 7, v3.call("hunter_popup_at", hnode.position,
+		v3.call("_hunter_popup_glyph")), false, true)
+	v3.call("_hunter_play", _actor, "hit")
 	hold.call()
 	var tw2: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
 	tw2.pause()
 	tw2.custom_step(float((v3.call("hunter_act_beat", "hit") as Dictionary)["out"]))
-	await step.call(0.10)
+	step.call(0.10)
 	print("IMPACT bite 7 +0.10 s: %s %s" % [clock.call(), off.call()])
 	await snap.call("%d bite 7 +0.10 s  %s" % [n, off.call()], true)
 	paused = false
