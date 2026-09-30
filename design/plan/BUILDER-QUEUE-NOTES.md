@@ -1413,6 +1413,26 @@ Builder, 2026-09-30 03:15 EDT. Brief: the Session line on the queue item (from
   ring.
 - **Grader:** FAIL (no orange on the rock, sparks unreadable), then PASS.
 
+Builder, 2026-09-30 12:43 EDT. Brief: Nick 09:44, "glow a little too strong and
+should not be rising on the lava rock everyone is standing on. only from the
+lava surrounding them."
+
+- **Root cause.** The rising field emitted from a box LAVA_MAX_R wide, so it
+  covered the whole floor, the hunters' rock included.
+- **What changed.** Static `ember_band(biome)` = the biome's `lava_ring` (1.0 to
+  2.5 R; hunters stand no further out than 0.86 R), ZERO without embers. The
+  rising field is now `EMISSION_SHAPE_RING` over that band. Glow down:
+  `EMBER_PEAK_ALPHA` 0.75 (was 1.0), spark 0.02 R (was 0.022), 420 sparks (was
+  500), seam lights `EMBER_SEAM_ENERGY` 95 (was 150). A first try at alpha 0.6 /
+  0.018 R / 360 left the frame nearly empty; nudged back up.
+- **Frames.** Rest pair `2026-09-30-embers-lava-{before,after}.png`; wide dev pair
+  (`devzoom=16 devorbit=-35`) `2026-09-30-embers-lava-wide-{before,after}.png`.
+- **Test.** `_test_embers_rise_off_the_lava_not_the_hunters_rock`.
+- **Grader.** FAIL on the rest pair (glow MET; origin "not visible in this shot",
+  asked for a wider view), FAIL on the wide pair (glow MET; origin still
+  unjudgeable, and no hunter in the dev frame). Stopped there: no harness view
+  shows the rock and the ring together, so a third round would fail the same way.
+  Final: `VERDICT: FAIL`.
 
 ## A sky with ash.
 

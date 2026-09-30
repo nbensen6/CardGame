@@ -2979,6 +2979,16 @@ static func ember_field(biome: String) -> bool:
 	return bool(b.get("embers", false))
 
 
+## Where the rising embers start, [inner, outer] in arena radii: the lava ring
+## and nowhere else, so none rise off the rock the hunters stand on (Nick,
+## 2026-09-30). ZERO for a biome with no embers or no lava. Static so
+## run_tests.gd can pin it.
+static func ember_band(biome: String) -> Vector2:
+	if not ember_field(biome):
+		return Vector2.ZERO
+	return lava_ring(biome)
+
+
 ## The wall's lava seams, in arena radii: SEAMS points (no more than the 8
 ## omni lights a mesh takes on the Compatibility renderer) out on the rock. The
 ## env's Wall starts at 2.6 R but most of its rock stands 3.5-5 R out and up to
@@ -2999,6 +3009,10 @@ static func seam_points(n: int) -> Array[Vector3]:
 ## The render layer the seam lights shine on: the env's Wall alone, so the
 ## rock takes their orange and the floor in front of the hunters stays dark.
 const SEAM_LIT_LAYER := 1 << 18
+## How hard the embers glow (Nick, 2026-09-30: "a little too strong"; were
+## 150 and 1.0).
+const EMBER_SEAM_ENERGY := 95.0
+const EMBER_PEAK_ALPHA := 0.75
 
 var _ember_field: Node3D = null
 
@@ -3025,15 +3039,19 @@ func _add_embers(beast_id: String) -> void:
 	_ember_field = Node3D.new()
 	_ember_field.name = "EmberField"
 	_rig.add_child(_ember_field)
-	# The rising field: a slab of air over the floor and the lava, out to the
-	# wall. Preprocessed so a still frame already has it full.
-	var air := _ember_particles(maxf(r * 0.022, 0.05))
+	# The rising field: off the lava ring only (ember_band), never the rock
+	# the hunters stand on. Preprocessed so a still frame already has it full.
+	var band := ember_band(String(BEAST_BIOME.get(beast_id, "crag")))
+	var air := _ember_particles(maxf(r * 0.02, 0.045))
 	air.name = "Rising"
-	air.amount = 500
+	air.amount = 420
 	air.lifetime = 7.0
 	air.preprocess = 7.0
-	air.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	air.emission_box_extents = Vector3(LAVA_MAX_R * r, 0.05 * r, LAVA_MAX_R * r)
+	air.emission_shape = CPUParticles3D.EMISSION_SHAPE_RING
+	air.emission_ring_axis = Vector3.UP
+	air.emission_ring_radius = band.y * r
+	air.emission_ring_inner_radius = band.x * r
+	air.emission_ring_height = 0.05 * r
 	air.position.y = 0.05 * r
 	air.direction = Vector3(0, 1, 0)
 	air.spread = 20.0
@@ -3045,7 +3063,7 @@ func _add_embers(beast_id: String) -> void:
 		var at := p * r
 		var l := OmniLight3D.new()
 		l.light_color = Color(1.0, 0.45, 0.12)
-		l.light_energy = 150.0
+		l.light_energy = EMBER_SEAM_ENERGY
 		l.omni_range = 1.4 * r
 		l.omni_attenuation = 1.0
 		l.shadow_enabled = false
@@ -3100,8 +3118,8 @@ func _ember_particles(size: float) -> CPUParticles3D:
 	var ramp := Gradient.new()
 	ramp.set_color(0, Color(1.0, 0.85, 0.5, 0.0))
 	ramp.set_color(1, Color(0.9, 0.2, 0.05, 0.0))
-	ramp.add_point(0.15, Color(1.0, 0.7, 0.3, 1.0))
-	ramp.add_point(0.7, Color(1.0, 0.4, 0.1, 0.9))
+	ramp.add_point(0.15, Color(1.0, 0.7, 0.3, EMBER_PEAK_ALPHA))
+	ramp.add_point(0.7, Color(1.0, 0.4, 0.1, EMBER_PEAK_ALPHA * 0.8))
 	e.color_ramp = ramp
 	return e
 

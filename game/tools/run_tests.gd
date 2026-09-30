@@ -2413,6 +2413,7 @@ func _init() -> void:
 	_test_lava_ring_stays_off_the_hunters_and_inside_the_wall()
 	_test_lava_ring_mesh_spans_inner_to_outer()
 	_test_embers_only_in_the_jackal_biome()
+	_test_embers_rise_off_the_lava_not_the_hunters_rock()
 	_test_ash_sky_only_in_the_jackal_biome()
 	_test_seam_points_ring_the_wall_beyond_the_camera()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
@@ -31171,6 +31172,20 @@ func _test_embers_only_in_the_jackal_biome() -> void:
 		if biome != "quarry_ember":
 			_expect(not Combat3D.ember_field(biome), "biome %s has no embers" % biome)
 	_expect(not Combat3D.ember_field("no_such_biome"), "an unknown biome has no embers")
+
+
+func _test_embers_rise_off_the_lava_not_the_hunters_rock() -> void:
+	# Nick, 2026-09-30: embers rise only from the lava round the arena, never
+	# from the rock everyone stands on (hunters stand no further out than 0.86 R).
+	var biome := String(Combat3D.BEAST_BIOME["cinder_jackal"])
+	var band := Combat3D.ember_band(biome)
+	_expect(band == Combat3D.lava_ring(biome), "the embers rise off the lava ring itself")
+	_expect(band.x >= Combat3D.LAVA_MIN_R and band.x > 0.86,
+		"no ember starts on the hunters' rock (inner %.2f R)" % band.x)
+	_expect(band.y > band.x, "the ember band has width")
+	_expect(Combat3D.ember_band("crag") == Vector2.ZERO, "a biome with no embers has no band")
+	_expect(Combat3D.EMBER_PEAK_ALPHA < 1.0 and Combat3D.EMBER_SEAM_ENERGY < 150.0,
+		"the ember glow is toned down from the first pass")
 
 
 func _test_seam_points_ring_the_wall_beyond_the_camera() -> void:

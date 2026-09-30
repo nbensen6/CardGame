@@ -74,13 +74,13 @@ run failed.
       Ask: Band removed: plain black floor with faint cracks. Good?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]] ^obsidian-floor
-- [ ] **Embers in the air.**
+- [ ] 👀 **Embers in the air.**
       **Nick, 2026-09-30 09:44 ET:** glow a little too strong and should not be rising on the lava rock everyone is standing on. only from the lava surrounding them.
       **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Embers in the air.|details]]
-      Ask: Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
+      Ask: Grader failed this: a still cannot show where embers start. Now only off the lava, dimmer. Good?
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-embers-after.png|420]] ^embers-in-the-air
+      ![[agents/frames/builder/2026-09-30-embers-lava-after.png|420]] ^embers-in-the-air
 - [ ] **A sky with ash.**
       **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
@@ -458,3 +458,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.
 - [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.
 - [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.
+- [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
