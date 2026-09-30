@@ -1108,6 +1108,13 @@ func _capture() -> void:
 			await process_frame
 		tv.call("snap_camera")
 		await process_frame
+		if _state == "3dosu":
+			# Let the hunters' hops to their new footholds land first: the notes
+			# are laid out around the hunter's on-screen rect at the tap, and a
+			# tap mid-hop laid them round where the hunter no longer was.
+			await create_timer(1.0).timeout
+			tv.call("snap_camera")
+			await process_frame
 		var hand: Array = Session.client.private.get("slots", [{}])[0].get("hand", [])
 		# 3dosu wants the most WINDOWS (a one-window card cannot show a chain);
 		# 3dslide wants the most CLIMB, since a long haul is what becomes a hold.

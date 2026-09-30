@@ -1066,6 +1066,20 @@ const NOTE_REACH := 230.0
 const NOTE_RISE := 100.0
 ## Points along the drag's path. Two legs, so it bends.
 const DRAG_POINTS := 3
+## How far every note's centre stays from the drag's road, when the note is
+## not one of that leg's own ends: a ring, half the road's dark band and a gap
+## you can see. Nick, 2026-09-29: "some drag goes over the next click in the
+## timing event. need to make sure they are spaced and lead well".
+const ROAD_CLEAR := HitCircle.TARGET_RADIUS * 1.525 + 14.0
+## Air between two rings, and between a ring and the hunter: they never touch
+## (grader, 2026-09-30: notes 3 and 4 overlapped; a ring pressed on the Frog).
+const NOTE_AIR := 12.0
+## Centre to centre, no two notes closer than two rings and the air between.
+const NOTE_GAP := HitCircle.TARGET_RADIUS * 2.0 + NOTE_AIR
+## The turn allowed on the note after the drag's tail, and on the drag's first
+## leg: small, so the drag carries on from the tap before it and points at the
+## tap after it, instead of doubling back across its own road.
+const DRAG_LEAD_TURN := 0.7
 
 
 ## How many taps come before the drag: any number from none (the drag opens
@@ -1092,8 +1106,78 @@ static func drag_order(plan: Vector2i, rng: RandomNumberGenerator) -> int:
 static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 		rng: RandomNumberGenerator, floor_y: float = INF, lift: bool = true,
 		drag_at: int = -1, avoid: Rect2 = Rect2()) -> PackedVector2Array:
+	# A walk that boxed itself in near the floor can end with two rings
+	# touching, a ring on the hunter or a tap on the drag's road. Walk again
+	# rather than ship it; keep the roomiest try.
+	var drag_from := taps if drag_at < 0 else mini(drag_at, taps)
+	var keep_off := avoid.grow(HitCircle.TARGET_RADIUS + NOTE_AIR) if avoid.has_area() else Rect2()
+	var best := PackedVector2Array()
+	var room := -INF
+	for _walk in NOTE_WALKS:
+		var pts := _note_walk(anchor, taps, drag, rng, floor_y, lift, drag_at, avoid)
+		# Worst shortfall against each rule; >= 0 means every rule holds.
+		var slack := note_spacing(pts, drag_from if drag else -1) - NOTE_GAP
+		if drag:
+			slack = minf(slack, road_clearance(pts, drag_from) - ROAD_CLEAR)
+			if not drag_leads(pts, drag_from):
+				slack -= 1e6      # a road that doubles back only if nothing else will do
+		for q in pts:
+			if keep_off.has_point(q):
+				slack -= 1e6      # on the hunter: likewise
+		if drag and road_crosses(pts, drag_from, avoid):
+			slack -= 1e6          # nor the road run across them
+		if slack >= 0.0:
+			return pts
+		if slack > room:
+			room = slack
+			best = pts
+	return best
+
+
+## Whole walks note_pattern tries before it takes the roomiest.
+const NOTE_WALKS := 32
+
+
+## The closest two notes in `pts` come, centre to centre, not counting the
+## drag road's neighbouring points (a leg apart by design; only its ends are
+## rings). `drag_from` -1: no drag.
+static func note_spacing(pts: PackedVector2Array, drag_from: int) -> float:
+	var gap := INF
+	for a in pts.size():
+		for b in range(a + 1, pts.size()):
+			if drag_from >= 0 and a >= drag_from and b < drag_from + DRAG_POINTS:
+				continue
+			gap = minf(gap, pts[a].distance_to(pts[b]))
+	return gap
+
+
+## True when a leg of the drag's road (its dark band, half a ring wide, and
+## NOTE_AIR) runs over `avoid`, the hunter's rect.
+static func road_crosses(pts: PackedVector2Array, drag_from: int, avoid: Rect2) -> bool:
+	if not avoid.has_area():
+		return false
+	var band := avoid.grow(HitCircle.TARGET_RADIUS * 0.525 + NOTE_AIR)
+	for s in range(drag_from, mini(drag_from + DRAG_POINTS, pts.size()) - 1):
+		for k in 9:
+			if band.has_point(pts[s].lerp(pts[s + 1], float(k) / 8.0)):
+				return true
+	return false
+
+
+## The tap after the drag lies ahead of the drag's last leg, so the road
+## points at it (true when the drag closes the chain).
+static func drag_leads(pts: PackedVector2Array, drag_from: int) -> bool:
+	var tail := drag_from + DRAG_POINTS - 1
+	if tail + 1 >= pts.size() or tail < 1:
+		return true
+	return (pts[tail] - pts[tail - 1]).dot(pts[tail + 1] - pts[tail]) > 0.0
+
+
+static func _note_walk(anchor: Vector2, taps: int, drag: bool,
+		rng: RandomNumberGenerator, floor_y: float, lift: bool,
+		drag_at: int, avoid: Rect2) -> PackedVector2Array:
 	var out := PackedVector2Array()
-	var keep_off := avoid.grow(HitCircle.TARGET_RADIUS) if avoid.has_area() else Rect2()
+	var keep_off := avoid.grow(HitCircle.TARGET_RADIUS + NOTE_AIR) if avoid.has_area() else Rect2()
 	var count := taps + (DRAG_POINTS if drag else 0)
 	var drag_from := taps if drag_at < 0 else mini(drag_at, taps)
 	# The first note sits on or beside the card, not always dead above it. From
@@ -1103,25 +1187,34 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 		if lift else Vector2(rng.randf_range(-8.0, 8.0), rng.randf_range(-8.0, 8.0))
 	var at := note_clamp(anchor, anchor + first, floor_y)
 	if keep_off.has_point(at):   # jittered back onto the hunter: out to the near side
-		at.x = keep_off.position.x if at.x < avoid.get_center().x else keep_off.end.x
+		at.x = keep_off.position.x - 1.0 if at.x < avoid.get_center().x else keep_off.end.x + 1.0
 	out.append(at)
 	var heading := 0.0 if rng.randf() < 0.5 else PI         # off to one side
 	for i in range(1, count):
 		var in_drag := drag and i > drag_from and i < drag_from + DRAG_POINTS
-		var step := NOTE_STEP * (0.8 if in_drag else rng.randf_range(0.95, 1.2))
+		var leads := drag and (i == drag_from + 1 or i == drag_from + DRAG_POINTS)
+		var step := NOTE_STEP * (0.8 if in_drag else rng.randf_range(1.0, 1.2))
 		var best := Vector2.ZERO
 		var found := false
-		for _try in 16:
-			var turn := rng.randf_range(-0.6, 0.6) if in_drag else rng.randf_range(-1.6, 1.6)
+		for _try in 24:
+			var turn := rng.randf_range(-0.6, 0.6) if in_drag \
+				else rng.randf_range(-DRAG_LEAD_TURN, DRAG_LEAD_TURN) if leads \
+				else rng.randf_range(-1.6, 1.6)
 			var h := heading + turn
 			var p := at + Vector2(cos(h), sin(h)) * step
 			if not note_in_reach(anchor, p, floor_y) or keep_off.has_point(p):
 				continue
 			var clear := true
-			for q in out:
-				if q.distance_to(p) < NOTE_STEP * 0.75:
+			for k in out.size():
+				if in_drag and k == out.size() - 1:
+					continue    # the road's own last point: a leg away, by design
+				if out[k].distance_to(p) < NOTE_GAP:
 					clear = false
 					break
+			if clear and drag:
+				var tried := out.duplicate()
+				tried.append(p)
+				clear = road_clearance(tried, drag_from) >= ROAD_CLEAR
 			if clear:
 				best = p
 				heading = h
@@ -1139,6 +1232,10 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 				var gap := 1e9
 				for q in out:
 					gap = minf(gap, q.distance_to(p))
+				if drag:
+					var tried := out.duplicate()
+					tried.append(p)
+					gap = minf(gap, road_clearance(tried, drag_from))
 				if keep_off.has_point(p):
 					gap -= 1e6      # on the hunter: only if nothing else is open
 				if gap > room:
@@ -1150,6 +1247,22 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 	return out
 
 
+## The closest any tap in `pts` comes to the drag's road. The road is
+## DRAG_POINTS in a row from `drag_from` (its own points are the road, not
+## notes on it); a pattern still being walked has only the legs placed so far.
+## INF with no road yet.
+## Pure, so note_pattern can test a candidate and a test can pin the result.
+static func road_clearance(pts: PackedVector2Array, drag_from: int) -> float:
+	var gap := INF
+	var last := mini(drag_from + DRAG_POINTS, pts.size()) - 1
+	for s in range(drag_from, last):
+		for j in pts.size():
+			if j >= drag_from and j < drag_from + DRAG_POINTS:
+				continue
+			gap = minf(gap, Geometry2D.get_closest_point_to_segment(pts[j], pts[s], pts[s + 1]).distance_to(pts[j]))
+	return gap
+
+
 ## Where the pattern opens: beside the climbing hunter, on the side facing the
 ## card you tapped, so the grip bar, the notes and the hunter are one place on
 ## screen -- the double timing (2026-09-28 jackal fight analysis: the notes
@@ -1158,8 +1271,8 @@ static func note_pattern(anchor: Vector2, taps: int, drag: bool,
 ## Falls back to the card when the hunter has no on-screen rect, or it is off
 ## the frame (`view`).
 ## 1.15, not 0.9: at 0.9 the first ring's edge sat on the hunter (grader,
-## 2026-09-29).
-const NOTE_BESIDE := HitCircle.TARGET_RADIUS * 1.15
+## 2026-09-29). Now a ring and NOTE_AIR clear, so no ring presses on them.
+const NOTE_BESIDE := HitCircle.TARGET_RADIUS + NOTE_AIR
 static func notes_anchor(hunter: Rect2, card: Vector2, view: Vector2) -> Vector2:
 	if hunter.size.x <= 0.0 or hunter.size.y <= 0.0 \
 			or not Rect2(Vector2.ZERO, view).has_point(hunter.get_center()):

@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **One tap for ordinary timed cards?**
+- [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 21:14 ET:** drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
@@ -18,9 +18,9 @@ run failed.
       **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
       **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dflick%2Clash_out%2Cpiston_punch%2Coverload_engine) · [[BUILDER-QUEUE-NOTES#One tap for ordinary timed cards?|details]]
-      Ask: Grader failed this: drag ends touch card tops. Drag order random now; right?
+      Ask: Drags now point on to the next tap, never across one. Spaced right?
       Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
-      ![[agents/frames/builder/2026-09-29-drag-order-after.png|420]] ^one-tap-for-ordinary-timed-cards
+      ![[agents/frames/builder/2026-09-30-drag-clear-after.png|420]] ^one-tap-for-ordinary-timed-cards
 - [ ] **Make the Jackal be less glossy and more matte.**
       **Nick, 2026-09-29 21:14 ET:** it is matte enough
       **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
@@ -306,3 +306,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) On the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
 - [ ] (proposed) The jackal's ear tips keep a thin tan rim-light edge; drop toon rim for it too if Nick wants flatter.
 - [ ] (proposed) Every other biome still uses exponential fog that hazes its own arena wall the same way.
+- [ ] (proposed) A card tapped while its hunter is mid-hop lays its notes round where the hunter was.

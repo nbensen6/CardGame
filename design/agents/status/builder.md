@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T21:11
-working_on: "Played cards fly to their target."
+updated: 2026-09-29T21:36
+working_on: "One tap for ordinary timed cards?"
 ---
 
 # builder
@@ -13,18 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 21:11 EDT
+2026-09-29 21:36 EDT
 
-- **Did:** Reverted the card flight: a tapped card plays at once again, nothing flies to a target.
-- **Worked?** Yes, Slash resolves on the tap with no card left in the air; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-30-card-fly-revert-before.png]] then ![[frames/builder/2026-09-30-card-fly-revert-after.png]]
-- **Ask:** Flight reverted: a tapped card plays at once, nothing flies. Good?
+- **Did:** Timing drags now stay clear of every tap, point at the next one, and rings never touch.
+- **Worked?** Yes, 480 test patterns clean and nine live plays clean; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-30-drag-clear-before.png]] then ![[frames/builder/2026-09-30-drag-clear-after.png]]
+- **Ask:** Drags now point on to the next tap, never across one. Spaced right?
 
 ## Notes
 
-- **Found:** the `block` sound is again never played, since it only rode on the reverted flight.
+- **Found:** a card tapped while its hunter is mid-hop lays its notes round where the hunter was.
+- **Found:** notes still sit over the jackal's body at times (already proposed).
 
 ## Log
+
+- 2026-09-29 21:36 EDT — builder: drag road clear of every tap (road_clearance, ROAD_CLEAR 75), tap after the drag leads on (drag_leads), rings never touch (NOTE_GAP 92), 12 px air off the hunter and road off them too, whole-walk retry (NOTE_WALKS 32); 3dosu waits 1 s for hops before the tap; grader FAIL then PASS; tests green, pushed.
 
 - 2026-09-29 21:11 EDT — builder: card flight reverted on Nick's word (20:59): flying copy, CARD_FLY_S, _fly_card_then/_land_card_now/_card_goal/_block_ring gone, every play path calls play_card on the tap; harness fly= just taps, flyt= ignored; grader PASS; tests green, pushed.
 - 2026-09-29 19:24 EDT — builder: fog behind the exterior: quarry_ember switched to depth fog via fog_behind [6,10] radii (fog_behind_range, min 5.5 R past the far wall), peak 0.6; other biomes reset to exponential; grader PASS; tests green, pushed.

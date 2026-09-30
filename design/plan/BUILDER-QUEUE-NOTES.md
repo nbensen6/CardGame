@@ -780,6 +780,18 @@ have to be so close to the head."
 
 ## One tap for ordinary timed cards?
 
+2026-09-29 21:36 EDT, builder. Worked from Nick's 21:14: "drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well".
+
+- **Road clear of every tap** (`Combat3D.road_clearance`, `ROAD_CLEAR` 75 px = a ring + half the road's dark band + 14): no tap's centre is that close to any leg of the drag's road. Checked on every candidate step of the walk, so a tap cannot land on the road and a leg cannot be laid across an earlier tap.
+- **Leads on** (`drag_leads`, `DRAG_LEAD_TURN` 0.7 rad): the tap after the drag's tail turns at most ~40 degrees off the road's last leg, so the road points at it instead of doubling back under it.
+- **Rings never touch** (`note_spacing`, `NOTE_GAP` = two rings + `NOTE_AIR` 12): was 69 px centre to centre (rings overlapped); tap steps are now 1.0-1.2 x NOTE_STEP, not 0.95-1.2.
+- **Off the hunter by NOTE_AIR too**: keep-off rect grown by a ring + 12; `NOTE_BESIDE` is a ring + 12 (was 1.15 rings); the road may not cross the hunter (`road_crosses`).
+- **Whole-walk retry** (`NOTE_WALKS` 32): a walk that boxed itself in is walked again; the first that meets every rule ships, else the roomiest. Test over 480 patterns (2 and 3 taps, every drag slot, three hunter rects): 0 taps on a road, 0 doubling back, 0 touching rings, 0 on the hunter.
+- Harness: `3dosu` now waits 1 s after moving the hunters to their footholds before tapping. It tapped mid-hop, so the notes were laid round a hunter rect ~50 px from where the hunter stood in the frame (ring 2 and its road on the Goblin's legs).
+- Grader: round 1 FAIL (rings 3 and 4 touched; a ring pressed on the hunter; wanted full-window shots with the card in frame). Round 2 `VERDICT: PASS`.
+- Frames: 2x2 labelled sheets of full windows, `state=3dosu beast=cinder_jackal hold=on hand=<card>`, two plays each of piston_punch (cost 2) and overload_engine (cost 3). The pattern is random per play; 9 after plays were shot and all met the rules. The Test line stays the four-card deal so Nick taps them himself.
+
+
 2026-09-29 17:04 EDT, builder. Worked from Nick's 12:44 ("yes and randomize the order for drag. sometimes on one sometimes others") and 12:59 ("some of the time events are going behind the cards").
 
 - **Drag anywhere in the chain** (`Combat3D.drag_order`): on a card with a drag, the number of taps before it is rolled fresh every play, 0 to all of them, so the drag opens, sits inside or closes the chain. `note_pattern(..., drag_at)` keeps the drag's road in one piece wherever it falls.

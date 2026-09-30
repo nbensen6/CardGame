@@ -1490,6 +1490,7 @@ func _init() -> void:
 	_test_timing_plan_scales_with_cost()
 	_test_timing_plan_keeps_printed_windows_and_climb_drags()
 	_test_note_pattern_stays_near_the_card()
+	_test_drag_road_clears_every_note()
 	_test_drag_order_is_rolled_every_play()
 	_test_hit_circle_drag_in_the_middle_then_taps()
 	_test_hit_circle_draws_above_the_hand()
@@ -30954,3 +30955,52 @@ func _test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin() -> v
 	_expect(a.is_equal_approx(Vector2(60.0, 100.0)), "fog_behind is measured in arena radii")
 	var b := Combat3D.fog_behind_range(10.0, [8.0, 3.0])
 	_expect(b.y > b.x, "a fog_behind end before its begin still ends past the begin")
+
+
+## Nick, 2026-09-29: "some drag goes over the next click in the timing event.
+## need to make sure they are spaced and lead well". No note sits on the drag's
+## road, and the tap after the drag lies ahead
+## of the drag's last leg, so the road points at it.
+func _test_drag_road_clears_every_note() -> void:
+	var view := Vector2(1280, 720)
+	var floor_y := Combat3D.notes_floor(view.y, 96.0, 512.0)
+	var bad := 0
+	var back := 0
+	var runs := 0
+	for hunter in [Rect2(), Rect2(600, 330, 60, 90), Rect2(900, 360, 50, 80)]:
+		for taps in [2, 3]:
+			for seed in range(80):
+				var rng := RandomNumberGenerator.new()
+				rng.seed = seed
+				var at := rng.randi_range(0, taps)
+				# No hunter on screen: the notes open on the card, lifted.
+				var anchor := Combat3D.notes_anchor(hunter, Vector2(420, 420), view)
+				var pts := Combat3D.note_pattern(anchor, taps, true, rng, floor_y, hunter == Rect2(), at, hunter)
+				runs += 1
+				var gap := Combat3D.road_clearance(pts, at)
+				if gap < Combat3D.ROAD_CLEAR - 0.5:
+					bad += 1
+					_expect(false, "%s taps %d seed %d drag at %d: a note %.0fpx from the road (needs %.0f)" \
+						% [str(hunter), taps, seed, at, gap, Combat3D.ROAD_CLEAR])
+				if not Combat3D.drag_leads(pts, at):
+					back += 1
+				var tight := Combat3D.note_spacing(pts, at)
+				_expect(tight >= Combat3D.NOTE_GAP - 0.5,
+					"%s taps %d seed %d: two rings %.0fpx apart, they touch (needs %.0f)" % [str(hunter), taps, seed, tight, Combat3D.NOTE_GAP])
+				if hunter.has_area():
+					var off: Rect2 = (hunter as Rect2).grow(HitCircle.TARGET_RADIUS + Combat3D.NOTE_AIR)
+					for q in pts:
+						_expect(not off.has_point(q), "%s taps %d seed %d: a ring at %s presses on the hunter" % [str(hunter), taps, seed, str(q)])
+					_expect(not Combat3D.road_crosses(pts, at, hunter), "%s taps %d seed %d: the drag's road runs over the hunter" % [str(hunter), taps, seed])
+	_expect(bad == 0, "%d of %d patterns put a note on the drag's road" % [bad, runs])
+	_expect(back == 0, "%d of %d patterns turn back from the drag's tail to the next tap" % [back, runs])
+	# The measure itself: a note on the middle of a leg is 0 away; the leg's own
+	# ends do not count against it.
+	var road := PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0), Vector2(300, 0), Vector2(150, 0)])
+	_expect(is_equal_approx(Combat3D.road_clearance(road, 1), 0.0), "a note on the road is 0 from it")
+	_expect(is_equal_approx(Combat3D.road_clearance(PackedVector2Array([Vector2(0, 0), Vector2(100, 0),
+		Vector2(200, 0), Vector2(300, 0)]), 1), 100.0), "the tap before the head is a leg away; the road's own points do not count")
+	_expect(Combat3D.drag_leads(PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0), Vector2(290, 40)]), 0),
+		"a tap ahead of the tail is led to")
+	_expect(not Combat3D.drag_leads(PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0), Vector2(120, 80)]), 0),
+		"a tap back behind the tail is not")
