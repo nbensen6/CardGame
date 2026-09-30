@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T21:36
-working_on: "One tap for ordinary timed cards?"
+updated: 2026-09-29T21:52
+working_on: "Make the Jackal be less glossy and more matte."
 ---
 
 # builder
@@ -13,12 +13,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 21:36 EDT
+2026-09-29 21:52 EDT
 
-- **Did:** Timing drags now stay clear of every tap, point at the next one, and rings never touch.
-- **Worked?** Yes, 480 test patterns clean and nine live plays clean; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-30-drag-clear-before.png]] then ![[frames/builder/2026-09-30-drag-clear-after.png]]
-- **Ask:** Drags now point on to the next tap, never across one. Spaced right?
+- **Did:** Nick called the jackal matte enough; recorded it, no code changed.
+- **Worked?** Yes, nothing to build; no grader run, the frame is unchanged by design.
+- **Look at:** ![[frames/builder/2026-09-29-jackal-matte-after.png]]
+- **Ask:** You said matte enough, so nothing changed. Tick it off?
 
 ## Notes
 
@@ -27,6 +27,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-29 21:52 EDT — builder: jackal matte item, Nick said matte enough; no code change, marked 👀 for his tick.
 - 2026-09-29 21:36 EDT — builder: drag road clear of every tap (road_clearance, ROAD_CLEAR 75), tap after the drag leads on (drag_leads), rings never touch (NOTE_GAP 92), 12 px air off the hunter and road off them too, whole-walk retry (NOTE_WALKS 32); 3dosu waits 1 s for hops before the tap; grader FAIL then PASS; tests green, pushed.
 
 - 2026-09-29 21:11 EDT — builder: card flight reverted on Nick's word (20:59): flying copy, CARD_FLY_S, _fly_card_then/_land_card_now/_card_goal/_block_ring gone, every play path calls play_card on the tap; harness fly= just taps, flyt= ignored; grader PASS; tests green, pushed.

@@ -1011,6 +1011,11 @@ Run 2026-09-29 16:04 EDT.
 - Shot: before and after both `state=3dclimb beast=cinder_jackal` (Nick's own view; at rest the jackal is too far to see the gloss).
 - Grader: VERDICT: PASS.
 
+Builder, 2026-09-29 21:52 EDT, on Nick's "it is matte enough" (2026-09-29 21:14).
+
+- Nick's answer approves the 2026-09-29 matte pass; nothing left to build. No code changed, no new frame, no grader run (before and after would be the same frame).
+- Marked 👀 so Nick can tick it; the builder never writes `[x]`.
+
 ## Change the fog so it's behind the exterior.
 
 - Cause: the Cinder Jackal's biome (`quarry_ember`) used exponential fog at density 0.014, which washed the whole Meshy rock wall and its lava seams into flat purple. With fog at 0 the mountains render crisp.

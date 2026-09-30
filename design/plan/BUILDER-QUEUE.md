@@ -21,11 +21,11 @@ run failed.
       Ask: Drags now point on to the next tap, never across one. Spaced right?
       Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
       ![[agents/frames/builder/2026-09-30-drag-clear-after.png|420]] ^one-tap-for-ordinary-timed-cards
-- [ ] **Make the Jackal be less glossy and more matte.**
+- [ ] 👀 **Make the Jackal be less glossy and more matte.**
       **Nick, 2026-09-29 21:14 ET:** it is matte enough
       **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
-      Ask: The pale shiny patches on the jackal's face are gone. Matte enough?
+      Ask: You said matte enough, so nothing changed. Tick it off?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-jackal-matte-after.png|420]] ^make-the-jackal-be-less-glossy-and-more-
 - [ ] 👀 **Played cards fly to their target.**
