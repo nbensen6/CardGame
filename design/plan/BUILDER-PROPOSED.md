@@ -209,4 +209,4 @@ appends here, never to the queue.
 - [ ] **Beast close-up for tells.** A short push-in on the jackal when the last hunter's turn begins, so head turns and glow read at all.
 - [ ] **Display-font digits read oddly.** KenneyFutureNarrow draws "7" like a hook; the intent badge's number may want the body font.
 - [ ] **Rest of the HUD in obsidian.** Log, Menu, the pile counts and the hunters' tan HP bars were outside the item and still use the old style.
-
+- [ ] **Show more sky at rest.** Tilt or lower the rest camera so the ash clouds over the wall read.

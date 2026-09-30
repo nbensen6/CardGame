@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T03:15
-working_on: "Embers in the air."
+updated: 2026-09-30T03:29
+working_on: "A sky with ash."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 03:15 EDT
+2026-09-30 03:29 EDT
 
-- **Did:** Embers now drift through the jackal arena, sparks drip off the cliffs, and seam lights glow orange on the rock.
-- **Worked?** Yes; VERDICT: PASS, embers across the air and orange-lit cliff rock on both sides.
-- **Look at:** ![[frames/builder/2026-09-30-embers-before.png]] then ![[frames/builder/2026-09-30-embers-after.png]]
-- **Ask:** Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
+- **Did:** The jackal's sky now carries drifting dark ash clouds lit red underneath, with an occasional distant glow.
+- **Worked?** Partly; VERDICT: FAIL, the sky notch reads as a magenta-to-orange wash, no cloud shapes.
+- **Look at:** ![[frames/builder/2026-09-30-ash-sky-before.png]] then ![[frames/builder/2026-09-30-ash-sky-after.png]]
+- **Ask:** Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
 
 ## Notes
 
-- **Found:** seam lights ring the wall evenly, not on the lava seams painted in its texture.
-- **Found:** the Compatibility renderer lights a mesh with 8 omni lights at most; the floor's lava lights use them all.
+- **Found:** the rest camera sees only a ~250x100 px notch of sky, mostly under the boss bar and intent badge.
 
 ## Log
 
+- 2026-09-30 03:29 EDT — builder: a sky with ash (quarry_ember `ash_sky`; ash_sky.gdshader sky shader: fbm ash on a flat ceiling, red lower rims, 9 s glow swell, gradient-only cubemap pass; _light_for swaps it in and restores the plain sky; 1 test); grader FAIL x3 (sky notch too small to read clouds), shipped 👀; tests green, pushed.
 - 2026-09-30 03:15 EDT — builder: embers in the air (quarry_ember `embers`; ember_field/seam_points; EmberField: 500 rising soft sparks, 8 seam omni lights at 3.4 R on a new SEAM_LIT_LAYER that takes the Wall off LAVA_LIT_LAYER (Compatibility 8-light cap), a spark drip per seam + 2 tests); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:04 EDT — builder: lava ring (quarry_ember `lava` [1.0, 2.5] R; lava_ring/lava_ring_mesh + lava.gdshader polar flow; 8 omni lights on LAVA_LIT_LAYER so the cast stays unlit; heat_shimmer.gdshader band past CAMERA_MAX_R; obsidian rim heat faded near the lens + 3 tests); grader FAIL x3 (rim floor not orange), escalated 👀; tests green, pushed.
 - 2026-09-30 02:40 EDT — builder: lava rock stones (lava_rock.gdshader: dark basalt x ROCK_DETAIL, emission on world-down faces + fresnel edge; stone_style/`"stone": "lava_rock"` on quarry_ember only, body+cap take it, ember rim kept + test); grader FAIL x2 (too orange, then Goblin off-frame), escalated 👀; tests green, pushed.

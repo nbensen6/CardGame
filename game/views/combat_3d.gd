@@ -31,6 +31,8 @@ const HEAT_SHIMMER := preload("res://assets/3d/heat_shimmer.gdshader")
 ## Dark basalt with an ember glow for the climb stones of a biome that names
 ## `"stone": "lava_rock"`.
 const LAVA_ROCK := preload("res://assets/3d/lava_rock.gdshader")
+## A sky with ash: dark cloud lit red from below. See ash_sky().
+const ASH_SKY := preload("res://assets/3d/ash_sky.gdshader")
 ## Faceted rock detail for the floating footholds (_build_float_stones) — a
 ## generated (not modelled) grayscale multiply so a stone reads as cut rock
 ## instead of one flat colour. See design/progress/foothold_rock_detail.md.
@@ -2631,6 +2633,10 @@ const BIOME := {
 		# arena, sparks falling from lava seams in the wall, and orange light in
 		# those seams on the rock. See ember_field() / _add_embers().
 		"embers": true,
+		# A sky with ash (session, 2026-09-29): slow dark ash cloud over the
+		# gradient, red underneath near the horizon, the odd distant glow
+		# pulse. The fog behind the wall stays. See ash_sky() / _light_for().
+		"ash_sky": true,
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -3037,6 +3043,16 @@ func _light_for(beast_id: String) -> void:
 	# everything else is right.
 	var sky: Sky = e.sky
 	if sky != null and sky.sky_material is ProceduralSkyMaterial:
+		_plain_sky = sky.sky_material
+	if sky != null and ash_sky(name):
+		var ash := ShaderMaterial.new()
+		ash.shader = ASH_SKY
+		ash.set_shader_parameter("top_color", b["top"])
+		ash.set_shader_parameter("horizon_color", b["horizon"])
+		sky.sky_material = ash
+	elif sky != null and _plain_sky != null:
+		sky.sky_material = _plain_sky
+	if sky != null and sky.sky_material is ProceduralSkyMaterial:
 		var m: ProceduralSkyMaterial = sky.sky_material
 		m.sky_top_color = b["top"]
 		m.sky_horizon_color = b["horizon"]
@@ -3047,6 +3063,18 @@ func _light_for(beast_id: String) -> void:
 		m.sky_curve = float(b.get("sky_curve", 0.15))
 		m.ground_curve = float(b.get("ground_curve", 0.02))
 	_dev_biome = name
+
+
+## Whether a biome hangs ash cloud in its sky instead of the plain gradient.
+## Static so run_tests.gd can pin which fights get it.
+static func ash_sky(biome: String) -> bool:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return bool(b.get("ash_sky", false))
+
+
+## The scene's own ProceduralSkyMaterial, kept while a biome's ash sky stands
+## in for it so the next beast gets it back.
+var _plain_sky: Material = null
 
 
 ## Where a biome's "fog_behind" depth fog starts and ends, in world units from

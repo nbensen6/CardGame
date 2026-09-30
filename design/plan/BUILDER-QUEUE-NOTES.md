@@ -1317,3 +1317,29 @@ Builder, 2026-09-30 03:15 EDT. Brief: the Session line on the queue item (from
   ring.
 - **Grader:** FAIL (no orange on the rock, sparks unreadable), then PASS.
 
+
+## A sky with ash.
+
+Builder, 2026-09-30 03:29 EDT. Brief: the Session line on the queue item (from
+[[2026-09-29-intense-fight-plan]]).
+
+- **What landed.** `combat_3d.BIOME["quarry_ember"]["ash_sky"] = true`; static
+  `ash_sky(biome)`; `_light_for` swaps the Sky's ProceduralSkyMaterial for a
+  ShaderMaterial on the new `assets/3d/ash_sky.gdshader` (keeping the plain
+  one in `_plain_sky` so the next beast gets it back). The shader: the biome's
+  horizon-to-top gradient spread over the lower sky; two-octave-set fbm ash
+  projected on a flat ceiling, drifting at `wind`; dark ash bodies with a
+  bright red rim on each cloud's lower edge (cloud here, none 0.03 lower in
+  EYEDIR.y), stronger low in the sky; a glow swell for 1/4 of every 9 s on
+  one side. The cubemap pass gets the gradient only. Fog untouched.
+- **Measured.** The rest camera sees sky only between elevation ~0.18 and
+  ~0.4 (0 = horizon, 1 = zenith), in a notch ~250x100 px between the cliffs,
+  mostly under the boss bar and the intent badge. "Low" is measured over
+  that band.
+- **Grader.** Three rounds, all FAIL: round 1, clouds too low-contrast;
+  round 2 (red wash, bigger cells), "a purple-to-red gradient"; round 3
+  (dark bodies, red lower rims), "a magenta-to-orange wash, no cloud shapes".
+  Cloud shapes do show at 1:1 in the notch, but it is too small to read as
+  a cloud layer.
+- **Test.** `_test_ash_sky_only_in_the_jackal_biome`.
+

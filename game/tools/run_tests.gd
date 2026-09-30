@@ -2416,6 +2416,7 @@ func _init() -> void:
 	_test_lava_ring_stays_off_the_hunters_and_inside_the_wall()
 	_test_lava_ring_mesh_spans_inner_to_outer()
 	_test_embers_only_in_the_jackal_biome()
+	_test_ash_sky_only_in_the_jackal_biome()
 	_test_seam_points_ring_the_wall_beyond_the_camera()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
 	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
@@ -31196,6 +31197,18 @@ func _test_lava_ring_mesh_spans_inner_to_outer() -> void:
 	_expect(is_equal_approx(lo, 10.0) and is_equal_approx(hi, 25.0),
 		"the lava mesh runs from its inner to its outer radius (%.2f..%.2f)" % [lo, hi])
 	_expect(m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() == 32 * 6, "two triangles per segment")
+
+
+func _test_ash_sky_only_in_the_jackal_biome() -> void:
+	_expect(Combat3D.ash_sky(String(Combat3D.BEAST_BIOME["cinder_jackal"])),
+		"the Cinder Jackal's sky hangs ash cloud")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(not Combat3D.ash_sky(biome), "biome %s keeps its plain sky" % biome)
+	_expect(not Combat3D.ash_sky("no_such_biome"), "an unknown biome keeps the plain sky")
+	_expect(Combat3D.ASH_SKY is Shader, "the ash sky shader loads")
+	_expect(Combat3D.BIOME["quarry_ember"].has("fog_behind"),
+		"the ash sky leaves the fog behind the wall in place")
 
 
 func _test_embers_only_in_the_jackal_biome() -> void:

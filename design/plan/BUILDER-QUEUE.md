@@ -308,9 +308,12 @@ run failed.
       Ask: Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-embers-after.png|420]] ^embers-in-the-air
-- [ ] **A sky with ash.**
+- [ ] 👀 **A sky with ash.**
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal ^a-sky-with-ash
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
+      Ask: Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-ash-sky-after.png|420]] ^a-sky-with-ash
 
 
 ## Waiting on Nick
@@ -424,3 +427,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Lava streaks at grazing angles.** From the low camera the lava's noise aliases into horizontal stripes.
 - [ ] (proposed) **Seam lights are evenly spaced.** They ring the wall on a fixed pattern, not on the lava seams painted in its texture.
 - [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
+- [ ] (proposed) **The rest camera sees almost no sky.** Cliffs, the boss bar and the intent badge leave a ~250x100 px notch, so sky work barely shows.
