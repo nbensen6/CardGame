@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Remove cost.**
+- [x] **Remove cost.**
       **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
       **Nick, 2026-09-30 10:59 ET:** remove cost
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
@@ -60,7 +60,7 @@ run failed.
       Ask: Grader failed this: fan tilt and lift still there. Flatten the hand too?
       Test: state=3d beast=cinder_jackal hover=1
       ![[agents/frames/builder/2026-09-30-cards-fan-remove-after.png|420]] ^cards-fan-and-glow
-- [ ] 👀 **The intent badge reads like a warning.**
+- [x] **The intent badge reads like a warning.**
       **Nick, 2026-09-30 09:44 ET:** remove damage badge and put it somewhere else in the hud.
       **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
