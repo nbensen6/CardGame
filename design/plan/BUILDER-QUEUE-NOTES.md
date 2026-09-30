@@ -1092,3 +1092,20 @@ Builder, 2026-09-29 22:32 EDT. Dev camera only; the Player camera and the rest s
 - Done-when strip (graded PASS): `state=3d beast=cinder_jackal` then `console=climb+1 touch=1,0.3`; Frog centred at 640 both, camera x differs.
 - Grader round 1 FAIL graded the overshoot pair as the done-when strip; round 2 PASS on the strip.
 
+## Hits stop time.
+
+Builder, 2026-09-30 00:21 EDT.
+
+What changed (views/combat_3d.gd):
+- `_strike(weak, dmg)` now takes the damage. Shake is `hit_shake(dmg, weak)`: 0.2 + 0.05 per point, clamped 0.25..1.0; the weak point keeps its old floor of 0.85.
+- Hit-stop: `_hit_stop(slowmo)` sets `Engine.time_scale` to 0.01 for 0.08 real seconds (`HIT_STOP`), then for a weak point 0.25 for 0.15 s (`HIT_SLOWMO`). Each restore only undoes its own scale, so the death's slow motion (0.3) and harness freezes (0 / 0.02 / 0.1) are never clobbered. The timers are not process_always, so a pause holds the stop.
+- Embers: a lazily built CPUParticles3D (`_ember_burst`) at `impact_point(box, cam)`, the beast box's face toward the camera (the weak point uses the sigil). Sized by `ember_reach(distance to camera)`, so the burst covers the same slice of frame near or far. `disable_fog` (the arena fog ate them at 85 m), `preprocess` 0.09 (so they are already flying on the frozen frame). `scale_amount` did not reach the screen on billboarded quads, so the quad size carries the scale.
+- Shake now always throws the lens the full amplitude (`shake_offset`) and also tilts it (`shake_tilt`, 2.5 deg at full energy). A slide alone moved the far wall 2-3 px, which the grader read as no shake at all.
+- The bite: `_react`'s per-hunter damage path is now `_hunter_struck(i, dmg)`: popup, flinch, `hit_shake`, `_hit_stop(false)`.
+
+Harness: `state=3dstrike beat=impact` (unattended) shoots six frames on a 3x2 sheet: rest; a 6-damage blow landing (clock x0.01) and +0.10 s (clock x1.00, cam 0.19 m 1.1 deg); a 14-damage weak point landing and +0.10 s (clock x0.25, cam 0.36 m 2.1 deg); the 7 bite +0.10 s (cam 0.21 m 1.2 deg). Seeded (seed 2) so the shake's dice are the same every run. In play it falls through to the ordinary beat loop.
+
+Grader: three rounds. Round 1 FAIL: offset invisible (positional only) -> added tilt. Round 2 FAIL: slow motion and damage scaling not shown -> six-panel sheet with clock and damage in the labels. Round 3 FAIL: "panel 3's framing matches panel 1 within about 2-3 px"; the bite has no landing frame. In the full-size run the other hunter moves 30 px at +0.10 s and 33 px on the bite, but at a third of the size it reads small.
+
+Tests: `_test_hits_stop_time` pins hit_shake, shake_offset, shake_tilt, impact_point, ember_reach and the distinct clock scales. ALL TESTS PASSED. Playtest (30 steps) shows `beast-behind-stone` failing 7 times; it was 6 on main before this change, so it is not from this change.
+

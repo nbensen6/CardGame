@@ -236,9 +236,12 @@ run failed.
       Ask: Camera now overshoots each sideways landing a little, then settles. Big enough?
       Test: state=3d beast=cinder_jackal console=climb+1
       ![[agents/frames/builder/2026-09-30-hop-swing-strip-after.png|420]] ^the-camera-swings-with-each-hop
-- [ ] **Hits stop time.**
+- [ ] 👀 **Hits stop time.**
       **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dstrike beast=cinder_jackal beat=loop ^hits-stop-time
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dimpact) · [[BUILDER-QUEUE-NOTES#Hits stop time.|details]]
+      Ask: Grader failed this: shake too small in stills. Is the hit kick strong enough?
+      Test: state=3dstrike beast=cinder_jackal beat=impact
+      ![[agents/frames/builder/2026-09-30-hit-stop-after.png|420]] ^hits-stop-time
 - [ ] **The jackal threatens between turns.**
       **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal endturn=1 ^the-jackal-threatens-between-turns
@@ -372,3 +375,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Mid-hop in 3dclimb with `climb 3`, the Frog leaves the top of the frame (screen y -26 to -206).
 - [ ] (proposed) shot.sh keeps `+` in console= (only play mode turns it into a space), so queue Test lines fail under shot.sh.
 - [ ] (proposed) 3dclimb already sits at Height 5, so its `climb 3` Test hops the Frog down, not up.
+- [ ] (proposed) The damage number on a blow to the jackal is ~8 px tall from the strike camera (85 m away), easy to miss.
+- [ ] (proposed) A hit-stop's slow motion is skipped if one frame outlasts 0.15 s (timers tick once a frame).
+- [ ] (proposed) Playtest `beast-behind-stone` already fails on main (6 times in a 30-step run).

@@ -1716,6 +1716,7 @@ func _init() -> void:
 	# for the death only when the beast fell, and for the whole of it.
 	_test_router_holds_the_fight_for_the_beasts_death_only()
 	_test_death_hold_covers_the_slow_hit_the_fall_and_the_rest()
+	_test_hits_stop_time()
 	# backlog #86 duty 3: music_for_phase (above) only proves the ROUTING is
 	# right; nothing had ever proven the settings-menu Music toggle
 	# (combat_3d.gd:2571) actually does what its own comment on
@@ -26404,6 +26405,40 @@ func _test_router_holds_the_fight_for_the_beasts_death_only() -> void:
 		"a lost fight is not the beast dying")
 	_expect(not Game3D.holds_for_death(String(Game3D.SCENES["map"]), "combat"),
 		"only leaving a fight can hold for a death")
+
+
+## "Hits stop time" (Session, 2026-09-29): shake grows with damage, the weak
+## point never shakes less than it did, the lens always leaves home while it
+## shakes, the embers show on the near side of the beast, and the stop's clock
+## scales never collide with the death's slow motion.
+func _test_hits_stop_time() -> void:
+	_expect(Combat3D.hit_shake(12, false) > Combat3D.hit_shake(3, false),
+		"a bigger blow shakes the camera harder")
+	_expect(Combat3D.hit_shake(0, true) >= 0.85 and Combat3D.hit_shake(0, false) > 0.0,
+		"the weak point keeps its old kick and a graze still moves the lens")
+	_expect(Combat3D.hit_shake(999, false) <= 1.0, "shake is capped")
+	var off := Combat3D.shake_offset(0.5, Vector3(0.001, 0.0, 0.0))
+	_expect(is_equal_approx(off.length(), 0.5 * 0.42),
+		"a shaking lens is off home by the full amplitude, whatever the dice (got %.3f)" % off.length())
+	_expect(Combat3D.shake_offset(0.5, Vector3.ZERO).length() > 0.0, "a zero roll still shakes")
+	var tilt := Combat3D.shake_tilt(0.5, Vector3(0.0, 0.001, 0.0))
+	_expect(is_equal_approx(tilt.length(), deg_to_rad(Combat3D.SHAKE_TILT_DEG) * 0.5),
+		"a shaking lens also tilts by the full amplitude, so the far wall moves too")
+	var box := AABB(Vector3(-5, 0, -20), Vector3(10, 20, 30))
+	var hit := Combat3D.impact_point(box, Vector3(0, 5, 80))
+	_expect(hit.z > box.get_center().z and is_equal_approx(hit.y, box.get_center().y),
+		"the embers burst on the beast's side facing the camera (got %s)" % hit)
+	_expect(Combat3D.ember_reach(80.0, false) > Combat3D.ember_reach(10.0, false)
+		and Combat3D.ember_reach(10.0, true) > Combat3D.ember_reach(10.0, false),
+		"embers are sized to the lens distance, and bigger on the weak point")
+	var scales := [Combat3D.HIT_STOP_SCALE, Combat3D.HIT_SLOWMO_SCALE, Combat3D.DEATH_TIME_SCALE, 1.0, 0.0]
+	var seen := {}
+	for sc in scales:
+		seen[sc] = true
+	_expect(seen.size() == scales.size(),
+		"hit-stop, its slow motion, the death and a harness freeze each own a distinct clock scale")
+	_expect(is_equal_approx(Combat3D.HIT_STOP, 0.08) and is_equal_approx(Combat3D.HIT_SLOWMO, 0.15),
+		"the stop is 0.08 s and the weak-point slow motion 0.15 s")
 
 
 func _test_death_hold_covers_the_slow_hit_the_fall_and_the_rest() -> void:

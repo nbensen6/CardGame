@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T23:38
-working_on: "The camera swings with each hop."
+updated: 2026-09-30T00:21
+working_on: "Hits stop time."
 ---
 
 # builder
@@ -13,18 +13,18 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 23:38 EDT
+2026-09-30 00:21 EDT
 
-- **Did:** Camera now runs on past each sideways hop's landing and settles back in 0.15 s.
-- **Worked?** Yes; grader VERDICT: PASS, camera x differs and the Frog is centred before and after one hop.
-- **Look at:** ![[frames/builder/2026-09-30-hop-swing-strip-before.png]] then ![[frames/builder/2026-09-30-hop-swing-strip-after.png]]
-- **Ask:** Swing big enough to feel, or larger?
+- **Did:** Blows now freeze the frame, burst embers and kick the camera; weak points add slow motion; bites too.
+- **Worked?** Partly; embers and slow motion show, but grader VERDICT: FAIL, the camera offset is too small to see in a third-size still.
+- **Look at:** ![[frames/builder/2026-09-30-hit-stop-before.png]] then ![[frames/builder/2026-09-30-hit-stop-after.png]]
+- **Ask:** Is the hit kick strong enough, or bigger?
 
 ## Notes
 
-- **Found:** mid-hop in 3dclimb+climb 3, the Frog leaves the top of the frame (screen y -26 to -206).
-- **Found:** shot.sh keeps `+` in console= (only play= turns it into a space), so queue Test lines fail there.
-- **Found:** 3dclimb already sits at Height 5, so its `climb 3` hops the Frog DOWN.
+- **Found:** a blow's damage number on the jackal is about 8 px tall from the strike camera.
+- **Found:** a hit-stop's slow motion is skipped when one frame takes longer than 0.15 s.
+- **Found:** playtest `beast-behind-stone` fails on main already (6 times in 30 steps).
 
 ## Log
 

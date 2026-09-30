@@ -578,6 +578,7 @@ var _active_slot := 0
 # --- feel state ---
 var _shake := 0.0                 # camera shake energy, decays each frame
 var _cam_home := Vector3.ZERO
+var _cam_basis_home := Basis.IDENTITY   # the orbit's aim, which a shake tilts about
 # --- orbit state ---
 var _yaw := 0.0
 var _pitch := 0.26
@@ -816,6 +817,7 @@ func _ready() -> void:
 	# have finished reading what it printed.
 	DevConsole.attach(self, _refresh)
 	_cam_home = _cam.position
+	_cam_basis_home = _cam.basis
 	# The active hunter's climb tween updates node.position during its own
 	# per-frame step, which this node's _process() runs ahead of -- reading
 	# it from _process (even at the very end, even deferred) still sees last
@@ -1794,9 +1796,12 @@ func _process(delta: float) -> void:
 			_coach.modulate.a = 1.0
 	if _shake > 0.001:
 		_shake = maxf(0.0, _shake - delta * 2.6)
-		var amp := _shake * 0.42
-		_cam.position = _cam_home + Vector3(
-			randf_range(-amp, amp), randf_range(-amp, amp), randf_range(-amp, amp) * 0.4)
+		_cam.position = _cam_home + shake_offset(_shake,
+			Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-0.4, 0.4)))
+		# And a tilt: sliding the lens alone never moves the far wall, which
+		# is most of the frame, so a blow read as nothing (grader, 2026-09-30).
+		_cam.basis = _cam_basis_home * Basis.from_euler(shake_tilt(_shake,
+			Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-0.3, 0.3))))
 	elif _cam.position != _cam_home:
 		_cam.position = _cam_home
 		_cam.look_at(_pivot, Vector3.UP)
@@ -3527,6 +3532,7 @@ func _apply_orbit() -> void:
 	_cam_home = _inside_wall(_cam_home + (ots["truck"] as Vector3))
 	_cam.position = _cam_home
 	_cam.look_at(ots["aim"] as Vector3, Vector3.UP)
+	_cam_basis_home = _cam.basis
 	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
 	# centre any more. h_offset trucks the camera sideways without re-aiming it, so
 	# the beast sits in the middle of the space it actually has. It scales with
@@ -5624,7 +5630,7 @@ func _react(s: Dictionary) -> void:
 		_prev_hp, enc, hp, foots, reached, php)
 	if not bool(plan["resync"]):
 		if plan["boss_hit"]:
-			_strike(plan["weak"])
+			_strike(plan["weak"], int(plan["boss_dmg"]))
 			_damage_popup(plan["boss_dmg"],
 				_sigil.position if plan["weak"] else _beast_box.get_center(), plan["weak"])
 			# A hunter's card just landed on the beast: that hunter lunges, and
@@ -5643,10 +5649,7 @@ func _react(s: Dictionary) -> void:
 					and is_instance_valid((_hunters[i] as Dictionary)["node"]):
 				# Hunters bleed too, and how hard you were hit is the thing you most
 				# need to know before deciding next turn.
-				var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
-				_damage_popup(hunter_dmg[i],
-					hunter_popup_at(hnode.position, _hunter_popup_glyph()), false, true)
-				_hunter_play(i, "hit")
+				_hunter_struck(i, int(hunter_dmg[i]))
 			match String(foot_actions[i]):
 				"reach": Sfx.play("reach_sigil")
 				"climb": Sfx.play("climb")
@@ -6611,18 +6614,155 @@ func _hide_tongue(slot: int) -> void:
 		tongue.visible = false
 
 
-## A hit on the beast: recoil, a flash of light, a kick of camera shake — much
-## bigger when it lands on the weak point.
-func _strike(weak_point: bool) -> void:
+## A hit on the beast: recoil, a flash of light, a burst of embers where it
+## landed, the frame held still for a beat, and a kick of camera shake that
+## grows with the damage — much bigger when it lands on the weak point.
+func _strike(weak_point: bool, dmg: int = 0) -> void:
 	_beast_play("hit")
 	Sfx.play("strike_weakpoint" if weak_point else "attack")
 	_beast_punch = 1.0 if weak_point else 0.45
-	_shake = maxf(_shake, 0.85 if weak_point else 0.3)
+	_shake = maxf(_shake, hit_shake(dmg, weak_point))
 	_flash.position = _sigil.position if weak_point else _beast_box.get_center()
 	_flash.light_energy = 7.0 if weak_point else 2.5
 	if weak_point:
 		_dust.position = _sigil.position
 		_dust.restart()
+	_ember_burst(_sigil.position if weak_point
+		else impact_point(_beast_box, _cam.global_position), weak_point)
+	_hit_stop(weak_point)
+
+
+## The beast's blow lands on hunter `i`: the number, the flinch, and the same
+## hit-stop and shake a blow on the beast gets.
+func _hunter_struck(i: int, dmg: int) -> void:
+	var hnode: Node3D = (_hunters[i] as Dictionary)["node"]
+	_damage_popup(dmg, hunter_popup_at(hnode.position, _hunter_popup_glyph()), false, true)
+	_hunter_play(i, "hit")
+	_shake = maxf(_shake, hit_shake(dmg, false))
+	_hit_stop(false)
+
+
+## Hit-stop (Session, 2026-09-29, "Hits stop time"): a landed blow freezes the
+## frame for HIT_STOP real seconds; a weak-point blow then runs HIT_SLOWMO more
+## at HIT_SLOWMO_SCALE. Neither scale is 0 or DEATH_TIME_SCALE, so a restore
+## only undoes its own stop and never the death's slow motion or a harness's.
+const HIT_STOP := 0.08
+const HIT_STOP_SCALE := 0.01
+const HIT_SLOWMO := 0.15
+const HIT_SLOWMO_SCALE := 0.25
+
+
+## Camera shake for a hit of `dmg`: a graze barely moves the lens, a big blow
+## kicks it. The weak point never shakes less than it always has.
+static func hit_shake(dmg: int, weak_point: bool) -> float:
+	var s := clampf(0.2 + 0.05 * float(maxi(dmg, 0)), 0.25, 1.0)
+	return maxf(s, 0.85) if weak_point else s
+
+
+## The camera's offset this frame for shake energy `shake`, thrown along the
+## random `dir`: always the full amplitude, so a big blow never lands on a
+## frame where the dice happened to leave the lens at home.
+static func shake_offset(shake: float, dir: Vector3) -> Vector3:
+	if dir.length() < 0.01:
+		dir = Vector3.UP
+	return dir.normalized() * shake * 0.42
+
+
+## The camera's tilt this frame (Euler radians) for shake energy `shake`:
+## SHAKE_TILT_DEG at full energy, the same slice of the frame near or far.
+const SHAKE_TILT_DEG := 2.5
+
+
+static func shake_tilt(shake: float, dir: Vector3) -> Vector3:
+	if dir.length() < 0.01:
+		dir = Vector3.RIGHT
+	return dir.normalized() * deg_to_rad(SHAKE_TILT_DEG) * shake
+
+
+## Where a blow on the beast's body shows: the side of its box facing the
+## camera, not the centre (inside the body, where embers would be hidden).
+static func impact_point(box: AABB, cam_pos: Vector3) -> Vector3:
+	var c := box.get_center()
+	var to := cam_pos - c
+	to.y = 0.0
+	if to.length() < 0.001:
+		return c
+	return c + to.normalized() * minf(box.size.x, box.size.z) * 0.5
+
+
+func _hit_stop(slowmo: bool) -> void:
+	if Engine.time_scale != 1.0 and Engine.time_scale != HIT_STOP_SCALE \
+			and Engine.time_scale != HIT_SLOWMO_SCALE:
+		return  # the death's slow motion or a harness owns the clock
+	Engine.time_scale = HIT_STOP_SCALE
+	# Not process_always: a pause (the menu, a harness shutter) holds the stop
+	# where it is instead of spending it unseen.
+	get_tree().create_timer(HIT_STOP, false, false, true).timeout.connect(func() -> void:
+		if Engine.time_scale != HIT_STOP_SCALE:
+			return
+		if not slowmo:
+			Engine.time_scale = 1.0
+			return
+		Engine.time_scale = HIT_SLOWMO_SCALE
+		get_tree().create_timer(HIT_SLOWMO, false, false, true).timeout.connect(func() -> void:
+			if Engine.time_scale == HIT_SLOWMO_SCALE:
+				Engine.time_scale = 1.0))
+
+
+var _embers: CPUParticles3D
+
+
+## How far an ember flies in a second, from `dist` metres away: sized to the
+## lens, not the beast, so the burst covers about the same slice of the frame
+## whether the blow lands on a far-off jackal or on the hide beside you.
+static func ember_reach(dist: float, big: bool) -> float:
+	return maxf(dist, 1.0) * (1.4 if big else 1.0)
+
+
+## Sparks off the beast's hide where the blow landed.
+func _ember_burst(at: Vector3, big: bool) -> void:
+	if _embers == null:
+		_embers = CPUParticles3D.new()
+		_embers.name = "Embers"
+		_embers.emitting = false
+		_embers.one_shot = true
+		_embers.explosiveness = 1.0
+		_embers.lifetime = 0.55
+		# Already flying on the first frame: the hit-stop holds the clock, and
+		# a burst that has not left its point yet is invisible on a held frame.
+		_embers.preprocess = 0.09
+		_embers.local_coords = false
+		var quad := QuadMesh.new()
+		var mat := StandardMaterial3D.new()
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		mat.vertex_color_use_as_albedo = true
+		mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat.no_depth_test = true
+		# The arena's fog swallows a spark at the beast's distance whole.
+		mat.disable_fog = true
+		quad.material = mat
+		_embers.mesh = quad
+		_embers.direction = Vector3(0, 1, 0)
+		_embers.spread = 180.0
+		_embers.gravity = Vector3(0, -6, 0)
+		var ramp := Gradient.new()
+		ramp.set_color(0, Color(1.0, 0.95, 0.7, 1.0))
+		ramp.set_color(1, Color(1.0, 0.3, 0.05, 0.0))
+		ramp.add_point(0.6, Color(1.0, 0.6, 0.15, 1.0))
+		_embers.color_ramp = ramp
+		add_child(_embers)
+	var reach := ember_reach(_cam.global_position.distance_to(at), big)
+	_embers.amount = 48 if big else 32
+	_embers.initial_velocity_min = reach * 0.5
+	_embers.initial_velocity_max = reach * 1.3
+	# The quad itself, not scale_amount: a billboarded particle's scale did not
+	# reach the screen here (tried, 2026-09-30), the mesh size does.
+	(_embers.mesh as QuadMesh).size = Vector2.ONE * reach * 0.03
+	_embers.scale_amount_min = 0.5
+	_embers.scale_amount_max = 1.2
+	_embers.position = at
+	_embers.restart()
 
 
 ## The killing blow, played out before the router cuts to the reward screen.
@@ -6646,7 +6786,7 @@ func play_death() -> float:
 	if _beast == null or not is_inside_tree():
 		return 0.0
 	var weak := _prev_reached.has(true)
-	_strike(weak)
+	_strike(weak, _prev_hp)
 	if _prev_hp > 0:
 		_damage_popup(_prev_hp, _sigil.position if weak else _beast_box.get_center(), weak)
 	var clip_len := 0.0
@@ -6668,7 +6808,7 @@ func play_death() -> float:
 
 ## Never leave the game in play_death's slow motion if this view goes early.
 func _exit_tree() -> void:
-	if Engine.time_scale == DEATH_TIME_SCALE:
+	if Engine.time_scale in [DEATH_TIME_SCALE, HIT_STOP_SCALE, HIT_SLOWMO_SCALE]:
 		Engine.time_scale = 1.0
 
 

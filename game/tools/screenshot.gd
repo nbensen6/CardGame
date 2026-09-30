@@ -27,6 +27,8 @@
 ##   beatat=0.1,0.2,0.3,0.4 (with beat=loop, unattended: instead of the peaks,
 ##     shoot hunter N's lunge that many seconds after it starts, so a change of
 ##     speed shows in stills)
+##   beat=impact (3dstrike, unattended: the hit-stop on a 3x2 strip. Rest, a
+##     blow and a weak-point blow each landing and 0.10 s later, the bite)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 ##   fly=N,M (tap those cards of the hand in turn; each resolves on the tap)
 ##   deathat=0.3,1.2,2.5 (3dreward: land the killing blow in the fight and
@@ -375,7 +377,7 @@ func _initialize() -> void:
 						break
 		print("MAP at row %d, phase %s" % [rm.map_row, rm.phase])
 		Session.host._broadcast_state()
-	if _state == "3dstrike" and _beat != "loop":  # mid-ascent AND mid-hit, to check the 3D juice
+	if _state == "3dstrike" and not _beat in ["loop", "impact"]:  # mid-ascent AND mid-hit, to check the 3D juice
 		var cs: Combat = Session.host._run.combat
 		cs.players[0].foothold = cs.boss.weak_point_height
 		cs.players[1].foothold = maxi(cs.boss.weak_point_height - 1, 1)
@@ -1680,7 +1682,7 @@ func _capture() -> void:
 			vi.call("_show_card_detail", hand[0])
 		for _i in 4:
 			await process_frame
-	if _state == "3dstrike" and _beat == "loop" and current_scene.has_method("_hunter_play"):
+	if _state == "3dstrike" and _beat in ["loop", "impact"] and current_scene.has_method("_hunter_play"):
 		await _strike_loop(current_scene)
 		return
 	if _state == "3dstrike":  # fire the 3D strike and catch the flash + dust
@@ -1946,9 +1948,10 @@ func _strike_loop(v3: Node) -> void:
 	root.add_child(tag_layer)
 	tag_layer.visible = not _play
 	var shots: Array[Image] = []
-	var snap := func(label: String) -> void:
+	var snap := func(label: String, keep_shake: bool = false) -> void:
 		tag.text = label
-		v3.set("_shake", 0.0)
+		if not keep_shake:
+			v3.set("_shake", 0.0)
 		for _i in 2:
 			await process_frame
 		await RenderingServer.frame_post_draw
@@ -1958,7 +1961,9 @@ func _strike_loop(v3: Node) -> void:
 			cam.unproject_position(body.global_position) if cam != null else Vector2.ZERO, body.position, body.scale,
 			cam.unproject_position(other.global_position) if cam != null else Vector2.ZERO])
 		shots.append(root.get_viewport().get_texture().get_image())
-	if not _play and not _beatat.is_empty():
+	if not _play and _beat == "impact":
+		await _strike_impact(v3, cam, snap)
+	elif not _play and not _beatat.is_empty():
 		# The lunge on a fixed clock: the same seconds before and after a
 		# speed change land on different poses.
 		v3.call("_hunter_play", _actor, "attack")
@@ -1973,7 +1978,7 @@ func _strike_loop(v3: Node) -> void:
 			await snap.call("%.2f s" % t)
 	elif not _play:
 		await snap.call("1 rest")
-	for _r in (0 if not _play and not _beatat.is_empty() else (3 if _play else 1)):
+	for _r in (0 if not _play and (not _beatat.is_empty() or _beat == "impact") else (3 if _play else 1)):
 		for beat in ["attack", "hit"]:
 			var d: Dictionary = v3.call("hunter_act_beat", beat)
 			v3.call("_hunter_play", _actor, beat)
@@ -1995,9 +2000,10 @@ func _strike_loop(v3: Node) -> void:
 	if _play:
 		print("PLAY READY: scenario is live. Close the window when done.")
 		return
-	var w := 640
-	var h := 360
-	_strip = Image.create(w * 2, h * 2, false, Image.FORMAT_RGBA8)
+	var cols := 3 if shots.size() > 4 else 2
+	var w := 1280 / cols
+	var h := 720 / cols
+	_strip = Image.create(w * cols, h * ceili(shots.size() / float(cols)), false, Image.FORMAT_RGBA8)
 	for i in shots.size():
 		var im: Image = shots[i]
 		im.convert(Image.FORMAT_RGBA8)
@@ -2009,15 +2015,96 @@ func _strike_loop(v3: Node) -> void:
 			im.convert(Image.FORMAT_RGBA8)
 		else:
 			im.resize(w, h, Image.INTERPOLATE_BILINEAR)
-		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % 2) * w, (i / 2) * h))
+		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % cols) * w, (i / cols) * h))
 	await _save_and_quit()
+
+
+## beat=impact (unattended): the hit-stop on a fixed clock, six frames. 1 rest;
+## 2 a 6-damage blow lands (embers at the impact point, the clock held);
+## 3 0.10 s later, the camera kicked off its home; 4 and 5 the same for a
+## 14-damage weak-point blow, whose +0.10 s frame is in slow motion; 6 the
+## jackal's 7-damage bite on the hunter, 0.10 s in. Each label carries the
+## clock's rate and the camera's offset, the parts a still cannot show. The
+## view's _process is stepped by hand past the stop, since a software
+## renderer's frame is longer than the whole shake.
+func _strike_impact(v3: Node, cam: Camera3D, snap: Callable) -> void:
+	seed(2)  # the shake's dice, the same on every run of this shot
+	await snap.call("1 rest")
+	var stop := float(v3.get("HIT_STOP"))
+	var clock := func() -> String:
+		return "clock x%.2f" % Engine.time_scale
+	var off := func() -> String:
+		var q := (v3.get("_cam_basis_home") as Basis).get_rotation_quaternion()
+		return "cam %.2f m %.1f°" % [(cam.position - (v3.get("_cam_home") as Vector3)).length(),
+			rad_to_deg(q.angle_to(cam.basis.get_rotation_quaternion()))]
+	# A software frame outlasts the whole stop: hold the view's clock at the
+	# blow and step it by hand to +0.10 s, the way 60 fps would have run it.
+	var hold := func() -> void:
+		v3.set_process(false)
+		v3.call("_process", 0.0)
+		paused = true  # holds the stop's own timers and the embers for the shutter
+	var step := func(secs: float) -> void:
+		# Out of the freeze the moment the view's own timer lets go, so a
+		# weak point's slow motion is caught before its 0.15 s runs out.
+		# Drawing off meanwhile: a drawn software frame outlasts the whole slow
+		# motion, and the timers only tick once a frame.
+		RenderingServer.render_loop_enabled = false
+		paused = false
+		while Engine.time_scale == float(v3.get("HIT_STOP_SCALE")):
+			await process_frame
+		RenderingServer.render_loop_enabled = true
+		var left := secs - stop
+		while left > 0.0:
+			v3.call("_process", minf(left, 1.0 / 60.0))
+			left -= 1.0 / 60.0
+		paused = true
+	var settle := func() -> void:
+		paused = false
+		v3.set_process(true)
+		await create_timer(0.5, true, false, true).timeout
+		v3.set("_shake", 0.0)
+		for _i in 10:
+			await process_frame
+	var n := 2
+	for blow in [[6, false], [14, true]]:
+		var dmg: int = blow[0]
+		var weak: bool = blow[1]
+		v3.call("_hunter_play", _actor, "attack")
+		var tw: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
+		tw.pause()
+		tw.custom_step(float((v3.call("hunter_act_beat", "attack") as Dictionary)["out"]))
+		# What _react does with a blow: the strike, then its number.
+		v3.call("_strike", weak, dmg)
+		var at: Vector3 = (v3.get("_sigil") as Node3D).position if weak \
+			else (v3.get("_beast_box") as AABB).get_center()
+		v3.call("_damage_popup", dmg, at, weak)
+		hold.call()
+		var what := "weak point %d" % dmg if weak else "blow %d" % dmg
+		print("IMPACT %s lands: %s shake %.2f" % [what, clock.call(), float(v3.get("_shake"))])
+		await snap.call("%d %s lands  %s" % [n, what, clock.call()], true)
+		await step.call(0.10)
+		print("IMPACT %s +0.10 s: %s %s" % [what, clock.call(), off.call()])
+		await snap.call("%d +0.10 s  %s  %s" % [n + 1, clock.call(), off.call()], true)
+		n += 2
+		tw.custom_step(10.0)
+		await settle.call()
+	v3.call("_hunter_struck", _actor, 7)
+	hold.call()
+	var tw2: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
+	tw2.pause()
+	tw2.custom_step(float((v3.call("hunter_act_beat", "hit") as Dictionary)["out"]))
+	await step.call(0.10)
+	print("IMPACT bite 7 +0.10 s: %s %s" % [clock.call(), off.call()])
+	await snap.call("%d bite 7 +0.10 s  %s" % [n, off.call()], true)
+	paused = false
+	v3.set_process(true)
 
 
 func _failsafe() -> void:
 	# Each endturn=N plays a whole beast turn (90 frames); on a software
 	# renderer that alone outlasts a flat 10 s, so give each one its own time.
 	await create_timer(10.0 + 15.0 * (_endturns + _thenend) + 1.0 * _flys.size()
-		+ (5.0 if _devzoom > 0 else 0.0) + _devfly * 1.5).timeout
+		+ (5.0 if _devzoom > 0 else 0.0) + _devfly * 1.5 + (20.0 if _beat == "impact" else 0.0)).timeout
 	print("SHOT TIMEOUT")
 	quit(1)
 
