@@ -1169,3 +1169,25 @@ unchanged.
 - **Tests.** `_test_beast_bar_reacts`: notch placement, major notch, crossing,
   ghost hold/drain curve, bar state on blow and heal.
 - **Grader:** VERDICT: PASS.
+
+## Cards fan and glow.
+
+2026-09-30 01:40 EDT. The fan, the per-card tilt, the lift, the straighten and
+the 1.34 grow were already in `_layout_hand`; the before frame showed them. What
+was missing was the glow and the pulse.
+
+- **Rim.** `foil.gdshader` gained a rim mode (`rim` > 0): a gaussian on the
+  distance to the card's true edge, ember-gold with 18 % of the foil's
+  travelling rainbow, bright on the frame line, gone ~5 px inside (name and
+  cost stay clean) and haloing ~10 px outward. First try was 35 % rainbow and
+  read garish against the ember HUD.
+- **Where.** `CardView.set_raised(on)` builds the rim on first use (a ColorRect
+  10 px bigger than the card on every side, mouse-ignored) and only hides it
+  afterwards. `_layout_hand` calls it with the same `card_is_raised` answer
+  that lifts the card, so a timed card on touch glows too, not only hover.
+- **Pulse.** The cost gem breathes 1.00 to 1.10 at 0.9 Hz (`pip_pulse`) while
+  the card is not disabled; `_end_timing` no longer stops the tick on a card
+  that still pulses.
+- **Tests.** `_test_cards_fan_raised_card_wears_a_rim_that_hides_when_lowered`,
+  `_test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range`.
+- **Grader:** VERDICT: PASS (it noted the pulse cannot show in a still).

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T01:25
-working_on: "The beast's health bar reacts."
+updated: 2026-09-30T01:40
+working_on: "Cards fan and glow."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 01:25 EDT
+2026-09-30 01:40 EDT
 
-- **Did:** Beast health bar now has notches, a pale ghost of lost HP that lingers then drains, and a crack flash.
-- **Worked?** Yes; VERDICT: PASS, strike frame shows the ghost behind 52/70 and the crack at the crossed notch.
-- **Look at:** ![[frames/builder/2026-09-30-beast-bar-before.png]] then ![[frames/builder/2026-09-30-beast-bar-after.png]]
-- **Ask:** Notches every 16 HP, ember line at the hurt pattern. Readable at a glance?
+- **Did:** The lifted card in the hand now glows ember-gold at its edge; playable cost gems gently pulse.
+- **Worked?** Yes; VERDICT: PASS, hover frame shows the lifted glowing Leap above its tilted neighbours.
+- **Look at:** ![[frames/builder/2026-09-30-cards-fan-before.png]] then ![[frames/builder/2026-09-30-cards-fan-after.png]]
+- **Ask:** Lifted card now glows ember-gold at its edge. Too strong?
 
 ## Notes
 
-- **Found:** the hurt-pattern notch's ember line is 1 px and faint at 1280x720.
+- **Found:** the cost-gem pulse is motion only, so no still frame can show it; judge it live.
 
 ## Log
 
+- 2026-09-30 01:40 EDT — builder: cards fan and glow (fan/tilt/lift already there; foil.gdshader rim mode, CardView.set_raised builds an ember-gold rim 10 px past the card, called from _layout_hand; cost gem breathes 1.0-1.1 via pip_pulse while playable + 2 tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:25 EDT — builder: beast HP bar reacts (beast_bar.gd overlay: notches per weak_point_threshold + hurt_pct line, 0.4 s ghost + drain, crack on crossing; hurt_pct in snapshot; beat=loop lands an 18 blow; tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:13 EDT — builder: carved-obsidian HUD (obsidian_style + ObsidianBox bevel wrapper `carved`, hud_font FontVariation w/ fallback; top bar, party cards, intent badge, energy orb, End Turn/Switch + test); grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 00:56 EDT — builder: low health (console `hp N` / `hp beast N`; is_low_hp <30 %, vignette_alpha heartbeat ColorRect under the HUD, beast_low_glow hotter+2.4 Hz breath in _step_threat, LowHpEmbers CPUParticles3D stream over the beast box + test); grader PASS; tests green, pushed.

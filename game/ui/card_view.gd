@@ -137,6 +137,14 @@ const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 const FOIL_SHADER := preload("res://ui/foil.gdshader")
 
 var _foil: ColorRect = null
+## The glowing edge a card lifted out of the hand wears (foil.gdshader's rim
+## mode), and its cost gem, which pulses while the card can be played. Cards
+## fan and glow, 2026-09-30.
+var _rim: ColorRect = null
+var _orb: Control = null
+var raised := false
+## How far the rim reaches past the card, in px, so the glow bleeds outward.
+const RIM_PAD := 10.0
 ## The moulding, drawn as a layer OVER the art rather than as the Button's
 ## stylebox - a stylebox draws behind every child and the art would hide it.
 var _frame_rect: NinePatchRect = null
@@ -353,6 +361,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 		child.queue_free()
 	_face_host = null   # _build_borderless sets it; _layer() and _build_foil read it
 	_win = null         # _window_art() sets it if this card has a 3D window
+	_orb = null         # _cost_orb() sets it
 
 	if compact:
 		var pad := MarginContainer.new()
@@ -379,6 +388,10 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	_foil = null
 	if bool(data.get("foil", false)) or force_foil:
 		_build_foil(data)
+	_rim = null
+	raised = false
+	if playable and _orb != null:
+		set_process(true)   # the cost gem pulses while the card can be played
 	if not pressed.is_connected(_on_self_pressed):
 		pressed.connect(_on_self_pressed)
 	if not gui_input.is_connected(_on_card_input):
@@ -1574,6 +1587,8 @@ func _cost_orb(cost: int, who: String) -> Control:
 	lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.75))
 	lbl.add_theme_constant_override("outline_size", 4)
 	orb.add_child(lbl)
+	orb.pivot_offset = Vector2(d, d) * 0.5
+	_orb = orb
 	return orb
 
 
@@ -2012,7 +2027,7 @@ func _end_timing(quality: int) -> void:
 	# been timed used to freeze its sheen the moment the window resolved,
 	# because this turned _process off wholesale; a 3D window would have frozen
 	# the same way.
-	if _foil == null and _win == null:
+	if _foil == null and _win == null and not _pulses():
 		set_process(false)
 	_strip.visible = false
 	if is_instance_valid(_clock):
@@ -2031,6 +2046,11 @@ func _update_count() -> void:
 
 
 func _process(delta: float) -> void:
+	var now := float(Time.get_ticks_msec()) * 0.001
+	if _pulses():
+		_orb.scale = Vector2.ONE * pip_pulse(now)
+	if _rim != null and is_instance_valid(_rim) and _rim.visible:
+		(_rim.material as ShaderMaterial).set_shader_parameter("time_s", now)
 	if _foil != null or _win != null:
 		var tilt := _foil_tilt(float(Time.get_ticks_msec()) * 0.001)
 		if _foil != null and is_instance_valid(_foil):
@@ -2117,6 +2137,44 @@ func _build_timing_strip() -> Control:
 	_count_lbl.visible = false
 	strip.add_child(_count_lbl)
 	return strip
+
+
+## The cost gem's scale at time `t`: a slow breath, 1.0 to 1.10 about once a
+## second, so a playable card says so without a word. Static so a test can pin
+## the range.
+static func pip_pulse(t: float) -> float:
+	return 1.05 + 0.05 * sin(t * TAU * 0.9)
+
+
+func _pulses() -> bool:
+	return not disabled and _orb != null and is_instance_valid(_orb)
+
+
+## Lift this card out of the fan's glow-less rest, or drop it back. Called by
+## the hand's layout (combat_3d._layout_hand), which alone knows which card is
+## raised; the rim is built on first use and only hidden afterwards.
+func set_raised(on: bool) -> void:
+	raised = on
+	if on and _rim == null:
+		_rim = ColorRect.new()
+		_rim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_rim.color = Color(1, 1, 1, 1)
+		_rim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_rim.offset_left = -RIM_PAD
+		_rim.offset_top = -RIM_PAD
+		_rim.offset_right = RIM_PAD
+		_rim.offset_bottom = RIM_PAD
+		var mat := ShaderMaterial.new()
+		mat.shader = FOIL_SHADER
+		mat.set_shader_parameter("rim", 1.0)
+		mat.set_shader_parameter("rim_pad", RIM_PAD)
+		var box := custom_minimum_size if size == Vector2.ZERO else size
+		mat.set_shader_parameter("rim_px", box + Vector2.ONE * RIM_PAD * 2.0)
+		_rim.material = mat
+		add_child(_rim)
+		set_process(true)
+	if _rim != null:
+		_rim.visible = on
 
 
 func _on_hover() -> void:

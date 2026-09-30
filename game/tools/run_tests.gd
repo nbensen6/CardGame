@@ -1102,6 +1102,10 @@ func _init() -> void:
 	# clipped in the fan's tuck for the whole timing minigame on touch.
 	_test_backlog86_card_is_raised_by_hover()
 	_test_backlog86_card_is_raised_by_active_timing_with_no_hover()
+	# Cards fan and glow (2026-09-30): the raised card wears a rim, the cost
+	# gem breathes while playable.
+	_test_cards_fan_raised_card_wears_a_rim_that_hides_when_lowered()
+	_test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range()
 	# backlog #86 duty 2: should_rebuild_hand -- state_updated fires on EVERY
 	# player's action, not just this client's own, so a teammate's turn used
 	# to blow away this player's own in-flight sweep-bar timing card mid-swing.
@@ -22134,6 +22138,34 @@ func _test_backlog86_render_hand_status_hides_prompt_outside_selection() -> void
 ## inside the deep tuck a resting card sits in — so tapping a timed card on
 ## a handheld (no mouse_entered, ever) started the sweep with the strip
 ## clipped off-screen for its whole duration. bugs.md Finding 3, 2026-09-08.
+func _test_cards_fan_raised_card_wears_a_rim_that_hides_when_lowered() -> void:
+	var cv := CardView.new()
+	_expect(cv._rim == null, "a fresh card has no rim until it is raised")
+	cv.set_raised(true)
+	_expect(cv.raised and cv._rim != null and cv._rim.visible,
+		"set_raised(true) builds a visible rim")
+	var mat := cv._rim.material as ShaderMaterial
+	_expect(mat != null and mat.shader == CardView.FOIL_SHADER
+		and float(mat.get_shader_parameter("rim")) > 0.0,
+		"the rim is foil.gdshader in rim mode")
+	var rim := cv._rim
+	cv.set_raised(false)
+	_expect(not cv.raised and cv._rim == rim and not rim.visible,
+		"lowering hides the same rim rather than building another")
+	cv.free()
+
+
+func _test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range() -> void:
+	var lo := 9.0
+	var hi := 0.0
+	for i in range(200):
+		var v := CardView.pip_pulse(float(i) * 0.01)
+		lo = minf(lo, v)
+		hi = maxf(hi, v)
+	_expect(lo >= 0.999 and hi <= 1.101 and hi - lo > 0.08,
+		"the cost gem breathes between 1.0 and 1.1 over a second (got %.3f..%.3f)" % [lo, hi])
+
+
 func _test_backlog86_card_is_raised_by_hover() -> void:
 	_expect(Combat3D.card_is_raised(1, 1, -1), "the hovered card must be raised")
 	_expect(not Combat3D.card_is_raised(2, 1, -1), "a card that is neither hovered nor timing must stay in the fan")

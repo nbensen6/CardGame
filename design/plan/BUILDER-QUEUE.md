@@ -266,9 +266,12 @@ run failed.
       Ask: Notches every 16 HP, ember line at the hurt pattern. Readable at a glance?
       Test: state=3dstrike beast=cinder_jackal beat=loop
       ![[agents/frames/builder/2026-09-30-beast-bar-after.png|420]] ^the-beast-s-health-bar-reacts
-- [ ] **Cards fan and glow.**
+- [ ] 👀 **Cards fan and glow.**
       **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal hover=1 ^cards-fan-and-glow
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hover%3D1) · [[BUILDER-QUEUE-NOTES#Cards fan and glow.|details]]
+      Ask: Lifted card now glows ember-gold at its edge. Too strong?
+      Test: state=3d beast=cinder_jackal hover=1
+      ![[agents/frames/builder/2026-09-30-cards-fan-after.png|420]] ^cards-fan-and-glow
 - [ ] **The intent badge reads like a warning.**
       **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dclimb beast=cinder_jackal ^the-intent-badge-reads-like-a-warning

@@ -37,6 +37,15 @@ uniform float distortion : hint_range(0.0, 2.0) = 0.55;
 // A per-card offset so two foils in the same hand do not shimmer in lockstep,
 // which instantly reads as a screen effect rather than as two objects.
 uniform float seed = 0.0;
+// RIM MODE. 0 is the foil above. Above 0 the same rect draws only a glowing
+// edge instead of a face sheen: the lifted card in the hand (Cards fan and
+// glow, 2026-09-30). `rim` is how bright, `rim_px` the rect's size in pixels
+// and `rim_pad` how far the rect reaches past the card, so the glow can sit on
+// the card's edge and bleed outward rather than being cut at the frame.
+uniform float rim = 0.0;
+uniform vec2 rim_px = vec2(1.0);
+uniform float rim_pad = 0.0;
+uniform float time_s = 0.0;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7)) + seed) * 43758.5453);
@@ -60,8 +69,25 @@ vec3 linear_light(vec3 base, vec3 blend) {
 	return clamp(base + 2.0 * blend - 1.0, vec3(0.0), vec3(1.0));
 }
 
+// The card's edge, glowing ember-gold with the foil's rainbow band travelling
+// round it. A gaussian on the distance to the card's true edge: bright on the
+// frame line, gone a few pixels in (the name and cost stay clean) and a soft
+// halo outward.
+vec4 rim_glow(vec2 uv) {
+	vec2 p = uv * rim_px;
+	float d = min(min(p.x, rim_px.x - p.x), min(p.y, rim_px.y - p.y)) - rim_pad;
+	float g = exp(-d * d / 26.0) + 0.45 * exp(-max(-d, 0.0) / 6.0) * step(d, 0.0);
+	float sweep = (uv.x * 0.85 + uv.y * 0.55) + time_s * 0.35;
+	vec3 ember = vec3(1.0, 0.72, 0.32);
+	vec3 col = mix(ember, rainbow(sweep * 2.0), 0.18);
+	return vec4(col, clamp(g, 0.0, 1.0) * rim);
+}
+
 void fragment() {
 	vec2 uv = UV;
+	if (rim > 0.0) {
+		COLOR = rim_glow(uv);
+	} else {
 
 	// The "facing" stand-in: one diagonal sweep across the card, phase driven by
 	// tilt. Deliberately NOT wrapped with fract() — a repeating band tiles the
@@ -99,4 +125,5 @@ void fragment() {
 	float a = (0.035 + 0.26 * band) * strength;
 
 	COLOR = vec4(col, a * texture(TEXTURE, UV).a);
+	}
 }
