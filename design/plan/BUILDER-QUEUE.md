@@ -10,6 +10,15 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Hunters lunge when they attack and flinch when hit.**
+      **Nick, 2026-09-29 22:29 ET:** slow down the animation by about 25 %
+      **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
+      **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
+      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
+      Ask: Frog's lunge now lashes a pink tongue onto the jackal. Right length and thickness?
+      Test: state=3dstrike beast=cinder_jackal beat=loop
+      ![[agents/frames/builder/2026-09-30-frog-tongue-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [x] **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 21:14 ET:** drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
@@ -36,14 +45,6 @@ run failed.
       Ask: Flight reverted: a tapped card plays at once, nothing flies. Good?
       Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0 flyt=0.5
       ![[agents/frames/builder/2026-09-30-card-fly-revert-after.png|420]] ^played-cards-fly-to-their-target
-- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
-      **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
-      **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
-      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Ask: Frog's lunge now lashes a pink tongue onto the jackal. Right length and thickness?
-      Test: state=3dstrike beast=cinder_jackal beat=loop
-      ![[agents/frames/builder/2026-09-30-frog-tongue-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [x] **Let the Frog hang?**
       **Nick, 2026-09-29 17:14 ET:** lets get rid of the grip mechanic for now
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
