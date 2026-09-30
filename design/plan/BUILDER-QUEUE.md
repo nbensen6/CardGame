@@ -224,6 +224,51 @@ run failed.
       Ask: Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
       Test: state=3d beast=cinder_jackal console=climb+5 devzoom=16 devorbit=-35
       ![[agents/frames/builder/2026-09-30-devcam-free-after.png|420]] ^more-free-unrestriced-camera-movement-at
+- [ ] **The climb zigzags side to side.**
+      **Session, 2026-09-29 22:35 ET:** `route_pos` puts all five stones on one straight line, so a climb reads as a staircase. Alternate the rungs LEFT and RIGHT of that line by about one hunter height, ledges on the outer edges, so each hop is a diagonal traverse across the flank. Keep the even hop length and both endpoints (ground gap and sigil, #14). The hunter turns to face the stone it hops to. Done-when: from the resting camera the stones form a zigzag, each on the opposite side of the last, and a test pins alternation plus even hop length. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dclimb beast=cinder_jackal ^the-climb-zigzags-side-to-side
+- [ ] **The camera swings with each hop.**
+      **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dclimb beast=cinder_jackal console=climb+3 ^the-camera-swings-with-each-hop
+- [ ] **Hits stop time.**
+      **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dstrike beast=cinder_jackal beat=loop ^hits-stop-time
+- [ ] **The jackal threatens between turns.**
+      **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal endturn=1 ^the-jackal-threatens-between-turns
+- [ ] **Low health shows on screen.**
+      **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal console=hp+10 ^low-health-shows-on-screen
+- [ ] **One HUD style: carved obsidian.**
+      **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal ^one-hud-style-carved-obsidian
+- [ ] **The beast's health bar reacts.**
+      **Session, 2026-09-29 22:35 ET:** The beast bar is a plain progress bar. Give it notch marks at each weak-point threshold, a pale ghost segment that lingers 0.4 s after damage and drains, and a crack flash when a threshold is crossed. Done-when: a strike frame shows the ghost segment behind the new value. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dstrike beast=cinder_jackal beat=loop ^the-beast-s-health-bar-reacts
+- [ ] **Cards fan and glow.**
+      **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal hover=1 ^cards-fan-and-glow
+- [ ] **The intent badge reads like a warning.**
+      **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dclimb beast=cinder_jackal ^the-intent-badge-reads-like-a-warning
+- [ ] **The climb gauge stands beside the beast.**
+      **Session, 2026-09-29 22:35 ET:** The right-rail ladder is a thin line with ticks. Make it a gauge beside the stage: a portrait pip per hunter at their height, glowing notches at the ledges, the sigil burning at the top, in the obsidian style. Done-when: the climb frame shows both pips at their heights and the sigil glow at the top. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dclimb beast=cinder_jackal ^the-climb-gauge-stands-beside-the-beast
+- [ ] **Obsidian floor.**
+      **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal ^obsidian-floor
+- [ ] **Lava rock under the hunters.**
+      **Session, 2026-09-29 22:35 ET:** The climb stones and the hunters' standing slabs are tan boxes. Make them dark basalt with an ember glow at the underside and edges, scoped to the jackal fight. Done-when: the climb frame shows dark stones with orange edge glow under both hunters. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3dclimb beast=cinder_jackal ^lava-rock-under-the-hunters
+- [ ] **Lava flows around the arena.**
+      **Session, 2026-09-29 22:35 ET:** Add a lava ring between the floor and the wall: an emissive scrolling shader with noise, slow flow, orange omni lights along it, heat shimmer above it. It must not reach the hunters' slabs. Done-when: the rest frame shows glowing lava between the floor edge and the wall, lighting the floor orange at the rim. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal ^lava-flows-around-the-arena
+- [ ] **Embers in the air.**
+      **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal ^embers-in-the-air
+- [ ] **A sky with ash.**
+      **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
+      Test: state=3d beast=cinder_jackal ^a-sky-with-ash
 
 
 ## Waiting on Nick
@@ -238,6 +283,9 @@ into Now.
   upper two-thirds.
 - #23 boulder shape: plain rounded boulders, no flat top, no orange rim.
 - #27 weak-point shot: locked behind the active hunter, beast untouched.
+- Zigzag width: about one hunter height each side of the old line.
+- Lava: a ring at the arena's edge, not rivers across the floor.
+- HUD palette: black glass, ember-orange rim, gold for energy and the sigil.
 
 ## Later — beast rollout (AI pipeline, see `tools/builder/BRIEF-art-rollout.md`)
 
