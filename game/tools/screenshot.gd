@@ -86,6 +86,12 @@ var _land := 0
 ## camera. Every other shot snaps it, which hides exactly the thing Nick saw:
 ## a follow camera that lags, overshoots or cuts while the hunter is mid-hop.
 var _midair := 0.0
+## touch=K,S -- with a console `climb`, run LIVE until the followed hunter
+## touches down for the K-th time, then S more seconds of game time, and shoot
+## WITHOUT snapping the camera. land= pauses at the start of the NEXT hop, a
+## quarter second after touchdown; a camera's landing overshoot is over by then.
+var _touch_k := 0
+var _touch_s := 0.0
 ## drag=2,300,240 — pick card 2 up and carry it to (300,240), then shoot it
 ## there without letting go. A screenshot cannot drag, so without this the
 ## whole drag-to-play gesture could only ever be claimed to work.
@@ -165,6 +171,10 @@ func _initialize() -> void:
 			_land = int(a.substr(5))
 		if a.begins_with("midair="):
 			_midair = float(a.substr(7))
+		if a.begins_with("touch="):
+			var ks := a.substr(6).split(",")
+			_touch_k = int(ks[0])
+			_touch_s = float(ks[1]) if ks.size() > 1 else 0.0
 		if a.begins_with("press="):
 			_press_key = a.substr(6)
 		if a.begins_with("out="):
@@ -649,6 +659,42 @@ func _freeze_at_landing(view: Node, k: int) -> void:
 	print("LAND %d hunter%d at %s after %d home moves" % [k, slot, str(node.position), int(seen["moves"])])
 
 
+## touch=K,S: see _touch_k. Touchdown is the body arriving on `home`, which
+## _advance_climb_home moves to each leg's stone as the leg starts. The clock
+## runs at a tenth so no frame's delta can step far past either moment.
+func _freeze_after_touchdown(view: Node, k: int, secs: float) -> void:
+	var hunters: Array = view.get("_hunters")
+	var slot: int = int(view.call("lock_slot_for", view.get("_lock_slot"), hunters.size(), view.call("_me")))
+	if slot < 0 or slot >= hunters.size():
+		print("TOUCH no hunter to follow")
+		return
+	var h: Dictionary = hunters[slot]
+	var node: Node3D = h["node"]
+	Engine.time_scale = 0.1
+	var down := true
+	var seen := 0
+	var t0 := Time.get_ticks_msec()
+	while seen < k and Time.get_ticks_msec() - t0 < 60000:
+		await process_frame
+		var now_down: bool = node.position.distance_to(h["home"] as Vector3) < 0.005
+		if now_down and not down:
+			seen += 1
+		down = now_down
+	var t := 0.0
+	var last := Time.get_ticks_usec()
+	while t < secs:
+		await process_frame
+		var now := Time.get_ticks_usec()
+		t += float(now - last) / 1000000.0 * Engine.time_scale
+		last = now
+	Engine.time_scale = 0.0
+	await process_frame
+	var cam: Camera3D = view.get("_cam")
+	var sp := cam.unproject_position(node.global_position + Vector3(0, 0.35, 0))
+	print("TOUCH %d of %d +%.3fs hunter%d at %s screen=(%d,%d) cam=%s" % [
+		seen, k, t, slot, str(node.position), int(sp.x), int(sp.y), str(cam.global_position)])
+
+
 ## midair=S: run the climb and the follow camera in real time for `secs` of
 ## game time, then stop the clock (time_scale 0 freezes tweens and _process's
 ## delta alike) so the PNG is what a player saw at that instant. Prints where
@@ -936,19 +982,22 @@ func _capture() -> void:
 				re.compile("\\[/?[^\\]]*\\]")
 				print("CONSOLE %s -> %s" % [String(cmd).strip_edges(),
 					re.sub(said, "", true).replace("\n", " | ")])
+			var live := _midair > 0.0 or _touch_k > 0
 			if _midair > 0.0:
 				await _freeze_midair(current_scene, _midair)
+			elif _touch_k > 0:
+				await _freeze_after_touchdown(current_scene, _touch_k, _touch_s)
 			elif _land > 0:
 				await _freeze_at_landing(current_scene, _land)
-			for _c in (0 if _midair > 0.0 else 3):
+			for _c in (0 if live else 3):
 				await process_frame
 			# A `climb` starts a real-time hop: shoot where it lands, not mid-air.
 			var t0 := Time.get_ticks_msec()
-			while current_scene.has_method("_followed_is_airborne") \
+			while not live and current_scene.has_method("_followed_is_airborne") \
 					and bool(current_scene.call("_followed_is_airborne")) \
 					and Time.get_ticks_msec() - t0 < 20000:
 				await process_frame
-			if _midair <= 0.0:
+			if not live:
 				await _await_camera(current_scene)
 
 	# devzoom=N: how close the dev free camera gets. Turns Dev on, rolls the

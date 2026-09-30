@@ -631,6 +631,18 @@ const SHOULDER_EASE_RATE := 2.2
 var _air_chase := false
 var _air_span := 0.0
 var _air_settle := 0.0
+## The swing on each landing: with the zigzag a hop carries the hunter sideways,
+## and a lens that stops dead with them never lets the traverse be felt. So the
+## camera runs on past the landing along the hop's sideways direction and comes
+## back, one bump over HOP_SWING_TIME (queue, 2026-09-29 22:35: "settle with a
+## small overshoot, about 0.15 s"). `_swing_vec` is the peak offset, set by
+## _hop_landed; `_swing_off` is this frame's, added to the pivot in _apply_orbit.
+const HOP_SWING_TIME := 0.15
+const HOP_SWING_SHARE := 0.2    # of the hop's sideways distance
+const HOP_SWING_MAX := 0.5      # world units; the frame is ~7 wide at FOLLOW_DIST
+var _swing_vec := Vector3.ZERO
+var _swing_t := HOP_SWING_TIME
+var _swing_off := Vector3.ZERO
 ## The world-height band one jump covers, set when the hop starts so the
 ## camera can frame the whole arc as a single shot.
 var _jump_lo := 0.0
@@ -2966,7 +2978,40 @@ func _aim_camera(delta: float, snap: bool) -> void:
 			# beast's axis, used to swing the whole shot in one frame.
 			_yaw = want_yaw if snap else ease_yaw(_yaw, want_yaw, delta)
 			_yaw_target = _yaw
+	if snap:
+		_swing_t = HOP_SWING_TIME
+	else:
+		_swing_t += delta
+	_swing_off = _swing_vec * hop_swing(_swing_t)
 	_apply_orbit()
+
+
+## The swing's shape at `t` seconds after a landing: 0 at touchdown, 1 at the
+## overshoot's peak halfway through HOP_SWING_TIME, back to 0 and staying there.
+static func hop_swing(t: float) -> float:
+	if t <= 0.0 or t >= HOP_SWING_TIME:
+		return 0.0
+	return sin(PI * t / HOP_SWING_TIME)
+
+
+## The peak swing for a hop from `from` to `to` seen through a lens at `yaw`:
+## the hop's travel along the screen's x (the camera's right vector, see
+## _apply_orbit's orbit), a share of it, capped. A hop straight at the beast
+## has no sideways part and gets no swing.
+static func hop_swing_vec(from: Vector3, to: Vector3, yaw: float) -> Vector3:
+	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
+	var side := (to - from).dot(right)
+	return right * clampf(side * HOP_SWING_SHARE, -HOP_SWING_MAX, HOP_SWING_MAX)
+
+
+## Tween callback at each hop's touchdown (_hop): start the swing, but only
+## for the hunter the camera follows.
+func _hop_landed(node: Node3D, from: Vector3, to: Vector3) -> void:
+	var fs: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
+	if fs < 0 or fs >= _hunters.size() or _hunters[fs]["node"] != node:
+		return
+	_swing_vec = hop_swing_vec(from, to, _yaw)
+	_swing_t = 0.0
 
 
 ## The orbit yaw that puts the lens directly behind `hunter`, looking through
@@ -3467,7 +3512,8 @@ func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 	_dist = minf(_dist, _cam_reach())
 	var flat := cos(_pitch) * _dist
-	_cam_home = _pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
+	var pivot := _pivot + _swing_off
+	_cam_home = pivot + Vector3(sin(_yaw) * flat, sin(_pitch) * _dist, cos(_yaw) * flat)
 	var lift := lens_lift_for(_dist)
 	# Never dip under the floor. Aiming low at the foot of something 13 units tall
 	# drives the camera below y=0, and then you're looking up THROUGH the ground.
@@ -3477,7 +3523,7 @@ func _apply_orbit() -> void:
 	# Stay inside the arena wall. Without this the orbit happily walks the
 	# lens out past the scenery and the fight goes back to being a plate in
 	# an open sky, however much wall env.py built.
-	var ots := shoulder_frame(_pivot, _yaw, _dist, _shoulder)
+	var ots := shoulder_frame(pivot, _yaw, _dist, _shoulder)
 	_cam_home = _inside_wall(_cam_home + (ots["truck"] as Vector3))
 	_cam.position = _cam_home
 	_cam.look_at(ots["aim"] as Vector3, Vector3.UP)
@@ -4398,6 +4444,7 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 		tw.parallel().tween_property(body, "rotation:x", -lean, rise) 			.set_ease(Tween.EASE_OUT)
 		tw.parallel().tween_property(body, "rotation:x", lean * 0.8, fall) 			.set_delay(rise + hang).set_ease(Tween.EASE_IN)
 
+	tw.tween_callback(_hop_landed.bind(node, from, to))
 	# LANDING. Impact is a SNAP, not an ease — the asymmetry (in fast, out
 	# slow) is what reads as weight rather than as a slide into place.
 	if live:

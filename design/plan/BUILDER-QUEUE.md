@@ -230,9 +230,12 @@ run failed.
       Ask: Grader failed this: zigzag faint from rest camera. Stones zigzag enough for you?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-zigzag-rest-after.png|420]] ^the-climb-zigzags-side-to-side
-- [ ] **The camera swings with each hop.**
+- [ ] 👀 **The camera swings with each hop.**
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dclimb beast=cinder_jackal console=climb+3 ^the-camera-swings-with-each-hop
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B1) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
+      Ask: Camera now overshoots each sideways landing a little, then settles. Big enough?
+      Test: state=3d beast=cinder_jackal console=climb+1
+      ![[agents/frames/builder/2026-09-30-hop-swing-strip-after.png|420]] ^the-camera-swings-with-each-hop
 - [ ] **Hits stop time.**
       **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dstrike beast=cinder_jackal beat=loop ^hits-stop-time
@@ -366,3 +369,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
 - [ ] (proposed) The zigzag's second stones sit over the jackal's chest from the rest camera, partly hiding it.
 - [ ] (proposed) The named 3dclimb shot starts at the sigil, so it cannot show the stones below the Frog.
+- [ ] (proposed) Mid-hop in 3dclimb with `climb 3`, the Frog leaves the top of the frame (screen y -26 to -206).
+- [ ] (proposed) shot.sh keeps `+` in console= (only play mode turns it into a space), so queue Test lines fail under shot.sh.
+- [ ] (proposed) 3dclimb already sits at Height 5, so its `climb 3` Test hops the Frog down, not up.

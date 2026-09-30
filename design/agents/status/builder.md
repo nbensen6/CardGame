@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T23:14
-working_on: "The climb zigzags side to side."
+updated: 2026-09-29T23:38
+working_on: "The camera swings with each hop."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 23:14 EDT
+2026-09-29 23:38 EDT
 
-- **Did:** Stones now zigzag left and right on the way up, hops still even, hunter turns to each stone.
-- **Worked?** Partly; grader VERDICT: FAIL, the zigzag reads as a V from the resting camera, not one path.
-- **Look at:** ![[frames/builder/2026-09-30-zigzag-rest-before.png]] then ![[frames/builder/2026-09-30-zigzag-rest-after.png]]
-- **Ask:** Stones zigzag enough for you, or wider?
+- **Did:** Camera now runs on past each sideways hop's landing and settles back in 0.15 s.
+- **Worked?** Yes; grader VERDICT: PASS, camera x differs and the Frog is centred before and after one hop.
+- **Look at:** ![[frames/builder/2026-09-30-hop-swing-strip-before.png]] then ![[frames/builder/2026-09-30-hop-swing-strip-after.png]]
+- **Ask:** Swing big enough to feel, or larger?
 
 ## Notes
 
-- **Found:** the zigzag's second stones sit over the jackal's chest from the rest camera.
-- **Found:** the named 3dclimb shot starts at the sigil, so it cannot show the stones below.
+- **Found:** mid-hop in 3dclimb+climb 3, the Frog leaves the top of the frame (screen y -26 to -206).
+- **Found:** shot.sh keeps `+` in console= (only play= turns it into a space), so queue Test lines fail there.
+- **Found:** 3dclimb already sits at Height 5, so its `climb 3` hops the Frog DOWN.
 
 ## Log
 
+- 2026-09-29 23:38 EDT — builder: hop swing: _hop_landed callback at each touchdown sets _swing_vec (hop's screen-sideways travel x0.2, cap 0.5) and a 0.15 s sin bump offsets the orbit pivot (hop_swing, hop_swing_vec + test); harness touch=K,S freezes S s after the K-th touchdown without snapping; grader FAIL (graded the overshoot pair, wanted the done-when strip) then PASS; tests green, pushed.
 - 2026-09-29 23:14 EDT — builder: climb zigzag (route_pos inner rungs +-ZIGZAG_WIDTH 2.0 H, outward first; zigzag_along keeps hops even; _turn_toward faces the next stone); graded on state=3d; grader FAIL x2, escalated 👀; tests green, pushed.
 - 2026-09-29 22:51 EDT — builder: top item (lunge 25% slower) was already pushed in a460aed but left without 👀; marked 👀, no rebuild so it is not slowed twice.
 - 2026-09-29 22:41 EDT — builder: lunge/flinch 25% slower (hunter_act_beat x1.25, test pinned); harness beatat= fixed-clock cropped strip; grader FAIL then PASS; tests green, pushed.

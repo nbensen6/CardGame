@@ -1081,3 +1081,14 @@ Builder, 2026-09-29 22:32 EDT. Dev camera only; the Player camera and the rest s
   looks down the route, so any sideways step foreshortens; a clearer zigzag
   needs a wider step (which crowds the beast) or a camera off the line.
 
+## The camera swings with each hop.
+
+2026-09-29 23:38 EDT, builder.
+
+- The follow camera already rode the body's x/z mid-hop (air_follow_pivot), so the pan was there; what was missing was the settle. At each hop's touchdown `_hop` now fires `_hop_landed`, which (for the followed hunter only) sets `_swing_vec`: the hop's travel along the camera's right vector x `HOP_SWING_SHARE` 0.2, capped at `HOP_SWING_MAX` 0.5 units. `hop_swing(t)` is a sin bump over `HOP_SWING_TIME` 0.15 s; `_swing_off` is added to the pivot in `_apply_orbit` only, so the eased pivot is never disturbed. A snap zeroes it. Test: `_test_camera_swings_past_a_sideways_hop`.
+- Harness: `touch=K,S` runs live until the K-th touchdown, then S s of game time, and shoots without snapping.
+- Overshoot proof (same command, old code vs new, `state=3d beast=cinder_jackal console=climb+3 touch=1,0.075`): Frog at screen x 640 before, 588 after; at +0.25 s the new code is back at 640.
+  ![[agents/frames/builder/2026-09-30-hop-swing-before.png|420]] ![[agents/frames/builder/2026-09-30-hop-swing-after.png|420]]
+- Done-when strip (graded PASS): `state=3d beast=cinder_jackal` then `console=climb+1 touch=1,0.3`; Frog centred at 640 both, camera x differs.
+- Grader round 1 FAIL graded the overshoot pair as the done-when strip; round 2 PASS on the strip.
+

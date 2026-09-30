@@ -1026,6 +1026,7 @@ func _init() -> void:
 	_test_hop_subpoints_matches_the_live_20m_repro()
 	_test_every_climb_landing_is_a_stone()
 	_test_follow_camera_rides_the_body_not_the_landing()
+	_test_camera_swings_past_a_sideways_hop()
 	# fixer, 2026-09-25: #0658 -- the low-mid stretch of route_pos()'s own
 	# sweep read as a wall in front of the beast's chest/foreleg from the
 	# resting camera. chest_clear_push is the nudge that clears it.
@@ -30946,6 +30947,29 @@ func _test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process() -> v
 ## stone (16-25 units ahead on the jackal) the instant the hop starts, so the
 ## lens flew past the hunter. The rules: follow the body while airborne, keep
 ## it inside the vertical dead zone, and turn the yaw rather than cut it.
+## Queue, 2026-09-29: a zigzag hop moves the hunter sideways; the camera runs
+## on past the landing along that direction and settles back in ~0.15 s.
+func _test_camera_swings_past_a_sideways_hop() -> void:
+	var T := Combat3D.HOP_SWING_TIME
+	_expect(Combat3D.hop_swing(0.0) == 0.0 and Combat3D.hop_swing(T) == 0.0 \
+		and Combat3D.hop_swing(T * 3.0) == 0.0, "no swing at touchdown, none once it has settled")
+	_expect(is_equal_approx(Combat3D.hop_swing(T * 0.5), 1.0), "the overshoot peaks halfway through")
+	# yaw 0: the lens looks down -z, so screen right is world +x.
+	var v := Combat3D.hop_swing_vec(Vector3.ZERO, Vector3(2.0, 1.5, -3.0), 0.0)
+	_expect(v.x > 0.0 and is_zero_approx(v.z) and is_zero_approx(v.y),
+		"a hop to the right swings the camera further right, only sideways (got %s)" % v)
+	_expect(is_equal_approx(v.x, 2.0 * Combat3D.HOP_SWING_SHARE), "a share of the sideways travel (got %.3f)" % v.x)
+	var l := Combat3D.hop_swing_vec(Vector3.ZERO, Vector3(-2.0, 0.0, 0.0), 0.0)
+	_expect(l.x < 0.0, "a hop to the left swings left")
+	var straight := Combat3D.hop_swing_vec(Vector3.ZERO, Vector3(0.0, 3.0, -5.0), 0.0)
+	_expect(straight.is_zero_approx(), "a hop straight at the beast does not swing")
+	var big := Combat3D.hop_swing_vec(Vector3.ZERO, Vector3(40.0, 0.0, 0.0), 0.0)
+	_expect(is_equal_approx(big.length(), Combat3D.HOP_SWING_MAX), "a long hop's swing is capped")
+	var turned := Combat3D.hop_swing_vec(Vector3.ZERO, Vector3(0.0, 0.0, -2.0), PI * 0.5)
+	_expect(turned.z < 0.0 and is_zero_approx(turned.x),
+		"under a yaw the swing follows the SCREEN's sideways, not world x (got %s)" % turned)
+
+
 func _test_follow_camera_rides_the_body_not_the_landing() -> void:
 	var home := Vector3(-1.8, 4.6, 65.2)     # the landing stone, set at take-off
 	var body := Vector3(-1.4, 6.5, 78.6)     # where the hunter actually is
