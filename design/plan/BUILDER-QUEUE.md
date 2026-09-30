@@ -10,12 +10,21 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Remove cost.**
+- [ ] **Remove cost.**
+      **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
       **Nick, 2026-09-30 10:59 ET:** remove cost
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
       Ask: Cost gems gone from cards; energy still limits plays. Remove energy too?
       Test: state=3d
       ![[agents/frames/builder/2026-09-30-remove-cost-after.png|420]] ^remove-cost
+- [ ] **One HUD style: carved obsidian.**
+      **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
+      **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
+      **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
+      Ask: HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-sts-hud-after.png|420]] ^one-hud-style-carved-obsidian
 - [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
@@ -44,14 +53,7 @@ run failed.
       Ask: Grader failed this: wanted a steady red edge kept. Keep the edge unpulsed?
       Test: state=3d beast=cinder_jackal console=hp+10
       ![[agents/frames/builder/2026-09-30-heartbeat-remove-after.png|420]] ^low-health-shows-on-screen
-- [ ] 👀 **One HUD style: carved obsidian.**
-      **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
-      **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
-      Ask: HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-sts-hud-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] 👀 **Cards fan and glow.**
+- [x] **Cards fan and glow.**
       **Nick, 2026-09-30 09:44 ET:** remove this
       **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hover%3D1) · [[BUILDER-QUEUE-NOTES#Cards fan and glow.|details]]
