@@ -2130,16 +2130,34 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	var kind := String(boss.get("intent", {}).get("type", ""))
 	_intent_kind = kind
 	var hostile: bool = intent_is_hostile(kind)
+	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
 	_intent.add_theme_color_override("default_color",
 		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
-	# Obsidian with the ember rim like the rest of the HUD; the text colour
-	# above still says hostile or not.
-	var style := obsidian_style(EMBER_RIM if hostile else Color(0.46, 0.62, 0.42), 1, 5)
-	style.content_margin_left = 12.0
-	style.content_margin_right = 12.0
+	# A warning, not a label (2026-09-29 intense-fight plan): a thick red rim on
+	# every move, a big icon for the move type, bigger words. Hostile or calm is
+	# now the icon's and the words' colour, not the rim's.
+	var style := obsidian_style(INTENT_RIM, 3, 6)
+	style.content_margin_left = 16.0
+	style.content_margin_right = 16.0
 	style.content_margin_top = 4.0
-	style.content_margin_bottom = 4.0
+	style.content_margin_bottom = 6.0
 	_intent_tag.add_theme_stylebox_override("panel", carved(style))
+
+
+const INTENT_RIM := Color(0.92, 0.14, 0.08)
+const INTENT_ICON_SIZE := 34
+
+
+## The badge's text with its leading move-type glyph (†, ◆, ▲, ✚, ✦, ▼, ☠ from
+## intent_text_for) blown up into an icon: red on a hostile move, gold on the
+## rest. Text without a leading glyph comes back unchanged.
+static func intent_badge_bbcode(txt: String, hostile: bool) -> String:
+	var cut := txt.find(" ")
+	if cut <= 0 or txt.substr(0, cut).begins_with("["):
+		return txt
+	var icon := txt.substr(0, cut)
+	var tint := "#ff3a22" if hostile else "#f2c75c"
+	return "[font_size=%d][color=%s]%s[/color][/font_size] %s" % [INTENT_ICON_SIZE, tint, icon, txt.substr(cut + 1)]
 
 
 ## The pure placement rule behind _position_intent_tag, pulled out static so it
@@ -2166,7 +2184,7 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 ## hunter tall enough to fill the whole legal band) rather than pick a worse
 ## spot arbitrarily.
 static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rect2,
-		hunter_rect: Rect2 = Rect2()) -> Vector2:
+		hunter_rect: Rect2 = Rect2(), other_hunters: Array = []) -> Vector2:
 	var lo_y := 70.0                                   # clear of the boss HP bar
 	var hi_y: float = maxf(lo_y, vp.y - sz.y - 250.0)  # clear of the hand
 	# A crown that lands IN the HP-bar's own clear band (director, 2026-09-24:
@@ -2191,17 +2209,25 @@ static func intent_tag_pos(p: Vector2, sz: Vector2, vp: Vector2, party_rect: Rec
 		hi_y = maxf(lo_y, hi_y)
 	var y := clampf(p.y - sz.y * 0.5, lo_y, hi_y) if near_top \
 		else clampf(p.y - sz.y - 10.0, lo_y, hi_y)
-	if hunter_rect.size.x > 0.0 and hunter_rect.size.y > 0.0 \
-			and x < hunter_rect.position.x + hunter_rect.size.x \
-			and x + sz.x > hunter_rect.position.x \
-			and y < hunter_rect.position.y + hunter_rect.size.y \
-			and y + sz.y > hunter_rect.position.y:
-		var above := hunter_rect.position.y - sz.y - 10.0
-		var below := hunter_rect.position.y + hunter_rect.size.y + 10.0
-		if above >= lo_y:
-			y = above
-		elif below <= hi_y:
-			y = below
+	# Every hunter, not just the one you hold: the badge is never over either
+	# (2026-09-29 intense-fight plan). Two passes, so clearing the second hunter
+	# can't quietly drop the tag back onto the first.
+	var rects: Array = [hunter_rect]
+	rects.append_array(other_hunters)
+	for _pass in range(2):
+		for r in rects:
+			var hr: Rect2 = r
+			if hr.size.x > 0.0 and hr.size.y > 0.0 \
+					and x < hr.position.x + hr.size.x \
+					and x + sz.x > hr.position.x \
+					and y < hr.position.y + hr.size.y \
+					and y + sz.y > hr.position.y:
+				var above := hr.position.y - sz.y - 10.0
+				var below := hr.position.y + hr.size.y + 10.0
+				if above >= lo_y:
+					y = above
+				elif below <= hi_y:
+					y = below
 	return Vector2(x, y)
 
 
@@ -2239,11 +2265,9 @@ func _position_intent_tag() -> void:
 		return
 	if _beast_box.size.y <= 0.0:
 		return
-	var c := _beast_box.get_center()
-	var crown := Vector3(c.x, _beast_box.end.y + _beast_box.size.y * 0.05, c.z)
-	if _cam.is_position_behind(crown):
+	var p := intent_crown_screen(_cam, _beast_box)
+	if p.x == INF:
 		return
-	var p := _cam.unproject_position(crown)
 	var sz := _intent_tag.size
 	# Node3D has no get_viewport_rect(); that lives on Control.
 	var vp: Vector2 = get_viewport().get_visible_rect().size
@@ -2251,11 +2275,30 @@ func _position_intent_tag() -> void:
 	if _party != null and is_instance_valid(_party) and _party.is_visible_in_tree():
 		party_rect = _party.get_global_rect()
 	var hunter_rect := Rect2()
-	if _active_slot >= 0 and _active_slot < _hunters.size():
-		var hnode: Node3D = (_hunters[_active_slot] as Dictionary).get("node") as Node3D
-		if hnode != null and is_instance_valid(hnode) and (_hunters[_active_slot] as Dictionary).get("body") != null:
-			hunter_rect = hunter_screen_rect(_cam, _merged_aabb(hnode))
-	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect, hunter_rect)
+	var others: Array = []
+	for i in range(_hunters.size()):
+		var hnode: Node3D = (_hunters[i] as Dictionary).get("node") as Node3D
+		if hnode == null or not is_instance_valid(hnode) or (_hunters[i] as Dictionary).get("body") == null \
+				or not hnode.is_visible_in_tree():
+			continue
+		var r := hunter_screen_rect(_cam, _merged_aabb(hnode))
+		if i == _active_slot:
+			hunter_rect = r
+		else:
+			others.append(r)
+	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect, hunter_rect, others)
+
+
+## Where "above the head" is on screen: the top-centre of the beast's whole
+## projected box, not the projection of the box's top-centre point. At a low
+## climb camera the box's near top edge projects well above its centre, so the
+## old point sat inside the ears and the badge landed on them. INF when the
+## beast is behind the camera.
+static func intent_crown_screen(cam: Camera3D, box: AABB) -> Vector2:
+	var r := hunter_screen_rect(cam, box)
+	if r.size == Vector2.ZERO and r.position == Vector2.ZERO:
+		return Vector2(INF, INF)
+	return Vector2(r.get_center().x, r.position.y)
 
 
 ## What the beast is about to do, in numbers the player does not have to derive.

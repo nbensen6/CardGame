@@ -2757,6 +2757,8 @@ func _finish_with_deferred_tests() -> void:
 	# frame actually renders, at the very start of a ground-level hop.
 	_test_backlog_intent_tag_pos_a_stale_hunter_rect_lands_on_the_real_hunter()
 	_test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process()
+	_test_intent_badge_clears_the_other_hunter_too()
+	_test_intent_badge_icon_is_big_and_red_on_hostile_moves()
 
 	print("")
 	if _failures == 0:
@@ -31280,3 +31282,30 @@ func _test_obsidian_hud_style_is_one_material() -> void:
 	var carved: StyleBox = Combat3D.carved(st)
 	_expect(carved.flat == st and carved.get_content_margin(SIDE_TOP) == st.get_content_margin(SIDE_TOP),
 		"obsidian: the bevel wrapper keeps the panel's margins")
+
+
+## The badge is never over EITHER hunter (2026-09-29 intense-fight plan), not
+## only the one you hold: a tag clear of the active hunter but on the other one
+## still has to move.
+func _test_intent_badge_clears_the_other_hunter_too() -> void:
+	var p := Vector2(640.0, 214.0)
+	var sz := Vector2(200.0, 48.0)
+	var vp := Vector2(1280.0, 720.0)
+	var held := Rect2(100.0, 400.0, 80.0, 80.0)
+	var other := Rect2(600.0, 150.0, 90.0, 60.0)
+	var before: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), held)
+	_expect(Rect2(before, sz).intersects(other),
+		"repro: without the other hunter passed, the badge sits on it (got %s)" % Rect2(before, sz))
+	var pos: Vector2 = Combat3D.intent_tag_pos(p, sz, vp, Rect2(), held, [other])
+	_expect(not Rect2(pos, sz).intersects(other) and not Rect2(pos, sz).intersects(held),
+		"the badge clears both hunters (got %s against %s and %s)" % [Rect2(pos, sz), held, other])
+
+
+func _test_intent_badge_icon_is_big_and_red_on_hostile_moves() -> void:
+	var b := Combat3D.intent_badge_bbcode("† [u]Attack[/u] 7", true)
+	_expect(b.begins_with("[font_size=%d][color=#ff3a22]†[/color]" % Combat3D.INTENT_ICON_SIZE),
+		"a hostile move's glyph becomes a big red icon (got %s)" % b)
+	_expect(b.ends_with("[u]Attack[/u] 7"), "the words after the icon are untouched (got %s)" % b)
+	var calm := Combat3D.intent_badge_bbcode("◆ [u]Block[/u] 6", false)
+	_expect(calm.contains("[color=#f2c75c]◆"), "a calm move's icon is gold, not red (got %s)" % calm)
+	_expect(Combat3D.intent_badge_bbcode("", true) == "", "no text stays no text")

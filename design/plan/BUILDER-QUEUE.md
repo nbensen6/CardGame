@@ -272,9 +272,12 @@ run failed.
       Ask: Lifted card now glows ember-gold at its edge. Too strong?
       Test: state=3d beast=cinder_jackal hover=1
       ![[agents/frames/builder/2026-09-30-cards-fan-after.png|420]] ^cards-fan-and-glow
-- [ ] **The intent badge reads like a warning.**
+- [ ] 👀 **The intent badge reads like a warning.**
       **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dclimb beast=cinder_jackal ^the-intent-badge-reads-like-a-warning
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
+      Ask: Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-intent-badge-after.png|420]] ^the-intent-badge-reads-like-a-warning
 - [ ] **The climb gauge stands beside the beast.**
       **Session, 2026-09-29 22:35 ET:** The right-rail ladder is a thin line with ticks. Make it a gauge beside the stage: a portrait pip per hunter at their height, glowing notches at the ledges, the sigil burning at the top, in the obsidian style. Done-when: the climb frame shows both pips at their heights and the sigil glow at the top. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dclimb beast=cinder_jackal ^the-climb-gauge-stands-beside-the-beast
@@ -397,3 +400,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The jackal's leg flame markings sit outside the toon glow mask; only the ears responded to glow_gain.
 - [ ] (proposed) Shots take `console=hp 10` with a real space; `+` only decodes in play mode, so a Test line pasted into shot.sh silently fails.
 - [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.
+- [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.

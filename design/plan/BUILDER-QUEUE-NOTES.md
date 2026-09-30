@@ -1191,3 +1191,25 @@ was missing was the glow and the pulse.
 - **Tests.** `_test_cards_fan_raised_card_wears_a_rim_that_hides_when_lowered`,
   `_test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range`.
 - **Grader:** VERDICT: PASS (it noted the pulse cannot show in a still).
+
+## The intent badge reads like a warning.
+
+2026-09-30 01:59 EDT, builder.
+
+- **Before.** A 17 pt label with a 1 px ember rim. At the climb camera it sat on
+  the jackal's ear tips: the crown was the projection of the box's top-centre
+  point, and at a low camera the box's near top edge projects well above that.
+- **Did.** Label 24 pt; 3 px red rim (`INTENT_RIM`) on every move; the leading
+  move glyph (†, ◆, ▲, ✚, ✦, ▼, ☠) drawn at 34 pt, red on hostile moves and
+  gold on calm ones (`intent_badge_bbcode`). The crown is now the top-centre of
+  the beast's whole projected box (`intent_crown_screen`), so the badge clears
+  the ears at every camera. `intent_tag_pos` takes the other hunters' rects too
+  (`other_hunters`), two passes, so the badge is never over either hunter.
+- **Round 1 grader FAIL:** only Attack in frame, icon-per-type unseen. Added a
+  Defend frame (`state=3dclimb endturn=3`). **Round 2 FAIL:** Defend had a green
+  rim, item says red-rimmed; every move now gets the red rim. **Round 3 PASS.**
+- **Frames.** 2x2 strip: rest, climb, rest after `endturn=1` (Goblin's turn),
+  climb after `endturn=3` (Defend 5).
+- **Tests.** `_test_intent_badge_clears_the_other_hunter_too`,
+  `_test_intent_badge_icon_is_big_and_red_on_hostile_moves`.
+

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T01:40
-working_on: "Cards fan and glow."
+updated: 2026-09-30T01:59
+working_on: "The intent badge reads like a warning."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 01:40 EDT
+2026-09-30 01:59 EDT
 
-- **Did:** The lifted card in the hand now glows ember-gold at its edge; playable cost gems gently pulse.
-- **Worked?** Yes; VERDICT: PASS, hover frame shows the lifted glowing Leap above its tilted neighbours.
-- **Look at:** ![[frames/builder/2026-09-30-cards-fan-before.png]] then ![[frames/builder/2026-09-30-cards-fan-after.png]]
-- **Ask:** Lifted card now glows ember-gold at its edge. Too strong?
+- **Did:** Intent badge is bigger, red-rimmed, with a big move icon, pinned above the jackal's head.
+- **Worked?** Yes; VERDICT: PASS, badge above the head and clear of both hunters in all four frames.
+- **Look at:** ![[frames/builder/2026-09-30-intent-badge-before.png]] then ![[frames/builder/2026-09-30-intent-badge-after.png]]
+- **Ask:** Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
 
 ## Notes
 
+- **Found:** every badge now wears the red rim, so Defend reads calm only by its gold icon and text.
 - **Found:** the cost-gem pulse is motion only, so no still frame can show it; judge it live.
 
 ## Log
 
+- 2026-09-30 01:59 EDT — builder: intent badge reads like a warning (24 pt, 3 px red rim, 34 pt move icon via intent_badge_bbcode, crown from projected box top, clears both hunters + 2 tests); grader PASS on round 3; tests green, pushed.
 - 2026-09-30 01:40 EDT — builder: cards fan and glow (fan/tilt/lift already there; foil.gdshader rim mode, CardView.set_raised builds an ember-gold rim 10 px past the card, called from _layout_hand; cost gem breathes 1.0-1.1 via pip_pulse while playable + 2 tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:25 EDT — builder: beast HP bar reacts (beast_bar.gd overlay: notches per weak_point_threshold + hurt_pct line, 0.4 s ghost + drain, crack on crossing; hurt_pct in snapshot; beat=loop lands an 18 blow; tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:13 EDT — builder: carved-obsidian HUD (obsidian_style + ObsidianBox bevel wrapper `carved`, hud_font FontVariation w/ fallback; top bar, party cards, intent badge, energy orb, End Turn/Switch + test); grader FAIL x2 then PASS; tests green, pushed.
