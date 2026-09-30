@@ -10,14 +10,14 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Played cards fly to their target.**
+- [ ] 👀 **Played cards fly to their target.**
       **Nick, 2026-09-29 20:59 ET:** the played cards flying feel really bad please revert.
       **Nick, 2026-09-29 17:29 ET:** the card is stuck
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0%2C0%2C0%20flyt%3D1) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
-      Ask: Grader failed this: early catch reads as raised, not flying. Press Test; still stuck?
-      Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0,0,0 flyt=1
-      ![[agents/frames/builder/2026-09-29-card-stuck-after.png|420]] ^played-cards-fly-to-their-target
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0%20flyt%3D0.5) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
+      Ask: Flight reverted: a tapped card plays at once, nothing flies. Good?
+      Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0 flyt=0.5
+      ![[agents/frames/builder/2026-09-30-card-fly-revert-after.png|420]] ^played-cards-fly-to-their-target
 - [ ] **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck

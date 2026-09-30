@@ -1511,7 +1511,6 @@ func _init() -> void:
 	_test_grip_clock_runs_only_on_the_held_hunters_own_time()
 	_test_hunters_lunge_on_attack_and_flinch_on_hit()
 	_test_played_cards_fly_to_their_target()
-	_test_play_mode_never_holds_a_card_midair()
 	_test_play_mode_never_holds_a_strike_beat()
 	# backlog #86 duty 3 (forty-fourth pass): the test right above this one feeds
 	# grip_after_tick a raw 10.0-second window by hand and says "a +5 relic
@@ -23086,23 +23085,16 @@ func _test_hunters_lunge_on_attack_and_flinch_on_hit() -> void:
 		"with no previous snapshot the driving hunter lunges alone")
 
 
-## Session 2026-09-29: a played card flies to the beast for an attack and to the
-## hunter for block or climb; block lands with the ring and the sound.
+## Nick, 2026-09-29 20:59: "the played cards flying feel really bad please
+## revert." A tapped card resolves on the tap again; no copy flies anywhere.
 func _test_played_cards_fly_to_their_target() -> void:
-	_expect(Combat3D.card_fly_target({"type": "attack", "base": {"damage": 6}}) == "beast",
-		"an attack flies to the beast")
-	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"damage": 3}}) == "beast",
-		"a skill that deals damage flies to the beast too")
-	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"block": 5}}) == "hunter",
-		"a block card flies to the hunter")
-	_expect(Combat3D.card_fly_target({"type": "skill", "base": {"grip": 2}}) == "hunter",
-		"a climb card flies to the hunter")
-	_expect(Combat3D.card_fly_blocks({"base": {"block": 5}})
-		and Combat3D.card_fly_blocks({"base": {"ally_block": 3}})
-		and not Combat3D.card_fly_blocks({"base": {"damage": 6}}),
-		"only a card that gives Block pops the ring")
-	_expect(not Combat3D.card_in_flight(null), "nothing in the air: taps go through")
-	_expect(Combat3D.CARD_FLY_S >= 0.2 and Combat3D.CARD_FLY_S <= 0.3, "the flight is about 0.25 s")
+	var consts: Dictionary = (Combat3D as Script).get_script_constant_map()
+	_expect(not consts.has("CARD_FLY_S"), "the card flight is reverted: no flight time")
+	var names: Array = []
+	for m in (Combat3D as Script).get_script_method_list():
+		names.append(String(m["name"]))
+	_expect(not names.has("_fly_card_then") and not names.has("_land_card_now"),
+		"the card flight is reverted: a tap plays the card at once")
 
 
 func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:
@@ -30903,15 +30895,6 @@ func _test_play_mode_never_arms_the_shot_failsafe() -> void:
 		"an unattended shot still arms the 10 s failsafe")
 	_expect(not shot.arms_failsafe(PackedStringArray(["play", "state=3d", "beast=cinder_jackal"])),
 		"play mode (Test this now) never arms the failsafe that closes the window")
-
-
-## Nick, 2026-09-29 17:29: "the card is stuck." Test this now carried fly=0,
-## and the harness froze the card mid-flight and disabled the view under him.
-func _test_play_mode_never_holds_a_card_midair() -> void:
-	var shot := preload("res://tools/screenshot.gd")
-	_expect(shot.fly_holds_midair(false, 0.7), "an unattended fly= shot still holds the card mid-flight")
-	_expect(not shot.fly_holds_midair(false, 1.0), "flyt=1 lets the card land")
-	_expect(not shot.fly_holds_midair(true, 0.7), "play mode (Test this now) never holds a card in the air")
 
 
 ## Nick, 2026-09-29 17:14: "the scenario doesn't show this properly also frog

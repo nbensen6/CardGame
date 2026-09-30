@@ -205,3 +205,4 @@ appends here, never to the queue.
 
 - [ ] (proposed) **midair= samples drift run to run.** The same midair=0.95 lands mid-hop one run and on the stone the next, so before/after midair strips are not comparable.
 - [ ] **Jackal Burn bite.** Nick 2026-09-29: rethink the jackal's damage, maybe burn. One idea: its round-3 bite (9) becomes a 5 bite that applies 3 Burn (lose 1 HP a turn per stack, stacks fall by 1 each turn), so damage lands over time and block alone does not answer it.
+- [ ] (proposed) **Block sound unplayed again.** The `block` sound only rode on the reverted card flight; a Block card now plays no block sound.

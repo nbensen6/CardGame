@@ -583,14 +583,6 @@ var _free_cam_engaged := false
 var _lock_slot := 0         # the hunter the camera is locked onto (CAMERA_LOCK)
 var _circle: HitCircle      # the osu-style timing face, when that setting is on
 var _circle_index := -1     # the hand index whose window the circle is holding open
-## A played card's flight to its target (see _fly_card_then). One at a time:
-## a tap while one is in the air is ignored, because its hand index would be
-## read against a hand the landing card is about to change.
-const CARD_FLY_S := 0.25
-var _card_flying: Control = null
-var _card_fly_tw: Tween = null
-var _card_fly_to := ""
-var _card_fly_land := Callable()
 var _focused := false       # the camera is held close on the hunter you picked
 ## How much of the over-the-shoulder truck is applied, 0..1, eased rather than
 ## switched: the shot has to give it up for the establishing wide and for a jump
@@ -1014,14 +1006,8 @@ func _on_circle_resolved(quality: int) -> void:
 	if _circle_index < 0:
 		return
 	Sfx.play("nail" if quality > Combat.TIMING_MISS else "slip")
-	var idx := _circle_index
-	var slot := _cmd_slot()
-	var hand: Array = _my_private().get("hand", [])
-	var card: Dictionary = hand[idx] if idx < hand.size() else {}
-	var cv: Control = _hand_row.get_child(idx) as Control if _hand_row != null and idx < _hand_row.get_child_count() else null
+	_client.play_card(_circle_index, quality > Combat.TIMING_MISS, _cmd_slot(), -1, -1, quality)
 	_circle_index = -1
-	_fly_card_then(card, cv, func() -> void:
-		_client.play_card(idx, quality > Combat.TIMING_MISS, slot, -1, -1, quality))
 
 
 ## How many taps a timed card asks for, and whether it ends in a drag.
@@ -1264,7 +1250,6 @@ func _hand_top() -> float:
 func _end_turn() -> void:
 	if _end_btn.disabled:
 		return                                   # already ended; waiting on your ally
-	_land_card_now()   # a card still in the air lands before the turn ends
 	Sfx.play("end_turn")
 	_dismiss_coach()
 	_client.end_turn(_cmd_slot())
@@ -6527,9 +6512,7 @@ func _render_hand() -> void:
 			# The clip is still binary (nailed it / missed it) — a "good" vs.
 			# "perfect" distinction is the display half (backlog #34), not this one.
 			Sfx.play("nail" if quality > Combat.TIMING_MISS else "slip")
-			var slot := _cmd_slot()
-			_fly_card_then(c_card, cv, func() -> void:
-				_client.play_card(idx, quality > Combat.TIMING_MISS, slot, -1, -1, quality)))
+			_client.play_card(idx, quality > Combat.TIMING_MISS, _cmd_slot(), -1, -1, quality))
 	var players: Array = _client.shared.get("players", [])
 	var me: Dictionary = players[_me()] if _me() < players.size() else {}
 	# selecting and non-selecting used to be two branches, one of which
@@ -6604,8 +6587,6 @@ static func timing_zone_bonus(team_mod_pct: int, card_enchant_effect: String, ca
 
 
 func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
-	if card_in_flight(_card_flying):
-		return   # the last card is still on its way; its index is not settled yet
 	_dismiss_coach()   # you're playing; you don't need to be told to play
 	var index := int(card["index"])
 	if not _selecting.is_empty():  # this tap is a pick for the active card
@@ -6643,144 +6624,12 @@ func _on_card_tapped(card: Dictionary, cv: CardView) -> void:
 		# a pick that can never be answered.
 		if (_my_private().get("hand", []) as Array).size() <= 1:
 			Sfx.play("card")
-			var slot1 := _cmd_slot()
-			_fly_card_then(card, cv, func() -> void: _client.play_card(index, true, slot1))
+			_client.play_card(index, true, _cmd_slot())
 			return
 		_start_selection(card)
 		return
 	Sfx.play("card")
-	var slot := _cmd_slot()
-	_fly_card_then(card, cv, func() -> void: _client.play_card(index, true, slot))
-
-
-## Where a played card flies: "beast" for an attack, "hunter" for everything
-## else (block, climb, powers). A card with printed damage is an attack whatever
-## its type pill says.
-static func card_fly_target(card: Dictionary) -> String:
-	var base: Dictionary = card.get("base", {})
-	if String(card.get("type", "")) == "attack" or int(base.get("damage", 0)) > 0:
-		return "beast"
-	return "hunter"
-
-
-## Whether a played card gives Block, so its landing pops the ring and the
-## `block` sound.
-static func card_fly_blocks(card: Dictionary) -> bool:
-	var base: Dictionary = card.get("base", {})
-	return int(base.get("block", 0)) > 0 or int(base.get("ally_block", 0)) > 0
-
-
-## The one test for "a card is still in the air".
-static func card_in_flight(flying: Variant) -> bool:
-	return flying != null and is_instance_valid(flying)
-
-
-## A played card leaves the hand, grows and flies to what it acts on, and only
-## then does its effect resolve (`land`). The card in the hand is copied, not
-## moved: a snapshot arriving mid-flight rebuilds the hand from state that
-## still holds it, and must not find it missing.
-func _fly_card_then(card: Dictionary, cv: Control, land: Callable) -> void:
-	_land_card_now()
-	var hud := get_node_or_null("Hud/Root") as Control
-	if cv == null or not is_instance_valid(cv) or card.is_empty() or hud == null or _cam == null:
-		land.call()
-		return
-	var to := card_fly_target(card)
-	var goal := _card_goal(to)
-	var from := cv.get_global_rect().get_center()
-	var fly := CardView.new()
-	hud.add_child(fly)
-	fly.setup(card, true, false)
-	fly.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	fly.size = cv.size
-	fly.pivot_offset = fly.size * 0.5
-	fly.global_position = from - fly.pivot_offset
-	fly.rotation = cv.rotation
-	fly.z_index = 50
-	cv.modulate.a = 0.0   # the copy IS the card now
-	_card_flying = fly
-	_card_fly_to = to
-	_card_fly_land = func() -> void:
-		if card_fly_blocks(card):
-			Sfx.play("block")
-			_block_ring(_card_goal("hunter"))
-		land.call()
-	var tw := create_tween().set_parallel(true)
-	_card_fly_tw = tw
-	# Out of the hand and bigger first, then shrinking into the target.
-	tw.tween_property(fly, "global_position", goal - fly.pivot_offset, CARD_FLY_S) \
-			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	tw.tween_property(fly, "rotation", 0.0, CARD_FLY_S * 0.3)
-	tw.tween_property(fly, "scale", Vector2.ONE * 1.2, CARD_FLY_S * 0.25) \
-			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	# Shrinking as it goes, so it never parks over the hunter or the beast.
-	# Delays, not chain(): a chained step waits for the whole move, which
-	# made the flight 0.44 s instead of CARD_FLY_S.
-	tw.tween_property(fly, "scale", Vector2.ONE * 0.3, CARD_FLY_S * 0.75).set_delay(CARD_FLY_S * 0.25)
-	tw.tween_property(fly, "modulate:a", 0.35, CARD_FLY_S * 0.75).set_delay(CARD_FLY_S * 0.25)
-	tw.chain().tween_callback(_land_card_now)
-
-
-## Finish a flight at once: free the copy and resolve the card. Safe to call
-## with nothing in the air.
-func _land_card_now() -> void:
-	if _card_fly_tw != null and _card_fly_tw.is_valid():
-		_card_fly_tw.kill()
-	_card_fly_tw = null
-	if card_in_flight(_card_flying):
-		_card_flying.queue_free()
-	_card_flying = null
-	var land := _card_fly_land
-	_card_fly_land = Callable()
-	if land.is_valid():
-		land.call()
-
-
-## Screen point a card flies to: the beast's weak point, or the hunter you
-## are commanding. Falls back to the top middle if the target is behind the lens.
-func _card_goal(to: String) -> Vector2:
-	var vp := get_viewport().get_visible_rect().size
-	var fallback := Vector2(vp.x * 0.5, vp.y * 0.3)
-	var at: Vector3
-	if to == "beast":
-		if _sigil == null:
-			return fallback
-		at = _sigil.global_position
-	else:
-		var slot := _cmd_slot()
-		if slot < 0 or slot >= _hunters.size():
-			return fallback
-		var body := (_hunters[slot] as Dictionary).get("body") as Node3D
-		if body == null or not is_instance_valid(body):
-			return fallback
-		at = body.global_position + Vector3(0, 0.6, 0)
-	if _cam.is_position_behind(at):
-		return fallback
-	return _cam.unproject_position(at)
-
-
-## A ring that swells and fades on the hunter when Block lands.
-func _block_ring(at: Vector2) -> void:
-	var hud := get_node_or_null("Hud/Root") as Control
-	if hud == null:
-		return
-	var ring := Panel.new()
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0, 0, 0, 0)
-	sb.border_color = Color(0.6, 0.85, 1.0, 1.0)
-	sb.set_border_width_all(10)
-	sb.set_corner_radius_all(64)
-	ring.add_theme_stylebox_override("panel", sb)
-	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ring.size = Vector2(128, 128)
-	ring.pivot_offset = ring.size * 0.5
-	ring.position = at - ring.pivot_offset
-	ring.scale = Vector2.ONE * 0.6
-	hud.add_child(ring)
-	var tw := ring.create_tween().set_parallel(true)
-	tw.tween_property(ring, "scale", Vector2.ONE * 1.2, 0.35).set_ease(Tween.EASE_OUT)
-	tw.tween_property(ring, "modulate:a", 0.0, 0.35).set_ease(Tween.EASE_IN)
-	tw.chain().tween_callback(ring.queue_free)
+	_client.play_card(index, true, _cmd_slot())
 
 
 func _selection_prompt() -> String:

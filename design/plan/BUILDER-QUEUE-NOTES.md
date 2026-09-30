@@ -970,6 +970,14 @@ Builder, 2026-09-29 17:39 EDT, on Nick's "the card is stuck" (17:29).
 - Grader round 3 FAIL: "none of the panels shows a card in flight" (at the quarter mark the card is still over its slot and reads as raised). Round 2 (half flight) showed the flight but not the scale-up. Escalated: the real game was never stuck; the frames can prove the flight or the scale-up, not both in one still.
 - Grader round 1 FAIL: the landed-only frame showed no card in the air and no ring.
 
+Builder, 2026-09-30, on Nick's "the played cards flying feel really bad please revert" (20:59).
+
+- Reverted by hand (a `git revert` of 9283b8e and 14354b2 conflicted with later work): the flying CardView copy, `CARD_FLY_S`, `_fly_card_then`, `_land_card_now`, `_card_goal`, `card_fly_target`, `card_fly_blocks` and the block ring are gone. Every play path (plain tap, the one-card pick fallback, the card-face timing, the hit circle) calls `play_card` on the tap again, exactly as before 9283b8e. End Turn no longer lands a card first; taps are no longer ignored while one is in the air.
+- The `block` sound went with it; it is again never played. Not re-added on its own: Nick asked for a revert.
+- Harness: `fly=N,M` now just taps those cards in turn; `flyt=` is accepted and ignored so old Test links still open. `fly_holds_midair` and its test removed; the flight test now pins that the flight code is gone.
+- Before (old code, `fly=0 flyt=0.5`): Slash frozen mid-air over the Frog. After (same args): Slash resolved on the tap, jackal 70 -> 69, energy 9 -> 8, discard 1, fan closed to three cards.
+- Grader: VERDICT: PASS.
+
 ## The jackal dies on screen.
 
 Run 2026-09-29 16:04 EDT.

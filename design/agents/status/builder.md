@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T19:24
-working_on: "Change the fog so it's behind the exterior."
+updated: 2026-09-29T21:11
+working_on: "Played cards fly to their target."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 19:24 EDT
+2026-09-29 21:11 EDT
 
-- **Did:** Pushed the jackal arena's fog past the wall, so the lava-lit mountains show clearly.
-- **Worked?** Yes, the mountains went from purple smear to crisp rock and lava; VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-09-29-fog-behind-before.png]] then ![[frames/builder/2026-09-29-fog-behind-after.png]]
-- **Ask:** The lava-lit mountains are clear now; haze only in the sky. Right?
+- **Did:** Reverted the card flight: a tapped card plays at once again, nothing flies to a target.
+- **Worked?** Yes, Slash resolves on the tap with no card left in the air; VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-09-30-card-fly-revert-before.png]] then ![[frames/builder/2026-09-30-card-fly-revert-after.png]]
+- **Ask:** Flight reverted: a tapped card plays at once, nothing flies. Good?
 
 ## Notes
 
-- **Found:** every other biome still uses exponential fog that hazes its own arena wall the same way.
+- **Found:** the `block` sound is again never played, since it only rode on the reverted flight.
 
 ## Log
 
+- 2026-09-29 21:11 EDT — builder: card flight reverted on Nick's word (20:59): flying copy, CARD_FLY_S, _fly_card_then/_land_card_now/_card_goal/_block_ring gone, every play path calls play_card on the tap; harness fly= just taps, flyt= ignored; grader PASS; tests green, pushed.
 - 2026-09-29 19:24 EDT — builder: fog behind the exterior: quarry_ember switched to depth fog via fog_behind [6,10] radii (fog_behind_range, min 5.5 R past the far wall), peak 0.6; other biomes reset to exponential; grader PASS; tests green, pushed.
 - 2026-09-29 19:11 EDT — builder: jackal matte: SURFACE_FINISH spec_strength 0 on the jackal's toon body (the hard spec band lit whole head facets pale); rim left; grader PASS; tests green, pushed.
 - 2026-09-29 18:59 EDT — builder: 3dstrike no longer pauses the beat in play (strike_holds_beat); new beat=loop runs lunge/flinch from the ground, labelled 2x2 shot with widened lens; grader FAIL then PASS; tests green, pushed.
