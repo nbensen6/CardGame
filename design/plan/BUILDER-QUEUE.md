@@ -10,10 +10,12 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Remove cost.**
+- [ ] 👀 **Remove cost.**
       **Nick, 2026-09-30 10:59 ET:** remove cost
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
-      Test: state=3d ^remove-cost
+      Ask: Cost gems gone from cards; energy still limits plays. Remove energy too?
+      Test: state=3d
+      ![[agents/frames/builder/2026-09-30-remove-cost-after.png|420]] ^remove-cost
 - [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
@@ -445,3 +447,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stone beside the Frog sits nearer the lens.** Just after the climb 3 landing, the right-hand stone looks as near the camera as the Frog's own.
 - [ ] (proposed) **No max energy in the snapshot.** The orb can only say "3", not Slay the Spire's "3/3".
 - [ ] (proposed) **Climb gauge still wears the old panel look.** The right-hand rail is the one HUD piece not redesigned.
+- [ ] (proposed) **Energy orb with no card costs.** The orb still says 3 while no card shows what it spends.
+- [ ] (proposed) **Card name ribbons still inset for the gem.** The banner and borderless name keep their left gap for a gem that is gone.

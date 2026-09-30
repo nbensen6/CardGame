@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T11:02
-working_on: "One HUD style: carved obsidian."
+updated: 2026-09-30T11:10
+working_on: "Remove cost."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 11:02 EDT
+2026-09-30 11:10 EDT
 
-- **Did:** Redesigned the fight HUD after Slay the Spire: health bars on creatures, pile stacks, amber End Turn.
-- **Worked?** Yes; VERDICT: PASS after two FAIL rounds (plate on the ears, then a boxed intent).
-- **Look at:** ![[frames/builder/2026-09-30-sts-hud-before.png]] then ![[frames/builder/2026-09-30-sts-hud-after.png]]
-- **Ask:** HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
+- **Did:** Removed the energy cost gem from every card face; energy itself still works.
+- **Worked?** Yes; VERDICT: PASS, all five hand cards lost their cost gems.
+- **Look at:** ![[frames/builder/2026-09-30-remove-cost-before.png]] then ![[frames/builder/2026-09-30-remove-cost-after.png]]
+- **Ask:** Cost gems gone from cards; energy still limits plays. Remove energy too?
 
 ## Notes
 
-- **Found:** No max energy in the snapshot, so the orb cannot read "3/3".
-- **Found:** The climb gauge on the right still wears the old panel look.
+- **Found:** The energy orb still says 3 while no card shows what it spends.
+- **Found:** Card name ribbons keep their left gap for the gem that is gone.
 
 ## Log
 
+- 2026-09-30 11:10 EDT — builder: remove cost on Nick's word (10:59): CardView.SHOW_COST/shows_cost gate the framed gem, borderless gem and rail number; energy rule untouched + test; grader PASS; tests green, pushed.
 - 2026-09-30 11:02 EDT — builder: HUD redesigned after Slay the Spire on Nick's word (09:44): unit_bar.gd under each hunter and in party rows, beast plate under its feet, frameless intent, pile_badge.gd stacks, amber End Turn pill, obsidian_box.gd deleted + test; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 10:39 EDT — builder: low-health heartbeat vignette removed on Nick's word (09:44); jackal ember stream and `hp` command kept; grader FAIL (wanted a steady edge), shipped 👀 for Nick; tests green, pushed.
 - 2026-09-30 10:25 EDT — builder: jackal threat reverted on Nick's word (09:44): c5c33bd undone by hand (threat statics, _update/_step_threat, HeadTrack, toon heat, growl sfx+ogg, test); low health keeps the glow list via _rig_glow/_step_low_health; grader PASS; tests green, pushed.

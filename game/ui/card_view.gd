@@ -142,6 +142,15 @@ var _foil: ColorRect = null
 ## fan and glow, 2026-09-30.
 var _rim: ColorRect = null
 var _orb: Control = null
+## Nick, 2026-09-30: "remove cost". No card face prints its energy cost; the
+## energy rule itself (Combat.can_play) is untouched. One switch, so bringing
+## the gem back is one line.
+const SHOW_COST := false
+
+
+## Whether a card face draws its cost. Static so a test can pin it.
+static func shows_cost(data: Dictionary) -> bool:
+	return SHOW_COST and not bool(data.get("no_cost", false))
 var raised := false
 ## How far the rim reaches past the card, in px, so the glow bleeds outward.
 const RIM_PAD := 10.0
@@ -535,7 +544,7 @@ func _build_upper(data: Dictionary) -> void:
 	_layer(ban, 0.0, 0.0, 1.0, 0.0, 28.0, 2.0, -3.0, 30.0)
 
 	# 8 - the cost, over the ribbon's left end, as in the reference.
-	if not bool(_data.get("no_cost", false)):
+	if shows_cost(_data):
 		add_child(_cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", ""))))
 
@@ -767,7 +776,7 @@ func _build_borderless(data: Dictionary, tex: Texture2D) -> void:
 	# most often, and printing it flat onto the art costs a real read for a
 	# cosmetic. INSET rather than overhanging the corner, because the clip box
 	# would cut an overhang off.
-	if not bool(_data.get("no_cost", false)):
+	if shows_cost(_data):
 		var orb := _cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", "")))
 		orb.position = Vector2(4, 4)
@@ -844,7 +853,10 @@ func _rail_row(data: Dictionary) -> Control:
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	cost.add_theme_color_override("font_color", Color(0.95, 0.82, 0.5))
-	row.add_child(cost)
+	if shows_cost(data):
+		row.add_child(cost)
+	else:
+		cost.free()
 
 	var icon := String(data.get("icon", ""))
 	if ICONS.has(icon):

@@ -1405,3 +1405,18 @@ Builder, 2026-09-30 03:29 EDT. Brief: the Session line on the queue item (from
   a cloud layer.
 - **Test.** `_test_ash_sky_only_in_the_jackal_biome`.
 
+## Remove cost.
+
+2026-09-30 11:10 EDT, builder. Nick (10:59): "remove cost". Read as the energy
+cost printed on each card, the green gem top-left. Before frame: gems 1, 2, 1,
+0, 0 on the five hand cards.
+
+- `CardView.SHOW_COST := false` and static `CardView.shows_cost(data)` gate
+  every place a face draws cost: framed card gem, borderless card gem, rail row
+  number. No gem means no gem pulse (`_pulses()` is false).
+- The rule is untouched: cards still cost energy (`Combat.can_play`), the
+  energy orb still shows 3. Balance is Nick's, so the Ask is whether energy
+  goes too.
+- Not touched: the name ribbon's left inset that cleared the gem.
+- Grader: VERDICT: PASS.
+- Test: `_test_remove_cost_card_faces_draw_no_cost`.

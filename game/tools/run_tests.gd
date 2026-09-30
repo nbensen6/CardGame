@@ -1104,6 +1104,8 @@ func _init() -> void:
 	# gem breathes while playable.
 	_test_cards_fan_raised_card_wears_a_rim_that_hides_when_lowered()
 	_test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range()
+	# Remove cost (Nick, 2026-09-30): no card face prints its energy cost.
+	_test_remove_cost_card_faces_draw_no_cost()
 	# backlog #86 duty 2: should_rebuild_hand -- state_updated fires on EVERY
 	# player's action, not just this client's own, so a teammate's turn used
 	# to blow away this player's own in-flight sweep-bar timing card mid-swing.
@@ -22175,6 +22177,18 @@ func _test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range() -> void:
 		hi = maxf(hi, v)
 	_expect(lo >= 0.999 and hi <= 1.101 and hi - lo > 0.08,
 		"the cost gem breathes between 1.0 and 1.1 over a second (got %.3f..%.3f)" % [lo, hi])
+
+
+func _test_remove_cost_card_faces_draw_no_cost() -> void:
+	_expect(not CardView.shows_cost({"name": "Slash", "cost": 1}),
+		"Nick: remove cost - a card with a cost must not draw it")
+	_expect(not CardView.shows_cost({"name": "Relic", "no_cost": true}),
+		"a no_cost card still draws no cost")
+	var cv := CardView.new()
+	cv.setup({"name": "Slash", "cost": 2, "text": "Deal 6 damage."}, true)
+	_expect(cv._orb == null, "a playable card builds no cost gem")
+	_expect(not cv._pulses(), "with no gem there is nothing to pulse")
+	cv.free()
 
 
 func _test_backlog86_card_is_raised_by_hover() -> void:
