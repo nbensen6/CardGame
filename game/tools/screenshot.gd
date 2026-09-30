@@ -24,6 +24,9 @@
 ##   beat=loop (3dstrike: hunters stay on the ground and hunter N lunges, comes
 ##     home, flinches, comes home, on the real clock; the shot is a 2x2 strip.
 ##     In play it runs a few rounds and hands the fight over live)
+##   beatat=0.1,0.2,0.3,0.4 (with beat=loop, unattended: instead of the peaks,
+##     shoot hunter N's lunge that many seconds after it starts, so a change of
+##     speed shows in stills)
 ##   drag=2,300,240 (carry the Nth card of the hand to that point, and hold it there)
 ##   fly=N,M (tap those cards of the hand in turn; each resolves on the tap)
 ##   deathat=0.3,1.2,2.5 (3dreward: land the killing blow in the fight and
@@ -40,6 +43,7 @@ var _state := "combat"
 var _hold := ""   # 3dloop: stop the lap at this phase instead of finishing it
 var _beat := "attack"  # 3dstrike beat=attack|hit|rest: the beat hunter _actor takes
 var _actor := 0
+var _beatat: Array[float] = []  # beat=loop beatat=: seconds into the lunge to shoot
 var _beast := ""  # force a specific beast, to check a model that RNG rarely picks
 var _shade := ""  # "ao" | "shader" | "full" — the rendering prototype, see _apply_shade
 var _wide := false  # hold the establishing shot — see _capture
@@ -171,6 +175,9 @@ func _initialize() -> void:
 			_hold = a.substr(5)
 		elif a.begins_with("beat="):
 			_beat = a.substr(5)
+		elif a.begins_with("beatat="):
+			for t in a.substr(7).split(","):
+				_beatat.append(float(t))
 		elif a.begins_with("actor="):
 			_actor = int(a.substr(6))
 		elif a.begins_with("beast="):
@@ -1881,7 +1888,7 @@ func _strike_loop(v3: Node) -> void:
 	var tag := Label.new()
 	var tag_layer := CanvasLayer.new()
 	tag_layer.layer = 100
-	tag.position = Vector2(24, 170)
+	tag.position = Vector2(344, 190) if not _beatat.is_empty() else Vector2(24, 170)
 	tag.add_theme_font_size_override("font_size", 44)
 	tag.add_theme_color_override("font_color", Color(1, 0.9, 0.4))
 	tag.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -1902,9 +1909,22 @@ func _strike_loop(v3: Node) -> void:
 			cam.unproject_position(body.global_position) if cam != null else Vector2.ZERO, body.position, body.scale,
 			cam.unproject_position(other.global_position) if cam != null else Vector2.ZERO])
 		shots.append(root.get_viewport().get_texture().get_image())
-	if not _play:
+	if not _play and not _beatat.is_empty():
+		# The lunge on a fixed clock: the same seconds before and after a
+		# speed change land on different poses.
+		v3.call("_hunter_play", _actor, "attack")
+		if v3.has_method("_strike"):
+			v3.call("_strike", false)
+		var tw0: Tween = (v3.get("_act_tw") as Dictionary).get(_actor)
+		tw0.pause()
+		var at := 0.0
+		for t in _beatat:
+			tw0.custom_step(maxf(t - at, 0.0))
+			at = t
+			await snap.call("%.2f s" % t)
+	elif not _play:
 		await snap.call("1 rest")
-	for _r in (3 if _play else 1):
+	for _r in (0 if not _play and not _beatat.is_empty() else (3 if _play else 1)):
 		for beat in ["attack", "hit"]:
 			var d: Dictionary = v3.call("hunter_act_beat", beat)
 			v3.call("_hunter_play", _actor, beat)
@@ -1932,7 +1952,14 @@ func _strike_loop(v3: Node) -> void:
 	for i in shots.size():
 		var im: Image = shots[i]
 		im.convert(Image.FORMAT_RGBA8)
-		im.resize(w, h, Image.INTERPOLATE_BILINEAR)
+		if not _beatat.is_empty():
+			# beatat=: the hunter's own corner at native size, not the whole
+			# frame halved, so a pose a few seconds apart can be told apart.
+			var c := Vector2i(im.get_width() / 2 - w / 2, im.get_height() / 2 - h / 2)
+			im = im.get_region(Rect2i(c, Vector2i(w, h)))
+			im.convert(Image.FORMAT_RGBA8)
+		else:
+			im.resize(w, h, Image.INTERPOLATE_BILINEAR)
 		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % 2) * w, (i / 2) * h))
 	await _save_and_quit()
 

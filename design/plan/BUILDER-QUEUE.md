@@ -15,10 +15,10 @@ run failed.
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
       **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Ask: Frog's lunge now lashes a pink tongue onto the jackal. Right length and thickness?
-      Test: state=3dstrike beast=cinder_jackal beat=loop
-      ![[agents/frames/builder/2026-09-30-frog-tongue-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop%20beatat%3D0.2%2C0.28%2C0.36%2C0.44) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
+      Ask: Lunge and flinch now 25% slower (lunge 0.44 s round trip). Pace right?
+      Test: state=3dstrike beast=cinder_jackal beat=loop beatat=0.2,0.28,0.36,0.44
+      ![[agents/frames/builder/2026-09-30-lunge-slower-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [x] **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 21:14 ET:** drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
@@ -360,3 +360,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) A card tapped while its hunter is mid-hop lays its notes round where the hunter was.
 - [ ] (proposed) The Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
 - [ ] (proposed) **Grader penalises dev-camera frames by rest-shot rules.** It docked the dev zoom for a hidden Frog and cut-off ears, which Dev is meant to allow.
+- [ ] (proposed) The beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.

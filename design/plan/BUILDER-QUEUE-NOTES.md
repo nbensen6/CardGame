@@ -970,6 +970,14 @@ Builder, 2026-09-29 22:12 EDT, on Nick's "in the lunge can you add a tongue comi
 - Before and after frames both `state=3dstrike beast=cinder_jackal beat=loop`; only panel 2 (strike peak) changes.
 - Grader: VERDICT: PASS.
 
+Builder, 2026-09-29 22:41 EDT, on Nick's "slow down the animation by about 25 %" (22:29).
+
+- `hunter_act_beat` durations x1.25: attack out 0.15 -> 0.1875 s, back 0.2 -> 0.25 s (round trip 0.35 -> 0.4375 s); hit out 0.2 -> 0.25 s, back 0.25 -> 0.3125 s. Distances, punch, lean and flash unchanged. The tongue rides the same tween, so it slows with it. The `beat=loop` harness reads the durations from the dict, so its live rounds slow too.
+- Test pins the new out and back for both beats.
+- Harness: new `beatat=T1,T2,..` with `beat=loop` (unattended only; ignored in play): shoots the lunge that many seconds after it starts, each panel a native-size 640x360 crop of the frame centre, so a speed change shows in stills. The peak-seeking strip could never show it.
+- LOOP log, body z at 0.20/0.28/0.36/0.44 s: before -1.40/-0.39/0/0, after -1.59/-1.16/-0.31/0.
+- Grader: FAIL (first strip at half size and 0.1-0.4 s, difference unreadable), then PASS on the cropped strip at 0.2-0.44 s.
+
 ## Played cards fly to their target.
 
 Builder, 2026-09-29 15:30 EDT.

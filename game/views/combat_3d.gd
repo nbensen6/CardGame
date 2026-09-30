@@ -6270,8 +6270,8 @@ func _hunter_play(slot: int, anim: String) -> void:
 
 
 ## How far a hunter's body moves, and for how long, for each act beat. Pulled
-## out static so the numbers the queue asked for (a 0.15 s lunge toward the
-## beast, a 0.2 s knock-back) are pinned by a test and not only by eye.
+## out static so the numbers the queue asked for (a 0.1875 s lunge toward the
+## beast, a 0.25 s knock-back) are pinned by a test and not only by eye.
 ##   dir  +1 toward the beast, -1 away from it
 ##   out  seconds to the extreme, back  seconds home again
 ##   reach  world units the body travels
@@ -6279,13 +6279,15 @@ func _hunter_play(slot: int, anim: String) -> void:
 ##   punch  body scale multiplier at the extreme
 ##   lean  radians of pitch at the extreme (+ leans into the beast)
 ##   flash  starting alpha of a white overlay, 0 for none
+## Durations are 1.25x the first cut (0.15/0.2 and 0.2/0.25): Nick,
+## 2026-09-29, "slow down the animation by about 25 %".
 static func hunter_act_beat(anim: String) -> Dictionary:
 	match anim:
 		"attack":
-			return {"dir": 1.0, "out": 0.15, "back": 0.2, "reach": 1.6, "lift": 0.55,
+			return {"dir": 1.0, "out": 0.1875, "back": 0.25, "reach": 1.6, "lift": 0.55,
 				"punch": 1.3, "lean": 0.4, "flash": 0.0}
 		"hit":
-			return {"dir": -1.0, "out": 0.2, "back": 0.25, "reach": 1.0, "lift": 0.0,
+			return {"dir": -1.0, "out": 0.25, "back": 0.3125, "reach": 1.0, "lift": 0.0,
 				"punch": 0.9, "lean": -0.5, "flash": 0.85}
 	return {}
 

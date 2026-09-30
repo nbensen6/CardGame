@@ -23071,13 +23071,14 @@ func _test_grip_clock_runs_only_on_the_held_hunters_own_time() -> void:
 ## only the hunter that played the card lunges.
 func _test_hunters_lunge_on_attack_and_flinch_on_hit() -> void:
 	var a: Dictionary = Combat3D.hunter_act_beat("attack")
-	_expect(float(a["dir"]) > 0.0 and is_equal_approx(float(a["out"]), 0.15)
-		and float(a["punch"]) > 1.0,
-		"an attack is a 0.15 s lunge toward the beast with a scale punch")
+	_expect(float(a["dir"]) > 0.0 and is_equal_approx(float(a["out"]), 0.1875)
+		and is_equal_approx(float(a["back"]), 0.25) and float(a["punch"]) > 1.0,
+		"an attack is a 0.1875 s lunge toward the beast with a scale punch (25% slower than 0.15, Nick)")
 	var h: Dictionary = Combat3D.hunter_act_beat("hit")
-	_expect(float(h["dir"]) < 0.0 and is_equal_approx(float(h["out"]), 0.2)
+	_expect(float(h["dir"]) < 0.0 and is_equal_approx(float(h["out"]), 0.25)
+		and is_equal_approx(float(h["back"]), 0.3125)
 		and float(h["flash"]) > 0.0 and float(h["lean"]) != 0.0,
-		"a hit is a 0.2 s knock-back away from the beast, with a white flash and a lean")
+		"a hit is a 0.25 s knock-back away from the beast (25% slower), with a white flash and a lean")
 	_expect(Combat3D.hunter_act_beat("idle").is_empty(), "no other clip name moves a rigless hunter")
 	_expect(Combat3D.strike_slots([3, 3], [2, 3], 1) == [0],
 		"the hunter who spent energy is the one who lunges, not the one this client drives")

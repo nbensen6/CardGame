@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T22:32
-working_on: "More free unrestriced camera movement at higher speed."
+updated: 2026-09-29T22:41
+working_on: "Hunters lunge when they attack and flinch when hit."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 22:32 EDT
+2026-09-29 22:41 EDT
 
-- **Did:** Dev camera zooms past the hunter right up to the jackal, flies about 3.5x faster, Shift triples it.
-- **Worked?** Partly; grader VERDICT: FAIL, zoom met in round 2 but speed and freedom cannot show in stills.
-- **Look at:** ![[frames/builder/2026-09-30-devcam-free-before.png]] then ![[frames/builder/2026-09-30-devcam-free-after.png]]
-- **Ask:** Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
+- **Did:** Slowed the hunters' lunge and flinch by 25%, tongue included, as Nick asked.
+- **Worked?** Yes; grader VERDICT: PASS, at 0.36 s the old lunge is home, the new still lashes.
+- **Look at:** ![[frames/builder/2026-09-30-lunge-slower-before.png]] then ![[frames/builder/2026-09-30-lunge-slower-after.png]]
+- **Ask:** Lunge and flinch now 25% slower. Pace right?
 
 ## Notes
 
-- **Found:** the grader scores dev-camera frames by rest-shot rules (hidden Frog, cut ears).
+- **Found:** the beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
 
 ## Log
 
+- 2026-09-29 22:41 EDT — builder: lunge/flinch 25% slower (hunter_act_beat x1.25, test pinned); harness beatat= fixed-clock cropped strip; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 22:32 EDT — builder: dev camera freed: wheel floor 4.0 to 0.5 then dolly past it (dev_zoom, dev_dolly), WASD 1.0 x max(dist,6) + Shift x3 (dev_fly_speed), pivot clamp to the wall and 1.5R up (dev_pan_clamp); harness devzoom=/devorbit=/devfly=; grader FAIL x3 (speed unseen in stills), escalated; tests green, pushed.
 - 2026-09-29 22:12 EDT — builder: Frog tongue on the attack lunge (HUNTER_TONGUE, _aim_tongue riding the lunge tween, arced 0.05 so it reads from behind the Frog, tongue_point static + test); grader PASS; tests green, pushed.
 - 2026-09-29 21:52 EDT — builder: jackal matte item, Nick said matte enough; no code change, marked 👀 for his tick.
