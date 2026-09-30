@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T21:52
-working_on: "Make the Jackal be less glossy and more matte."
+updated: 2026-09-29T22:12
+working_on: "Hunters lunge when they attack and flinch when hit."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 21:52 EDT
+2026-09-29 22:12 EDT
 
-- **Did:** Nick called the jackal matte enough; recorded it, no code changed.
-- **Worked?** Yes, nothing to build; no grader run, the frame is unchanged by design.
-- **Look at:** ![[frames/builder/2026-09-29-jackal-matte-after.png]]
-- **Ask:** You said matte enough, so nothing changed. Tick it off?
+- **Did:** The Frog's attack lunge now lashes a pink tongue, arcing onto the jackal, then reels it back.
+- **Worked?** Yes, grader VERDICT: PASS; the strike-peak panel shows the tongue, the others unchanged.
+- **Look at:** ![[frames/builder/2026-09-30-frog-tongue-before.png]] then ![[frames/builder/2026-09-30-frog-tongue-after.png]]
+- **Ask:** Frog's lunge now lashes a pink tongue onto the jackal. Right length and thickness?
 
 ## Notes
 
-- **Found:** a card tapped while its hunter is mid-hop lays its notes round where the hunter was.
-- **Found:** notes still sit over the jackal's body at times (already proposed).
+- **Found:** the Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
 
 ## Log
 
+- 2026-09-29 22:12 EDT — builder: Frog tongue on the attack lunge (HUNTER_TONGUE, _aim_tongue riding the lunge tween, arced 0.05 so it reads from behind the Frog, tongue_point static + test); grader PASS; tests green, pushed.
 - 2026-09-29 21:52 EDT — builder: jackal matte item, Nick said matte enough; no code change, marked 👀 for his tick.
 - 2026-09-29 21:36 EDT — builder: drag road clear of every tap (road_clearance, ROAD_CLEAR 75), tap after the drag leads on (drag_leads), rings never touch (NOTE_GAP 92), 12 px air off the hunter and road off them too, whole-walk retry (NOTE_WALKS 32); 3dosu waits 1 s for hops before the tap; grader FAIL then PASS; tests green, pushed.
 

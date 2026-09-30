@@ -48,6 +48,10 @@ const AI_ART := {"cinder_jackal": "_ai"}
 ## (_show_beast, location_3d.gd's felled-beast lookup) means "beast", and nothing
 ## here changes that. Empty until an artist ships a rigged hunter .glb.
 const HUNTER_AI_ART := {"frog": "_ai", "goblin_mech": "_ai"}
+## Hunters whose attack lunge shoots a tongue at the beast (Nick, 2026-09-29:
+## "in the lunge can you add a tongue coming out like its attacking with its
+## tongue at the beast"). Presentation only; the value is its colour.
+const HUNTER_TONGUE := {"frog": Color(0.93, 0.36, 0.5)}
 ## outline.gdshader draws one fixed screen-space line weight on every model,
 ## tuned against thick rounded masses (the jackal, the Frog). A HUNTER_AI_ART
 ## model built from many thin parts (straps, tank fittings, limb segments)
@@ -4864,7 +4868,7 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 	# The BODY is kept apart from the holder because the climb hop squashes it,
 	# and the pip is a child of the holder too — squashing that would pump the
 	# one marker that has to stay readable from across the arena.
-	return {"node": holder, "home": Vector3.ZERO, "body": body, "anim": anim}
+	return {"node": holder, "home": Vector3.ZERO, "body": body, "anim": anim, "cid": cid}
 
 
 ## Orbiting means a hunter can end up behind the beast's body. A pip that draws
@@ -6291,6 +6295,7 @@ func _hunter_tween_act(slot: int, anim: String) -> void:
 			(mi as MeshInstance3D).material_overlay = null
 		if body is MeshInstance3D:
 			(body as MeshInstance3D).material_overlay = null
+		_hide_tongue(slot)
 	var rest := hunter_rest_scale(body)
 	body.rotation.x = 0.0
 	var at := _beast_box.get_center() - holder.position if _beast != null else Vector3.FORWARD
@@ -6313,10 +6318,19 @@ func _hunter_tween_act(slot: int, anim: String) -> void:
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.parallel().tween_property(body, "rotation:x", float(beat["lean"]), out) \
 		.set_ease(Tween.EASE_OUT)
+	# The tongue rides the same tween, out with the lunge and back with the
+	# return, so seeking or killing the beat takes it along; at 0 it hides.
+	var tongue := anim == "attack" and HUNTER_TONGUE.has(String(h.get("cid", "")))
+	if tongue:
+		tw.parallel().tween_method(_aim_tongue.bind(slot), 0.0, 1.0, out) \
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tw.tween_property(body, "position", Vector3.ZERO, back) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 	tw.parallel().tween_property(body, "scale", rest, back).set_ease(Tween.EASE_IN_OUT)
 	tw.parallel().tween_property(body, "rotation:x", 0.0, back).set_ease(Tween.EASE_IN_OUT)
+	if tongue:
+		tw.parallel().tween_method(_aim_tongue.bind(slot), 1.0, 0.0, back) \
+			.set_ease(Tween.EASE_IN)
 	var flash: float = beat["flash"]
 	if flash > 0.0:
 		var white := StandardMaterial3D.new()
@@ -6336,6 +6350,108 @@ func _hunter_tween_act(slot: int, anim: String) -> void:
 			for mi in meshes:
 				if is_instance_valid(mi) and (mi as MeshInstance3D).material_overlay == white:
 					(mi as MeshInstance3D).material_overlay = null)
+
+
+## A point `u` of the way along a lunging hunter's tongue (0 in the mouth, 1
+## at the beast). The beast stands straight behind the hunter from the rest
+## camera, so a straight tongue points into the screen and shows as a sliver;
+## it arcs up by TONGUE_ARC of its length, a lash, and ends TONGUE_SHORT short
+## of the aim point so it lands on the hide rather than inside it.
+const TONGUE_SHORT := 0.15
+const TONGUE_ARC := 0.05
+const TONGUE_SEGMENTS := 14
+static func tongue_point(mouth: Vector3, target: Vector3, u: float) -> Vector3:
+	var gap := target - mouth
+	var reach := maxf(gap.length() - TONGUE_SHORT, 0.0)
+	if reach <= 0.0:
+		return mouth
+	var end := mouth + gap.normalized() * reach
+	var k := clampf(u, 0.0, 1.0)
+	return mouth.lerp(end, k) + Vector3.UP * (reach * TONGUE_ARC * 4.0 * k * (1.0 - k))
+
+
+## Stretch hunter `slot`'s tongue `t` of the way from its mouth to the beast:
+## TONGUE_SEGMENTS pink cylinders along tongue_point's arc, tapering to the
+## tip, plus a round sticky pad on the end. Parented to the rig the hunters
+## and the beast box share, made on first use; hidden again at t = 0.
+func _aim_tongue(t: float, slot: int) -> void:
+	if slot < 0 or slot >= _hunters.size() or _beast == null:
+		return
+	var h: Dictionary = _hunters[slot]
+	var holder := h.get("node") as Node3D
+	var body := h.get("body") as Node3D
+	if holder == null or body == null or not is_instance_valid(body):
+		return
+	var tongue := h.get("tongue") as Node3D
+	if tongue == null or not is_instance_valid(tongue):
+		tongue = Node3D.new()
+		var mat := StandardMaterial3D.new()
+		mat.albedo_color = HUNTER_TONGUE.get(String(h.get("cid", "")), Color(0.93, 0.36, 0.5))
+		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		var cyl := CylinderMesh.new()
+		cyl.top_radius = 1.0
+		cyl.bottom_radius = 1.0
+		cyl.height = 1.0
+		cyl.radial_segments = 8
+		cyl.rings = 1
+		for i in TONGUE_SEGMENTS:
+			var seg := MeshInstance3D.new()
+			seg.mesh = cyl
+			seg.material_override = mat
+			seg.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			tongue.add_child(seg)
+		var pad := MeshInstance3D.new()
+		var ball := SphereMesh.new()
+		ball.radius = 1.0
+		ball.height = 2.0
+		ball.radial_segments = 10
+		ball.rings = 5
+		pad.mesh = ball
+		pad.material_override = mat
+		pad.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		tongue.add_child(pad)
+		_rig.add_child(tongue)
+		h["tongue"] = tongue
+	if t <= 0.001:
+		tongue.visible = false
+		return
+	var rest := hunter_rest_scale(body)
+	var grow: float = body.scale.y / maxf(rest.y, 0.001)
+	var mouth: Vector3 = holder.transform * (body.position + Vector3(0.0, HUNTER_HEIGHT * 0.55 * grow, 0.0))
+	var target := _beast_box.get_center()
+	var r0 := HUNTER_HEIGHT * 0.14
+	for i in TONGUE_SEGMENTS:
+		var a := tongue_point(mouth, target, t * float(i) / TONGUE_SEGMENTS)
+		var b := tongue_point(mouth, target, t * float(i + 1) / TONGUE_SEGMENTS)
+		var seg := tongue.get_child(i) as MeshInstance3D
+		var span := b - a
+		var length := span.length()
+		if length < 0.0005:
+			seg.visible = false
+			continue
+		var dir := span / length
+		var side := dir.cross(Vector3.UP)
+		if side.length() < 0.01:
+			side = dir.cross(Vector3.RIGHT)
+		side = side.normalized()
+		var fwd := side.cross(dir).normalized()
+		# Tapers from the mouth, but grows with distance so the far end still
+		# reads from a camera beside the hunter.
+		var r := r0 * (1.0 + 6.0 * float(i) / TONGUE_SEGMENTS * t)
+		seg.transform = Transform3D(Basis(side * r, dir * length, fwd * r), a + span * 0.5)
+		seg.visible = true
+	var pad := tongue.get_child(TONGUE_SEGMENTS) as MeshInstance3D
+	pad.transform = Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * r0 * (1.0 + 10.0 * t)),
+		tongue_point(mouth, target, t))
+	tongue.visible = true
+
+
+func _hide_tongue(slot: int) -> void:
+	if slot < 0 or slot >= _hunters.size():
+		return
+	var tongue := (_hunters[slot] as Dictionary).get("tongue") as Node3D
+	if tongue != null and is_instance_valid(tongue):
+		tongue.visible = false
 
 
 ## A hit on the beast: recoil, a flash of light, a kick of camera shake — much

@@ -23084,6 +23084,19 @@ func _test_hunters_lunge_on_attack_and_flinch_on_hit() -> void:
 		"a 0-cost card spends nothing, so the lunge falls back to the driving hunter")
 	_expect(Combat3D.strike_slots([], [3, 3], 0) == [0],
 		"with no previous snapshot the driving hunter lunges alone")
+	# Nick, 2026-09-29 20:59: the Frog's lunge shoots a tongue at the beast.
+	_expect(Combat3D.HUNTER_TONGUE.has("frog") and not Combat3D.HUNTER_TONGUE.has("goblin_mech"),
+		"the Frog lunges with its tongue; the Goblin does not have one")
+	var mouth := Vector3(0, 0.4, 10)
+	var aim := Vector3(0, 6, -20)
+	_expect(Combat3D.tongue_point(mouth, aim, 0.0) == mouth, "the tongue starts in the mouth")
+	var tip := Combat3D.tongue_point(mouth, aim, 1.0)
+	_expect(is_equal_approx(tip.distance_to(aim), Combat3D.TONGUE_SHORT),
+		"fully out, the tongue reaches the beast and stops on its hide")
+	var mid := Combat3D.tongue_point(mouth, aim, 0.5)
+	_expect(mid.y > mouth.lerp(tip, 0.5).y + 1.0,
+		"the tongue arcs up over the straight line, so it reads from behind the hunter")
+	_expect(Combat3D.tongue_point(mouth, mouth, 1.0) == mouth, "no beast gap, no tongue")
 
 
 ## Nick, 2026-09-29 20:59: "the played cards flying feel really bad please

@@ -960,6 +960,16 @@ Builder, 2026-09-29 18:59 EDT, on Nick's "the scenario doesn't show this properl
 - Test link and Test line now carry `beat=loop`.
 - Grader: FAIL (panels unlabelled, no rest-then-strike order, Goblin out of frame), then PASS.
 
+Builder, 2026-09-29 22:12 EDT, on Nick's "in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?" (20:59).
+
+- `HUNTER_TONGUE` (combat_3d.gd) names the hunters whose attack lunge shoots a tongue; only `frog`, value is its colour (pink 0.93, 0.36, 0.5). The hunter dict now carries its `cid`.
+- The tongue rides the lunge's own tween: `tween_method(_aim_tongue)` 0 -> 1 in parallel with the 0.15 s out, 1 -> 0 with the 0.2 s return, hidden at 0. Killing a beat mid-flight hides it, like the flash. Hit beats and the Goblin never show it.
+- Shape: 14 unshaded cylinder segments plus a round tip pad, parented to the rig, built on first use. Runs from the mouth (55% hunter height above the body) to the beast box centre, stopping `TONGUE_SHORT` 0.15 short.
+- The first straight tongue was 84 world units long but only 30 px on screen: from the rest camera the jackal stands straight behind the Frog, so a straight line points into the screen. It now arcs up by `TONGUE_ARC` 0.05 of its length (0.18 and 0.12 looped up behind the Attack badge) and thickens toward the tip (radius 0.14 x hunter height at the mouth, 7x that at the far end, pad up to 11x), so the far end still reads.
+- Static `tongue_point(mouth, target, u)` holds the arc; `_test_hunters_lunge_on_attack_and_flinch_on_hit` pins Frog-only, starts in the mouth, lands 0.15 short of the aim, arcs above the straight line.
+- Before and after frames both `state=3dstrike beast=cinder_jackal beat=loop`; only panel 2 (strike peak) changes.
+- Grader: VERDICT: PASS.
+
 ## Played cards fly to their target.
 
 Builder, 2026-09-29 15:30 EDT.
