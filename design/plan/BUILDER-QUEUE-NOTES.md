@@ -1233,3 +1233,22 @@ was missing was the glow and the pulse.
 - Specular band: a real sun highlight never lands in frame (key light is behind the camera), and a light-driven spec gave a big blue ellipse off the Fill. Tried a world-elevation band (a red ring around the camera) and a view-anchored spot (read as a spotlight decal). Kept: reflected view ray's VIEW-space y in [0.20, 0.235], hard edges, soft ends past |x| 0.9, colour (1.0, 0.74, 0.62) x0.8.
 - Cracks: world-XZ Voronoi edges, 4 m cells, width min(0.018 cell, 1.2 px) so they stay hairlines near the camera; gain 0.35 orange.
 - Grader round 1 FAIL (foreground cracks were solid red bars), round 2 PASS.
+
+## Lava rock under the hunters.
+
+Built 2026-09-30 02:40 EDT.
+
+- New `game/assets/3d/lava_rock.gdshader`: base (0.11, 0.095, 0.10) multiplied by
+  ROCK_DETAIL, toon diffuse, no specular. Emission (1.0, 0.32, 0.06) on faces whose
+  world normal points down (smoothstep -0.55..-0.95, gain 0.7) plus a fresnel edge
+  (power 7, gain 1.2).
+- `BIOME["quarry_ember"]["stone"] = "lava_rock"`; `Combat3D.stone_style(biome)`
+  reads it. `_add_float_stone` puts the shader on the rock body and the cap when the
+  current beast's biome asks for it; every other biome keeps its pale stones. The
+  existing ember rim torus stays and now reads as the glowing lip.
+- Test `_test_stone_style_lava_rock_only_in_the_jackal_biome`.
+- First pass (under gain 2.4, edge power 3) blew the whole stone out to orange/yellow;
+  grader FAIL. Tightened to the values above; the stone reads dark with orange rim and
+  edges. Second grader FAIL only because the Goblin's stone is cut off at the right edge
+  in `state=3dclimb` (and `state=3d`), so "under both hunters" cannot be seen. Moving
+  the camera is outside this item; left for Nick.

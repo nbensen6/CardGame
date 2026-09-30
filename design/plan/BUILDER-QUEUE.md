@@ -290,9 +290,12 @@ run failed.
       Ask: Floor is black glass with a sheen band. Band too bright or right?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-obsidian-floor-after.png|420]] ^obsidian-floor
-- [ ] **Lava rock under the hunters.**
+- [ ] 👀 **Lava rock under the hunters.**
       **Session, 2026-09-29 22:35 ET:** The climb stones and the hunters' standing slabs are tan boxes. Make them dark basalt with an ember glow at the underside and edges, scoped to the jackal fight. Done-when: the climb frame shows dark stones with orange edge glow under both hunters. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dclimb beast=cinder_jackal ^lava-rock-under-the-hunters
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Lava rock under the hunters.|details]]
+      Ask: Grader failed this: Goblin's stone off-frame. Stones read as lava rock to you?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-lava-rock-after.png|420]] ^lava-rock-under-the-hunters
 - [ ] **Lava flows around the arena.**
       **Session, 2026-09-29 22:35 ET:** Add a lava ring between the floor and the wall: an emissive scrolling shader with noise, slow flow, orange omni lights along it, heat shimmer above it. It must not reach the hunters' slabs. Done-when: the rest frame shows glowing lava between the floor edge and the wall, lighting the floor orange at the rim. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal ^lava-flows-around-the-arena
@@ -409,3 +412,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.
 - [ ] (proposed) **Gauge covers the Goblin's stone.** The climb gauge panel on the right edge overlaps the Goblin's stone in the climb frame.
 - [ ] (proposed) The sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
+- [ ] (proposed) **Goblin off-frame in jackal shots.** The Goblin and its stones sit past the right edge in both the rest and climb frames.
+- [ ] (proposed) **Frog stone lost against the jackal.** The dark lava stone has little contrast against the black jackal body behind it.

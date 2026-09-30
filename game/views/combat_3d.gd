@@ -25,6 +25,9 @@ const TOON := preload("res://assets/3d/toon.gdshader")
 const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Black-glass arena floor for a biome that names `"floor": "obsidian"`.
 const OBSIDIAN := preload("res://assets/3d/obsidian.gdshader")
+## Dark basalt with an ember glow for the climb stones of a biome that names
+## `"stone": "lava_rock"`.
+const LAVA_ROCK := preload("res://assets/3d/lava_rock.gdshader")
 ## Faceted rock detail for the floating footholds (_build_float_stones) — a
 ## generated (not modelled) grayscale multiply so a stone reads as cut rock
 ## instead of one flat colour. See design/progress/foothold_rock_detail.md.
@@ -2611,6 +2614,10 @@ const BIOME := {
 		# band, faint orange cracks. The env's Floor mesh and the plain Ground
 		# disc both take it; see floor_style() / _dress_floor().
 		"floor": "obsidian",
+		# Lava rock under the hunters (session, 2026-09-29): the climb stones
+		# go dark basalt with an ember glow at the underside and edges. See
+		# stone_style() / _add_float_stone().
+		"stone": "lava_rock",
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -2700,6 +2707,14 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 static func floor_style(biome: String) -> String:
 	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
 	return String(b.get("floor", ""))
+
+
+## The climb stones' finish a biome asks for: "lava_rock", or "" for the pale
+## stones every other fight keeps. Static so run_tests.gd can pin which fights
+## get it.
+static func stone_style(biome: String) -> String:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return String(b.get("stone", ""))
 
 
 var _ground_mat_default: Material = null
@@ -5589,8 +5604,14 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# as clones.
 	body_mat.albedo_texture = ROCK_DETAIL
 	body_mat.roughness = 1.0
+	var lava := stone_style(String(BEAST_BIOME.get(_beast_id, "crag"))) == "lava_rock"
+	var lava_mat: ShaderMaterial = null
+	if lava:
+		lava_mat = ShaderMaterial.new()
+		lava_mat.shader = LAVA_ROCK
+		lava_mat.set_shader_parameter("detail", ROCK_DETAIL)
 	if body_mesh != null:
-		body_mesh.material_override = body_mat
+		body_mesh.material_override = lava_mat if lava else body_mat
 
 	# CAP: the flat top face the playtester's request asked for
 	# (`2026-09-23-1846-...make-ledges-read-as-shelves`). A round boulder
@@ -5620,7 +5641,7 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	cap_mat.albedo_color = Color(0.88 + cap_tint, 0.86 + cap_tint, 0.82 + cap_tint * 0.7)
 	cap_mat.albedo_texture = ROCK_DETAIL
 	cap_mat.roughness = 0.75   # a touch less rough than the raw body: worn, not raw rock
-	cap.material_override = cap_mat
+	cap.material_override = lava_mat if lava else cap_mat
 	cap.position = Vector3(0.0, -cap_height * 0.5, 0.0)
 	cap.rotation.y = randf_range(0.0, TAU)
 	stone.add_child(cap)

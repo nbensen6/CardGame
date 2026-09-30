@@ -2409,6 +2409,7 @@ func _init() -> void:
 	_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin()
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
+	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
 	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
 	# by anything in this file — see the doc comment on the tests themselves.
@@ -31144,6 +31145,17 @@ func _test_floor_style_obsidian_only_in_the_jackal_biome() -> void:
 				"biome %s keeps its own floor" % biome)
 	_expect(Combat3D.floor_style("no_such_biome") == "", "an unknown biome falls back to the plain floor")
 	_expect(Combat3D.OBSIDIAN is Shader, "the obsidian floor shader loads")
+
+
+func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
+	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "lava_rock",
+		"the Cinder Jackal's climb stones are lava rock")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(Combat3D.stone_style(biome) == "",
+				"biome %s keeps its pale stones" % biome)
+	_expect(Combat3D.stone_style("no_such_biome") == "", "an unknown biome keeps the pale stones")
+	_expect(Combat3D.LAVA_ROCK is Shader, "the lava rock shader loads")
 
 
 func _test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin() -> void:

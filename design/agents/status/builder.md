@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T02:29
-working_on: "Obsidian floor."
+updated: 2026-09-30T02:40
+working_on: "Lava rock under the hunters."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 02:29 EDT
+2026-09-30 02:40 EDT
 
-- **Did:** The jackal's arena floor is black glass now, with a sharp sheen band and faint orange cracks.
-- **Worked?** Yes; VERDICT: PASS, floor reads black and glossy with a visible specular band.
-- **Look at:** ![[frames/builder/2026-09-30-obsidian-floor-before.png]] then ![[frames/builder/2026-09-30-obsidian-floor-after.png]]
-- **Ask:** Floor is black glass with a sheen band. Band too bright or right?
+- **Did:** The jackal fight's climb stones are dark basalt now, glowing orange at the rim, edges and underside.
+- **Worked?** Partly; VERDICT: FAIL, stones dark with orange edge glow, but the Goblin's stone is off-frame.
+- **Look at:** ![[frames/builder/2026-09-30-lava-rock-before.png]] then ![[frames/builder/2026-09-30-lava-rock-after.png]]
+- **Ask:** Grader failed this: Goblin's stone off-frame. Stones read as lava rock to you?
 
 ## Notes
 
-- **Found:** the sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
+- **Found:** the Goblin and its stones are off-frame in both the rest and climb shots of the jackal fight.
+- **Found:** the Frog's dark stone has little contrast against the black jackal body behind it.
 
 ## Log
 
+- 2026-09-30 02:40 EDT — builder: lava rock stones (lava_rock.gdshader: dark basalt x ROCK_DETAIL, emission on world-down faces + fresnel edge; stone_style/`"stone": "lava_rock"` on quarry_ember only, body+cap take it, ember rim kept + test); grader FAIL x2 (too orange, then Goblin off-frame), escalated 👀; tests green, pushed.
 - 2026-09-30 02:29 EDT — builder: obsidian floor (obsidian.gdshader: near-black base, view-space reflected sheen band, px-clamped Voronoi crack hairlines; floor_style/_dress_floor on env Floor + Ground for quarry_ember only + test); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 02:10 EDT — builder: climb gauge in obsidian (carved panel 84x372, groove rail, ember-halo ledge notches, 5-ring burning sigil wider than a pip, portrait pips r13 in slot-tint rings via snapshot `portrait`, static gauge_y + test); grader PASS; tests green, pushed.
 - 2026-09-30 01:59 EDT — builder: intent badge reads like a warning (24 pt, 3 px red rim, 34 pt move icon via intent_badge_bbcode, crown from projected box top, clears both hunters + 2 tests); grader PASS on round 3; tests green, pushed.
