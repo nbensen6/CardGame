@@ -67,13 +67,13 @@ run failed.
       Ask: Badge moved off the jackal to a fixed top-centre HUD panel. Right spot?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-intent-hud-after.png|420]] ^the-intent-badge-reads-like-a-warning
-- [ ] **Obsidian floor.**
+- [ ] 👀 **Obsidian floor.**
       **Nick, 2026-09-30 09:44 ET:** remove the band
       **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Obsidian floor.|details]]
-      Ask: Floor is black glass with a sheen band. Band too bright or right?
+      Ask: Band removed: plain black floor with faint cracks. Good?
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-obsidian-floor-after.png|420]] ^obsidian-floor
+      ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]] ^obsidian-floor
 - [ ] **Embers in the air.**
       **Nick, 2026-09-30 09:44 ET:** glow a little too strong and should not be rising on the lava rock everyone is standing on. only from the lava surrounding them.
       **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
@@ -457,3 +457,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The deck list still draws cards in the old baked green frame, not the new border.
 - [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.
 - [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.
+- [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.

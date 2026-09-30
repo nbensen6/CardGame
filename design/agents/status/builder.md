@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T12:13
-working_on: "One HUD style: carved obsidian."
+updated: 2026-09-30T12:24
+working_on: "Obsidian floor."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 12:13 EDT
+2026-09-30 12:24 EDT
 
-- **Did:** Jackal health top-left with a small intent chip beside it; party panel gone; hunters stand still.
-- **Worked?** Yes, grid of idle frames shows both unchanged. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-hud-trim-before.png]] then ![[frames/builder/2026-09-30-hud-trim-after.png]]
-- **Ask:** Jackal bar top-left, small intent beside it, party panel gone. Good?
+- **Did:** Removed the bright sheen band from the black floor; cracks and lava glow stay.
+- **Worked?** Yes, the band is gone from the rest frame. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-floor-band-before.png]] then ![[frames/builder/2026-09-30-floor-band-after.png]]
+- **Ask:** Band removed: plain black floor with faint cracks. Good?
 
 ## Notes
 
-- **Found:** The red "being targeted" edge and Height line only lived on the removed party cards.
+- **Found:** With the band gone a diagonal orange floor-disc edge shows at the far right of the rest frame.
 
 ## Log
 
+- 2026-09-30 12:24 EDT — builder: Obsidian floor answered (Nick 09:44 "remove the band"): specular band deleted from obsidian.gdshader, test asserts no band uniform; grader PASS; tests green, pushed.
 - 2026-09-30 12:13 EDT — builder: HUD trimmed on Nick's 11:44 word: beast plate pinned top-left on glass, party panel hidden, intent chip small beside the bar, hunter idle sway gone and ridden stones still; harness idleat= grid; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 11:57 EDT — builder: Remove cost answered (Nick 11:44): SHOW_COST back on, new card_border.gdshader (obsidian, brass hairline and fillet, hunter line, corner studs), name ribbon darkened; grader PASS; tests green, pushed.
 

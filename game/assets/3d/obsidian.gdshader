@@ -5,26 +5,14 @@ render_mode cull_back, diffuse_toon, specular_toon;
 // names `"floor": "obsidian"` in combat_3d.BIOME (quarry_ember only), on both
 // the environment's own Floor mesh and the plain Ground disc under it.
 //
-// Three things, all in world space so it needs no UVs from the floor mesh:
+// Two things, all in world space so it needs no UVs from the floor mesh:
 //   - a near-black base with one hard lit/shadow step, like toon.gdshader;
-//   - a sharp toon specular BAND: the reflected view ray's elevation, cut hard,
-//     so the floor mirrors a strip of glow across the ground ahead.
-//     A sun highlight alone never shows: the key light comes from behind the
-//     camera, so its mirror spot falls outside the frame;
 //   - faint orange emission along a Voronoi crack network.
+// The reflected specular band it once had is gone (Nick, 2026-09-30:
+// "remove the band").
 
 uniform vec4 base_color : source_color = vec4(0.035, 0.03, 0.045, 1.0);
 uniform vec4 shadow_color : source_color = vec4(0.30, 0.30, 0.50, 1.0);
-
-// The band: a hard-edged stripe of reflected glow. Reflected view rays whose
-// VIEW-space elevation lies in [band_lo, band_hi] light up, so the stripe always
-// lies across the floor between the hunter and what the camera faces; it fades
-// out sideways past |x| = band_half so it ends like a sheen, not a painted line.
-uniform vec4 band_color : source_color = vec4(1.0, 0.74, 0.62, 1.0);
-uniform float band_strength : hint_range(0.0, 2.0) = 0.8;
-uniform float band_lo : hint_range(0.0, 1.0) = 0.20;
-uniform float band_hi : hint_range(0.0, 1.0) = 0.235;
-uniform float band_half : hint_range(0.05, 1.0) = 0.9;
 
 // Cracks: cell size in world units, line width as a fraction of a cell.
 uniform vec4 crack_color : source_color = vec4(1.0, 0.46, 0.10, 1.0);
@@ -102,15 +90,6 @@ void fragment() {
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
 
-	vec3 r = reflect(-VIEW, NORMAL);
-	float w = fwidth(r.y) + 0.0005;
-	float band = smoothstep(band_lo - w, band_lo + w, r.y)
-		* (1.0 - smoothstep(band_hi - w, band_hi + w, r.y))
-		* (1.0 - smoothstep(band_half * 0.4, band_half, abs(r.x)))
-		* step(r.z, 0.0);
-	// Glass: the cracks break the reflection, they do not carry it.
-	band *= 1.0 - crack;
-
 	float heat = 0.0;
 	if (rim_radius > 0.0) {
 		float d = length(world_pos.xz - rim_center);
@@ -124,8 +103,7 @@ void fragment() {
 		heat *= smoothstep(0.5 * rim_radius, 1.2 * rim_radius, seen);
 	}
 
-	EMISSION = band * band_strength * band_color.rgb
-		+ crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
+	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
 		+ rim_color.rgb * rim_gain * heat;
 }
 

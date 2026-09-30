@@ -1328,6 +1328,8 @@ screen on touch and what reveals the rules text under the deep tuck.
 - Cracks: world-XZ Voronoi edges, 4 m cells, width min(0.018 cell, 1.2 px) so they stay hairlines near the camera; gain 0.35 orange.
 - Grader round 1 FAIL (foreground cracks were solid red bars), round 2 PASS.
 
+2026-09-30 12:24 EDT, band removed (Nick, 09:44: "remove the band"). Deleted the reflected-view band (uniforms `band_*` and its EMISSION term) from `obsidian.gdshader`; base, cracks and rim heat unchanged. Floor test now also checks the shader has no `band_strength` uniform. Grader PASS. Frames: `2026-09-30-floor-band-before/after.png`.
+
 ## Lava rock under the hunters.
 
 Built 2026-09-30 02:40 EDT.

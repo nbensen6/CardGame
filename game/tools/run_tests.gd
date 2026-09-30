@@ -31102,6 +31102,10 @@ func _test_floor_style_obsidian_only_in_the_jackal_biome() -> void:
 				"biome %s keeps its own floor" % biome)
 	_expect(Combat3D.floor_style("no_such_biome") == "", "an unknown biome falls back to the plain floor")
 	_expect(Combat3D.OBSIDIAN is Shader, "the obsidian floor shader loads")
+	var params: Array = (Combat3D.OBSIDIAN as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	_expect(not params.has("band_strength"),
+		"the obsidian floor has no specular band (Nick, 2026-09-30: remove the band)")
 
 
 func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
