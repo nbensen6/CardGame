@@ -10,6 +10,24 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **One tap for ordinary timed cards?**
+      **Nick, 2026-09-29 21:14 ET:** drag no longer touch card tops, but some drag goes over the next click in the timing event. need to make sure they are spaced and lead well
+      **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
+      **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
+      **Session, 2026-09-29 16:50 ET:** these three answers were stuck on Nick's PC since 12:44 (its sync was jammed) and never reached the builder. Read them in time order, oldest last.
+      **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
+      **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dflick%2Clash_out%2Cpiston_punch%2Coverload_engine) · [[BUILDER-QUEUE-NOTES#One tap for ordinary timed cards?|details]]
+      Ask: Grader failed this: drag ends touch card tops. Drag order random now; right?
+      Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
+      ![[agents/frames/builder/2026-09-29-drag-order-after.png|420]] ^one-tap-for-ordinary-timed-cards
+- [ ] **Make the Jackal be less glossy and more matte.**
+      **Nick, 2026-09-29 21:14 ET:** it is matte enough
+      **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
+      Ask: The pale shiny patches on the jackal's face are gone. Matte enough?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-29-jackal-matte-after.png|420]] ^make-the-jackal-be-less-glossy-and-more-
 - [ ] 👀 **Played cards fly to their target.**
       **Nick, 2026-09-29 20:59 ET:** the played cards flying feel really bad please revert.
       **Nick, 2026-09-29 17:29 ET:** the card is stuck
@@ -55,16 +73,6 @@ run failed.
       Ask: Notes now stay above the cards and off the hunter. Still see any over cards?
       Test: state=3dosu beast=cinder_jackal hold=on
       ![[agents/frames/builder/2026-09-29-notes-off-hand-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
-- [ ] 👀 **One tap for ordinary timed cards?**
-      **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
-      **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
-      **Session, 2026-09-29 16:50 ET:** these three answers were stuck on Nick's PC since 12:44 (its sync was jammed) and never reached the builder. Read them in time order, oldest last.
-      **Nick, 2026-09-29 11:59 ET:** make it more complex dependent on how much the card cost. add a mechanic of click and drag. also add variety of where the clicks are, but don't have them far from the card.
-      **Session, 2026-09-29 11:05 ET:** Today every timed card needs three taps and one bad tap loses it. Default if you say yes: three taps only for cards that print more than one window (Satchel Charge); everything else is one tap. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dflick%2Clash_out%2Cpiston_punch%2Coverload_engine) · [[BUILDER-QUEUE-NOTES#One tap for ordinary timed cards?|details]]
-      Ask: Grader failed this: drag ends touch card tops. Drag order random now; right?
-      Test: state=3d beast=cinder_jackal hand=flick,lash_out,piston_punch,overload_engine
-      ![[agents/frames/builder/2026-09-29-drag-order-after.png|420]] ^one-tap-for-ordinary-timed-cards
 - [x] **A missed timed card: keep the card?**
       **Nick, 2026-09-29 12:14 ET:** i dont like the idea of losing a card. a miss play can do a plain value of the card, but hitting the timed can have a small bonus
       **Session, 2026-09-29 11:05 ET:** Today a miss deletes the card for the whole fight with no effect. Default if you say yes: a miss plays the card's printed value with no bonus and it discards like any other card. This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -101,7 +109,7 @@ run failed.
       Ask: On the last stone, do you see the jackal's head and chest now?
       Test: state=3d beast=cinder_jackal console=climb+5
       ![[agents/frames/builder/2026-09-29-stones-back-after.png|420]] ^move-the-stones-and-the-hunters-back
-- [ ] 👀 **The jackal dies on screen.**
+- [x] **The jackal dies on screen.**
       **Session, 2026-09-29 11:05 ET:** The killing blow plays `hit` and the scene cuts to the reward screen. Add a `death` clip with the same Blender script that made idle, attack and hit (`tools/blender/ai_beast.py`), a 0.6 s slow-motion on the final hit, the fall, then the cut. Done-when: a three-frame strip shows the last hit, the fall, the body down, all before the reward screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dreward%20beast%3Dcinder_jackal%20console%3Dclimb%2B5%20deathat%3D0.3%2C1.6%2C2.6%2C3.6) · [[BUILDER-QUEUE-NOTES#The jackal dies on screen.|details]]
       Ask: Grader failed this: slow-motion unseen in stills. Kill from top: slow hit, fall?
@@ -112,7 +120,7 @@ run failed.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Playtest presses Switch.|details]]
       Ask: Test-only, nothing to look at: the playtest now presses Switch. Tick.
       Test: state=3d beast=cinder_jackal ^playtest-presses-switch
-- [ ] 👀 **playtest.cmd green.**
+- [x] **playtest.cmd green.**
       **Session, 2026-09-28 14:35 ET:** yes. One red check per run until none are left; do not escalate this item again until the count is zero or a check needs a taste call.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20slot%3D1) · [[BUILDER-QUEUE-NOTES#playtest.cmd green.|details]]
       Ask: Goblin's own stairs hide up to half the jackal. Accept, or fan them wider?
@@ -203,18 +211,16 @@ run failed.
       Ask: Is this the weak-point shot? Tick, or say closer, lower, or what else.
       ![[agents/frames/builder/2026-09-25-sigil-face-after.png|420]]
       ![[agents/frames/builder/2026-09-25-sigil-climb-after.png|420]] ^sigil-shot-face-and-eyes-in-frame
-- [ ] 👀 **Make the Jackal be less glossy and more matte.**
-      **Nick, 2026-09-29 12:14 ET:** Make the Jackal be less glossy and more matte (where: jackal) ![[art/references/Pasted image 20260929121120.png|420]]
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Make the Jackal be less glossy and more matte.|details]]
-      Ask: The pale shiny patches on the jackal's face are gone. Matte enough?
-      Test: state=3dclimb beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-29-jackal-matte-after.png|420]] ^make-the-jackal-be-less-glossy-and-more-
-- [ ] 👀 **Change the fog so it's behind the exterior.**
+- [x] **Change the fog so it's behind the exterior.**
       **Nick, 2026-09-29 12:14 ET:** Change the fog so it's behind the exterior. I would like to be able to see the mountains (where: environment)
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Change the fog so it's behind the exterior.|details]]
       Ask: The lava-lit mountains are clear now; haze only in the sky. Right?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-fog-behind-after.png|420]] ^change-the-fog-so-it-s-behind-the-exteri
+- [ ] **More free unrestriced camera movement at higher speed.**
+      **Nick, 2026-09-29 21:14 ET:** more free unrestriced camera movement at higher speed. cant zoom in more past picture. (where: in dev movde) ![[art/references/Pasted image 20260929210409.png|420]]
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#More free unrestriced camera movement at higher speed.|details]]
+      Test: state=3d ^more-free-unrestriced-camera-movement-at
 
 
 ## Waiting on Nick
