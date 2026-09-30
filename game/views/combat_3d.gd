@@ -507,69 +507,71 @@ const COACH_SECONDS := 7.0
 ## point is that the green frame and the green pip are obviously the same hunter.
 const SLOT_TINT := [Color(0.45, 0.95, 0.5), Color(0.55, 0.82, 1.0)]
 
-## The HUD's one material: carved obsidian (queue, "One HUD style", 2026-09-29).
-## Every panel on the fight screen — top bar, party cards, intent badge, energy
-## orb, End Turn, Switch — was a flat box in its own outline colour, so the HUD
-## read as six widgets rather than one object. They now share this: a near-black
-## glassy fill, a thin ember rim that blends inward (the bevel), a heavier lip
-## along the bottom edge and a soft drop shadow.
-const OBSIDIAN_FILL := Color(0.05, 0.043, 0.05, 0.92)
+## The HUD reads like Slay the Spire's (Nick, 2026-09-30, "One HUD style": "we
+## need to redesign the display of information. reference how slay the spire ii
+## displays information"). That replaced a carved-obsidian pass that boxed
+## every widget in the same ember-rimmed slab. What Slay the Spire does instead:
+##   - a creature's health is a red bar with the number INSIDE it, sitting on
+##     the creature (ui/unit_bar.gd under each hunter; the beast's name and bar
+##     above its head, where the eye already is);
+##   - Block is a blue shield on that bar, not a glyph in a line of text;
+##   - panels that remain are plain dark glass with a hairline edge, so the
+##     scene, not the frame, carries the colour;
+##   - End Turn is the one warm, fat button.
+const HUD_FILL := Color(0.04, 0.045, 0.06, 0.62)
+const HUD_EDGE := Color(0.78, 0.74, 0.66, 0.28)
+## The ember of the climb gauge's ledges and sigil (a reading, not a frame).
 const EMBER_RIM := Color(0.96, 0.47, 0.16)
+const END_TURN_FILL := Color(0.80, 0.52, 0.13)
 const HUD_DISPLAY_FONT := preload("res://assets/fonts/KenneyFutureNarrow.ttf")
-const ObsidianBox := preload("res://ui/obsidian_box.gd")
 const BeastBar := preload("res://ui/beast_bar.gd")
+const UnitBar := preload("res://ui/unit_bar.gd")
+const PileBadge := preload("res://ui/pile_badge.gd")
+## Draw, discard and burn, as card stacks under the energy orb.
+var _pile_badges: Array = []
 var _hud_font: Font = null
+## One Slay-the-Spire health bar per hunter, pinned under them on screen.
+var _unit_bars: Array = []
 
 
-## A fresh obsidian StyleBoxFlat. `rim` stays a parameter because a few panels
-## still have to say something with their edge — red on the hunter the beast is
-## aiming at, grey on an empty energy orb — and `rim_w` thickens it for the
-## hunter you are holding.
-static func obsidian_style(rim: Color = EMBER_RIM, rim_w: int = 1, radius: int = 6) -> StyleBoxFlat:
+## A fresh HUD panel: dark glass, hairline edge, no bevel. `edge` stays a
+## parameter because a few panels still say something with it (red on the
+## hunter the beast is aiming at, grey on an empty energy orb).
+static func hud_style(edge: Color = HUD_EDGE, edge_w: int = 1, radius: int = 6) -> StyleBoxFlat:
 	var st := StyleBoxFlat.new()
-	st.bg_color = OBSIDIAN_FILL
-	st.border_color = rim
-	st.border_width_left = rim_w
-	st.border_width_top = rim_w
-	st.border_width_right = rim_w
-	st.border_width_bottom = rim_w + 2
-	st.border_blend = true
+	st.bg_color = HUD_FILL
+	st.border_color = edge
+	st.set_border_width_all(edge_w)
 	st.set_corner_radius_all(radius)
-	st.shadow_color = Color(0, 0, 0, 0.55)
-	st.shadow_size = 6
-	st.shadow_offset = Vector2(0, 3)
+	st.shadow_color = Color(0, 0, 0, 0.3)
+	st.shadow_size = 4
 	st.anti_aliasing = true
 	return st
 
 
-## Wrap a finished obsidian_style (margins and all) so it draws with its bevel.
-static func carved(st: StyleBoxFlat) -> StyleBox:
-	return ObsidianBox.new(st)
-
-
-## Obsidian for a Button's four states: the rim warms on hover, the fill sinks
-## on press, and a disabled button keeps the material but loses the ember.
-static func obsidian_button_styles() -> Dictionary:
+## A Button's four states. `fill` is the button's own colour: warm amber for
+## End Turn (Slay the Spire's one loud button), glass for the rest. Hover
+## lightens, press darkens, disabled greys out.
+static func hud_button_styles(fill: Color = HUD_FILL) -> Dictionary:
 	var out := {}
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
-		var st := obsidian_style(EMBER_RIM, 1, 6)
-		st.content_margin_left = 12.0
-		st.content_margin_right = 12.0
-		st.content_margin_top = 6.0
-		st.content_margin_bottom = 6.0
+		var st := hud_style(Color(0.02, 0.015, 0.01, 0.9), 2, 22)
+		st.bg_color = fill
+		st.content_margin_left = 18.0
+		st.content_margin_right = 18.0
+		st.content_margin_top = 8.0
+		st.content_margin_bottom = 8.0
 		match state:
 			"hover":
-				st.border_color = EMBER_RIM.lightened(0.25)
-				st.bg_color = OBSIDIAN_FILL.lightened(0.08)
+				st.bg_color = Color(fill.lightened(0.18), maxf(fill.a, 0.8))
 			"pressed":
-				st.bg_color = OBSIDIAN_FILL.darkened(0.4)
-				st.shadow_size = 2
+				st.bg_color = Color(fill.darkened(0.35), maxf(fill.a, 0.8))
 			"disabled":
-				st.border_color = Color(0.36, 0.3, 0.27)
+				st.bg_color = Color(0.22, 0.21, 0.2, 0.75)
 			"focus":
 				st.draw_center = false
 				st.shadow_size = 0
-		out[state] = carved(st)
+		out[state] = st
 	return out
 
 
@@ -582,27 +584,49 @@ static func hud_font() -> Font:
 	return f
 
 
-func _apply_obsidian_hud() -> void:
+## The beast's bar, Slay the Spire red with the number inside it.
+static func beast_bar_styles() -> Dictionary:
+	var bg := StyleBoxFlat.new()
+	bg.bg_color = UnitBar.TRACK
+	bg.border_color = UnitBar.EDGE
+	bg.set_border_width_all(2)
+	var fill := StyleBoxFlat.new()
+	fill.bg_color = UnitBar.FILL
+	fill.border_color = UnitBar.EDGE
+	fill.set_border_width_all(2)
+	return {"background": bg, "fill": fill}
+
+
+func _apply_sts_hud() -> void:
 	_hud_font = hud_font()
 	var top := _hud.get_node_or_null("TopBar") as PanelContainer
 	if top != null:
-		var st := obsidian_style(EMBER_RIM, 1, 6)
-		st.content_margin_left = 12.0
-		st.content_margin_right = 12.0
-		st.content_margin_top = 8.0
-		st.content_margin_bottom = 8.0
-		top.add_theme_stylebox_override("panel", carved(st))
-	_title.add_theme_font_override("font", _hud_font)
-	_intent.add_theme_font_override("normal_font", _hud_font)
+		# No panel: the beast is the frame. The plate follows its head
+		# (_position_beast_plate).
+		top.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	var bar_st := beast_bar_styles()
+	for k in bar_st:
+		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
+	_intent.add_theme_constant_override("outline_size", 8)
 	_beast_bar = BeastBar.new()
 	_beast_bar.name = "BeastBarFx"
 	_hp_bar.add_child(_beast_bar)
-	_title.add_theme_color_override("font_color", Color(1, 0.9, 0.74))
-	var styles := obsidian_button_styles()
+	_hp_bar.move_child(_hp, -1)          # the number reads over the notches
+	var end_st := hud_button_styles(END_TURN_FILL)
+	for state in end_st:
+		_end_btn.add_theme_stylebox_override(state, end_st[state])
+	_end_btn.custom_minimum_size = Vector2(150, 46)
+	_end_btn.add_theme_font_size_override("font_size", 19)
+	var sw_st := hud_button_styles(Color(0.12, 0.2, 0.3, 0.85))
+	for state in sw_st:
+		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
+	_switch_btn.custom_minimum_size = Vector2(118, 46)
 	for b in [_end_btn, _switch_btn]:
-		for state in styles:
-			(b as Button).add_theme_stylebox_override(state, styles[state])
-		(b as Button).add_theme_font_override("font", _hud_font)
+		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
+		(b as Button).add_theme_constant_override("outline_size", 5)
+	var controls := _end_btn.get_parent() as Control
+	controls.offset_top = -58.0
+
 
 var _client: GameClient
 var _beast: Node3D
@@ -915,7 +939,7 @@ func _ready() -> void:
 	# Backtick opens it. Given the refresh callable so a command that changes
 	# the world - a new hand, a different beast - is on screen by the time you
 	# have finished reading what it printed.
-	_apply_obsidian_hud()
+	_apply_sts_hud()
 	DevConsole.attach(self, _refresh)
 	_cam_home = _cam.position
 	# The active hunter's climb tween updates node.position during its own
@@ -928,6 +952,8 @@ func _ready() -> void:
 	# it is actually rendered, so this is the first point where the tag can
 	# see the same hunter position the frame is about to show.
 	RenderingServer.frame_pre_draw.connect(_position_intent_tag)
+	RenderingServer.frame_pre_draw.connect(_position_beast_plate)
+	RenderingServer.frame_pre_draw.connect(_position_unit_bars)
 	_client = Session.client
 	if _client == null:
 		return
@@ -995,7 +1021,7 @@ func _build_gauge() -> void:
 	panel.offset_bottom = GAUGE_H * 0.5
 	# The same carved obsidian as the rest of the HUD (queue, "The climb gauge
 	# stands beside the beast", 2026-09-29): it was the last flat brown box.
-	panel.add_theme_stylebox_override("panel", carved(obsidian_style(EMBER_RIM, 1, 8)))
+	panel.add_theme_stylebox_override("panel", hud_style(HUD_EDGE, 1, 8))
 
 	_gauge = Control.new()
 	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1138,7 +1164,7 @@ func _draw_gauge() -> void:
 		var c := Vector2(x + gauge_dot_dx(heights, i, top) * 1.8, gauge_y(float(h), top, y_top, y_bot))
 		var tint: Color = _slot_color(i)
 		_gauge.draw_circle(c, GAUGE_PIP_R + 2.0, Color(0, 0, 0, 0.6))
-		_gauge.draw_circle(c, GAUGE_PIP_R, OBSIDIAN_FILL)
+		_gauge.draw_circle(c, GAUGE_PIP_R, Color(0.05, 0.045, 0.05, 0.95))
 		var face: Texture2D = faces[i] if i < faces.size() else null
 		if face != null:
 			var s := GAUGE_PIP_R * 1.5
@@ -2090,7 +2116,7 @@ func _refresh() -> void:
 		return                                   # the old board stays up until the bite
 	var boss: Dictionary = s["boss"]
 	_title.text = String(boss["name"])
-	_hp.text = "%d / %d" % [int(boss["hp"]), int(boss["max_hp"])]
+	_hp.text = UnitBar.hp_text(int(boss["hp"]), int(boss["max_hp"]))
 	_hp_bar.max_value = int(boss["max_hp"])
 	_hp_bar.value = int(boss["hp"])
 	_beast_bar.call("set_marks", int(boss["max_hp"]),
@@ -2141,15 +2167,14 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	# A warning, not a label (2026-09-29 intense-fight plan): a thick red rim on
 	# every move, a big icon for the move type, bigger words. Hostile or calm is
 	# now the icon's and the words' colour, not the rim's.
-	var style := obsidian_style(INTENT_RIM, 3, 6)
-	style.content_margin_left = 16.0
-	style.content_margin_right = 16.0
-	style.content_margin_top = 4.0
-	style.content_margin_bottom = 6.0
-	_intent_tag.add_theme_stylebox_override("panel", carved(style))
+	# No box (Slay the Spire's intent is an icon and a number floating over the
+	# enemy, not a panel): the outlined glyph and number carry it alone.
+	var style := StyleBoxEmpty.new()
+	style.content_margin_left = 6.0
+	style.content_margin_right = 6.0
+	_intent_tag.add_theme_stylebox_override("panel", style)
 
 
-const INTENT_RIM := Color(0.92, 0.14, 0.08)
 const INTENT_ICON_SIZE := 34
 
 
@@ -2292,6 +2317,70 @@ func _position_intent_tag() -> void:
 		else:
 			others.append(r)
 	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect, hunter_rect, others)
+
+
+const BEAST_PLATE_GAP := 6.0
+
+
+## Where the beast's name and bar go: Slay the Spire's place, just under the
+## beast's feet, centred on it. A hunter standing there wins: the plate lifts
+## to sit above that hunter's head rather than cover them. Always wholly on
+## screen. Pure so the rule has a test.
+static func beast_plate_pos(feet: Vector2, plate: Vector2, vp: Vector2, hunters: Array) -> Vector2:
+	var x := clampf(feet.x - plate.x * 0.5, 12.0, maxf(12.0, vp.x - plate.x - 12.0))
+	var y := feet.y + BEAST_PLATE_GAP
+	for r in hunters:
+		var hr: Rect2 = r
+		if hr.size.x > 0.0 and x < hr.end.x and x + plate.x > hr.position.x \
+				and y < hr.end.y and y + plate.y > hr.position.y:
+			y = minf(y, hr.position.y - plate.y - 4.0)
+	y = clampf(y, 8.0, maxf(8.0, vp.y - plate.y - 300.0))
+	return Vector2(x, y)
+
+
+func _position_beast_plate() -> void:
+	var top := _hud.get_node_or_null("TopBar") as Control if _hud != null else null
+	if top == null or _cam == null or _beast_box.size.y <= 0.0:
+		return
+	var r := hunter_screen_rect(_cam, _beast_box)
+	if r.size == Vector2.ZERO:
+		return
+	var hunters: Array = []
+	for h in _hunters:
+		var hnode: Node3D = (h as Dictionary).get("node") as Node3D
+		if hnode != null and is_instance_valid(hnode) and hnode.is_visible_in_tree():
+			hunters.append(hunter_screen_rect(_cam, _merged_aabb(hnode)))
+	top.position = beast_plate_pos(Vector2(r.get_center().x, r.end.y), top.size,
+		get_viewport().get_visible_rect().size, hunters)
+
+
+## Slay the Spire's bar under each hunter's feet, hidden while the hunter is
+## off screen (the party rows top-left still carry them).
+func _position_unit_bars() -> void:
+	if _cam == null:
+		return
+	var vp: Vector2 = get_viewport().get_visible_rect().size
+	for i in range(_unit_bars.size()):
+		var bar: Control = _unit_bars[i]
+		bar.visible = false
+		if i >= _hunters.size():
+			continue
+		var hnode: Node3D = (_hunters[i] as Dictionary).get("node") as Node3D
+		if hnode == null or not is_instance_valid(hnode) or not hnode.is_visible_in_tree():
+			continue
+		var r := hunter_screen_rect(_cam, _merged_aabb(hnode))
+		if r.size == Vector2.ZERO:
+			continue
+		var at := unit_bar_pos(r, bar.size)
+		if at.x < 0.0 or at.x + bar.size.x > vp.x or at.y + bar.size.y > vp.y:
+			continue
+		bar.position = at
+		bar.visible = true
+
+
+## Centred just under the hunter's feet.
+static func unit_bar_pos(hunter: Rect2, bar: Vector2) -> Vector2:
+	return Vector2(hunter.get_center().x - bar.x * 0.5, hunter.end.y + 4.0)
 
 
 ## Where "above the head" is on screen: the top-centre of the beast's whole
@@ -7822,6 +7911,17 @@ func _render_party(s: Dictionary, boss_target: int, move: Dictionary, add_attack
 		var aimed: bool = hunter_is_aimed_at(move_type, boss_target, i, int(p.get("foothold", 0)),
 			add_attacking, move)
 		_party.add_child(_party_card(p, i, aimed))
+	while _unit_bars.size() < players.size():
+		var ub: Control = UnitBar.new()
+		ub.size = Vector2(124, 24)
+		ub.visible = false
+		_hud.add_child(ub)
+		_hud.move_child(ub, 0)             # under every panel and the hand
+		_unit_bars.append(ub)
+	for i in range(players.size()):
+		var pl: Dictionary = players[i]
+		_unit_bars[i].call("set_values", int(pl.get("hp", 0)), int(pl.get("max_hp", 1)),
+			int(pl.get("block", 0)))
 	var bits: Array = ["Gold %d" % int(s.get("gold", 0))]
 	var relics: Array = s.get("relics", [])
 	if not relics.is_empty():
@@ -7863,7 +7963,12 @@ func _slot_color(slot: int) -> Color:
 ## out is the number you consult before every single card.
 func _render_energy(p: Dictionary) -> void:
 	var out := int(p.get("energy", 0))
-	var style := obsidian_style(EMBER_RIM if out > 0 else Color(0.34, 0.32, 0.30), 3, 14)
+	var style := hud_style(Color(1.0, 0.8, 0.36) if out > 0 else Color(0.34, 0.32, 0.30), 3, 14)
+	# Lit from inside while there is Energy to spend, like Slay the Spire's orb.
+	if out > 0:
+		style.bg_color = Color(0.36, 0.17, 0.04, 0.9)
+		style.shadow_color = Color(1.0, 0.6, 0.2, 0.35)
+		style.shadow_size = 10
 	# A rounded SQUARE, not a disc. It was a disc — "it should read as an orb" —
 	# right up until the osu face started drawing dark circles with a gold rim and
 	# a big number in them, at which point the most permanent thing on the HUD and
@@ -7872,7 +7977,7 @@ func _render_energy(p: Dictionary) -> void:
 	# design as the osu numbers"). Two things cannot share one shape, and the one
 	# you have to react to in half a second wins it.
 	style.set_corner_radius_all(14)
-	_energy_orb.add_theme_stylebox_override("panel", carved(style))
+	_energy_orb.add_theme_stylebox_override("panel", style)
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",
 		Color(1, 0.87, 0.5) if out > 0 else Color(0.55, 0.52, 0.5))
@@ -7882,8 +7987,22 @@ func _render_energy(p: Dictionary) -> void:
 	var priv := _my_private()
 	_piles.visible = priv.has("draw")
 	if priv.has("draw"):
-		_piles.text = "draw %d\ndisc %d · burn %d" % [int(priv.get("draw", 0)),
-			int(priv.get("discard", 0)), int(priv.get("exhaust", 0))]
+		# Slay the Spire's piles: card stacks with a count, not a line of text.
+		# The label stays as the row's holder (and its click target).
+		_piles.text = " "
+		_piles.custom_minimum_size = Vector2(0, 50)
+		if _pile_badges.is_empty():
+			var names := ["draw", "discard", "burn"]
+			for k in range(3):
+				var pb: Control = PileBadge.new()
+				pb.set("label", names[k])
+				pb.size = Vector2(30, 34)
+				pb.position = Vector2(2.0 + k * 34.0, 0.0)
+				pb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				_piles.add_child(pb)
+				_pile_badges.append(pb)
+		for k in range(3):
+			_pile_badges[k].call("set_count", int(priv.get(["draw", "discard", "exhaust"][k], 0)))
 		# Clicking the pile counts opens the deck. That is where Slay the Spire
 		# puts it and where a hand reaches for it — the number of cards left is
 		# the thing that makes you want to look at what they are.
@@ -7954,9 +8073,14 @@ static func party_card_name(p: Dictionary, slot: int, me: int) -> String:
 ## own Energy, Height, incoming damage, and a status tag) assemble into one
 ## joined line; any one silently dropping or misordering reads as a missing
 ## number on a screen nobody is failing a test over.
-static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
-	var parts: Array = ["HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))]]
-	if int(p.get("block", 0)) > 0:
+##
+## `on_bar` drops HP and Block: the Slay the Spire bar beside the line already
+## draws both (the number inside the bar, Block as its shield).
+static func party_card_stats(p: Dictionary, slot: int, me: int, on_bar: bool = false) -> String:
+	var parts: Array = []
+	if not on_bar:
+		parts.append("HP %d/%d" % [int(p.get("hp", 0)), int(p.get("max_hp", 0))])
+	if not on_bar and int(p.get("block", 0)) > 0:
 		parts.append("◈%d" % int(p.get("block", 0)))
 	# Energy only for the ALLY — yours is the orb beside your hand, and printing it
 	# in both places is exactly the doubling this pass exists to remove.
@@ -7994,41 +8118,44 @@ static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
 
 func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var panel := PanelContainer.new()
-	# the hunter in the beast's sights is outlined in red — the single most
-	# time-critical fact on the screen. Everyone else wears the HUD's ember rim;
-	# their identity colour moved onto the name, so the card, the portrait in
-	# the rail and the pip in the scene still agree.
-	var style := obsidian_style(Color(0.93, 0.3, 0.2) if aimed else EMBER_RIM,
-		2 if slot == _me() else 1, 5)
-	style.content_margin_left = 8.0
+	# Frameless, Slay the Spire style: a face, a name and a red bar. Only the
+	# hunter in the beast's sights gets an edge, red — the single most
+	# time-critical fact on the screen.
+	var style := hud_style(Color(0.93, 0.3, 0.2) if aimed else Color(0, 0, 0, 0),
+		2 if aimed else 0, 8)
+	style.bg_color = Color(0, 0, 0, 0.34)
+	style.shadow_size = 0
+	style.content_margin_left = 6.0
 	style.content_margin_right = 10.0
-	style.content_margin_top = 6.0
-	style.content_margin_bottom = 6.0
-	panel.add_theme_stylebox_override("panel", carved(style))
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	panel.add_theme_stylebox_override("panel", style)
 	var outer := HBoxContainer.new()
 	outer.add_theme_constant_override("separation", 8)
 	panel.add_child(outer)
-	outer.add_child(_portrait_of(p, 34))
+	outer.add_child(_portrait_of(p, 40))
 	var box := VBoxContainer.new()
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", 1)
 	outer.add_child(box)
 	var who := Label.new()
 	who.text = party_card_name(p, slot, _me())
-	who.add_theme_font_size_override("font_size", 13)
-	who.add_theme_font_override("font", _hud_font)
-	who.add_theme_color_override("font_color", _slot_color(slot).lerp(Color(1, 0.93, 0.78), 0.45))
+	who.add_theme_font_size_override("font_size", 14)
+	who.add_theme_color_override("font_color", _slot_color(slot).lerp(Color(1, 0.96, 0.88), 0.35))
+	who.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.02))
+	who.add_theme_constant_override("outline_size", 4)
 	box.add_child(who)
-	var bar := ProgressBar.new()
-	bar.max_value = maxi(int(p.get("max_hp", 1)), 1)
-	bar.value = int(p.get("hp", 0))
-	bar.show_percentage = false
-	bar.custom_minimum_size = Vector2(0, 12)
+	var bar: Control = UnitBar.new()
+	bar.custom_minimum_size = Vector2(0, 20)
+	bar.call("set_values", int(p.get("hp", 0)), int(p.get("max_hp", 1)), int(p.get("block", 0)))
 	box.add_child(bar)
 	var stats := Label.new()
-	stats.text = party_card_stats(p, slot, _me())
+	stats.text = party_card_stats(p, slot, _me(), true)
+	stats.visible = stats.text != ""
 	stats.add_theme_font_size_override("font_size", 12)
-	stats.add_theme_color_override("font_color", Color(0.86, 0.82, 0.72))
+	stats.add_theme_color_override("font_color", Color(0.9, 0.87, 0.8))
+	stats.add_theme_color_override("font_outline_color", Color(0.02, 0.02, 0.02))
+	stats.add_theme_constant_override("outline_size", 3)
 	box.add_child(stats)
 	# Tapping a hunter's card holds that hunter, and the camera locks onto them.
 	# The card already shows who they are and what is about to hit them, so it is

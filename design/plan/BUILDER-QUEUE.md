@@ -42,13 +42,13 @@ run failed.
       Ask: Grader failed this: wanted a steady red edge kept. Keep the edge unpulsed?
       Test: state=3d beast=cinder_jackal console=hp+10
       ![[agents/frames/builder/2026-09-30-heartbeat-remove-after.png|420]] ^low-health-shows-on-screen
-- [ ] **One HUD style: carved obsidian.**
+- [ ] 👀 **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
-      Ask: HUD is now dark obsidian with ember rims and display caps. Keep this look?
+      Ask: HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-obsidian-hud-after.png|420]] ^one-hud-style-carved-obsidian
+      ![[agents/frames/builder/2026-09-30-sts-hud-after.png|420]] ^one-hud-style-carved-obsidian
 - [ ] **Cards fan and glow.**
       **Nick, 2026-09-30 09:44 ET:** remove this
       **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
@@ -443,3 +443,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
 - [ ] (proposed) **The rest camera sees almost no sky.** Cliffs, the boss bar and the intent badge leave a ~250x100 px notch, so sky work barely shows.
 - [ ] (proposed) **Stone beside the Frog sits nearer the lens.** Just after the climb 3 landing, the right-hand stone looks as near the camera as the Frog's own.
+- [ ] (proposed) **No max energy in the snapshot.** The orb can only say "3", not Slay the Spire's "3/3".
+- [ ] (proposed) **Climb gauge still wears the old panel look.** The right-hand rail is the one HUD piece not redesigned.

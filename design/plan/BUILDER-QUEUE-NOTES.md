@@ -1173,6 +1173,40 @@ Reverted 2026-09-30 10:25 EDT (Nick, 09:44: "no revert this as the game is co op
 - Grader: FAIL (badge unchanged, no bevel) → added the bevel wrapper and an ember badge rim; FAIL (badge still looked the same) → badge label into the display font; PASS.
 - Test: `_test_obsidian_hud_style_is_one_material`.
 
+
+2026-09-30 11:02 EDT, builder. Nick (09:44): "no. we need to redesign the display
+of information. reference how slay the spire ii displays information". The
+obsidian material above is gone.
+
+- **Health on the creature.** `ui/unit_bar.gd`: a red bar, number inside
+  ("42/42", no "HP"), a blue shield with the Block number on its left end and
+  the fill turning blue while Block stands. One under each hunter's feet on
+  screen (`unit_bar_pos`, hidden while the hunter is off screen), and the same
+  bar in the party rows.
+- **The beast's plate.** The old top banner (TopBar) is now one frameless line,
+  name then red bar with "70/70" inside, pinned under the beast's feet
+  (`beast_plate_pos`); a hunter standing there wins and the plate lifts above
+  their head. Round 1 had it over the head and the grader said it covered the
+  ears. Notches, ghost and crack from the health-bar item still draw on it.
+- **Party rows.** No frame: face, name, red bar, one status line (`party_card_stats`
+  with `on_bar` drops HP and Block, the bar has them). Only the hunter being
+  aimed at gets an edge, red.
+- **Intent.** The box is gone; outlined glyph and words float over the head.
+  Not moved: the next item (Nick: "remove damage badge and put it somewhere
+  else") owns where it goes.
+- **Energy.** Still a rounded square, lit gold from inside. Not a disc: Nick
+  (2026-08-25) found a round orb read like the osu circles. No "3/3" because
+  the snapshot has no max energy (proposed).
+- **Piles.** `ui/pile_badge.gd`: draw, discard and burn as little card stacks
+  with a count disc, under the orb. The row still opens the deck.
+- **Buttons.** End Turn is the warm amber pill (150x46), Switch a slate pill.
+- **Panels left** (climb gauge, log) are plain glass with a hairline edge
+  (`hud_style`). `ui/obsidian_box.gd` deleted.
+- **Grader:** FAIL (plate on the ears, piles as text, orb square, intent boxed)
+  → plate under feet, pile stacks; FAIL (intent still a box) → frameless intent;
+  VERDICT: PASS.
+- **Test:** `_test_hud_reads_like_slay_the_spire`.
+
 ## The beast's health bar reacts.
 
 2026-09-30 01:25 EDT. Built as an overlay (`game/ui/beast_bar.gd`) drawn over the

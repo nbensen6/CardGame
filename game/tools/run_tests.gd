@@ -21,7 +21,7 @@ func _init() -> void:
 	RunSave.clear()
 	Progress.use_scratch_slot("run_tests")  # a headless test run must never touch the designer's real progress.cfg
 	# combatant / boss
-	_test_obsidian_hud_style_is_one_material()
+	_test_hud_reads_like_slay_the_spire()
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
 	_test_boss_pattern_loops()
@@ -31283,28 +31283,41 @@ func _test_beast_bar_reacts() -> void:
 	bar.free()
 
 
-## One HUD style (queue, 2026-09-29): every fight-screen panel is built from
-## Combat3D.obsidian_style, so the material is pinned here once.
-func _test_obsidian_hud_style_is_one_material() -> void:
-	var st: StyleBoxFlat = Combat3D.obsidian_style()
-	_expect(st.bg_color == Combat3D.OBSIDIAN_FILL and st.bg_color.v < 0.1,
-		"obsidian: fill is near-black")
-	_expect(st.border_color == Combat3D.EMBER_RIM, "obsidian: default rim is ember")
-	_expect(st.border_blend and st.border_width_bottom > st.border_width_top,
-		"obsidian: bevel = blended rim with a heavier bottom lip")
-	_expect(st.shadow_size > 0 and st.shadow_color.a > 0.3, "obsidian: soft drop shadow")
-	var aimed: StyleBoxFlat = Combat3D.obsidian_style(Color(0.93, 0.3, 0.2), 2, 5)
-	_expect(aimed.bg_color == st.bg_color and aimed.border_width_left == 2,
-		"obsidian: a signalling rim keeps the same fill")
-	var btn: Dictionary = Combat3D.obsidian_button_styles()
-	for k in ["normal", "hover", "pressed", "disabled"]:
-		_expect(btn.has(k) and btn[k].flat.border_blend,
-			"obsidian: button %s is obsidian" % k)
-	_expect(btn["hover"].flat.border_color != btn["disabled"].flat.border_color,
-		"obsidian: a disabled button loses the ember")
-	var carved: StyleBox = Combat3D.carved(st)
-	_expect(carved.flat == st and carved.get_content_margin(SIDE_TOP) == st.get_content_margin(SIDE_TOP),
-		"obsidian: the bevel wrapper keeps the panel's margins")
+## One HUD style (Nick, 2026-09-30: redesign it after Slay the Spire II):
+## health is a red bar with the number inside, on the creature; Block is its
+## shield; panels are plain glass; End Turn is the one warm button.
+func _test_hud_reads_like_slay_the_spire() -> void:
+	var UB := preload("res://ui/unit_bar.gd")
+	_expect(UB.hp_text(42, 42) == "42/42", "sts hud: number reads 42/42, no 'HP'")
+	_expect(UB.hp_text(-3, 42) == "0/42", "sts hud: overkill reads 0")
+	_expect(is_equal_approx(UB.fill_frac(21, 42), 0.5) and UB.fill_frac(50, 42) == 1.0,
+		"sts hud: fill is hp over max, clamped")
+	_expect(UB.FILL.r > 0.6 and UB.FILL.g < 0.2 and UB.FILL_BLOCKED.b > UB.FILL_BLOCKED.r,
+		"sts hud: red bar, blue while blocked")
+	var st: StyleBoxFlat = Combat3D.hud_style()
+	_expect(st.bg_color.a < 0.8 and st.border_width_top == 1 and not st.border_blend,
+		"sts hud: panels are see-through glass with a hairline, no bevel")
+	var end: Dictionary = Combat3D.hud_button_styles(Combat3D.END_TURN_FILL)
+	_expect(end["normal"].bg_color.r > 0.6 and end["normal"].bg_color.b < 0.3,
+		"sts hud: End Turn is warm")
+	_expect(end["disabled"].bg_color.s < 0.2, "sts hud: a disabled button greys out")
+	var bar: Dictionary = Combat3D.beast_bar_styles()
+	_expect(bar["fill"].bg_color == UB.FILL, "sts hud: the beast's bar is the same red")
+	# The beast plate: under its feet, lifted above a hunter standing there.
+	var vp := Vector2(1280, 720)
+	var plate := Vector2(380, 22)
+	var at: Vector2 = Combat3D.beast_plate_pos(Vector2(640, 300), plate, vp, [])
+	_expect(at == Vector2(450, 300 + Combat3D.BEAST_PLATE_GAP), "sts hud: plate sits under the feet")
+	var frog := Rect2(590, 310, 100, 110)
+	at = Combat3D.beast_plate_pos(Vector2(640, 300), plate, vp, [frog])
+	_expect(at.y + plate.y <= frog.position.y, "sts hud: plate never covers a hunter")
+	at = Combat3D.beast_plate_pos(Vector2(1270, 900), plate, vp, [])
+	_expect(at.x + plate.x <= vp.x - 12.0 and at.y + plate.y <= vp.y - 300.0,
+		"sts hud: plate stays on screen, clear of the hand")
+	var ub: Vector2 = Combat3D.unit_bar_pos(Rect2(600, 330, 80, 90), Vector2(124, 24))
+	_expect(ub == Vector2(578, 424), "sts hud: hunter bar centred under the feet")
+	_expect(Combat3D.party_card_stats({"hp": 30, "max_hp": 42, "block": 5}, 0, 0, true).find("HP") == -1,
+		"sts hud: the party line leaves HP and Block to the bar")
 
 
 ## The badge is never over EITHER hunter (2026-09-29 intense-fight plan), not

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T10:39
-working_on: "Low health shows on screen."
+updated: 2026-09-30T11:02
+working_on: "One HUD style: carved obsidian."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 10:39 EDT
+2026-09-30 11:02 EDT
 
-- **Did:** Removed the red heartbeat edge on a hunter at low health; the jackal's low-health embers stay.
-- **Worked?** Partly; VERDICT: FAIL, grader wanted a steady red edge kept, which Nick's "remove" seems to reject.
-- **Look at:** ![[frames/builder/2026-09-30-heartbeat-remove-before.png]] then ![[frames/builder/2026-09-30-heartbeat-remove-after.png]]
-- **Ask:** Keep a steady, unpulsed red edge at low health, or nothing at all?
+- **Did:** Redesigned the fight HUD after Slay the Spire: health bars on creatures, pile stacks, amber End Turn.
+- **Worked?** Yes; VERDICT: PASS after two FAIL rounds (plate on the ears, then a boxed intent).
+- **Look at:** ![[frames/builder/2026-09-30-sts-hud-before.png]] then ![[frames/builder/2026-09-30-sts-hud-after.png]]
+- **Ask:** HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
 
 ## Notes
 
-- **Found:** nothing new.
+- **Found:** No max energy in the snapshot, so the orb cannot read "3/3".
+- **Found:** The climb gauge on the right still wears the old panel look.
 
 ## Log
 
+- 2026-09-30 11:02 EDT — builder: HUD redesigned after Slay the Spire on Nick's word (09:44): unit_bar.gd under each hunter and in party rows, beast plate under its feet, frameless intent, pile_badge.gd stacks, amber End Turn pill, obsidian_box.gd deleted + test; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 10:39 EDT — builder: low-health heartbeat vignette removed on Nick's word (09:44); jackal ember stream and `hp` command kept; grader FAIL (wanted a steady edge), shipped 👀 for Nick; tests green, pushed.
 - 2026-09-30 10:25 EDT — builder: jackal threat reverted on Nick's word (09:44): c5c33bd undone by hand (threat statics, _update/_step_threat, HeadTrack, toon heat, growl sfx+ogg, test); low health keeps the glow list via _rig_glow/_step_low_health; grader PASS; tests green, pushed.
 - 2026-09-30 10:11 EDT — builder: hits stop time removed on Nick's word (09:44): reverse of 991b33c in combat_3d.gd and run_tests.gd (hit-stop, slow motion, ember burst, hit_shake/tilt, _hunter_struck); beat=impact harness rewritten for the plain strike; grader FAIL on the pre-existing strike shake, shipped 👀; tests green, pushed.
