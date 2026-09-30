@@ -10,6 +10,10 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Remove cost.**
+      **Nick, 2026-09-30 10:59 ET:** remove cost
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
+      Test: state=3d ^remove-cost
 - [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
@@ -17,21 +21,21 @@ run failed.
       Ask: Swing removed: camera lands dead on the Frog each hop, as before. Good?
       Test: state=3d beast=cinder_jackal console=climb+3 touch=1,0.075
       ![[agents/frames/builder/2026-09-30-hop-swing-revert-after.png|420]] ^the-camera-swings-with-each-hop
-- [ ] 👀 **Hits stop time.**
+- [x] **Hits stop time.**
       **Nick, 2026-09-30 09:44 ET:** no remove this for now
       **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dimpact) · [[BUILDER-QUEUE-NOTES#Hits stop time.|details]]
       Ask: Grader failed this: old strike shake still moves lens. Remove that too?
       Test: state=3dstrike beast=cinder_jackal beat=impact
       ![[agents/frames/builder/2026-09-30-hit-stop-remove-after.png|420]] ^hits-stop-time
-- [ ] 👀 **The jackal threatens between turns.**
+- [x] **The jackal threatens between turns.**
       **Nick, 2026-09-30 09:44 ET:** no revert this as the game is co op and we cannot make this work in multiplayer
       **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal threatens between turns.|details]]
       Ask: Reverted: no head turn, crack heat, badge beat or growl. Gone for good?
       Test: state=3d beast=cinder_jackal endturn=1
       ![[agents/frames/builder/2026-09-30-threat-revert-after.png|420]] ^the-jackal-threatens-between-turns
-- [ ] 👀 **Low health shows on screen.**
+- [x] **Low health shows on screen.**
       **Nick, 2026-09-30 09:44 ET:** no remove the heartbeat
       **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dhp%2B10) · [[BUILDER-QUEUE-NOTES#Low health shows on screen.|details]]
