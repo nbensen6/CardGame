@@ -1442,3 +1442,22 @@ cost printed on each card, the green gem top-left. Before frame: gems 1, 2, 1,
 - Not touched: the name ribbon's left inset that cleared the gem.
 - Grader: VERDICT: PASS.
 - Test: `_test_remove_cost_card_faces_draw_no_cost`.
+
+2026-09-30 11:57 EDT, builder. Nick (11:44): "no we still need cost gems. a
+redesign of the card borders in need." Before frame: no gems, the thick green
+lofted 9-slice (`frame_frog.png`) and a light steel name ribbon.
+
+- `SHOW_COST := true`: the gem is back on framed, borderless and rail cards.
+- New border `ui/card_border.gdshader`, drawn per pixel in the card's own rect
+  (no 9-slice smear): outer brass hairline, obsidian face with an engraved
+  groove and top-left bevel light, a 2 px brass fillet, a 2.5 px line in the
+  hunter's colour (frames.py's hues, `CardView.BORDER_HUES`), a soft inner
+  shadow on the art, brass diamond studs at the four corners and the foot.
+  Band 9 px (`BORDER_BAND`), radius 12.
+- Name ribbon darkened to match (`BANNER_TINT` via self_modulate), name cream.
+- First pass (band 8, no outer hairline) melted into the dark floor at hand
+  size; second pass added the hairline, widened the brass and hue lines.
+- Not touched: the deck list and the rail form still use the baked `FRAMES`.
+  Only in cloud: Blender is not installed, so the shader route, not frames.py.
+- Grader: VERDICT: PASS.
+- Test: `_test_cost_gems_back_on_a_redesigned_border`.

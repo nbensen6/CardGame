@@ -137,10 +137,9 @@ const ENERGY_ICON := preload("res://ui/icons/energy.svg")
 const FOIL_SHADER := preload("res://ui/foil.gdshader")
 
 var _foil: ColorRect = null
-## Nick, 2026-09-30: "remove cost". No card face prints its energy cost; the
-## energy rule itself (Combat.can_play) is untouched. One switch, so bringing
-## the gem back is one line.
-const SHOW_COST := false
+## Nick, 2026-09-30 10:59: "remove cost"; then 11:44: "no we still need cost
+## gems". The gem is back; the switch stays so the next change is one line.
+const SHOW_COST := true
 
 
 ## Whether a card face draws its cost. Static so a test can pin it.
@@ -148,7 +147,32 @@ static func shows_cost(data: Dictionary) -> bool:
 	return SHOW_COST and not bool(data.get("no_cost", false))
 ## The moulding, drawn as a layer OVER the art rather than as the Button's
 ## stylebox - a stylebox draws behind every child and the art would hide it.
-var _frame_rect: NinePatchRect = null
+var _frame_rect: ColorRect = null
+## The border (Nick, 2026-09-30: "a redesign of the card borders is needed"):
+## carved obsidian with a brass fillet and a thin line of the hunter's colour,
+## drawn by card_border.gdshader. FRAMES and frames.py still dress the rail
+## form and the deck list.
+const BORDER_SHADER := preload("res://ui/card_border.gdshader")
+## Width of the dark face, px. The art starts band + 4.5 in.
+const BORDER_BAND := 9.0
+const BORDER_RADIUS := 12.0
+## The name ribbon, darkened onto the border's obsidian.
+const BANNER_TINT := Color(0.34, 0.31, 0.33)
+## hunter -> [line colour, its lit side]. frames.py's CHARACTERS, so a hunter
+## keeps the colour it has always had.
+const BORDER_HUES := {
+	"frog": [Color("3F7A55"), Color("7FB894")],
+	"vine_weaver": [Color("6B58A6"), Color("A794D6")],
+	"mountain_climbers": [Color("5F82B5"), Color("9CB8DC")],
+	"goblin_mech": [Color("C07E4F"), Color("E0AE85")],
+	"lightbearer": [Color("D9A94E"), Color("F2D492")],
+	"common": [Color("5D6171"), Color("9AA0B2")],
+}
+
+
+## The owner's line colour and its lit side. Static so a test can pin it.
+static func border_hues(character: String) -> Array:
+	return BORDER_HUES.get(character, BORDER_HUES["common"])
 ## The rules text, the type pill and the panel they sit on. Held so the hand can
 ## hide them until a card is highlighted.
 var _rules: RichTextLabel = null
@@ -479,14 +503,20 @@ func _build_upper(data: Dictionary) -> void:
 
 	# 3 - the moulding. A Button draws its StyleBox BEHIND every child, so the
 	# frame cannot be a stylebox any more or the art would cover it.
-	var fr := NinePatchRect.new()
-	fr.texture = FRAMES.get(String(_data.get("character", "")), FRAMES["common"])
-	fr.patch_margin_left = FRAME_MARGIN
-	fr.patch_margin_right = FRAME_MARGIN
-	fr.patch_margin_top = FRAME_MARGIN
-	fr.patch_margin_bottom = FRAME_MARGIN
+	var fr := ColorRect.new()
+	var mat := ShaderMaterial.new()
+	mat.shader = BORDER_SHADER
+	var hues := border_hues(String(_data.get("character", "")))
+	mat.set_shader_parameter("hue", hues[0])
+	mat.set_shader_parameter("hue_lit", hues[1])
+	mat.set_shader_parameter("band", BORDER_BAND)
+	mat.set_shader_parameter("radius", BORDER_RADIUS)
+	fr.material = mat
+	fr.resized.connect(func() -> void:
+		mat.set_shader_parameter("rect_size", fr.size))
 	_frame_rect = fr
 	_layer(fr, 0, 0, 1, 1)
+	mat.set_shader_parameter("rect_size", custom_minimum_size)
 
 	# 4 - the type, straddling the scrim's top edge as a caption on the art.
 	var kind := String(_data.get("type", ""))
@@ -528,6 +558,13 @@ func _build_upper(data: Dictionary) -> void:
 	# Taller ribbon, bigger name. The name is the one thing readable on every
 	# card in the reference hand - it is their largest type after the cost.
 	var ban := _plate(BANNER, BANNER_SLICE, String(_data.get("name", "")), 14, 26)
+	# Obsidian, to match the border (Nick, 2026-09-30): the steel ribbon is
+	# darkened with self_modulate, which leaves the name label alone, and the
+	# name turns cream on it.
+	ban.self_modulate = BANNER_TINT
+	var ban_lbl: Label = ban.get_child(0)
+	ban_lbl.add_theme_color_override("font_color", Color(1.0, 0.93, 0.78))
+	ban_lbl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
 	_layer(ban, 0.0, 0.0, 1.0, 0.0, 28.0, 2.0, -3.0, 30.0)
 
 	# 8 - the cost, over the ribbon's left end, as in the reference.

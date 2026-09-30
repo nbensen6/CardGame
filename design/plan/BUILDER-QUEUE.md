@@ -10,13 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Remove cost.**
+- [ ] 👀 **Remove cost.**
       **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
       **Nick, 2026-09-30 10:59 ET:** remove cost
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
-      Ask: Cost gems gone from cards; energy still limits plays. Remove energy too?
-      Test: state=3d
-      ![[agents/frames/builder/2026-09-30-remove-cost-after.png|420]] ^remove-cost
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
+      Ask: Gems back; borders now obsidian with brass lines. Keep this border direction?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-card-borders-after.png|420]] ^remove-cost
 - [ ] **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
@@ -454,3 +454,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) A small "<" chevron shows at the far left edge mid-screen in the hover frame; no owner found.
 - [ ] (proposed) The jackal's name and HP plate touches the active hunter's feet at the climb camera.
 - [ ] (proposed) The old crown-tracking intent_tag_pos and its ten tests are now unused; delete once the HUD slot sticks.
+- [ ] (proposed) The deck list still draws cards in the old baked green frame, not the new border.
+- [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.

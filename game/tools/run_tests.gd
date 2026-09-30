@@ -1100,8 +1100,9 @@ func _init() -> void:
 	# clipped in the fan's tuck for the whole timing minigame on touch.
 	_test_backlog86_card_is_raised_by_hover()
 	_test_backlog86_card_is_raised_by_active_timing_with_no_hover()
-	# Remove cost (Nick, 2026-09-30): no card face prints its energy cost.
-	_test_remove_cost_card_faces_draw_no_cost()
+	# Remove cost, answered (Nick, 2026-09-30 11:44): the gems stay, the
+	# borders get a redesign.
+	_test_cost_gems_back_on_a_redesigned_border()
 	_test_cards_fan_raised_card_has_no_glow()
 	# backlog #86 duty 2: should_rebuild_hand -- state_updated fires on EVERY
 	# player's action, not just this client's own, so a teammate's turn used
@@ -22149,11 +22150,30 @@ func _test_backlog86_render_hand_status_hides_prompt_outside_selection() -> void
 ## inside the deep tuck a resting card sits in — so tapping a timed card on
 ## a handheld (no mouse_entered, ever) started the sweep with the strip
 ## clipped off-screen for its whole duration. bugs.md Finding 3, 2026-09-08.
-func _test_remove_cost_card_faces_draw_no_cost() -> void:
-	_expect(not CardView.shows_cost({"name": "Slash", "cost": 1}),
-		"Nick: remove cost - a card with a cost must not draw it")
+func _test_cost_gems_back_on_a_redesigned_border() -> void:
+	_expect(CardView.shows_cost({"name": "Slash", "cost": 1}),
+		"Nick: we still need cost gems - a card with a cost draws it")
 	_expect(not CardView.shows_cost({"name": "Relic", "no_cost": true}),
 		"a no_cost card still draws no cost")
+	_expect(CardView.border_hues("frog")[0] == Color("3F7A55"),
+		"the Frog keeps its green line on the new border")
+	_expect(CardView.border_hues("nobody") == CardView.border_hues("common"),
+		"an unknown owner falls back to the common line")
+	var cv := CardView.new()
+	cv.setup({"name": "Slash", "cost": 2, "character": "goblin_mech",
+		"text": "Deal 6 damage."}, true)
+	var fr = cv._frame_rect
+	_expect(fr is ColorRect and fr.material is ShaderMaterial
+		and fr.material.shader == CardView.BORDER_SHADER,
+		"the border is the carved-obsidian shader, not the old 9-slice")
+	_expect(fr.material.get_shader_parameter("hue") == Color("C07E4F"),
+		"the Goblin's card carries the Goblin's line colour")
+	var gems := 0
+	for c in cv.get_children():
+		if c is TextureRect and CardView.ORBS.values().has(c.texture):
+			gems += 1
+	_expect(gems == 1, "a playable card hangs exactly one cost gem (got %d)" % gems)
+	cv.free()
 
 
 ## Nick, 2026-09-30, on Cards fan and glow: "remove this". The lifted card

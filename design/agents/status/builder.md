@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T11:48
-working_on: "The intent badge reads like a warning."
+updated: 2026-09-30T11:57
+working_on: "Remove cost."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 11:48 EDT
+2026-09-30 11:57 EDT
 
-- **Did:** Moved the jackal's intent badge off its head into a fixed top-centre HUD panel.
-- **Worked?** Yes, all four frames show it in the HUD, clear of both hunters. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-intent-hud-before.png]] then ![[frames/builder/2026-09-30-intent-hud-after.png]]
-- **Ask:** Is top centre the right HUD spot for the badge?
+- **Did:** Brought cost gems back and redrew card borders as obsidian with brass lines.
+- **Worked?** Yes, every hand card shows its gem and the new border. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-card-borders-before.png]] then ![[frames/builder/2026-09-30-card-borders-after.png]]
+- **Ask:** Keep this obsidian-and-brass border direction?
 
 ## Notes
 
-- **Found:** The jackal's name and HP plate touches the active hunter's feet at the climb camera.
-- **Found:** The old crown-tracking intent_tag_pos and its tests are now unused.
+- **Found:** The deck list still draws cards in the old baked green frame.
+- **Found:** The rail (compact) card form still wears the old baked frame.
 
 ## Log
+
+- 2026-09-30 11:57 EDT — builder: Remove cost answered (Nick 11:44): SHOW_COST back on, new card_border.gdshader (obsidian, brass hairline and fillet, hunter line, corner studs), name ribbon darkened; grader PASS; tests green, pushed.
 
 - 2026-09-30 11:48 EDT — builder: intent badge moved to the HUD on Nick's word (09:44): intent_hud_pos pins it top centre in a hud_style panel (red edge on hostile), INTENT_ON_HUD skips the crown tracking + test; grader FAIL (one frame) then PASS on 2x2 strips; tests green, pushed.
 - 2026-09-30 11:24 EDT — builder: cards fan and glow removed on Nick's word (09:44): reverse of 3aec5e3 (set_raised rim, foil.gdshader rim mode, pip_pulse) kept with remove-cost; fan/tilt/lift kept (predate the item, lift carries touch timing) + test; grader FAIL (wanted the fan gone too), shipped 👀 to ask; tests green, pushed.
