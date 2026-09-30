@@ -1092,6 +1092,11 @@ Builder, 2026-09-29 22:32 EDT. Dev camera only; the Player camera and the rest s
 - Done-when strip (graded PASS): `state=3d beast=cinder_jackal` then `console=climb+1 touch=1,0.3`; Frog centred at 640 both, camera x differs.
 - Grader round 1 FAIL graded the overshoot pair as the done-when strip; round 2 PASS on the strip.
 
+- 2026-09-30 09:56 EDT, builder: **reverted on Nick's word (09:44, "no i dont like this change").** `_swing_vec`/`_swing_t`/`_swing_off`, `HOP_SWING_*`, `hop_swing`, `hop_swing_vec`, `_hop_landed` and its tween callback are gone from combat_3d; `_apply_orbit` uses `_pivot` again; `_test_camera_swings_past_a_sideways_hop` removed. The harness `touch=K,S` stays (it is how the revert was shot).
+- Proof, `state=3d beast=cinder_jackal "console=climb 3" touch=1,0.075`: Frog at screen x 588 with the old code, 640 now. Frames are two-panel strips: rest | 0.075 s after the first landing.
+  ![[agents/frames/builder/2026-09-30-hop-swing-revert-before.png|420]] ![[agents/frames/builder/2026-09-30-hop-swing-revert-after.png|420]]
+- Grader round 1 FAIL (single frames did not bracket a hop); round 2 PASS on the strips.
+
 ## Hits stop time.
 
 Builder, 2026-09-30 00:21 EDT.

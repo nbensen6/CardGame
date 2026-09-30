@@ -10,13 +10,13 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **The camera swings with each hop.**
+- [ ] 👀 **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B1) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
-      Ask: Camera now overshoots each sideways landing a little, then settles. Big enough?
-      Test: state=3d beast=cinder_jackal console=climb+1
-      ![[agents/frames/builder/2026-09-30-hop-swing-strip-after.png|420]] ^the-camera-swings-with-each-hop
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B3%20touch%3D1%2C0.075) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
+      Ask: Swing removed: camera lands dead on the Frog each hop, as before. Good?
+      Test: state=3d beast=cinder_jackal console=climb+3 touch=1,0.075
+      ![[agents/frames/builder/2026-09-30-hop-swing-revert-after.png|420]] ^the-camera-swings-with-each-hop
 - [ ] **Hits stop time.**
       **Nick, 2026-09-30 09:44 ET:** no remove this for now
       **Session, 2026-09-29 22:35 ET:** A landed strike freezes the frame for 0.08 s, shakes the camera in proportion to damage, and bursts embers from the impact point; a weak-point hit adds 0.15 s of slow motion. The jackal's bite gets the same hit-stop on the hunter. Done-when: the strike frame shows the ember burst at the impact point and a frame 0.1 s later shows the camera offset. Source: [[2026-09-29-intense-fight-plan]].
@@ -438,3 +438,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Seam lights are evenly spaced.** They ring the wall on a fixed pattern, not on the lava seams painted in its texture.
 - [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
 - [ ] (proposed) **The rest camera sees almost no sky.** Cliffs, the boss bar and the intent badge leave a ~250x100 px notch, so sky work barely shows.
+- [ ] (proposed) **Stone beside the Frog sits nearer the lens.** Just after the climb 3 landing, the right-hand stone looks as near the camera as the Frog's own.

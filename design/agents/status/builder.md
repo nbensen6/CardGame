@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T03:29
-working_on: "A sky with ash."
+updated: 2026-09-30T09:56
+working_on: "The camera swings with each hop."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 03:29 EDT
+2026-09-30 09:56 EDT
 
-- **Did:** The jackal's sky now carries drifting dark ash clouds lit red underneath, with an occasional distant glow.
-- **Worked?** Partly; VERDICT: FAIL, the sky notch reads as a magenta-to-orange wash, no cloud shapes.
-- **Look at:** ![[frames/builder/2026-09-30-ash-sky-before.png]] then ![[frames/builder/2026-09-30-ash-sky-after.png]]
-- **Ask:** Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
+- **Did:** Removed the camera's sideways overshoot after each hop, as Nick asked.
+- **Worked?** Yes; VERDICT: PASS, Frog centred right after landing (x 640, was 588).
+- **Look at:** ![[frames/builder/2026-09-30-hop-swing-revert-before.png]] then ![[frames/builder/2026-09-30-hop-swing-revert-after.png]]
+- **Ask:** nothing.
 
 ## Notes
 
-- **Found:** the rest camera sees only a ~250x100 px notch of sky, mostly under the boss bar and intent badge.
+- **Found:** just after the climb 3 landing, the right-hand stone looks as near the lens as the Frog's own.
 
 ## Log
 
+- 2026-09-30 09:56 EDT — builder: hop swing reverted on Nick's word (09:44): swing state, HOP_SWING_*, hop_swing/hop_swing_vec/_hop_landed and its test removed, _apply_orbit back on _pivot; harness touch= kept; grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:29 EDT — builder: a sky with ash (quarry_ember `ash_sky`; ash_sky.gdshader sky shader: fbm ash on a flat ceiling, red lower rims, 9 s glow swell, gradient-only cubemap pass; _light_for swaps it in and restores the plain sky; 1 test); grader FAIL x3 (sky notch too small to read clouds), shipped 👀; tests green, pushed.
 - 2026-09-30 03:15 EDT — builder: embers in the air (quarry_ember `embers`; ember_field/seam_points; EmberField: 500 rising soft sparks, 8 seam omni lights at 3.4 R on a new SEAM_LIT_LAYER that takes the Wall off LAVA_LIT_LAYER (Compatibility 8-light cap), a spark drip per seam + 2 tests); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:04 EDT — builder: lava ring (quarry_ember `lava` [1.0, 2.5] R; lava_ring/lava_ring_mesh + lava.gdshader polar flow; 8 omni lights on LAVA_LIT_LAYER so the cast stays unlit; heat_shimmer.gdshader band past CAMERA_MAX_R; obsidian rim heat faded near the lens + 3 tests); grader FAIL x3 (rim floor not orange), escalated 👀; tests green, pushed.
