@@ -10,14 +10,23 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Played cards fly to their target.**
+- [ ] **Played cards fly to their target.**
+      **Nick, 2026-09-29 20:59 ET:** the played cards flying feel really bad please revert.
       **Nick, 2026-09-29 17:29 ET:** the card is stuck
       **Session, 2026-09-29 11:05 ET:** A played card pops out of the hand. Make it scale up and fly to the beast for an attack, to the hunter for block or climb, before its effect resolves, about 0.25 s. Block pops a ring on the hunter and plays the `block` sound that exists and is never played. Done-when: a mid-flight frame shows the card between the hand and its target. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hand%3Dslash%2Cbrace%2Crope_up%2Cbunker_down%20fly%3D0%2C0%2C0%20flyt%3D1) · [[BUILDER-QUEUE-NOTES#Played cards fly to their target.|details]]
       Ask: Grader failed this: early catch reads as raised, not flying. Press Test; still stuck?
       Test: state=3d beast=cinder_jackal hand=slash,brace,rope_up,bunker_down fly=0,0,0 flyt=1
       ![[agents/frames/builder/2026-09-29-card-stuck-after.png|420]] ^played-cards-fly-to-their-target
-- [ ] 👀 **Let the Frog hang?**
+- [ ] **Hunters lunge when they attack and flinch when hit.**
+      **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
+      **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
+      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
+      Ask: Frog no longer freezes: it lunges, flinches white, three times, then yours. Right?
+      Test: state=3dstrike beast=cinder_jackal beat=loop
+      ![[agents/frames/builder/2026-09-29-strike-live-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
+- [x] **Let the Frog hang?**
       **Nick, 2026-09-29 17:14 ET:** lets get rid of the grip mechanic for now
       **Nick, 2026-09-29 11:59 ET:** i don't understand this question please re word it.
       **Session, 2026-09-29 11:05 ET:** The Frog's +1 climb makes every one of its climbs land on a safe ledge, so the Frog never meets the grip bar. Default if you say yes: the +1 applies to Climb cards only, not to attacks that climb (Tongue Snap, Pounce). This changes a balance number, so it is yours. Source: [[2026-09-28-jackal-fight-analysis]].
@@ -25,34 +34,27 @@ run failed.
       Ask: Grip is off: no countdown, nobody slips. Does climbing feel right without it?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-grip-off-after.png|420]] ^let-the-frog-hang
-- [ ] 👀 **The jackal's turn plays out on screen.**
+- [x] **The jackal's turn plays out on screen.**
       **Nick, 2026-09-29 17:14 ET:** re word this question it doesnt make sense
       **Session, 2026-09-29 11:05 ET:** Today the enemy turn resolves in zero seconds and the bite clip plays AFTER the damage number. On End Turn: a 0.4 s hold, the intent badge pulses, the existing `attack` clip plays, the damage and popup land on the bite frame (frame 16 of 40), then the new hand. Same for the sweep, with the shake and both hunters hopping down. No new clips. Done-when: a four-frame strip across one enemy turn shows wind-up, bite, number, new hand in that order. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal's turn plays out on screen.|details]]
       Ask: Grader failed this: wind-up unseen in stills. Press End Turn: jackal lunges, then damage?
       Test: state=3d beast=cinder_jackal endturn=1
       ![[agents/frames/builder/2026-09-29-jackal-turn-reads-after.png|420]] ^the-jackal-s-turn-plays-out-on-screen
-- [ ] 👀 **The grip clock only runs on your own time.**
+- [x] **The grip clock only runs on your own time.**
       **Nick, 2026-09-29 17:14 ET:** remove grip timer for now
       **Session, 2026-09-29 11:05 ET:** The 5 s grip starts at the snapshot and keeps draining through hop animations, the timing mini-game, the other hunter's turn and the enemy turn. Pause it whenever the hanging hunter is not the one being held, or a hop tween or timing window is open. Do not change the 5 seconds. Done-when: the grip bar reads the same value before and after the other hunter's whole turn, and a test pins the pause rule. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dgrip%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The grip clock only runs on your own time.|details]]
       Ask: Grip timer is gone: no HOLD ON bar, nobody slips. Tick to close?
       Test: state=3dgrip beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-grip-timer-removed-after.png|420]] ^the-grip-clock-only-runs-on-your-own-tim
-- [ ] 👀 **Timing notes open at the hold on the beast.**
+- [x] **Timing notes open at the hold on the beast.**
       **Nick, 2026-09-29 17:14 ET:** this question doesnt make sense. i do see timing over the cards still
       **Session, 2026-09-29 11:05 ET:** The hit-circle notes stream up from the tapped card; the code comment says they open at the hold and they do not. Open them beside the climbing hunter so the grip bar, the notes and the hunter are one place on screen. That is the double timing. Done-when: with a timed card open mid-climb, the first note is within a hunter-height of the hunter on screen. Source: [[2026-09-28-jackal-fight-analysis]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dosu%20beast%3Dcinder_jackal%20hold%3Don) · [[BUILDER-QUEUE-NOTES#Timing notes open at the hold on the beast.|details]]
       Ask: Notes now stay above the cards and off the hunter. Still see any over cards?
       Test: state=3dosu beast=cinder_jackal hold=on
       ![[agents/frames/builder/2026-09-29-notes-off-hand-after.png|420]] ^timing-notes-open-at-the-hold-on-the-bea
-- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
-      **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
-      **Session, 2026-09-29 11:05 ET:** The Frog and Goblin have no rig; `_hunter_play` for attack and hit does nothing. Build both as tweens like the hop already is: attack = a 0.15 s lunge toward the beast with a scale punch, only on the hunter that played the card; hit = a white flash and a 0.2 s knock-back with a lean. Done-when: a strike frame shows the lunge, a hit frame shows the flinch, and the other hunter does not move. Source: [[2026-09-28-jackal-fight-analysis]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dstrike%20beast%3Dcinder_jackal%20beat%3Dloop) · [[BUILDER-QUEUE-NOTES#Hunters lunge when they attack and flinch when hit.|details]]
-      Ask: Frog no longer freezes: it lunges, flinches white, three times, then yours. Right?
-      Test: state=3dstrike beast=cinder_jackal beat=loop
-      ![[agents/frames/builder/2026-09-29-strike-live-after.png|420]] ^hunters-lunge-when-they-attack-and-flinc
 - [ ] 👀 **One tap for ordinary timed cards?**
       **Nick, 2026-09-29 12:59 ET:** some of the time events are going behind the cards
       **Nick, 2026-09-29 12:44 ET:** yes and randomize the order for drag. sometimes on one sometimes others
