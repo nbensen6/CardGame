@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T02:40
-working_on: "Lava rock under the hunters."
+updated: 2026-09-30T03:04
+working_on: "Lava flows around the arena."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 02:40 EDT
+2026-09-30 03:04 EDT
 
-- **Did:** The jackal fight's climb stones are dark basalt now, glowing orange at the rim, edges and underside.
-- **Worked?** Partly; VERDICT: FAIL, stones dark with orange edge glow, but the Goblin's stone is off-frame.
-- **Look at:** ![[frames/builder/2026-09-30-lava-rock-before.png]] then ![[frames/builder/2026-09-30-lava-rock-after.png]]
-- **Ask:** Grader failed this: Goblin's stone off-frame. Stones read as lava rock to you?
+- **Did:** A glowing lava ring now flows between the jackal arena's floor and wall, with heat shimmer above.
+- **Worked?** Partly; VERDICT: FAIL, lava glows across the horizon but the floor at the rim is not visibly orange.
+- **Look at:** ![[frames/builder/2026-09-30-lava-ring-before.png]] then ![[frames/builder/2026-09-30-lava-ring-after.png]]
+- **Ask:** Grader failed this: rim floor not visibly orange. Does the lava ring read?
 
 ## Notes
 
-- **Found:** the Goblin and its stones are off-frame in both the rest and climb shots of the jackal fight.
-- **Found:** the Frog's dark stone has little contrast against the black jackal body behind it.
+- **Found:** at the rest camera the far rim squeezes into a few rows at the horizon.
+- **Found:** from the low camera the lava's noise aliases into horizontal streaks.
 
 ## Log
 
+- 2026-09-30 03:04 EDT — builder: lava ring (quarry_ember `lava` [1.0, 2.5] R; lava_ring/lava_ring_mesh + lava.gdshader polar flow; 8 omni lights on LAVA_LIT_LAYER so the cast stays unlit; heat_shimmer.gdshader band past CAMERA_MAX_R; obsidian rim heat faded near the lens + 3 tests); grader FAIL x3 (rim floor not orange), escalated 👀; tests green, pushed.
 - 2026-09-30 02:40 EDT — builder: lava rock stones (lava_rock.gdshader: dark basalt x ROCK_DETAIL, emission on world-down faces + fresnel edge; stone_style/`"stone": "lava_rock"` on quarry_ember only, body+cap take it, ember rim kept + test); grader FAIL x2 (too orange, then Goblin off-frame), escalated 👀; tests green, pushed.
 - 2026-09-30 02:29 EDT — builder: obsidian floor (obsidian.gdshader: near-black base, view-space reflected sheen band, px-clamped Voronoi crack hairlines; floor_style/_dress_floor on env Floor + Ground for quarry_ember only + test); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 02:10 EDT — builder: climb gauge in obsidian (carved panel 84x372, groove rail, ember-halo ledge notches, 5-ring burning sigil wider than a pip, portrait pips r13 in slot-tint rings via snapshot `portrait`, static gauge_y + test); grader PASS; tests green, pushed.

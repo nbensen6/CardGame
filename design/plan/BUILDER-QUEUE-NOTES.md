@@ -1252,3 +1252,39 @@ Built 2026-09-30 02:40 EDT.
   edges. Second grader FAIL only because the Goblin's stone is cut off at the right edge
   in `state=3dclimb` (and `state=3d`), so "under both hunters" cannot be seen. Moving
   the camera is outside this item; left for Nick.
+
+## Lava flows around the arena.
+
+Builder, 2026-09-30 03:04 EDT. Brief: the Session line on the queue item (plan item 13 in
+[[2026-09-29-intense-fight-plan]]).
+
+- **What landed.** `combat_3d.BIOME["quarry_ember"]["lava"] = [1.0, 2.5]`
+  (arena radii); static `lava_ring(biome)` clamps it to [LAVA_MIN_R 1.0,
+  LAVA_MAX_R 2.55]; `_add_lava` builds, under `_rig`:
+  - a flat annulus (`lava_ring_mesh`, 96 segments) at -0.003 R, level with the
+    floor's brim so the floor's own edge walls it in; `lava.gdshader`, unshaded,
+    two 3-octave value-noise layers in polar coords, the body flowing round at
+    `flow` 0.018 rad/s and a darker crust at half that;
+  - 8 OmniLight3D at 1.2 R, 0.05 R up, range 0.6 R, energy 6, with
+    `light_cull_mask = LAVA_LIT_LAYER` (bit 19); only the env's meshes join that
+    layer, so the lights warm floor and wall but not the Frog (at first they
+    turned it yellow);
+  - a heat shimmer band (open CylinderMesh at SHIMMER_R 2.46 R > CAMERA_MAX_R,
+    0.3 R tall): `heat_shimmer.gdshader` wobbles the screen texture and adds an
+    orange glow that is strongest at the lava. Its height is measured off
+    VERTEX.y: a CylinderMesh's side UVs do not span 0..1 with caps off, which
+    is why the first two tries drew nothing.
+  - obsidian floor rim heat: new `rim_*` uniforms on `obsidian.gdshader`, set by
+    `_add_lava`; emission rises over LAVA_RIM_HEAT 0.8 R toward the lava and
+    fades out within 0.5-1.2 rim radii of the lens, so the ground in front of
+    the hunter stays dark.
+- **Tests:** `lava_ring` only in quarry_ember; ring starts past 0.86 R and ends
+  inside the wall; shimmer beyond CAMERA_MAX_R and inside the wall;
+  `lava_ring_mesh` spans inner..outer, 6 vertices per segment.
+- **Grader:** FAIL x3, each time on the same point: the floor just in front of
+  the lava does not read orange. At the rest camera the far rim, 0.2-1 R behind
+  the beast, is about 20 screen rows (y 318-340), so neither the omni lights
+  (obsidian albedo 0.035) nor the emissive rim heat shows much there. Floor
+  lights at energy 10 turned the whole foreground maroon, which goes against
+  "dark ground". The wide shot (`wide`) shows the whole ring and the glow.
+

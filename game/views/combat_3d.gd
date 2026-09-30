@@ -25,6 +25,9 @@ const TOON := preload("res://assets/3d/toon.gdshader")
 const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Black-glass arena floor for a biome that names `"floor": "obsidian"`.
 const OBSIDIAN := preload("res://assets/3d/obsidian.gdshader")
+## The molten ring round the arena for a biome that names `"lava"`.
+const LAVA := preload("res://assets/3d/lava.gdshader")
+const HEAT_SHIMMER := preload("res://assets/3d/heat_shimmer.gdshader")
 ## Dark basalt with an ember glow for the climb stones of a biome that names
 ## `"stone": "lava_rock"`.
 const LAVA_ROCK := preload("res://assets/3d/lava_rock.gdshader")
@@ -2522,6 +2525,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		ground.radius = maxf(9.0, want_r)
 	_show_env(beast_id, want_r, ground)
 	_dress_floor(beast_id, ground)
+	_add_lava(beast_id)
 	_light_for(beast_id)
 	_frame_beast()
 
@@ -2618,6 +2622,10 @@ const BIOME := {
 		# go dark basalt with an ember glow at the underside and edges. See
 		# stone_style() / _add_float_stone().
 		"stone": "lava_rock",
+		# Lava round the arena (session, 2026-09-29): a molten ring in the
+		# trench between the floor's edge and the wall, [inner, outer] in arena
+		# radii. See lava_ring() / _add_lava().
+		"lava": [1.0, 2.5],
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -2739,6 +2747,118 @@ func _dress_floor(beast_id: String, ground: CSGCylinder3D) -> void:
 		for node in _all_meshes(floor_node):
 			if node is MeshInstance3D:
 				(node as MeshInstance3D).material_override = mat
+
+
+## Where a biome's lava ring runs, [inner, outer] in arena radii, or ZERO for
+## a biome with none. The inner edge is never inside LAVA_MIN_R: the hunters
+## stand no further out than 0.86 R (ground_standoff_for's clamp), and the lava
+## must not reach their slabs. The outer edge never passes LAVA_MAX_R, the
+## wall's inner face (env.ENCLOSE_CLEAR). Static so run_tests.gd can pin it.
+const LAVA_MIN_R := 1.0
+const LAVA_MAX_R := 2.55
+static func lava_ring(biome: String) -> Vector2:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	if not b.has("lava"):
+		return Vector2.ZERO
+	var r: Array = b["lava"]
+	var inner := maxf(float(r[0]), LAVA_MIN_R)
+	return Vector2(inner, clampf(float(r[1]), inner, LAVA_MAX_R))
+
+
+## The shimmer band stands here, in arena radii: past CAMERA_MAX_R, so the lens
+## is always inside it and it can only ever wobble what lies beyond the lava.
+const SHIMMER_R := 2.46
+const LAVA_LIGHTS := 8
+## The render layer the lava's lights shine on: the environment's own meshes
+## join it, the cast never does, so the rim glows orange and the Frog stays
+## green.
+const LAVA_LIT_LAYER := 1 << 19
+## How far in from the lava the obsidian floor still glows with its heat, in
+## arena radii. The obsidian shader also fades it out near the lens, so on the
+## camera's side, where the hunters stand, the ground stays dark.
+const LAVA_RIM_HEAT := 0.8
+
+var _lava: Node3D = null
+
+## Fill the trench between the floor's edge and the wall with lava, light the
+## floor's rim with it, and stand a heat shimmer over it. The floor's top is at
+## 0 and env.py's apron sits a step below it, so the pool lies between the two:
+## the floor's own edge walls it in and nothing of it shows inside the arena.
+func _add_lava(beast_id: String) -> void:
+	if _lava != null:
+		_lava.queue_free()
+		_lava = null
+	var ring := lava_ring(String(BEAST_BIOME.get(beast_id, "crag")))
+	if ring == Vector2.ZERO or _env == null:
+		return
+	var r := _arena_r
+	for node in _all_meshes(_env):
+		(node as VisualInstance3D).layers |= LAVA_LIT_LAYER
+	# The obsidian floor's own rim heat: it glows toward the lava.
+	var floor_node := _env.find_child("Floor", true, false)
+	if floor_node != null:
+		for node in _all_meshes(floor_node):
+			var fm := (node as GeometryInstance3D).material_override as ShaderMaterial
+			if fm != null and fm.shader == OBSIDIAN:
+				fm.set_shader_parameter("rim_center", Vector2(_rig.global_position.x, _rig.global_position.z))
+				fm.set_shader_parameter("rim_radius", ring.x * r)
+				fm.set_shader_parameter("rim_width", LAVA_RIM_HEAT * r)
+	_lava = Node3D.new()
+	_lava.name = "Lava"
+	_rig.add_child(_lava)
+	var pool := MeshInstance3D.new()
+	pool.mesh = lava_ring_mesh(ring.x * r, ring.y * r, 96)
+	var mat := ShaderMaterial.new()
+	mat.shader = LAVA
+	pool.material_override = mat
+	pool.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	pool.position.y = -0.003 * r
+	_lava.add_child(pool)
+	# Orange light off the pool onto the floor's rim, just inside its edge.
+	for i in LAVA_LIGHTS:
+		var a := TAU * (float(i) + 0.5) / float(LAVA_LIGHTS)
+		var l := OmniLight3D.new()
+		l.light_color = Color(1.0, 0.42, 0.12)
+		l.light_energy = 6.0
+		l.omni_range = 0.6 * r
+		l.omni_attenuation = 1.4
+		l.shadow_enabled = false
+		l.light_cull_mask = LAVA_LIT_LAYER
+		l.position = Vector3(cos(a), 0.05, sin(a)) * Vector3(ring.x * r * 1.2, r, ring.x * r * 1.2)
+		_lava.add_child(l)
+	var band := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = SHIMMER_R * r
+	cyl.bottom_radius = SHIMMER_R * r
+	cyl.height = 0.3 * r
+	cyl.cap_top = false
+	cyl.cap_bottom = false
+	cyl.radial_segments = 64
+	cyl.rings = 1
+	band.mesh = cyl
+	var heat := ShaderMaterial.new()
+	heat.shader = HEAT_SHIMMER
+	heat.set_shader_parameter("band_height", cyl.height)
+	band.material_override = heat
+	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	band.position.y = pool.position.y + cyl.height * 0.5
+	_lava.add_child(band)
+
+
+## A flat ring, `inner` to `outer`, facing up, centred on its own origin.
+static func lava_ring_mesh(inner: float, outer: float, seg: int) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_normal(Vector3.UP)
+	for i in seg:
+		var a0 := TAU * float(i) / float(seg)
+		var a1 := TAU * float(i + 1) / float(seg)
+		var p0 := Vector3(cos(a0), 0.0, sin(a0))
+		var p1 := Vector3(cos(a1), 0.0, sin(a1))
+		for v in [p0 * inner, p1 * outer, p0 * outer, p0 * inner, p1 * inner, p1 * outer]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(v)
+	return st.commit()
 
 
 ## Scale a freshly added model so it stands `want` units tall, and report the

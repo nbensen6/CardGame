@@ -33,6 +33,19 @@ uniform float crack_cell = 4.0;
 uniform float crack_width : hint_range(0.0, 0.3) = 0.018;
 uniform float crack_px : hint_range(0.5, 4.0) = 1.2;
 
+// Rim heat — "Lava flows around the arena", 2026-09-30. Where lava rings the
+// floor (combat_3d._add_lava sets these), the glass nearest it glows orange
+// and its cracks run hotter, fading in over `rim_width` world units up to
+// `rim_radius` from `rim_center`, and never near the lens (see below).
+// rim_radius 0 = no lava, no heat. Emission,
+// not a light: the glass is near-black, so no light that leaves the Frog
+// green can make it read orange from the rest camera.
+uniform vec2 rim_center = vec2(0.0);
+uniform float rim_radius = 0.0;
+uniform float rim_width = 1.0;
+uniform vec4 rim_color : source_color = vec4(1.0, 0.36, 0.08, 1.0);
+uniform float rim_gain : hint_range(0.0, 3.0) = 2.0;
+
 varying vec3 world_pos;
 
 void vertex() {
@@ -98,8 +111,22 @@ void fragment() {
 	// Glass: the cracks break the reflection, they do not carry it.
 	band *= 1.0 - crack;
 
+	float heat = 0.0;
+	if (rim_radius > 0.0) {
+		float d = length(world_pos.xz - rim_center);
+		heat = smoothstep(rim_radius - rim_width, rim_radius, d);
+		heat = pow(heat, 1.2);
+		// The rest camera stands near the rim on its own side, so the glass
+		// under the lens would glow too and the dark ground in front of the
+		// hunter would go red. Only the rim across the arena, the one you look
+		// at, carries the heat.
+		float seen = length(world_pos - CAMERA_POSITION_WORLD);
+		heat *= smoothstep(0.5 * rim_radius, 1.2 * rim_radius, seen);
+	}
+
 	EMISSION = band * band_strength * band_color.rgb
-		+ crack_color.rgb * crack_gain * (crack + halo * 0.12);
+		+ crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
+		+ rim_color.rgb * rim_gain * heat;
 }
 
 void light() {

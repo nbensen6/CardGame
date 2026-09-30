@@ -296,9 +296,12 @@ run failed.
       Ask: Grader failed this: Goblin's stone off-frame. Stones read as lava rock to you?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-lava-rock-after.png|420]] ^lava-rock-under-the-hunters
-- [ ] **Lava flows around the arena.**
+- [ ] 👀 **Lava flows around the arena.**
       **Session, 2026-09-29 22:35 ET:** Add a lava ring between the floor and the wall: an emissive scrolling shader with noise, slow flow, orange omni lights along it, heat shimmer above it. It must not reach the hunters' slabs. Done-when: the rest frame shows glowing lava between the floor edge and the wall, lighting the floor orange at the rim. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal ^lava-flows-around-the-arena
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Lava flows around the arena.|details]]
+      Ask: Grader failed this: rim floor not visibly orange. Does the lava ring read?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
 - [ ] **Embers in the air.**
       **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal ^embers-in-the-air
@@ -414,3 +417,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
 - [ ] (proposed) **Goblin off-frame in jackal shots.** The Goblin and its stones sit past the right edge in both the rest and climb frames.
 - [ ] (proposed) **Frog stone lost against the jackal.** The dark lava stone has little contrast against the black jackal body behind it.
+- [ ] (proposed) **Rest camera flattens the far rim.** At rest the whole trench beyond the floor is a few rows at the horizon.
+- [ ] (proposed) **Lava streaks at grazing angles.** From the low camera the lava's noise aliases into horizontal stripes.

@@ -2410,6 +2410,11 @@ func _init() -> void:
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
+	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
+	# between the hunters' ground and the wall, lens always inside the shimmer.
+	_test_lava_ring_only_in_the_jackal_biome()
+	_test_lava_ring_stays_off_the_hunters_and_inside_the_wall()
+	_test_lava_ring_mesh_spans_inner_to_outer()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
 	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
 	# by anything in this file — see the doc comment on the tests themselves.
@@ -31156,6 +31161,39 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 				"biome %s keeps its pale stones" % biome)
 	_expect(Combat3D.stone_style("no_such_biome") == "", "an unknown biome keeps the pale stones")
 	_expect(Combat3D.LAVA_ROCK is Shader, "the lava rock shader loads")
+
+
+func _test_lava_ring_only_in_the_jackal_biome() -> void:
+	_expect(Combat3D.lava_ring(String(Combat3D.BEAST_BIOME["cinder_jackal"])) != Vector2.ZERO,
+		"the Cinder Jackal's arena has a lava ring")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(Combat3D.lava_ring(biome) == Vector2.ZERO, "biome %s has no lava" % biome)
+	_expect(Combat3D.lava_ring("no_such_biome") == Vector2.ZERO, "an unknown biome has no lava")
+	_expect(Combat3D.LAVA is Shader and Combat3D.HEAT_SHIMMER is Shader, "the lava shaders load")
+
+
+func _test_lava_ring_stays_off_the_hunters_and_inside_the_wall() -> void:
+	var r := Combat3D.lava_ring("quarry_ember")
+	# Hunters stand no further out than 0.86 R (ground_standoff_for's clamp).
+	_expect(r.x > 0.86, "the lava starts outside where any hunter stands (%.2f R)" % r.x)
+	_expect(r.y > r.x and r.y <= Combat3D.LAVA_MAX_R, "the lava ends inside the wall (%.2f R)" % r.y)
+	_expect(Combat3D.SHIMMER_R > Combat3D.CAMERA_MAX_R,
+		"the heat shimmer stands beyond the camera, so it never wobbles the hunters")
+	_expect(Combat3D.SHIMMER_R < Combat3D.LAVA_MAX_R, "the heat shimmer stands inside the wall")
+
+
+func _test_lava_ring_mesh_spans_inner_to_outer() -> void:
+	var m := Combat3D.lava_ring_mesh(10.0, 25.0, 32)
+	var lo := INF
+	var hi := 0.0
+	for v in m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		var d := Vector2(v.x, v.z).length()
+		lo = minf(lo, d)
+		hi = maxf(hi, d)
+	_expect(is_equal_approx(lo, 10.0) and is_equal_approx(hi, 25.0),
+		"the lava mesh runs from its inner to its outer radius (%.2f..%.2f)" % [lo, hi])
+	_expect(m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX].size() == 32 * 6, "two triangles per segment")
 
 
 func _test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin() -> void:
