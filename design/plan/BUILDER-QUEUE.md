@@ -218,10 +218,12 @@ run failed.
       Ask: The lava-lit mountains are clear now; haze only in the sky. Right?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-29-fog-behind-after.png|420]] ^change-the-fog-so-it-s-behind-the-exteri
-- [ ] **More free unrestriced camera movement at higher speed.**
+- [ ] 👀 **More free unrestriced camera movement at higher speed.**
       **Nick, 2026-09-29 21:14 ET:** more free unrestriced camera movement at higher speed. cant zoom in more past picture. (where: in dev movde) ![[art/references/Pasted image 20260929210409.png|420]]
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d) · [[BUILDER-QUEUE-NOTES#More free unrestriced camera movement at higher speed.|details]]
-      Test: state=3d ^more-free-unrestriced-camera-movement-at
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B5%20devzoom%3D16%20devorbit%3D-35) · [[BUILDER-QUEUE-NOTES#More free unrestriced camera movement at higher speed.|details]]
+      Ask: Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
+      Test: state=3d beast=cinder_jackal console=climb+5 devzoom=16 devorbit=-35
+      ![[agents/frames/builder/2026-09-30-devcam-free-after.png|420]] ^more-free-unrestriced-camera-movement-at
 
 
 ## Waiting on Nick
@@ -309,3 +311,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Every other biome still uses exponential fog that hazes its own arena wall the same way.
 - [ ] (proposed) A card tapped while its hunter is mid-hop lays its notes round where the hunter was.
 - [ ] (proposed) The Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
+- [ ] (proposed) **Grader penalises dev-camera frames by rest-shot rules.** It docked the dev zoom for a hidden Frog and cut-off ears, which Dev is meant to allow.

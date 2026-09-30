@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-29T22:12
-working_on: "Hunters lunge when they attack and flinch when hit."
+updated: 2026-09-29T22:32
+working_on: "More free unrestriced camera movement at higher speed."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-29 22:12 EDT
+2026-09-29 22:32 EDT
 
-- **Did:** The Frog's attack lunge now lashes a pink tongue, arcing onto the jackal, then reels it back.
-- **Worked?** Yes, grader VERDICT: PASS; the strike-peak panel shows the tongue, the others unchanged.
-- **Look at:** ![[frames/builder/2026-09-30-frog-tongue-before.png]] then ![[frames/builder/2026-09-30-frog-tongue-after.png]]
-- **Ask:** Frog's lunge now lashes a pink tongue onto the jackal. Right length and thickness?
+- **Did:** Dev camera zooms past the hunter right up to the jackal, flies about 3.5x faster, Shift triples it.
+- **Worked?** Partly; grader VERDICT: FAIL, zoom met in round 2 but speed and freedom cannot show in stills.
+- **Look at:** ![[frames/builder/2026-09-30-devcam-free-before.png]] then ![[frames/builder/2026-09-30-devcam-free-after.png]]
+- **Ask:** Grader failed this: stills can't show speed. Try Dev: wheel in, WASD, Shift. Good?
 
 ## Notes
 
-- **Found:** the Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
+- **Found:** the grader scores dev-camera frames by rest-shot rules (hidden Frog, cut ears).
 
 ## Log
 
+- 2026-09-29 22:32 EDT — builder: dev camera freed: wheel floor 4.0 to 0.5 then dolly past it (dev_zoom, dev_dolly), WASD 1.0 x max(dist,6) + Shift x3 (dev_fly_speed), pivot clamp to the wall and 1.5R up (dev_pan_clamp); harness devzoom=/devorbit=/devfly=; grader FAIL x3 (speed unseen in stills), escalated; tests green, pushed.
 - 2026-09-29 22:12 EDT — builder: Frog tongue on the attack lunge (HUNTER_TONGUE, _aim_tongue riding the lunge tween, arced 0.05 so it reads from behind the Frog, tongue_point static + test); grader PASS; tests green, pushed.
 - 2026-09-29 21:52 EDT — builder: jackal matte item, Nick said matte enough; no code change, marked 👀 for his tick.
 - 2026-09-29 21:36 EDT — builder: drag road clear of every tap (road_clearance, ROAD_CLEAR 75), tap after the drag leads on (drag_leads), rings never touch (NOTE_GAP 92), 12 px air off the hunter and road off them too, whole-walk retry (NOTE_WALKS 32); 3dosu waits 1 s for hops before the tap; grader FAIL then PASS; tests green, pushed.

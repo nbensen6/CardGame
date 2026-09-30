@@ -264,6 +264,20 @@ const PAN_SENSITIVITY := 0.0018   # world units per pixel, per unit of distance
 ## by distance because a step that reads as a step next to a Crag Pup is a
 ## twitch next to a Titan, and the camera is 40 units out there.
 const FLY_SPEED := 0.34
+## The dev camera, freed up (Nick, 2026-09-29 21:14: "more free unrestricted
+## camera movement at higher speed. cant zoom in more past picture"). The wheel
+## used to stop 4 units from the pivot, which at the sigil is still a hunter's
+## length short of the jackal's face; it now goes to half a unit, in bigger
+## steps. WASD flies three times as fast, with a floor so it does not crawl
+## once you are zoomed right in, and Shift triples it again.
+const DEV_ZOOM_MIN := 0.5
+const DEV_ZOOM_MAX := 60.0
+const DEV_ZOOM_STEP := 0.2
+const DEV_FLY_SPEED := 1.0
+const DEV_FLY_BOOST := 3.0
+## Past DEV_ZOOM_MIN a wheel notch walks the pivot this far along the lens
+## instead, so zooming in never hits a wall: it just keeps going.
+const DEV_DOLLY_STEP := 0.6
 ## World-units of height the camera holds around a hunter you have picked.
 ##
 ## An ABSOLUTE window, not a fraction of the working shot, and this is the whole
@@ -326,7 +340,6 @@ const SHOULDER_TRUCK := 0.15
 ## y=602 on a 720 frame, behind the card strip (measured, first attempt at this).
 ## The vertical belongs to the jump's hold and dead zone; this must not touch it.
 const SHOULDER_AIM := 0.0   # centred on the hunter you hold (Nick, 2026-09-28: "more centered on the character selected")
-const ZOOM_STEP := 0.12
 ## Sideways truck, in world units per unit of camera distance, that pushes the
 ## beast right so it centres in the space left of the HUD rather than on the
 ## screen. The rail claims ~300 of 1280px, so the free middle is ~11% right of
@@ -2614,21 +2627,39 @@ func _fly(delta: float) -> void:
 	fwd = fwd.normalized() if fwd.length() > 0.001 else Vector3.FORWARD
 	var right := Vector3(b.x.x, 0.0, b.x.z)
 	right = right.normalized() if right.length() > 0.001 else Vector3.RIGHT
-	var speed := FLY_SPEED * maxf(_dist, 4.0) * delta
+	var speed := dev_fly_speed(_dist, Input.is_key_pressed(KEY_SHIFT)) * delta
 	_pan += (fwd * step.z + right * step.x + Vector3.UP * step.y) * speed
-	# Walk the camera anywhere inside the arena, and nowhere outside it. The
-	# orbit clamp alone is not enough: it holds the ORBIT, and flying moves
-	# the point the orbit is around, so W held down would carry the pivot
-	# out through the wall and take the lens with it.
-	var flat := Vector2(_pan.x, _pan.z)
-	var room := maxf(_arena_r * 0.80, 1.0)
+	_pan = dev_pan_clamp(_pan, _arena_r)
+
+
+## WASD speed in world units per second: DEV_FLY_SPEED per unit of distance,
+## never slower than at 6 units out, times DEV_FLY_BOOST while Shift is held.
+static func dev_fly_speed(dist: float, boost: bool) -> float:
+	return DEV_FLY_SPEED * maxf(dist, 6.0) * (DEV_FLY_BOOST if boost else 1.0)
+
+
+## Where WASD may carry the pivot: anywhere up to the wall (the lens itself is
+## still held inside it by _inside_wall), and from just under the floor to one
+## and a half arena radii up. It used to stop at 0.8 of the arena and 0.9 up.
+static func dev_pan_clamp(pan: Vector3, arena_r: float) -> Vector3:
+	var flat := Vector2(pan.x, pan.z)
+	var room := cam_reach_for(arena_r)
 	if flat.length() > room:
 		flat = flat.normalized() * room
-		_pan.x = flat.x
-		_pan.z = flat.y
-	# Not up over the wall's top either, or you look down on the whole arena
-	# and straight out at the sky beyond it.
-	_pan.y = clampf(_pan.y, -_arena_r * 0.2, _arena_r * 0.9)
+	return Vector3(flat.x, clampf(pan.y, -arena_r * 0.2, arena_r * 1.5), flat.y)
+
+
+## One wheel notch past the closest zoom: the pivot steps DEV_DOLLY_STEP along
+## the lens direction `fwd`, carrying the camera with it.
+static func dev_dolly(pan: Vector3, fwd: Vector3) -> Vector3:
+	return pan + fwd.normalized() * DEV_DOLLY_STEP
+
+
+## One wheel notch of the dev camera's zoom, from `dist` toward the pivot
+## (`zoom_in`) or away from it, inside DEV_ZOOM_MIN..DEV_ZOOM_MAX.
+static func dev_zoom(dist: float, zoom_in: bool) -> float:
+	var d := dist * (1.0 - DEV_ZOOM_STEP) if zoom_in else dist * (1.0 + DEV_ZOOM_STEP)
+	return clampf(d, DEV_ZOOM_MIN, DEV_ZOOM_MAX)
 
 
 ## Ride the camera up the beast as the hunter climbs. Smoothed rather than
@@ -3620,10 +3651,12 @@ func _unhandled_input(event: InputEvent) -> void:
 				_take_manual_control()
 				# A target, not _dist itself — _aim_camera chases it every frame
 				# (FREE_CAM_EASE) instead of the step landing all at once.
-				_free_dist_target = maxf(_free_dist_target * (1.0 - ZOOM_STEP), 4.0)
+				if _free_dist_target <= DEV_ZOOM_MIN + 0.001:
+					_pan = dev_pan_clamp(dev_dolly(_pan, -_cam.global_transform.basis.z), _arena_r)
+				_free_dist_target = dev_zoom(_free_dist_target, true)
 			MOUSE_BUTTON_WHEEL_DOWN:
 				_take_manual_control()
-				_free_dist_target = minf(_free_dist_target * (1.0 + ZOOM_STEP), 60.0)
+				_free_dist_target = dev_zoom(_free_dist_target, false)
 	elif event is InputEventMouseMotion and (_dragging or _panning):
 		var mm: InputEventMouseMotion = event
 		_take_manual_control()

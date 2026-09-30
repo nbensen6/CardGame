@@ -1034,3 +1034,14 @@ Builder, 2026-09-29 21:52 EDT, on Nick's "it is matte enough" (2026-09-29 21:14)
 - Tests: `_test_fog_behind_range_never_starts_inside_the_wall`, `_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin`.
 - Shot: before and after both `state=3d beast=cinder_jackal`.
 - Grader: VERDICT: PASS.
+
+## More free unrestriced camera movement at higher speed.
+
+Builder, 2026-09-29 22:32 EDT. Dev camera only; the Player camera and the rest shot are untouched.
+
+- Wheel zoom: floor was 4.0 units from the pivot (the held hunter), so at the sigil the lens stopped a hunter-length short of the jackal. Now `DEV_ZOOM_MIN` 0.5 in steps of 0.2 (was 0.12), and past the floor each notch walks the pivot 0.6 along the lens (`dev_dolly`), so zooming in never stops.
+- WASD: `dev_fly_speed` = 1.0 x max(dist, 6) u/s (was 0.34 x max(dist, 4)); Shift x3. Measured: W held 2 s from the rest shot moved the pivot 3.32 before, 12.06 after.
+- Pivot clamp (`dev_pan_clamp`): up to the wall (`cam_reach_for`) and 1.5 arena radii up (was 0.8 and 0.9). The lens itself is still held inside the wall.
+- Harness: `devzoom=N` (Dev on, N wheel-ups), `devorbit=deg`, `devfly=secs` (hold W in real time); all show the DEV CAMERA tag.
+- Grader: round 1 FAIL (no dev tag in frame, before not at old max); round 2 zoom MET, speed/freedom "not visible in stills"; round 3 (strip: zoom + 2 s fly) FAIL, wants an off-axis position the old camera could not reach and read the zoom as no tighter than Nick's picture. Frames: `2026-09-30-devcam-free-{before,after}.png` and `-strip-{before,after}.png`.
+- Tests: `_test_dev_camera_is_freer_and_faster` (six checks).

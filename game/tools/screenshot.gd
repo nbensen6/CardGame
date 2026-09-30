@@ -53,6 +53,9 @@ var _flys: Array[int] = []  # fly=N,M — each tapped in turn
 var _deathat: Array = []  # deathat=0.3,1.2,2.5 — 3dreward: frames through the death
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
+var _devzoom := 0  # devzoom=N — Dev camera on, then N wheel-ups at the centre
+var _devfly := 0.0  # devfly=secs — Dev camera on, hold W that long in real time
+var _devorbit := 0.0  # devorbit=deg — with devzoom, then swing the dev camera this far round
 var _orbit := 999.0  # 3D combat: drive the orbit camera to this yaw, in degrees
 var _size := Vector2i.ZERO  # size=WxH — shoot at a different screen shape
 var _slot := -1  # slot=N — force the active hunter, so camera framing can be compared
@@ -209,6 +212,12 @@ func _initialize() -> void:
 			_wide = true
 		elif a.begins_with("act="):
 			_act = int(a.substr(4))
+		elif a.begins_with("devzoom="):
+			_devzoom = int(a.substr(8))
+		elif a.begins_with("devfly="):
+			_devfly = float(a.substr(7))
+		elif a.begins_with("devorbit="):
+			_devorbit = float(a.substr(9))
 		elif a.begins_with("orbit="):
 			_orbit = float(a.substr(6))
 		elif a == "taps":
@@ -934,6 +943,47 @@ func _capture() -> void:
 				await process_frame
 			if _midair <= 0.0:
 				await _await_camera(current_scene)
+
+	# devzoom=N: how close the dev free camera gets. Turns Dev on, rolls the
+	# wheel N times at the centre of the screen, and settles the chase.
+	if _devzoom > 0 and current_scene != null and current_scene.has_method("snap_camera"):
+		Progress.set_dev_camera_enabled(true)
+		current_scene.call("_sync_dev_camera_tag")
+		var vp := get_root().get_visible_rect().size
+		for _z in _devzoom:
+			var wu := InputEventMouseButton.new()
+			wu.button_index = MOUSE_BUTTON_WHEEL_UP
+			wu.pressed = true
+			wu.position = vp * Vector2(0.5, 0.45)
+			Input.parse_input_event(wu)
+		await process_frame
+		await process_frame
+		if _devorbit != 0.0:
+			current_scene.set("_yaw_target",
+				float(current_scene.get("_yaw_target")) + deg_to_rad(_devorbit))
+		current_scene.call("snap_camera")
+		await process_frame
+		print("DEVZOOM %d wheel-ups -> dist %.2f" % [_devzoom, float(current_scene.get("_dist"))])
+
+	# devfly=secs: how far the dev camera's WASD gets in a fixed real time.
+	if _devfly > 0.0 and current_scene != null and current_scene.has_method("snap_camera"):
+		Progress.set_dev_camera_enabled(true)
+		current_scene.call("_sync_dev_camera_tag")
+		var p0: Vector3 = current_scene.get("_pan")
+		var kd := InputEventKey.new()
+		kd.keycode = KEY_W
+		kd.pressed = true
+		Input.parse_input_event(kd)
+		await create_timer(_devfly).timeout
+		var ku := InputEventKey.new()
+		ku.keycode = KEY_W
+		ku.pressed = false
+		Input.parse_input_event(ku)
+		await process_frame
+		current_scene.call("snap_camera")
+		await process_frame
+		print("DEVFLY W held %.1fs -> pivot moved %.2f" % [_devfly,
+			(current_scene.get("_pan") as Vector3).distance_to(p0)])
 
 	if not _deathat.is_empty():
 		await _shoot_death()
@@ -1890,7 +1940,8 @@ func _strike_loop(v3: Node) -> void:
 func _failsafe() -> void:
 	# Each endturn=N plays a whole beast turn (90 frames); on a software
 	# renderer that alone outlasts a flat 10 s, so give each one its own time.
-	await create_timer(10.0 + 15.0 * (_endturns + _thenend) + 1.0 * _flys.size()).timeout
+	await create_timer(10.0 + 15.0 * (_endturns + _thenend) + 1.0 * _flys.size()
+		+ (5.0 if _devzoom > 0 else 0.0) + _devfly * 1.5).timeout
 	print("SHOT TIMEOUT")
 	quit(1)
 

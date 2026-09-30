@@ -2713,6 +2713,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_f8_flips_dev_camera_enabled_live()
 	_test_dev_camera_never_survives_a_launch()
 	_test_f8_dev_overview_is_visibly_wider()
+	_test_dev_camera_is_freer_and_faster()
 
 	# request 2026-09-23-2141: the intent tag's own Y clamp (clear of the boss
 	# HP bar, clear of the hand) never accounted for the top-left party panel,
@@ -30637,6 +30638,29 @@ func _test_backlog86_console_history_append_evicts_the_oldest_once_over_cap() ->
 	out = DevConsole.history_append(["a", "b"], "c", 3)
 	_expect(out.size() == 3 and out[0] == "a" and out[2] == "c",
 		"appending under the cap keeps every entry")
+
+
+## Nick, 2026-09-29 21:14: "more free unrestricted camera movement at higher
+## speed. cant zoom in more past picture." The wheel used to stop at 4 units.
+func _test_dev_camera_is_freer_and_faster() -> void:
+	var d := 4.0
+	for _i in 30:
+		d = Combat3D.dev_zoom(d, true)
+	_expect(is_equal_approx(d, Combat3D.DEV_ZOOM_MIN) and d < 1.0,
+		"dev camera: the wheel zooms in well past the old 4-unit stop")
+	_expect(is_equal_approx(Combat3D.dev_zoom(Combat3D.DEV_ZOOM_MAX, false), Combat3D.DEV_ZOOM_MAX),
+		"dev camera: the wheel still stops zooming out at DEV_ZOOM_MAX")
+	var p := Combat3D.dev_dolly(Vector3.ZERO, Vector3(0.0, 0.0, -5.0))
+	_expect(is_equal_approx(p.length(), Combat3D.DEV_DOLLY_STEP) and p.z < 0.0,
+		"dev camera: past the closest zoom a notch walks the pivot along the lens")
+	_expect(Combat3D.dev_fly_speed(4.0, false) > Combat3D.FLY_SPEED * 4.0 * 2.0,
+		"dev camera: WASD flies more than twice the old speed")
+	_expect(is_equal_approx(Combat3D.dev_fly_speed(10.0, true),
+		Combat3D.dev_fly_speed(10.0, false) * Combat3D.DEV_FLY_BOOST),
+		"dev camera: Shift boosts WASD by DEV_FLY_BOOST")
+	var far := Combat3D.dev_pan_clamp(Vector3(100.0, 100.0, 0.0), 10.0)
+	_expect(is_equal_approx(far.x, Combat3D.cam_reach_for(10.0)) and is_equal_approx(far.y, 15.0),
+		"dev camera: the pivot may fly to the wall and 1.5 arena radii up")
 
 
 func _expect(cond: bool, name: String) -> void:
