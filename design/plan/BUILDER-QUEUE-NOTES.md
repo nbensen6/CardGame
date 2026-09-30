@@ -1133,3 +1133,15 @@ Built 2026-09-30 00:48 EDT.
 - Grader: VERDICT: PASS (heartbeat and breath rate not judgeable from stills).
 - Tests: `_test_low_health_shows_on_screen`.
 
+## One HUD style: carved obsidian.
+
+2026-09-30 01:13 EDT, builder.
+
+- One material, `Combat3D.obsidian_style(rim, rim_w, radius)`: fill (0.05, 0.043, 0.05, 0.92), ember rim (0.96, 0.47, 0.16), `border_blend` on, bottom lip rim_w+2, shadow 6 px offset 3 px.
+- StyleBoxFlat has one border colour, so no bevel. `ui/obsidian_box.gd` wraps it (`Combat3D.carved`) and draws a glassy sheen over the top 46 % of the fill, a lit 1 px line inside the top edge and a 2 px shade inside the bottom lip.
+- Applied to: TopBar (in `_apply_obsidian_hud`, called from `_ready`), party cards, intent badge, energy orb, End Turn and Switch (normal/hover/pressed/disabled/focus).
+- Signalling rims kept: the hunter the beast is aiming at stays red, an empty energy orb stays grey, a non-hostile intent stays green. The hunters' identity colours moved from their card rims to their names.
+- Display font: KenneyFutureNarrow as a FontVariation with the body font as fallback (it has no †, ⇥, ⛨). Used on the beast name, hunter names, intent badge and both buttons.
+- Grader: FAIL (badge unchanged, no bevel) → added the bevel wrapper and an ember badge rim; FAIL (badge still looked the same) → badge label into the display font; PASS.
+- Test: `_test_obsidian_hud_style_is_one_material`.
+

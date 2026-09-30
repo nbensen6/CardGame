@@ -207,3 +207,6 @@ appends here, never to the queue.
 - [ ] **Jackal Burn bite.** Nick 2026-09-29: rethink the jackal's damage, maybe burn. One idea: its round-3 bite (9) becomes a 5 bite that applies 3 Burn (lose 1 HP a turn per stack, stacks fall by 1 each turn), so damage lands over time and block alone does not answer it.
 - [ ] (proposed) **Block sound unplayed again.** The `block` sound only rode on the reverted card flight; a Block card now plays no block sound.
 - [ ] **Beast close-up for tells.** A short push-in on the jackal when the last hunter's turn begins, so head turns and glow read at all.
+- [ ] **Display-font digits read oddly.** KenneyFutureNarrow draws "7" like a hook; the intent badge's number may want the body font.
+- [ ] **Rest of the HUD in obsidian.** Log, Menu, the pile counts and the hunters' tan HP bars were outside the item and still use the old style.
+

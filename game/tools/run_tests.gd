@@ -21,6 +21,7 @@ func _init() -> void:
 	RunSave.clear()
 	Progress.use_scratch_slot("run_tests")  # a headless test run must never touch the designer's real progress.cfg
 	# combatant / boss
+	_test_obsidian_hud_style_is_one_material()
 	_test_combatant_block_absorbs_before_hp()
 	_test_combatant_hp_never_negative()
 	_test_boss_pattern_loops()
@@ -31188,3 +31189,27 @@ func _test_low_health_shows_on_screen() -> void:
 	for t in [0.0, 0.1, 0.2, 0.3]:
 		_expect(Combat3D.beast_low_glow(1.0, t) > 1.5, "a low beast glows hotter on every breath")
 	_expect(Combat3D.LOW_BEAST_BREATH_HZ > Combat3D.THREAT_BEAT_HZ, "a low beast breathes faster")
+
+
+## One HUD style (queue, 2026-09-29): every fight-screen panel is built from
+## Combat3D.obsidian_style, so the material is pinned here once.
+func _test_obsidian_hud_style_is_one_material() -> void:
+	var st: StyleBoxFlat = Combat3D.obsidian_style()
+	_expect(st.bg_color == Combat3D.OBSIDIAN_FILL and st.bg_color.v < 0.1,
+		"obsidian: fill is near-black")
+	_expect(st.border_color == Combat3D.EMBER_RIM, "obsidian: default rim is ember")
+	_expect(st.border_blend and st.border_width_bottom > st.border_width_top,
+		"obsidian: bevel = blended rim with a heavier bottom lip")
+	_expect(st.shadow_size > 0 and st.shadow_color.a > 0.3, "obsidian: soft drop shadow")
+	var aimed: StyleBoxFlat = Combat3D.obsidian_style(Color(0.93, 0.3, 0.2), 2, 5)
+	_expect(aimed.bg_color == st.bg_color and aimed.border_width_left == 2,
+		"obsidian: a signalling rim keeps the same fill")
+	var btn: Dictionary = Combat3D.obsidian_button_styles()
+	for k in ["normal", "hover", "pressed", "disabled"]:
+		_expect(btn.has(k) and btn[k].flat.border_blend,
+			"obsidian: button %s is obsidian" % k)
+	_expect(btn["hover"].flat.border_color != btn["disabled"].flat.border_color,
+		"obsidian: a disabled button loses the ember")
+	var carved: StyleBox = Combat3D.carved(st)
+	_expect(carved.flat == st and carved.get_content_margin(SIDE_TOP) == st.get_content_margin(SIDE_TOP),
+		"obsidian: the bevel wrapper keeps the panel's margins")

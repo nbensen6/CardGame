@@ -497,6 +497,99 @@ const COACH_SECONDS := 7.0
 ## point is that the green frame and the green pip are obviously the same hunter.
 const SLOT_TINT := [Color(0.45, 0.95, 0.5), Color(0.55, 0.82, 1.0)]
 
+## The HUD's one material: carved obsidian (queue, "One HUD style", 2026-09-29).
+## Every panel on the fight screen — top bar, party cards, intent badge, energy
+## orb, End Turn, Switch — was a flat box in its own outline colour, so the HUD
+## read as six widgets rather than one object. They now share this: a near-black
+## glassy fill, a thin ember rim that blends inward (the bevel), a heavier lip
+## along the bottom edge and a soft drop shadow.
+const OBSIDIAN_FILL := Color(0.05, 0.043, 0.05, 0.92)
+const EMBER_RIM := Color(0.96, 0.47, 0.16)
+const HUD_DISPLAY_FONT := preload("res://assets/fonts/KenneyFutureNarrow.ttf")
+const ObsidianBox := preload("res://ui/obsidian_box.gd")
+var _hud_font: Font = null
+
+
+## A fresh obsidian StyleBoxFlat. `rim` stays a parameter because a few panels
+## still have to say something with their edge — red on the hunter the beast is
+## aiming at, grey on an empty energy orb — and `rim_w` thickens it for the
+## hunter you are holding.
+static func obsidian_style(rim: Color = EMBER_RIM, rim_w: int = 1, radius: int = 6) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = OBSIDIAN_FILL
+	st.border_color = rim
+	st.border_width_left = rim_w
+	st.border_width_top = rim_w
+	st.border_width_right = rim_w
+	st.border_width_bottom = rim_w + 2
+	st.border_blend = true
+	st.set_corner_radius_all(radius)
+	st.shadow_color = Color(0, 0, 0, 0.55)
+	st.shadow_size = 6
+	st.shadow_offset = Vector2(0, 3)
+	st.anti_aliasing = true
+	return st
+
+
+## Wrap a finished obsidian_style (margins and all) so it draws with its bevel.
+static func carved(st: StyleBoxFlat) -> StyleBox:
+	return ObsidianBox.new(st)
+
+
+## Obsidian for a Button's four states: the rim warms on hover, the fill sinks
+## on press, and a disabled button keeps the material but loses the ember.
+static func obsidian_button_styles() -> Dictionary:
+	var out := {}
+	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
+		var st := obsidian_style(EMBER_RIM, 1, 6)
+		st.content_margin_left = 12.0
+		st.content_margin_right = 12.0
+		st.content_margin_top = 6.0
+		st.content_margin_bottom = 6.0
+		match state:
+			"hover":
+				st.border_color = EMBER_RIM.lightened(0.25)
+				st.bg_color = OBSIDIAN_FILL.lightened(0.08)
+			"pressed":
+				st.bg_color = OBSIDIAN_FILL.darkened(0.4)
+				st.shadow_size = 2
+			"disabled":
+				st.border_color = Color(0.36, 0.3, 0.27)
+			"focus":
+				st.draw_center = false
+				st.shadow_size = 0
+		out[state] = carved(st)
+	return out
+
+
+## The display face has no symbols (†, ⇥, ⛨), so it falls back to the body
+## font for those rather than drawing boxes.
+static func hud_font() -> Font:
+	var f := FontVariation.new()
+	f.base_font = HUD_DISPLAY_FONT
+	f.fallbacks = [ThemeDB.fallback_font]
+	return f
+
+
+func _apply_obsidian_hud() -> void:
+	_hud_font = hud_font()
+	var top := _hud.get_node_or_null("TopBar") as PanelContainer
+	if top != null:
+		var st := obsidian_style(EMBER_RIM, 1, 6)
+		st.content_margin_left = 12.0
+		st.content_margin_right = 12.0
+		st.content_margin_top = 8.0
+		st.content_margin_bottom = 8.0
+		top.add_theme_stylebox_override("panel", carved(st))
+	_title.add_theme_font_override("font", _hud_font)
+	_intent.add_theme_font_override("normal_font", _hud_font)
+	_title.add_theme_color_override("font_color", Color(1, 0.9, 0.74))
+	var styles := obsidian_button_styles()
+	for b in [_end_btn, _switch_btn]:
+		for state in styles:
+			(b as Button).add_theme_stylebox_override(state, styles[state])
+		(b as Button).add_theme_font_override("font", _hud_font)
+
 var _client: GameClient
 var _beast: Node3D
 var _env: Node3D
@@ -830,6 +923,7 @@ func _ready() -> void:
 	# Backtick opens it. Given the refresh callable so a command that changes
 	# the world - a new hand, a different beast - is on screen by the time you
 	# have finished reading what it printed.
+	_apply_obsidian_hud()
 	DevConsole.attach(self, _refresh)
 	_cam_home = _cam.position
 	_cam_basis_home = _cam.basis
@@ -2029,16 +2123,14 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	var hostile: bool = intent_is_hostile(kind)
 	_intent.add_theme_color_override("default_color",
 		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.18, 0.07, 0.06, 0.88) if hostile else Color(0.09, 0.14, 0.09, 0.85)
-	style.set_border_width_all(2)
-	style.border_color = Color(0.86, 0.36, 0.28) if hostile else Color(0.46, 0.62, 0.42)
-	style.set_corner_radius_all(5)
+	# Obsidian with the ember rim like the rest of the HUD; the text colour
+	# above still says hostile or not.
+	var style := obsidian_style(EMBER_RIM if hostile else Color(0.46, 0.62, 0.42), 1, 5)
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 4.0
 	style.content_margin_bottom = 4.0
-	_intent_tag.add_theme_stylebox_override("panel", style)
+	_intent_tag.add_theme_stylebox_override("panel", carved(style))
 
 
 ## The pure placement rule behind _position_intent_tag, pulled out static so it
@@ -7695,10 +7787,7 @@ func _slot_color(slot: int) -> Color:
 ## out is the number you consult before every single card.
 func _render_energy(p: Dictionary) -> void:
 	var out := int(p.get("energy", 0))
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.16, 0.12, 0.07, 0.92) if out > 0 else Color(0.11, 0.1, 0.1, 0.85)
-	style.set_border_width_all(3)
-	style.border_color = Color(0.82, 0.66, 0.34) if out > 0 else Color(0.34, 0.32, 0.30)
+	var style := obsidian_style(EMBER_RIM if out > 0 else Color(0.34, 0.32, 0.30), 3, 14)
 	# A rounded SQUARE, not a disc. It was a disc — "it should read as an orb" —
 	# right up until the osu face started drawing dark circles with a gold rim and
 	# a big number in them, at which point the most permanent thing on the HUD and
@@ -7707,7 +7796,7 @@ func _render_energy(p: Dictionary) -> void:
 	# design as the osu numbers"). Two things cannot share one shape, and the one
 	# you have to react to in half a second wins it.
 	style.set_corner_radius_all(14)
-	_energy_orb.add_theme_stylebox_override("panel", style)
+	_energy_orb.add_theme_stylebox_override("panel", carved(style))
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",
 		Color(1, 0.87, 0.5) if out > 0 else Color(0.55, 0.52, 0.5))
@@ -7829,20 +7918,17 @@ static func party_card_stats(p: Dictionary, slot: int, me: int) -> String:
 
 func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var panel := PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.13, 0.1, 0.08, 0.8)
-	style.set_border_width_all(2 if slot == _me() else 1)
 	# the hunter in the beast's sights is outlined in red — the single most
-	# time-critical fact on the screen
-	# red when the beast is aiming at them, else their own identity colour so the
-	# card, the portrait in the rail and the pip in the scene all agree
-	style.border_color = Color(0.85, 0.32, 0.26) if aimed else _slot_color(slot)
-	style.set_corner_radius_all(5)
+	# time-critical fact on the screen. Everyone else wears the HUD's ember rim;
+	# their identity colour moved onto the name, so the card, the portrait in
+	# the rail and the pip in the scene still agree.
+	var style := obsidian_style(Color(0.93, 0.3, 0.2) if aimed else EMBER_RIM,
+		2 if slot == _me() else 1, 5)
 	style.content_margin_left = 8.0
 	style.content_margin_right = 10.0
 	style.content_margin_top = 6.0
 	style.content_margin_bottom = 6.0
-	panel.add_theme_stylebox_override("panel", style)
+	panel.add_theme_stylebox_override("panel", carved(style))
 	var outer := HBoxContainer.new()
 	outer.add_theme_constant_override("separation", 8)
 	panel.add_child(outer)
@@ -7854,7 +7940,8 @@ func _party_card(p: Dictionary, slot: int, aimed: bool) -> Control:
 	var who := Label.new()
 	who.text = party_card_name(p, slot, _me())
 	who.add_theme_font_size_override("font_size", 13)
-	who.add_theme_color_override("font_color", Color(1, 0.93, 0.78))
+	who.add_theme_font_override("font", _hud_font)
+	who.add_theme_color_override("font_color", _slot_color(slot).lerp(Color(1, 0.93, 0.78), 0.45))
 	box.add_child(who)
 	var bar := ProgressBar.new()
 	bar.max_value = maxi(int(p.get("max_hp", 1)), 1)

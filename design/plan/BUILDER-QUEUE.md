@@ -254,9 +254,12 @@ run failed.
       Ask: Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
       Test: state=3d beast=cinder_jackal console=hp+10
       ![[agents/frames/builder/2026-09-30-low-health-after.png|420]] ^low-health-shows-on-screen
-- [ ] **One HUD style: carved obsidian.**
+- [ ] 👀 **One HUD style: carved obsidian.**
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal ^one-hud-style-carved-obsidian
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
+      Ask: HUD is now dark obsidian with ember rims and display caps. Keep this look?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-obsidian-hud-after.png|420]] ^one-hud-style-carved-obsidian
 - [ ] **The beast's health bar reacts.**
       **Session, 2026-09-29 22:35 ET:** The beast bar is a plain progress bar. Give it notch marks at each weak-point threshold, a pale ghost segment that lingers 0.4 s after damage and drains, and a crack flash when a threshold is crossed. Done-when: a strike frame shows the ghost segment behind the new value. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dstrike beast=cinder_jackal beat=loop ^the-beast-s-health-bar-reacts

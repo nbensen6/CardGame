@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T00:56
-working_on: "Low health shows on screen."
+updated: 2026-09-30T01:13
+working_on: "One HUD style: carved obsidian."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 00:56 EDT
+2026-09-30 01:13 EDT
 
-- **Did:** Low HP now shows: a red heartbeat edge for your hunter, a hotter ember-streaming jackal, and an `hp` console command.
-- **Worked?** Yes; VERDICT: PASS, both frames show it, though the pulse and breathing need motion to judge.
-- **Look at:** ![[frames/builder/2026-09-30-low-health-before.png]] then ![[frames/builder/2026-09-30-low-health-after.png]] and ![[frames/builder/2026-09-30-low-health-beast-after.png]]
-- **Ask:** Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
+- **Did:** Re-themed the fight HUD in one carved-obsidian material: dark glassy panels, ember rims, bevel, display-font names.
+- **Worked?** Yes; VERDICT: PASS, every listed panel is in the new material and no text clips.
+- **Look at:** ![[frames/builder/2026-09-30-obsidian-hud-before.png]] then ![[frames/builder/2026-09-30-obsidian-hud-after.png]]
+- **Ask:** HUD is now dark obsidian with ember rims and display caps. Keep this look?
 
 ## Notes
 
-- **Found:** shots need `console=hp 10` with a real space; `+` only decodes in play mode.
+- **Found:** the display font draws "7" like a hook; the badge number may want the body font.
+- **Found:** Log, Menu, pile counts and hunter HP bars still use the old style.
 
 ## Log
 
+- 2026-09-30 01:13 EDT — builder: carved-obsidian HUD (obsidian_style + ObsidianBox bevel wrapper `carved`, hud_font FontVariation w/ fallback; top bar, party cards, intent badge, energy orb, End Turn/Switch + test); grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 00:56 EDT — builder: low health (console `hp N` / `hp beast N`; is_low_hp <30 %, vignette_alpha heartbeat ColorRect under the HUD, beast_low_glow hotter+2.4 Hz breath in _step_threat, LowHpEmbers CPUParticles3D stream over the beast box + test); grader PASS; tests green, pushed.
 - 2026-09-30 00:48 EDT — builder: jackal threat between turns (beast_threat/threat_focus/head_yaw_to/intent_badge_scale/growl_now + test; HeadTrack neck/head modifier, gain 8; toon `heat` uniform + glow_gain x(1+3t); badge 1+0.18t heartbeat; growl.ogg); grader FAIL x3 (head unseen behind stones; body-turn try reverted), escalated 👀; tests green, pushed.
 - 2026-09-29 23:38 EDT — builder: hop swing: _hop_landed callback at each touchdown sets _swing_vec (hop's screen-sideways travel x0.2, cap 0.5) and a 0.15 s sin bump offsets the orbit pivot (hop_swing, hop_swing_vec + test); harness touch=K,S freezes S s after the K-th touchdown without snapping; grader FAIL (graded the overshoot pair, wanted the done-when strip) then PASS; tests green, pushed.
