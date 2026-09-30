@@ -2407,6 +2407,8 @@ func _init() -> void:
 	# never start close enough to haze the wall and its mountains.
 	_test_fog_behind_range_never_starts_inside_the_wall()
 	_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin()
+	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
+	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	# backlog #86 duty 3 (forty-eighth pass): energy_handoff, a real offerable
 	# relic wired to MOMENT_TURN_END since backlog #70, had never been driven
 	# by anything in this file — see the doc comment on the tests themselves.
@@ -31131,6 +31133,17 @@ func _test_fog_behind_range_never_starts_inside_the_wall() -> void:
 	_expect(r.x > far_wall, "fog begins past the far wall seen from the camera's furthest reach")
 	var jackal: Dictionary = Combat3D.BIOME["quarry_ember"]
 	_expect(jackal.has("fog_behind"), "the Cinder Jackal's biome keeps its fog behind the exterior")
+
+
+func _test_floor_style_obsidian_only_in_the_jackal_biome() -> void:
+	_expect(Combat3D.floor_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "obsidian",
+		"the Cinder Jackal is fought on an obsidian floor")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(Combat3D.floor_style(biome) == "",
+				"biome %s keeps its own floor" % biome)
+	_expect(Combat3D.floor_style("no_such_biome") == "", "an unknown biome falls back to the plain floor")
+	_expect(Combat3D.OBSIDIAN is Shader, "the obsidian floor shader loads")
 
 
 func _test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin() -> void:

@@ -23,6 +23,8 @@ const CREATURE := preload("res://assets/3d/creature.gdshader")
 # the harness asks — see screenshot.gd variant= / toon.
 const TOON := preload("res://assets/3d/toon.gdshader")
 const OUTLINE := preload("res://assets/3d/outline.gdshader")
+## Black-glass arena floor for a biome that names `"floor": "obsidian"`.
+const OBSIDIAN := preload("res://assets/3d/obsidian.gdshader")
 ## Faceted rock detail for the floating footholds (_build_float_stones) — a
 ## generated (not modelled) grayscale multiply so a stone reads as cut rock
 ## instead of one flat colour. See design/progress/foothold_rock_detail.md.
@@ -2516,6 +2518,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	if ground != null:
 		ground.radius = maxf(9.0, want_r)
 	_show_env(beast_id, want_r, ground)
+	_dress_floor(beast_id, ground)
 	_light_for(beast_id)
 	_frame_beast()
 
@@ -2604,6 +2607,10 @@ const BIOME := {
 		# is [begin, end] in arena radii, see fog_behind_range(); the density
 		# is depth mode's peak opacity (0..1), not an exponential rate.
 		"fog_behind": [6.0, 10.0], "fog_behind_density": 0.6,
+		# Obsidian floor (session, 2026-09-29): black glass, a hard specular
+		# band, faint orange cracks. The env's Floor mesh and the plain Ground
+		# disc both take it; see floor_style() / _dress_floor().
+		"floor": "obsidian",
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -2686,6 +2693,37 @@ func _show_env(beast_id: String, want_r: float, ground: CSGCylinder3D) -> void:
 	if ground != null:
 		# The disc would z-fight with the floor sitting on top of it.
 		ground.visible = false
+
+
+## The floor finish a biome asks for: "obsidian", or "" for the one the
+## ground already has. Static so run_tests.gd can pin which fights get it.
+static func floor_style(biome: String) -> String:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return String(b.get("floor", ""))
+
+
+var _ground_mat_default: Material = null
+
+## Put the biome's floor finish on the env's Floor mesh and the plain Ground
+## disc. A biome with no "floor" leaves the env as _shade_model left it and
+## gives the disc back the scene's own material.
+func _dress_floor(beast_id: String, ground: CSGCylinder3D) -> void:
+	var style := floor_style(String(BEAST_BIOME.get(beast_id, "crag")))
+	if ground != null:
+		if _ground_mat_default == null:
+			_ground_mat_default = ground.material
+		ground.material = _ground_mat_default
+	if style != "obsidian":
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = OBSIDIAN
+	if ground != null:
+		ground.material = mat
+	var floor_node := _env.find_child("Floor", true, false) if _env != null else null
+	if floor_node != null:
+		for node in _all_meshes(floor_node):
+			if node is MeshInstance3D:
+				(node as MeshInstance3D).material_override = mat
 
 
 ## Scale a freshly added model so it stands `want` units tall, and report the

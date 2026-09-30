@@ -284,9 +284,12 @@ run failed.
       Ask: Gauge has faces and a burning sigil now. Pips big enough to read?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-climb-gauge-after.png|420]] ^the-climb-gauge-stands-beside-the-beast
-- [ ] **Obsidian floor.**
+- [ ] 👀 **Obsidian floor.**
       **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal ^obsidian-floor
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Obsidian floor.|details]]
+      Ask: Floor is black glass with a sheen band. Band too bright or right?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-obsidian-floor-after.png|420]] ^obsidian-floor
 - [ ] **Lava rock under the hunters.**
       **Session, 2026-09-29 22:35 ET:** The climb stones and the hunters' standing slabs are tan boxes. Make them dark basalt with an ember glow at the underside and edges, scoped to the jackal fight. Done-when: the climb frame shows dark stones with orange edge glow under both hunters. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3dclimb beast=cinder_jackal ^lava-rock-under-the-hunters
@@ -405,3 +408,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.
 - [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.
 - [ ] (proposed) **Gauge covers the Goblin's stone.** The climb gauge panel on the right edge overlaps the Goblin's stone in the climb frame.
+- [ ] (proposed) The sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.

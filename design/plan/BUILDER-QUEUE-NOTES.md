@@ -1225,3 +1225,11 @@ was missing was the glow and the pulse.
 - New static `gauge_y(h, top, y_top, y_bot)` places rungs and pips; `_test_climb_gauge_y_puts_ground_at_bottom_and_sigil_at_top` pins ground, top, clamp and a zero sigil.
 - Grader: PASS first round. It noted the panel is still on the screen edge, not next to the beast, and covers the Goblin's stone.
 
+## Obsidian floor.
+
+2026-09-30 02:29 EDT. Before: flat matte grey-brown floor (the env's `Floor` mesh under the creature shader). After: `game/assets/3d/obsidian.gdshader`, on the env `Floor` mesh and the plain `Ground` disc, only for a biome with `"floor": "obsidian"` (quarry_ember). `Combat3D.floor_style()` + `_dress_floor()` (runs after `_show_env`; restores the scene's own Ground material for every other biome). Test `_test_floor_style_obsidian_only_in_the_jackal_biome`.
+
+- Base albedo ~(0.035, 0.03, 0.045), one hard lit/shadow step.
+- Specular band: a real sun highlight never lands in frame (key light is behind the camera), and a light-driven spec gave a big blue ellipse off the Fill. Tried a world-elevation band (a red ring around the camera) and a view-anchored spot (read as a spotlight decal). Kept: reflected view ray's VIEW-space y in [0.20, 0.235], hard edges, soft ends past |x| 0.9, colour (1.0, 0.74, 0.62) x0.8.
+- Cracks: world-XZ Voronoi edges, 4 m cells, width min(0.018 cell, 1.2 px) so they stay hairlines near the camera; gain 0.35 orange.
+- Grader round 1 FAIL (foreground cracks were solid red bars), round 2 PASS.

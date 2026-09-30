@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T02:10
-working_on: "The climb gauge stands beside the beast."
+updated: 2026-09-30T02:29
+working_on: "Obsidian floor."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 02:10 EDT
+2026-09-30 02:29 EDT
 
-- **Did:** Climb gauge is now carved obsidian with portrait pips, glowing ledge notches and a burning sigil.
-- **Worked?** Yes; VERDICT: PASS, both pips at their heights and the sigil glow at the top.
-- **Look at:** ![[frames/builder/2026-09-30-climb-gauge-before.png]] then ![[frames/builder/2026-09-30-climb-gauge-after.png]]
-- **Ask:** Gauge has faces and a burning sigil now. Pips big enough to read?
+- **Did:** The jackal's arena floor is black glass now, with a sharp sheen band and faint orange cracks.
+- **Worked?** Yes; VERDICT: PASS, floor reads black and glossy with a visible specular band.
+- **Look at:** ![[frames/builder/2026-09-30-obsidian-floor-before.png]] then ![[frames/builder/2026-09-30-obsidian-floor-after.png]]
+- **Ask:** Floor is black glass with a sheen band. Band too bright or right?
 
 ## Notes
 
-- **Found:** the gauge panel still sits on the right screen edge and covers part of the Goblin's stone.
+- **Found:** the sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
 
 ## Log
 
+- 2026-09-30 02:29 EDT — builder: obsidian floor (obsidian.gdshader: near-black base, view-space reflected sheen band, px-clamped Voronoi crack hairlines; floor_style/_dress_floor on env Floor + Ground for quarry_ember only + test); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 02:10 EDT — builder: climb gauge in obsidian (carved panel 84x372, groove rail, ember-halo ledge notches, 5-ring burning sigil wider than a pip, portrait pips r13 in slot-tint rings via snapshot `portrait`, static gauge_y + test); grader PASS; tests green, pushed.
 - 2026-09-30 01:59 EDT — builder: intent badge reads like a warning (24 pt, 3 px red rim, 34 pt move icon via intent_badge_bbcode, crown from projected box top, clears both hunters + 2 tests); grader PASS on round 3; tests green, pushed.
 - 2026-09-30 01:40 EDT — builder: cards fan and glow (fan/tilt/lift already there; foil.gdshader rim mode, CardView.set_raised builds an ember-gold rim 10 px past the card, called from _layout_hand; cost gem breathes 1.0-1.1 via pip_pulse while playable + 2 tests); grader PASS; tests green, pushed.
