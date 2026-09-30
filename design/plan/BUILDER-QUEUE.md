@@ -81,13 +81,13 @@ run failed.
       Ask: Grader failed this: a still cannot show where embers start. Now only off the lava, dimmer. Good?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-embers-lava-after.png|420]] ^embers-in-the-air
-- [ ] **A sky with ash.**
+- [ ] 👀 **A sky with ash.**
       **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
-      Ask: Grader failed this: clouds unreadable in tiny sky notch. Show more sky?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-ash-sky-after.png|420]] ^a-sky-with-ash
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20idleat%3D0%2C3%2C6) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
+      Ask: Clouds now drift and churn, a cell every few seconds. Speed right?
+      Test: state=3d beast=cinder_jackal idleat=0,3,6
+      ![[agents/frames/builder/2026-09-30-sky-drift-after.png|420]] ^a-sky-with-ash
 - [x] **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 22:29 ET:** slow down the animation by about 25 %
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
@@ -459,3 +459,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.
 - [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.
 - [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
+- [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.

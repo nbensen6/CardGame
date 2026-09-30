@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T12:43
-working_on: "Embers in the air."
+updated: 2026-09-30T12:55
+working_on: "A sky with ash."
 ---
 
 # builder
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 12:43 EDT
+2026-09-30 12:55 EDT
 
-- **Did:** Embers now rise only off the lava ring, smaller and dimmer; cliff glow softened.
-- **Worked?** Partly: glow is down, but a still cannot show where embers start. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-30-embers-lava-before.png]] then ![[frames/builder/2026-09-30-embers-lava-after.png]]
-- **Ask:** Embers only off the lava now, dimmer. Good?
+- **Did:** Ash clouds now drift and churn visibly, about fifteen times faster than before.
+- **Worked?** Yes, clouds move across three frames 3 s apart. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-sky-drift-before.png]] then ![[frames/builder/2026-09-30-sky-drift-after.png]]
+- **Ask:** Clouds now drift and churn, a cell every few seconds. Speed right?
 
 ## Notes
 
-- **Found:** No harness view shows the hunters' rock and the lava ring together, so ember origin can't be graded.
+- **Found:** The half-size idleat grid is too small to judge the sky notch; motion needed 4x crops.
 
 ## Log
 
+- 2026-09-30 12:55 EDT — builder: sky clouds move on Nick's word (09:44): ash wind 0.018 -> (0.3, 0.1) cells/s via BIOME ash_wind + static ash_wind() + test; grader FAIL on half-size grid then PASS on 4x sky strips; tests green, pushed.
 - 2026-09-30 12:43 EDT — builder: Embers answered (Nick 09:44): rising field emits from the lava ring only (ember_band = lava_ring, RING emission), glow down (alpha 0.75, seam lights 95) + test; grader FAIL x2 (origin unjudgeable from a still), shipped 👀; tests green, pushed.
 - 2026-09-30 12:24 EDT — builder: Obsidian floor answered (Nick 09:44 "remove the band"): specular band deleted from obsidian.gdshader, test asserts no band uniform; grader PASS; tests green, pushed.
 - 2026-09-30 12:13 EDT — builder: HUD trimmed on Nick's 11:44 word: beast plate pinned top-left on glass, party panel hidden, intent chip small beside the bar, hunter idle sway gone and ridden stones still; harness idleat= grid; grader FAIL x2 then PASS; tests green, pushed.

@@ -31163,6 +31163,11 @@ func _test_ash_sky_only_in_the_jackal_biome() -> void:
 	_expect(Combat3D.ASH_SKY is Shader, "the ash sky shader loads")
 	_expect(Combat3D.BIOME["quarry_ember"].has("fog_behind"),
 		"the ash sky leaves the fog behind the wall in place")
+	# "Clouds need to move" (Nick, 2026-09-30): a cloud cell has to cross in
+	# well under ten seconds, or the sky reads as a painting.
+	var w := Combat3D.ash_wind("quarry_ember")
+	_expect(w.length() >= 0.15, "the ash drifts fast enough to see (%.3f cells/s)" % w.length())
+	_expect(w.length() <= 1.0, "the ash drifts like smoke, not a storm (%.3f cells/s)" % w.length())
 
 
 func _test_embers_only_in_the_jackal_biome() -> void:

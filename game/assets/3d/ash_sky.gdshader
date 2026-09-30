@@ -23,8 +23,8 @@ uniform vec4 under_color : source_color = vec4(1.0, 0.30, 0.08, 1.0);
 // Cloud cells across the ceiling, and how much of the sky they cover (0..1).
 uniform float scale = 5.0;
 uniform float cover = 0.48;
-// Ceiling units per second the ash drifts. Slow: smoke, not weather.
-uniform vec2 wind = vec2(0.018, 0.006);
+// Noise cells per second the ash drifts; combat_3d.ash_wind() sets it.
+uniform vec2 wind = vec2(0.3, 0.1);
 // Seconds between glow pulses, and how bright one peaks.
 uniform float pulse_period = 9.0;
 uniform float pulse_gain = 0.9;

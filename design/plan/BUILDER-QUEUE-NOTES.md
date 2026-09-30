@@ -1459,6 +1459,20 @@ Builder, 2026-09-30 03:29 EDT. Brief: the Session line on the queue item (from
   a cloud layer.
 - **Test.** `_test_ash_sky_only_in_the_jackal_biome`.
 
+- **2026-09-30 12:55 EDT, builder: "clouds need to move" (Nick, 09:44).** The
+  shader already scrolled by `TIME * wind`, but `wind` was 0.018 noise cells
+  a second: one cell per ~55 s, so three rest frames 3 s apart showed the
+  same cloud shapes (the only change between them was the glow pulse). Wind
+  is now `BIOME["quarry_ember"]["ash_wind"] = Vector2(0.3, 0.1)`, read by the
+  static `ash_wind(biome)` and set on the ShaderMaterial in `_light_for`;
+  the shader default matches. A cell now crosses in ~3 s; the second fbm
+  octave still runs the other way at 0.6x, so the ash churns as it drifts
+  rather than sliding as one sheet. Test: `ash_wind` length between 0.15 and
+  1.0 cells/s. Proof: `idleat=0,3,6` grid, sky notch cropped 4x in the
+  before/after frames (full grid: `2026-09-30-sky-drift-after-grid.png`).
+  Grader: FAIL on the half-size grid ("clouds sit in the same place"), PASS
+  on the 4x sky strips. Glow pulse and fog untouched.
+
 ## Remove cost.
 
 2026-09-30 11:10 EDT, builder. Nick (10:59): "remove cost". Read as the energy

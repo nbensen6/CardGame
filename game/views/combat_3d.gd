@@ -2753,6 +2753,10 @@ const BIOME := {
 		# gradient, red underneath near the horizon, the odd distant glow
 		# pulse. The fog behind the wall stays. See ash_sky() / _light_for().
 		"ash_sky": true,
+		# Noise cells per second the ash drifts. Nick (2026-09-30): "clouds
+		# need to move" -- the first 0.018 took ~55 s per cell and read as a
+		# painted backdrop. See ash_wind().
+		"ash_wind": Vector2(0.3, 0.1),
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -3183,6 +3187,7 @@ func _light_for(beast_id: String) -> void:
 		ash.shader = ASH_SKY
 		ash.set_shader_parameter("top_color", b["top"])
 		ash.set_shader_parameter("horizon_color", b["horizon"])
+		ash.set_shader_parameter("wind", ash_wind(name))
 		sky.sky_material = ash
 	elif sky != null and _plain_sky != null:
 		sky.sky_material = _plain_sky
@@ -3204,6 +3209,13 @@ func _light_for(beast_id: String) -> void:
 static func ash_sky(biome: String) -> bool:
 	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
 	return bool(b.get("ash_sky", false))
+
+
+## How fast a biome's ash drifts, in noise cells per second. Static so
+## run_tests.gd can hold it above "you can see it move".
+static func ash_wind(biome: String) -> Vector2:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return b.get("ash_wind", Vector2(0.3, 0.1))
 
 
 ## The scene's own ProceduralSkyMaterial, kept while a biome's ash sky stands
