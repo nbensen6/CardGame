@@ -990,11 +990,12 @@ func _ready() -> void:
 # next safe hold are all one glance, and the shape of the climb is visible before
 # you commit to it.
 
-const GAUGE_W := 62.0
-const GAUGE_H := 330.0
+const GAUGE_W := 84.0
+const GAUGE_H := 372.0
 const GAUGE_MARGIN := 14.0
-const GAUGE_PAD_TOP := 30.0     # room for the sigil mark above the rail
+const GAUGE_PAD_TOP := 58.0     # room for the burning sigil above the rail
 const GAUGE_PAD_BOTTOM := 34.0  # room for the "N to go" line below it
+const GAUGE_PIP_R := 13.0       # a hunter's portrait pip, big enough to tell faces apart
 
 
 func _build_gauge() -> void:
@@ -1007,12 +1008,9 @@ func _build_gauge() -> void:
 	panel.offset_right = -GAUGE_MARGIN
 	panel.offset_top = -GAUGE_H * 0.5
 	panel.offset_bottom = GAUGE_H * 0.5
-	var st := StyleBoxFlat.new()
-	st.bg_color = Color(0.09, 0.075, 0.06, 0.66)
-	st.set_border_width_all(1)
-	st.border_color = Color(0.42, 0.35, 0.26, 0.8)
-	st.set_corner_radius_all(6)
-	panel.add_theme_stylebox_override("panel", st)
+	# The same carved obsidian as the rest of the HUD (queue, "The climb gauge
+	# stands beside the beast", 2026-09-29): it was the last flat brown box.
+	panel.add_theme_stylebox_override("panel", carved(obsidian_style(EMBER_RIM, 1, 8)))
 
 	_gauge = Control.new()
 	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1034,9 +1032,13 @@ func _update_gauge(s: Dictionary) -> void:
 		panel.visible = false
 		return
 	var heights: Array = []
+	var faces: Array = []
 	for p in s.get("players", []):
 		heights.append(int((p as Dictionary).get("foothold", 0)))
-	_gauge_data = {"top": top, "ledges": gauge_ledge_heights(boss.get("ledges", [])), "heights": heights}
+		var path := String((p as Dictionary).get("portrait", ""))
+		faces.append(load(path) if path != "" and ResourceLoader.exists(path) else null)
+	_gauge_data = {"top": top, "ledges": gauge_ledge_heights(boss.get("ledges", [])),
+		"heights": heights, "faces": faces}
 	panel.visible = true
 	_gauge.queue_redraw()
 
@@ -1093,49 +1095,72 @@ static func gauge_dot_dx(heights: Array, i: int, top: int) -> float:
 	return dx
 
 
+## Height `h` -> a y on the gauge's rail: the ground at `y_bot`, the sigil at
+## `y_top`, and anything past the sigil pinned to it. One rule for the rungs,
+## the ledge notches and the portrait pips, so a pip always sits on its rung.
+static func gauge_y(h: float, top: int, y_top: float, y_bot: float) -> float:
+	return y_bot - (y_bot - y_top) * clampf(h / float(maxi(top, 1)), 0.0, 1.0)
+
+
 func _draw_gauge() -> void:
 	if _gauge_data.is_empty():
 		return
 	var top: int = int(_gauge_data["top"])
 	var ledges: Array = _gauge_data["ledges"]
 	var heights: Array = _gauge_data["heights"]
+	var faces: Array = _gauge_data.get("faces", [])
 	var size := _gauge.size
 	var x := size.x * 0.5
 	var y_top := GAUGE_PAD_TOP
 	var y_bot := size.y - GAUGE_PAD_BOTTOM
-	var font := ThemeDB.fallback_font
-	var rail := Color(0.55, 0.47, 0.36, 0.95)
+	var font: Font = _hud_font if _hud_font != null else ThemeDB.fallback_font
+	var groove := Color(0.02, 0.018, 0.02, 0.95)
+	var rail := Color(0.46, 0.25, 0.14, 0.95)
 	var gold := Color(1.0, 0.84, 0.42)
 
-	# `h` in Height units -> a y on the rail. Height 0 is the ground, at the bottom.
-	var y_of := func(h: float) -> float:
-		return y_bot - (y_bot - y_top) * clampf(h / float(top), 0.0, 1.0)
-
-	_gauge.draw_line(Vector2(x, y_top), Vector2(x, y_bot), rail, 3.0)
+	# The rail: a cut groove with a dull ember seam down its middle.
+	_gauge.draw_line(Vector2(x, y_top), Vector2(x, y_bot), groove, 7.0)
+	_gauge.draw_line(Vector2(x, y_top), Vector2(x, y_bot), rail, 2.0)
 
 	# Rungs. Every Height gets a small one so the ladder has a SCALE — without
 	# them a climb of 2 up a sigil of 13 looks the same as one up a sigil of 4.
+	# A ledge is a glowing notch: a soft ember halo under a bright core.
 	for h in range(1, top):
-		var y: float = y_of.call(float(h))
-		var is_ledge: bool = ledges.has(h)
-		var w: float = 13.0 if is_ledge else 6.0
-		_gauge.draw_line(Vector2(x - w, y), Vector2(x + w, y),
-			Color(0.78, 0.68, 0.5, 0.95) if is_ledge else rail, 3.0 if is_ledge else 1.5)
+		var y: float = gauge_y(float(h), top, y_top, y_bot)
+		if ledges.has(h):
+			_gauge.draw_line(Vector2(x - 17, y), Vector2(x + 17, y), Color(EMBER_RIM, 0.28), 9.0)
+			_gauge.draw_line(Vector2(x - 15, y), Vector2(x + 15, y), Color(EMBER_RIM, 0.55), 5.0)
+			_gauge.draw_line(Vector2(x - 13, y), Vector2(x + 13, y), Color(1.0, 0.8, 0.5), 2.0)
+		else:
+			_gauge.draw_line(Vector2(x - 5, y), Vector2(x + 5, y), rail, 1.5)
 
-	# The sigil, its Height, and the ground you fall back to.
-	_gauge.draw_line(Vector2(x - 15, y_top), Vector2(x + 15, y_top), gold, 3.0)
-	_gauge.draw_string(font, Vector2(0, y_top - 10), "✦ %d" % top,
+	# The sigil burning at the top: a halo that falls off in rings, a hot core,
+	# and its Height in the display face.
+	var sig := Vector2(x, y_top)
+	# Wider than a pip, so a hunter standing on the sigil sits IN the fire
+	# rather than hiding it.
+	for r in [31.0, 26.0, 21.0, 17.0, 12.0]:
+		_gauge.draw_circle(sig, r, Color(EMBER_RIM, 0.12 + (31.0 - r) * 0.028))
+	_gauge.draw_circle(sig, 6.0, Color(1.0, 0.86, 0.5))
+	_gauge.draw_circle(sig, 3.0, Color(1.0, 0.98, 0.9))
+	_gauge.draw_string(font, Vector2(0, y_top - 36), "✦ %d" % top,
 		HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, gold)
 	_gauge.draw_line(Vector2(x - 11, y_bot), Vector2(x + 11, y_bot), rail, 3.0)
 
-	# Each hunter, and — for the one you are holding — how much climb is left.
+	# Each hunter as their own face in a ring of their colour, at their Height.
 	for i in range(heights.size()):
 		var h: int = heights[i]
-		var y: float = y_of.call(float(h))
+		var c := Vector2(x + gauge_dot_dx(heights, i, top) * 1.8, gauge_y(float(h), top, y_top, y_bot))
 		var tint: Color = _slot_color(i)
-		var dx: float = gauge_dot_dx(heights, i, top)
-		_gauge.draw_circle(Vector2(x + dx, y), 6.0, tint)
-		_gauge.draw_arc(Vector2(x + dx, y), 6.0, 0.0, TAU, 16, Color(0.1, 0.09, 0.07), 2.0)
+		_gauge.draw_circle(c, GAUGE_PIP_R + 2.0, Color(0, 0, 0, 0.6))
+		_gauge.draw_circle(c, GAUGE_PIP_R, OBSIDIAN_FILL)
+		var face: Texture2D = faces[i] if i < faces.size() else null
+		if face != null:
+			var s := GAUGE_PIP_R * 1.5
+			_gauge.draw_texture_rect(face, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false)
+		else:
+			_gauge.draw_circle(c, GAUGE_PIP_R * 0.5, tint)
+		_gauge.draw_arc(c, GAUGE_PIP_R, 0.0, TAU, 24, tint, 2.5, true)
 
 	var mine: int = int(heights[_me()]) if _me() < heights.size() else 0
 	var left: int = top - mine

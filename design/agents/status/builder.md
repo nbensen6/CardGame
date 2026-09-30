@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T01:59
-working_on: "The intent badge reads like a warning."
+updated: 2026-09-30T02:10
+working_on: "The climb gauge stands beside the beast."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 01:59 EDT
+2026-09-30 02:10 EDT
 
-- **Did:** Intent badge is bigger, red-rimmed, with a big move icon, pinned above the jackal's head.
-- **Worked?** Yes; VERDICT: PASS, badge above the head and clear of both hunters in all four frames.
-- **Look at:** ![[frames/builder/2026-09-30-intent-badge-before.png]] then ![[frames/builder/2026-09-30-intent-badge-after.png]]
-- **Ask:** Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
+- **Did:** Climb gauge is now carved obsidian with portrait pips, glowing ledge notches and a burning sigil.
+- **Worked?** Yes; VERDICT: PASS, both pips at their heights and the sigil glow at the top.
+- **Look at:** ![[frames/builder/2026-09-30-climb-gauge-before.png]] then ![[frames/builder/2026-09-30-climb-gauge-after.png]]
+- **Ask:** Gauge has faces and a burning sigil now. Pips big enough to read?
 
 ## Notes
 
-- **Found:** every badge now wears the red rim, so Defend reads calm only by its gold icon and text.
-- **Found:** the cost-gem pulse is motion only, so no still frame can show it; judge it live.
+- **Found:** the gauge panel still sits on the right screen edge and covers part of the Goblin's stone.
 
 ## Log
 
+- 2026-09-30 02:10 EDT — builder: climb gauge in obsidian (carved panel 84x372, groove rail, ember-halo ledge notches, 5-ring burning sigil wider than a pip, portrait pips r13 in slot-tint rings via snapshot `portrait`, static gauge_y + test); grader PASS; tests green, pushed.
 - 2026-09-30 01:59 EDT — builder: intent badge reads like a warning (24 pt, 3 px red rim, 34 pt move icon via intent_badge_bbcode, crown from projected box top, clears both hunters + 2 tests); grader PASS on round 3; tests green, pushed.
 - 2026-09-30 01:40 EDT — builder: cards fan and glow (fan/tilt/lift already there; foil.gdshader rim mode, CardView.set_raised builds an ember-gold rim 10 px past the card, called from _layout_hand; cost gem breathes 1.0-1.1 via pip_pulse while playable + 2 tests); grader PASS; tests green, pushed.
 - 2026-09-30 01:25 EDT — builder: beast HP bar reacts (beast_bar.gd overlay: notches per weak_point_threshold + hurt_pct line, 0.4 s ghost + drain, crack on crossing; hurt_pct in snapshot; beat=loop lands an 18 blow; tests); grader PASS; tests green, pushed.

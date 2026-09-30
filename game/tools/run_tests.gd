@@ -1153,6 +1153,7 @@ func _init() -> void:
 	_test_backlog86_gauge_dot_dx_splits_apart_when_footholds_match()
 	_test_backlog86_gauge_dot_dx_centres_both_dots_when_footholds_genuinely_differ()
 	_test_backlog86_gauge_dot_dx_treats_footholds_past_the_sigil_as_shared()
+	_test_climb_gauge_y_puts_ground_at_bottom_and_sigil_at_top()
 	# backlog #86 duty 3 (fourth pass): height_gap_between, lifted out of
 	# combat_3d._height_gap, is a SECOND copy of the exact gap formula
 	# Combat.incoming_for already prices a rift move on in /core — the intent
@@ -31309,3 +31310,14 @@ func _test_intent_badge_icon_is_big_and_red_on_hostile_moves() -> void:
 	var calm := Combat3D.intent_badge_bbcode("◆ [u]Block[/u] 6", false)
 	_expect(calm.contains("[color=#f2c75c]◆"), "a calm move's icon is gold, not red (got %s)" % calm)
 	_expect(Combat3D.intent_badge_bbcode("", true) == "", "no text stays no text")
+
+
+## The climb gauge (queue, "The climb gauge stands beside the beast"): rungs,
+## ledge notches and portrait pips all place themselves with gauge_y, so a pip
+## sits on its rung, the sigil is the top and nothing climbs past it.
+func _test_climb_gauge_y_puts_ground_at_bottom_and_sigil_at_top() -> void:
+	_expect(Combat3D.gauge_y(0.0, 5, 40.0, 300.0) == 300.0, "Height 0 sits at the bottom of the gauge")
+	_expect(Combat3D.gauge_y(5.0, 5, 40.0, 300.0) == 40.0, "the sigil's Height sits at the top")
+	_expect(Combat3D.gauge_y(8.0, 5, 40.0, 300.0) == 40.0, "a foothold past the sigil pins to the top")
+	_expect(is_equal_approx(Combat3D.gauge_y(2.5, 5, 40.0, 300.0), 170.0), "halfway up is halfway down the rail")
+	_expect(Combat3D.gauge_y(1.0, 0, 40.0, 300.0) == 40.0, "a zero sigil does not divide by zero")

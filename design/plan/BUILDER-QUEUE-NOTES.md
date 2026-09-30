@@ -1213,3 +1213,15 @@ was missing was the glow and the pulse.
 - **Tests.** `_test_intent_badge_clears_the_other_hunter_too`,
   `_test_intent_badge_icon_is_big_and_red_on_hostile_moves`.
 
+## The climb gauge stands beside the beast.
+
+2026-09-30 02:10 EDT, builder.
+
+- Before: a 3 px brown rail in a flat brown panel, 6 px coloured dots, a gold tick for the sigil.
+- Panel now uses `carved(obsidian_style(EMBER_RIM, 1, 8))`, 84 x 372 (was 62 x 330), same right-centre anchor.
+- Rail: 7 px black groove with a 2 px ember seam. Ledge rungs: three stacked lines (9 px at 28 % ember, 5 px at 55 %, 2 px hot core). Plain Heights: 10 px dim ticks.
+- Sigil: five ember rings out to r31 plus a hot core, so a hunter standing on it sits inside the fire (first try at r22 was hidden by the Frog's pip). Label in the HUD display font.
+- Pips: r13 obsidian disc, the hunter's portrait (snapshot `portrait`) at 1.5 r, a 2.5 px ring in their slot tint; side-step on a shared rung is `gauge_dot_dx` x 1.8.
+- New static `gauge_y(h, top, y_top, y_bot)` places rungs and pips; `_test_climb_gauge_y_puts_ground_at_bottom_and_sigil_at_top` pins ground, top, clamp and a zero sigil.
+- Grader: PASS first round. It noted the panel is still on the screen edge, not next to the beast, and covers the Goblin's stone.
+

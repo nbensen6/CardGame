@@ -278,9 +278,12 @@ run failed.
       Ask: Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
       Test: state=3dclimb beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-intent-badge-after.png|420]] ^the-intent-badge-reads-like-a-warning
-- [ ] **The climb gauge stands beside the beast.**
+- [ ] 👀 **The climb gauge stands beside the beast.**
       **Session, 2026-09-29 22:35 ET:** The right-rail ladder is a thin line with ticks. Make it a gauge beside the stage: a portrait pip per hunter at their height, glowing notches at the ledges, the sigil burning at the top, in the obsidian style. Done-when: the climb frame shows both pips at their heights and the sigil glow at the top. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3dclimb beast=cinder_jackal ^the-climb-gauge-stands-beside-the-beast
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The climb gauge stands beside the beast.|details]]
+      Ask: Gauge has faces and a burning sigil now. Pips big enough to read?
+      Test: state=3dclimb beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-climb-gauge-after.png|420]] ^the-climb-gauge-stands-beside-the-beast
 - [ ] **Obsidian floor.**
       **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal ^obsidian-floor
@@ -401,3 +404,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Shots take `console=hp 10` with a real space; `+` only decodes in play mode, so a Test line pasted into shot.sh silently fails.
 - [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.
 - [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.
+- [ ] (proposed) **Gauge covers the Goblin's stone.** The climb gauge panel on the right edge overlaps the Goblin's stone in the climb frame.
