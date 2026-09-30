@@ -35,6 +35,8 @@
 ##     shoot a grid of frames that many real seconds after it; a time past the
 ##     hold shows the cut to the reward screen)
 ##   rest=1 (3dosu: open the timed card with both hunters still on the ground)
+##   idleat=0,0.4,0.8,1.2 (a grid of whole frames that many real seconds after
+##     the camera settles, nothing pressed: proof the rest pose holds still)
 ##   press=F8 (feed one real key press before the shot — for a live-toggle key
 ##     whose only visible effect is a HUD note, not a layout change)
 extends SceneTree
@@ -57,6 +59,7 @@ var _nail := false  # nail=1 — the same, but a PERFECT hit, to set beside a mi
 var _flyi := -1  # fly=N — tap the Nth card of the hand
 var _flys: Array[int] = []  # fly=N,M — each tapped in turn
 var _deathat: Array = []  # deathat=0.3,1.2,2.5 — 3dreward: frames through the death
+var _idleat: Array = []  # idleat=0,0.4,0.8 — rest frames over real time
 var _anim := ""  # anim=attack@0.5 — pose the beast's own animation; see _capture
 var _act := 0     # 3dmap: fast-forward to this act, so later regions get looked at
 var _devzoom := 0  # devzoom=N — Dev camera on, then N wheel-ups at the centre
@@ -214,6 +217,9 @@ func _initialize() -> void:
 			_miss = true
 		elif a == "nail=1":
 			_nail = true
+		elif a.begins_with("idleat="):
+			for t in a.substr(7).split(","):
+				_idleat.append(float(t))
 		elif a.begins_with("deathat="):
 			for t in a.substr(8).split(","):
 				_deathat.append(float(t))
@@ -1047,6 +1053,10 @@ func _capture() -> void:
 		await _shoot_death()
 		return
 
+	if not _idleat.is_empty():
+		await _shoot_idle()
+		return
+
 	# thenend=N: the beast's turn resolved against a board console= set up (say,
 	# a hunter climbed into a move's reach), with the log open as the proof.
 	if _thenend > 0 and current_scene != null and current_scene.has_method("_end_turn"):
@@ -1876,7 +1886,31 @@ func _shoot_death() -> void:
 		print("DEATHAT %.2fs (real %.2fs) on=%s anim=%s" % [float(t), (Time.get_ticks_msec() - t0) / 1000.0, str(current_scene.get("_current")),
 			str((fight.get("_beast_anim") as AnimationPlayer).current_animation) if is_instance_valid(fight) and fight.get("_beast_anim") != null else "-"])
 		shots.append(img)
-	# Whole frames on a grid (2x2 for four), so nothing the strip proves is cropped.
+	_grid(shots)
+	await _save_and_quit()
+
+
+## idleat=: the settled rest frame over real time, each hunter's height printed.
+func _shoot_idle() -> void:
+	var fight: Node = current_scene.get("_view") if current_scene.get("_view") != null else current_scene
+	await _await_camera(fight)
+	var t0 := Time.get_ticks_msec()
+	var shots: Array[Image] = []
+	for t in _idleat:
+		while Time.get_ticks_msec() - t0 < int(float(t) * 1000.0):
+			await process_frame
+		await RenderingServer.frame_post_draw
+		var ys: Array = []
+		for h in fight.get("_hunters"):
+			ys.append("%.4f" % ((h as Dictionary)["node"] as Node3D).position.y)
+		print("IDLEAT %.2fs (real %.2fs) hunter_y=%s" % [float(t), (Time.get_ticks_msec() - t0) / 1000.0, ", ".join(ys)])
+		shots.append(root.get_viewport().get_texture().get_image())
+	_grid(shots)
+	await _save_and_quit()
+
+
+## Whole frames on a grid (2x2 for four), so nothing the strip proves is cropped.
+func _grid(shots: Array[Image]) -> void:
 	var cols := ceili(sqrt(float(shots.size())))
 	var rows := ceili(float(shots.size()) / cols)
 	var w := 1280 / cols
@@ -1887,7 +1921,6 @@ func _shoot_death() -> void:
 		im.convert(Image.FORMAT_RGBA8)
 		im.resize(w, h, Image.INTERPOLATE_BILINEAR)
 		_strip.blit_rect(im, Rect2i(0, 0, w, h), Vector2i((i % cols) * w, (i / cols) * h))
-	await _save_and_quit()
 
 
 func _save_and_quit() -> void:

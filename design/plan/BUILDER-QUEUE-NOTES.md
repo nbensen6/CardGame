@@ -1207,6 +1207,16 @@ obsidian material above is gone.
   VERDICT: PASS.
 - **Test:** `_test_hud_reads_like_slay_the_spire`.
 
+2026-09-30 12:13 EDT, builder, on Nick's 11:44 answer.
+
+- Beast plate (`TopBar`) pinned top-left at `beast_plate_hud_pos()` (16,12) behind `BEAST_PLATE_ON_HUD`, on a `hud_style` glass panel. The under-the-feet rule `beast_plate_pos` stays for its test.
+- Party panel hidden (`PARTY_PANEL_SHOWN = false`). Lost with it: the red "aimed at" edge and the Height line (proposed at the bottom of the queue).
+- Intent: no "Next:", icon 34 -> 18 px, text 15 px, 1 px rim, `reset_size()` so the chip fits its words; `intent_hud_pos(sz, plate)` puts it 10 px right of the plate, centred on it.
+- Idle bob: the hunters' `sin()` sway is gone (`hunter_idle_y`); a stone with a hunter on it no longer drifts, so feet stay on it.
+- Harness: `idleat=0,0.4,...` shoots a grid of the settled rest frame over real time and prints each hunter's y (all 0.0000 over 1.2 s, both slots). The Frog-active grid is `2026-09-30-hud-trim-after-frog.png`.
+- Grader: FAIL (bob not provable in one still; bare plate) -> idleat grid + glass plate; FAIL (Goblin not in frame) -> slot=1 grid; PASS.
+- Test: `_test_intent_badge_sits_in_a_fixed_hud_slot` rewritten for the new layout.
+
 ## The beast's health bar reacts.
 
 2026-09-30 01:25 EDT. Built as an overlay (`game/ui/beast_bar.gd`) drawn over the

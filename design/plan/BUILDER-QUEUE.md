@@ -17,14 +17,14 @@ run failed.
       Ask: Gems back; borders now obsidian with brass lines. Keep this border direction?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-card-borders-after.png|420]] ^remove-cost
-- [ ] **One HUD style: carved obsidian.**
+- [ ] 👀 **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
-      Ask: HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-sts-hud-after.png|420]] ^one-hud-style-carved-obsidian
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20slot%3D1%20idleat%3D0%2C0.4%2C0.8%2C1.2) · [[BUILDER-QUEUE-NOTES#One HUD style: carved obsidian.|details]]
+      Ask: Jackal bar top-left, small intent beside it, party panel gone. Good?
+      Test: state=3d beast=cinder_jackal slot=1 idleat=0,0.4,0.8,1.2
+      ![[agents/frames/builder/2026-09-30-hud-trim-after.png|420]] ^one-hud-style-carved-obsidian
 - [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
@@ -456,3 +456,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The old crown-tracking intent_tag_pos and its ten tests are now unused; delete once the HUD slot sticks.
 - [ ] (proposed) The deck list still draws cards in the old baked green frame, not the new border.
 - [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.
+- [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.

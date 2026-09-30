@@ -601,13 +601,20 @@ func _apply_sts_hud() -> void:
 	_hud_font = hud_font()
 	var top := _hud.get_node_or_null("TopBar") as PanelContainer
 	if top != null:
-		# No panel: the beast is the frame. The plate follows its head
-		# (_position_beast_plate).
-		top.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+		# Pinned top-left now (Nick, 2026-09-30), so it sits on the same glass
+		# as the intent chip beside it, not bare over the cliffs.
+		var plate := hud_style(HUD_EDGE, 1, 6)
+		plate.content_margin_left = 10.0
+		plate.content_margin_right = 8.0
+		plate.content_margin_top = 4.0
+		plate.content_margin_bottom = 4.0
+		top.add_theme_stylebox_override("panel", plate if BEAST_PLATE_ON_HUD else StyleBoxEmpty.new())
 	var bar_st := beast_bar_styles()
 	for k in bar_st:
 		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
-	_intent.add_theme_constant_override("outline_size", 8)
+	_intent.add_theme_constant_override("outline_size", 5)
+	_intent.add_theme_font_size_override("normal_font_size", INTENT_FONT_SIZE)
+	_party.visible = PARTY_PANEL_SHOWN
 	_beast_bar = BeastBar.new()
 	_beast_bar.name = "BeastBarFx"
 	_hp_bar.add_child(_beast_bar)
@@ -1882,12 +1889,18 @@ func _process(delta: float) -> void:
 		var want := atan2(at_beast.x, at_beast.z)
 		hb.rotation.y = lerp_angle(hb.rotation.y, want, 1.0 - exp(-delta * 9.0))
 
+	# A stone with a hunter on it holds still: hunters do not move up and down
+	# while idle (Nick, 2026-09-30 11:44), and the stone under them must not
+	# rise through their feet either.
+	var ridden := {}
+	for h in _hunters:
+		ridden[riding_stone((h as Dictionary)["home"] as Vector3, _float_home)] = true
 	for i in _float_stones.size():
 		var st := _float_stones[i] as Node3D
 		if not is_instance_valid(st):
 			continue
 		var home: Vector3 = _float_home[i]
-		st.position.y = home.y + stone_bob(_time, i)
+		st.position.y = home.y + (0.0 if ridden.has(i) else stone_bob(_time, i))
 		st.rotation.y += delta * 0.25
 	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
 	_step_enemy_turn(delta)
@@ -1929,12 +1942,10 @@ func _process(delta: float) -> void:
 		# to the destination on frame one and fought the tween for the rest of
 		# its run. Every climb read as a flat slide instead of a jump.
 		if is_instance_valid(node) and not _tween_is_live(_climb_tw.get(i) as Tween):
-			# a gentle out-of-phase idle so the two hunters don't look cloned,
-			# unless they stand on a stone: then they ride that stone's drift,
-			# or the stone rises through their feet (Frog half-sunk, 2026-09-28)
-			var on := riding_stone(h["home"] as Vector3, _float_home)
-			node.position.y = float((h["home"] as Vector3).y) + (stone_bob(_time, on)
-				if on >= 0 else sin(_time * 2.3 + i * 1.7) * 0.045)
+			# Standing still: no idle sway (Nick, 2026-09-30 11:44: "stop the
+			# hunters from moving up and down while idle"). A stone under a
+			# hunter holds still too (the stone loop above).
+			node.position.y = hunter_idle_y(h["home"] as Vector3)
 	if _sigil != null and _sigil.visible:
 		_sigil.scale = Vector3.ONE * _sigil_scale * (1.0 + sin(_time * 3.0) * 0.14)
 	_fly(delta)
@@ -2169,22 +2180,27 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	# Off the beast and into the HUD (Nick, 2026-09-30: "remove damage badge and
 	# put it somewhere else in the hud"): a glass panel like the rest, its edge
 	# red while the beast is swinging.
-	_intent.text = "[center][font_size=16][color=#b8b0a4]Next:[/color][/font_size]  %s[/center]" \
-		% intent_badge_bbcode(txt, hostile)
-	var style := hud_style(Color(0.9, 0.2, 0.14, 0.9) if hostile else HUD_EDGE, 2, 8)
-	style.content_margin_left = 14.0
-	style.content_margin_right = 14.0
-	style.content_margin_top = 2.0
-	style.content_margin_bottom = 2.0
+	# Small, beside the beast's bar (Nick, 2026-09-30 11:44): no "Next:", the
+	# icon at text size, a thin rim.
+	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
+	var style := hud_style(Color(0.9, 0.2, 0.14, 0.9) if hostile else HUD_EDGE, 1, 6)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 0.0
+	style.content_margin_bottom = 0.0
 	_intent_tag.add_theme_stylebox_override("panel", style)
+	_intent_tag.reset_size()             # shrink to the words, not the old banner
 
 
-const INTENT_ICON_SIZE := 34
+const INTENT_ICON_SIZE := 18
 
 
 ## The badge's text with its leading move-type glyph (†, ◆, ▲, ✚, ✦, ▼, ☠ from
 ## intent_text_for) blown up into an icon: red on a hostile move, gold on the
 ## rest. Text without a leading glyph comes back unchanged.
+const INTENT_FONT_SIZE := 15
+
+
 static func intent_badge_bbcode(txt: String, hostile: bool) -> String:
 	var cut := txt.find(" ")
 	if cut <= 0 or txt.substr(0, cut).begins_with("["):
@@ -2300,7 +2316,9 @@ func _position_intent_tag() -> void:
 	# The badge no longer rides the beast (Nick, 2026-09-30): it has a fixed
 	# HUD slot. intent_tag_pos below is the old crown-tracking rule, kept for
 	# its tests until Nick says the move is for good.
-	_intent_tag.position = intent_hud_pos(_intent_tag.size, get_viewport().get_visible_rect().size)
+	var top := _hud.get_node_or_null("TopBar") as Control if _hud != null else null
+	var plate := Rect2(beast_plate_hud_pos(), top.size) if top != null else Rect2()
+	_intent_tag.position = intent_hud_pos(_intent_tag.size, plate)
 	if INTENT_ON_HUD:
 		return
 	if _beast_box.size.y <= 0.0:
@@ -2333,11 +2351,26 @@ func _position_intent_tag() -> void:
 const INTENT_ON_HUD := true
 
 
-## The badge's HUD slot: top centre, in the gap between the party panel and
-## Log/Menu, so it is read in the same place every turn and never lands on the
-## beast or a hunter.
-static func intent_hud_pos(sz: Vector2, vp: Vector2) -> Vector2:
-	return Vector2(roundf((vp.x - sz.x) * 0.5), 12.0)
+## The badge's HUD slot: small, just right of the beast's health bar and
+## centred on it (Nick, 2026-09-30: "make it small and next to its health"),
+## so the beast's two numbers are read together, in one place every turn.
+static func intent_hud_pos(sz: Vector2, plate: Rect2) -> Vector2:
+	return Vector2(plate.end.x + INTENT_PLATE_GAP,
+		roundf(plate.get_center().y - sz.y * 0.5))
+
+
+const INTENT_PLATE_GAP := 10.0
+
+
+## The beast's name and bar live in the HUD, top-left, where the party panel
+## used to be (Nick, 2026-09-30: "the cinder jackal health can be in top
+## left. remove the character information").
+const BEAST_PLATE_ON_HUD := true
+const PARTY_PANEL_SHOWN := false
+
+
+static func beast_plate_hud_pos() -> Vector2:
+	return Vector2(16.0, 12.0)
 
 
 const BEAST_PLATE_GAP := 6.0
@@ -2361,6 +2394,9 @@ static func beast_plate_pos(feet: Vector2, plate: Vector2, vp: Vector2, hunters:
 
 func _position_beast_plate() -> void:
 	var top := _hud.get_node_or_null("TopBar") as Control if _hud != null else null
+	if top != null and BEAST_PLATE_ON_HUD:
+		top.position = beast_plate_hud_pos()
+		return
 	if top == null or _cam == null or _beast_box.size.y <= 0.0:
 		return
 	var r := hunter_screen_rect(_cam, _beast_box)
@@ -5293,6 +5329,11 @@ static func hunter_facing_y(t: float, side: float, from: Vector3 = Vector3.ZERO,
 	if absf(dx) < 0.0001 and absf(dz) < 0.0001:
 		return 0.0
 	return atan2(dx, dz)
+
+
+## Where an idle hunter stands: exactly at home, whatever the time.
+static func hunter_idle_y(home: Vector3) -> float:
+	return home.y
 
 
 ## How far stone `k` has drifted from its home at `time` (see _process).

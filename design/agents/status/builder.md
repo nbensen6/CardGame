@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T11:57
-working_on: "Remove cost."
+updated: 2026-09-30T12:13
+working_on: "One HUD style: carved obsidian."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 11:57 EDT
+2026-09-30 12:13 EDT
 
-- **Did:** Brought cost gems back and redrew card borders as obsidian with brass lines.
-- **Worked?** Yes, every hand card shows its gem and the new border. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-card-borders-before.png]] then ![[frames/builder/2026-09-30-card-borders-after.png]]
-- **Ask:** Keep this obsidian-and-brass border direction?
+- **Did:** Jackal health top-left with a small intent chip beside it; party panel gone; hunters stand still.
+- **Worked?** Yes, grid of idle frames shows both unchanged. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-hud-trim-before.png]] then ![[frames/builder/2026-09-30-hud-trim-after.png]]
+- **Ask:** Jackal bar top-left, small intent beside it, party panel gone. Good?
 
 ## Notes
 
-- **Found:** The deck list still draws cards in the old baked green frame.
-- **Found:** The rail (compact) card form still wears the old baked frame.
+- **Found:** The red "being targeted" edge and Height line only lived on the removed party cards.
 
 ## Log
 
+- 2026-09-30 12:13 EDT — builder: HUD trimmed on Nick's 11:44 word: beast plate pinned top-left on glass, party panel hidden, intent chip small beside the bar, hunter idle sway gone and ridden stones still; harness idleat= grid; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 11:57 EDT — builder: Remove cost answered (Nick 11:44): SHOW_COST back on, new card_border.gdshader (obsidian, brass hairline and fillet, hunter line, corner studs), name ribbon darkened; grader PASS; tests green, pushed.
 
 - 2026-09-30 11:48 EDT — builder: intent badge moved to the HUD on Nick's word (09:44): intent_hud_pos pins it top centre in a hud_style panel (red edge on hostile), INTENT_ON_HUD skips the crown tracking + test; grader FAIL (one frame) then PASS on 2x2 strips; tests green, pushed.
