@@ -58,13 +58,13 @@ run failed.
       Ask: Grader failed this: fan tilt and lift still there. Flatten the hand too?
       Test: state=3d beast=cinder_jackal hover=1
       ![[agents/frames/builder/2026-09-30-cards-fan-remove-after.png|420]] ^cards-fan-and-glow
-- [ ] **The intent badge reads like a warning.**
+- [ ] 👀 **The intent badge reads like a warning.**
       **Nick, 2026-09-30 09:44 ET:** remove damage badge and put it somewhere else in the hud.
       **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3dclimb%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
-      Ask: Badge is bigger, red-rimmed, big icon, above the head. Loud enough?
-      Test: state=3dclimb beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-intent-badge-after.png|420]] ^the-intent-badge-reads-like-a-warning
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The intent badge reads like a warning.|details]]
+      Ask: Badge moved off the jackal to a fixed top-centre HUD panel. Right spot?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-intent-hud-after.png|420]] ^the-intent-badge-reads-like-a-warning
 - [ ] **Obsidian floor.**
       **Nick, 2026-09-30 09:44 ET:** remove the band
       **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
@@ -450,3 +450,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Energy orb with no card costs.** The orb still says 3 while no card shows what it spends.
 - [ ] (proposed) **Card name ribbons still inset for the gem.** The banner and borderless name keep their left gap for a gem that is gone.
 - [ ] (proposed) A small "<" chevron shows at the far left edge mid-screen in the hover frame; no owner found.
+- [ ] (proposed) The jackal's name and HP plate touches the active hunter's feet at the climb camera.
+- [ ] (proposed) The old crown-tracking intent_tag_pos and its ten tests are now unused; delete once the HUD slot sticks.

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T11:10
-working_on: "Remove cost."
+updated: 2026-09-30T11:48
+working_on: "The intent badge reads like a warning."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 11:24 EDT
+2026-09-30 11:48 EDT
 
-- **Did:** Removed the lifted card's ember-gold glow and the cost-gem pulse; the fan and lift stay.
-- **Worked?** Partly: the glow is gone, but the grader wanted the fan removed too. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-09-30-cards-fan-remove-before.png]] then ![[frames/builder/2026-09-30-cards-fan-remove-after.png]]
-- **Ask:** Should the hand also lose its tilt and lift, or just the glow?
+- **Did:** Moved the jackal's intent badge off its head into a fixed top-centre HUD panel.
+- **Worked?** Yes, all four frames show it in the HUD, clear of both hunters. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-intent-hud-before.png]] then ![[frames/builder/2026-09-30-intent-hud-after.png]]
+- **Ask:** Is top centre the right HUD spot for the badge?
 
 ## Notes
 
-- **Found:** A small "<" chevron shows at the far left edge mid-screen in the hover frame.
+- **Found:** The jackal's name and HP plate touches the active hunter's feet at the climb camera.
+- **Found:** The old crown-tracking intent_tag_pos and its tests are now unused.
 
 ## Log
 
+- 2026-09-30 11:48 EDT — builder: intent badge moved to the HUD on Nick's word (09:44): intent_hud_pos pins it top centre in a hud_style panel (red edge on hostile), INTENT_ON_HUD skips the crown tracking + test; grader FAIL (one frame) then PASS on 2x2 strips; tests green, pushed.
 - 2026-09-30 11:24 EDT — builder: cards fan and glow removed on Nick's word (09:44): reverse of 3aec5e3 (set_raised rim, foil.gdshader rim mode, pip_pulse) kept with remove-cost; fan/tilt/lift kept (predate the item, lift carries touch timing) + test; grader FAIL (wanted the fan gone too), shipped 👀 to ask; tests green, pushed.
 - 2026-09-30 11:10 EDT — builder: remove cost on Nick's word (10:59): CardView.SHOW_COST/shows_cost gate the framed gem, borderless gem and rail number; energy rule untouched + test; grader PASS; tests green, pushed.
 - 2026-09-30 11:02 EDT — builder: HUD redesigned after Slay the Spire on Nick's word (09:44): unit_bar.gd under each hunter and in party rows, beast plate under its feet, frameless intent, pile_badge.gd stacks, amber End Turn pill, obsidian_box.gd deleted + test; grader FAIL x2 then PASS; tests green, pushed.

@@ -1270,6 +1270,14 @@ screen on touch and what reveals the rules text under the deep tuck.
 
 ## The intent badge reads like a warning.
 
+2026-09-30 11:45 EDT, builder (Nick 09:44: "remove damage badge and put it somewhere else in the hud").
+
+- **Before.** The badge floated in world space over the jackal's head (`_position_intent_tag` tracking the crown via `intent_tag_pos`).
+- **Did.** `_position_intent_tag` now pins it to a fixed HUD slot, `intent_hud_pos`: top centre, y 12, between the party panel and Log/Menu. It wears the glass `hud_style` panel with a 2 px red edge on hostile moves (hairline edge on calm ones) and reads "Next: † Attack 7". `INTENT_ON_HUD` gates the old crown path; `intent_tag_pos` and its ten tests are left in place until Nick says the move is for good.
+- **Frames.** 2x2 strips, before and after: rest, climb, rest after `endturn=1` (Goblin's turn), climb after `endturn=3` (Defend 5).
+- **Test.** `_test_intent_badge_sits_in_a_fixed_hud_slot`.
+- **Grader.** Round 1 FAIL: one frame only, the Goblin and a non-attack icon unseen. Round 2 on the strips: PASS.
+
 2026-09-30 01:59 EDT, builder.
 
 - **Before.** A 17 pt label with a 1 px ember rim. At the climb camera it sat on

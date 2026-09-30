@@ -2161,17 +2161,21 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	var kind := String(boss.get("intent", {}).get("type", ""))
 	_intent_kind = kind
 	var hostile: bool = intent_is_hostile(kind)
-	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
 	_intent.add_theme_color_override("default_color",
 		Color(0.98, 0.55, 0.44) if hostile else Color(0.72, 0.84, 0.62))
 	# A warning, not a label (2026-09-29 intense-fight plan): a thick red rim on
 	# every move, a big icon for the move type, bigger words. Hostile or calm is
 	# now the icon's and the words' colour, not the rim's.
-	# No box (Slay the Spire's intent is an icon and a number floating over the
-	# enemy, not a panel): the outlined glyph and number carry it alone.
-	var style := StyleBoxEmpty.new()
-	style.content_margin_left = 6.0
-	style.content_margin_right = 6.0
+	# Off the beast and into the HUD (Nick, 2026-09-30: "remove damage badge and
+	# put it somewhere else in the hud"): a glass panel like the rest, its edge
+	# red while the beast is swinging.
+	_intent.text = "[center][font_size=16][color=#b8b0a4]Next:[/color][/font_size]  %s[/center]" \
+		% intent_badge_bbcode(txt, hostile)
+	var style := hud_style(Color(0.9, 0.2, 0.14, 0.9) if hostile else HUD_EDGE, 2, 8)
+	style.content_margin_left = 14.0
+	style.content_margin_right = 14.0
+	style.content_margin_top = 2.0
+	style.content_margin_bottom = 2.0
 	_intent_tag.add_theme_stylebox_override("panel", style)
 
 
@@ -2293,6 +2297,12 @@ static func hunter_screen_rect(cam: Camera3D, box: AABB) -> Rect2:
 func _position_intent_tag() -> void:
 	if _intent_tag == null or not _intent_tag.visible or _cam == null:
 		return
+	# The badge no longer rides the beast (Nick, 2026-09-30): it has a fixed
+	# HUD slot. intent_tag_pos below is the old crown-tracking rule, kept for
+	# its tests until Nick says the move is for good.
+	_intent_tag.position = intent_hud_pos(_intent_tag.size, get_viewport().get_visible_rect().size)
+	if INTENT_ON_HUD:
+		return
 	if _beast_box.size.y <= 0.0:
 		return
 	var p := intent_crown_screen(_cam, _beast_box)
@@ -2317,6 +2327,17 @@ func _position_intent_tag() -> void:
 		else:
 			others.append(r)
 	_intent_tag.position = intent_tag_pos(p, sz, vp, party_rect, hunter_rect, others)
+
+
+## The intent badge sits in a fixed HUD slot, not over the beast's head.
+const INTENT_ON_HUD := true
+
+
+## The badge's HUD slot: top centre, in the gap between the party panel and
+## Log/Menu, so it is read in the same place every turn and never lands on the
+## beast or a hunter.
+static func intent_hud_pos(sz: Vector2, vp: Vector2) -> Vector2:
+	return Vector2(roundf((vp.x - sz.x) * 0.5), 12.0)
 
 
 const BEAST_PLATE_GAP := 6.0

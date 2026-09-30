@@ -2767,6 +2767,7 @@ func _finish_with_deferred_tests() -> void:
 	_test_backlog_intent_tag_repositions_from_frame_pre_draw_not_process()
 	_test_intent_badge_clears_the_other_hunter_too()
 	_test_intent_badge_icon_is_big_and_red_on_hostile_moves()
+	_test_intent_badge_sits_in_a_fixed_hud_slot()
 
 	print("")
 	if _failures == 0:
@@ -31344,3 +31345,18 @@ func _test_climb_gauge_y_puts_ground_at_bottom_and_sigil_at_top() -> void:
 	_expect(Combat3D.gauge_y(8.0, 5, 40.0, 300.0) == 40.0, "a foothold past the sigil pins to the top")
 	_expect(is_equal_approx(Combat3D.gauge_y(2.5, 5, 40.0, 300.0), 170.0), "halfway up is halfway down the rail")
 	_expect(Combat3D.gauge_y(1.0, 0, 40.0, 300.0) == 40.0, "a zero sigil does not divide by zero")
+
+
+## Nick, 2026-09-30: "remove damage badge and put it somewhere else in the
+## hud." The badge has a fixed slot at top centre, clear of the party panel
+## (top-left, ends x=320) and Log/Menu (top-right, from x=1130), at every size.
+func _test_intent_badge_sits_in_a_fixed_hud_slot() -> void:
+	_expect(Combat3D.INTENT_ON_HUD, "the intent badge lives in the HUD, not over the beast")
+	var vp := Vector2(1280.0, 720.0)
+	var sz := Vector2(240.0, 44.0)
+	var at: Vector2 = Combat3D.intent_hud_pos(sz, vp)
+	_expect(is_equal_approx(at.x + sz.x * 0.5, vp.x * 0.5), "centred on the screen (got x %.1f)" % at.x)
+	_expect(at.y <= 16.0, "at the top edge (got y %.1f)" % at.y)
+	_expect(at.x > 320.0 and at.x + sz.x < 1130.0, "clear of the party panel and Log/Menu")
+	_expect(Combat3D.intent_hud_pos(sz, vp) == Combat3D.intent_hud_pos(sz, vp),
+		"the slot depends on nothing but the viewport and the badge")
