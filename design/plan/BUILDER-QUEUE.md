@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **The camera swings with each hop.**
+- [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20console%3Dclimb%2B3%20touch%3D1%2C0.075) · [[BUILDER-QUEUE-NOTES#The camera swings with each hop.|details]]
