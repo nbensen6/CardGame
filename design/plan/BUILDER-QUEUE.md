@@ -10,14 +10,8 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [x] **Remove cost.**
-      **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
-      **Nick, 2026-09-30 10:59 ET:** remove cost
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
-      Ask: Gems back; borders now obsidian with brass lines. Keep this border direction?
-      Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-09-30-card-borders-after.png|420]] ^remove-cost
-- [ ] 👀 **One HUD style: carved obsidian.**
+- [ ] **One HUD style: carved obsidian.**
+      **Nick, 2026-09-30 16:59 ET:** yes but game crashes a second after opening
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
       **Session, 2026-09-29 22:35 ET:** The HUD is flat outlined panels. Re-theme the top bar, party cards, intent badge, energy orb and the End Turn and Switch buttons in one material: dark glassy fill, bevelled edge, thin ember-orange rim, soft shadow; names in the display font in `assets/fonts`. Same sizes and positions, nothing overlaps at 1280x720. Done-when: the rest frame shows every panel in the new material and no text clips. Source: [[2026-09-29-intense-fight-plan]].
@@ -25,6 +19,21 @@ run failed.
       Ask: Jackal bar top-left, small intent beside it, party panel gone. Good?
       Test: state=3d beast=cinder_jackal slot=1 idleat=0,0.4,0.8,1.2
       ![[agents/frames/builder/2026-09-30-hud-trim-after.png|420]] ^one-hud-style-carved-obsidian
+- [ ] **A sky with ash.**
+      **Nick, 2026-09-30 16:59 ET:** yes but game crashes after a few seconds
+      **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
+      **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20idleat%3D0%2C3%2C6) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
+      Ask: Clouds now drift and churn, a cell every few seconds. Speed right?
+      Test: state=3d beast=cinder_jackal idleat=0,3,6
+      ![[agents/frames/builder/2026-09-30-sky-drift-after.png|420]] ^a-sky-with-ash
+- [x] **Remove cost.**
+      **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
+      **Nick, 2026-09-30 10:59 ET:** remove cost
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Remove cost.|details]]
+      Ask: Gems back; borders now obsidian with brass lines. Keep this border direction?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-card-borders-after.png|420]] ^remove-cost
 - [x] **The camera swings with each hop.**
       **Nick, 2026-09-30 09:44 ET:** no i dont like this change
       **Session, 2026-09-29 22:35 ET:** With the zigzag, a hop moves the hunter sideways. Pan the locked camera across with the hunter over the hop and settle with a small overshoot (about 0.15 s), so the traverse is felt. Done-when: a two-frame strip, before and after one hop, shows the camera's x differs and the hunter is centred in both. Source: [[2026-09-29-intense-fight-plan]].
@@ -67,27 +76,20 @@ run failed.
       Ask: Badge moved off the jackal to a fixed top-centre HUD panel. Right spot?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-intent-hud-after.png|420]] ^the-intent-badge-reads-like-a-warning
-- [ ] 👀 **Obsidian floor.**
+- [x] **Obsidian floor.**
       **Nick, 2026-09-30 09:44 ET:** remove the band
       **Session, 2026-09-29 22:35 ET:** The arena floor is a flat grey-brown disc. For `quarry_ember` make it black glass: dark base, sharp toon specular band, faint orange emissive in a crack pattern; the plain `Ground` disc gets the same material. Other biomes unchanged. Done-when: the rest frame's floor reads black and glossy with a visible specular band. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Obsidian floor.|details]]
       Ask: Band removed: plain black floor with faint cracks. Good?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]] ^obsidian-floor
-- [ ] 👀 **Embers in the air.**
+- [x] **Embers in the air.**
       **Nick, 2026-09-30 09:44 ET:** glow a little too strong and should not be rising on the lava rock everyone is standing on. only from the lava surrounding them.
       **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Embers in the air.|details]]
       Ask: Grader failed this: a still cannot show where embers start. Now only off the lava, dimmer. Good?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-embers-lava-after.png|420]] ^embers-in-the-air
-- [ ] 👀 **A sky with ash.**
-      **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
-      **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20idleat%3D0%2C3%2C6) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
-      Ask: Clouds now drift and churn, a cell every few seconds. Speed right?
-      Test: state=3d beast=cinder_jackal idleat=0,3,6
-      ![[agents/frames/builder/2026-09-30-sky-drift-after.png|420]] ^a-sky-with-ash
 - [x] **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 22:29 ET:** slow down the animation by about 25 %
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
