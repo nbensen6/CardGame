@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-29 22:51 EDT — builder: top item (lunge 25% slower) was already pushed in a460aed but left without 👀; marked 👀, no rebuild so it is not slowed twice.
 - 2026-09-29 22:41 EDT — builder: lunge/flinch 25% slower (hunter_act_beat x1.25, test pinned); harness beatat= fixed-clock cropped strip; grader FAIL then PASS; tests green, pushed.
 - 2026-09-29 22:32 EDT — builder: dev camera freed: wheel floor 4.0 to 0.5 then dolly past it (dev_zoom, dev_dolly), WASD 1.0 x max(dist,6) + Shift x3 (dev_fly_speed), pivot clamp to the wall and 1.5R up (dev_pan_clamp); harness devzoom=/devorbit=/devfly=; grader FAIL x3 (speed unseen in stills), escalated; tests green, pushed.
 - 2026-09-29 22:12 EDT — builder: Frog tongue on the attack lunge (HUNTER_TONGUE, _aim_tongue riding the lunge tween, arced 0.05 so it reads from behind the Frog, tongue_point static + test); grader PASS; tests green, pushed.

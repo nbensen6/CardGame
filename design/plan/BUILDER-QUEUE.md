@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Hunters lunge when they attack and flinch when hit.**
+- [ ] 👀 **Hunters lunge when they attack and flinch when hit.**
       **Nick, 2026-09-29 22:29 ET:** slow down the animation by about 25 %
       **Nick, 2026-09-29 20:59 ET:** it works now. in the lunge can you add a tongue coming out like its attacking with its tongue at the beast?
       **Nick, 2026-09-29 17:14 ET:** the scenario doesn't show this properly also frog is stuck
