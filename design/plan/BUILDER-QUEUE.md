@@ -19,14 +19,14 @@ run failed.
       Ask: Window no longer closes after the idle frames. Does it stay open now?
       Test: state=3d beast=cinder_jackal slot=1 idleat=0,0.4,0.8,1.2
       ![[agents/frames/builder/2026-09-30-play-stays-open-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] **A sky with ash.**
+- [ ] 👀 **A sky with ash.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes after a few seconds
       **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20idleat%3D0%2C3%2C6) · [[BUILDER-QUEUE-NOTES#A sky with ash.|details]]
-      Ask: Clouds now drift and churn, a cell every few seconds. Speed right?
+      Ask: Game now stays open with the drifting sky. Still crashing for you?
       Test: state=3d beast=cinder_jackal idleat=0,3,6
-      ![[agents/frames/builder/2026-09-30-sky-drift-after.png|420]] ^a-sky-with-ash
+      ![[agents/frames/builder/2026-09-30-sky-stays-open-after.png|420]] ^a-sky-with-ash
 - [x] **Remove cost.**
       **Nick, 2026-09-30 11:44 ET:** no we still need cost gems. a redesign of the card borders in need.
       **Nick, 2026-09-30 10:59 ET:** remove cost
@@ -463,3 +463,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
 - [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.
 - [ ] (proposed) **Test this now links still carry idleat=.** The shot-only grid argument is harmless now but does nothing in play.
+- [ ] (proposed) The ash sky glow pulse (once per 9 s) has no frame proving it shows.

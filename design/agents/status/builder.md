@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T17:12
-working_on: "One HUD style: carved obsidian."
+updated: 2026-09-30T17:25
+working_on: "A sky with ash."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 17:12 EDT
+2026-09-30 17:25 EDT
 
-- **Did:** Test-this-now no longer closes the game after its idle frames; that was the "crash".
-- **Worked?** Yes, the game stays open 8 s after the frames where it used to quit. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-play-stays-open-before.png]] then ![[frames/builder/2026-09-30-play-stays-open-after.png]]
-- **Ask:** Window no longer closes after the idle frames. Does it stay open now?
+- **Did:** Confirmed the sky scenario's "crash" was the window quitting after its frames; already fixed, now proven.
+- **Worked?** Yes, pre-fix closes by 9 s, main stays open past 20 s. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-09-30-sky-stays-open-before.png]] then ![[frames/builder/2026-09-30-sky-stays-open-after.png]]
+- **Ask:** Game now stays open with the drifting sky. Still crashing for you?
 
 ## Notes
 
-- **Found:** The sky item's crash is the same bug (idleat=0,3,6 quit at 6 s); this fixes it too.
-- **Found:** Test links still carry idleat=, which does nothing useful in play.
+- **Found:** The glow pulse (once per 9 s) was not caught in any of the four tiles; the grader could not confirm it.
 
 ## Log
 
+- 2026-09-30 17:25 EDT — builder: sky "crash" answered (Nick 16:59): same play-mode quit as the HUD item, fixed at 17:12; proved with pre-fix vs main play runs sampled to +20 s; no code change; grader PASS; tests green, pushed.
 - 2026-09-30 17:12 EDT — builder: HUD "crash" answered (Nick 16:59): play mode quit after idleat/deathat/enemyat shots via _save_and_quit; now returns PLAY READY when quits_after_shot is false + test; grader FAIL (one still) then PASS on 8 s grid; tests green, pushed.
 - 2026-09-30 12:55 EDT — builder: sky clouds move on Nick's word (09:44): ash wind 0.018 -> (0.3, 0.1) cells/s via BIOME ash_wind + static ash_wind() + test; grader FAIL on half-size grid then PASS on 4x sky strips; tests green, pushed.
 - 2026-09-30 12:43 EDT — builder: Embers answered (Nick 09:44): rising field emits from the lava ring only (ember_band = lava_ring, RING emission), glow down (alpha 0.75, seam lights 95) + test; grader FAIL x2 (origin unjudgeable from a still), shipped 👀; tests green, pushed.

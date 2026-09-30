@@ -1481,6 +1481,18 @@ Builder, 2026-09-30 03:29 EDT. Brief: the Session line on the queue item (from
   Grader: FAIL on the half-size grid ("clouds sit in the same place"), PASS
   on the 4x sky strips. Glow pulse and fog untouched.
 
+- **2026-09-30 17:25 EDT, builder: "game crashes after a few seconds" (Nick, 16:59).**
+  Not a crash, and already fixed on main by the HUD item's run (17:12): in
+  `play`, `idleat=0,3,6` ended in `_save_and_quit()`, so the window saved
+  `shot.png` and quit about 6 s after the fight settled. `test_scenario.cmd`
+  pulls main before launching, so Nick's next click gets the fix. No code
+  change this run; proof only. Same Xvfb play run, sampled at +3/+9/+15/+20 s
+  after the fight is up: pre-fix `screenshot.gd` (3851fde^) is open at 3 s and
+  gone by 9 s (log ends `SHOT SAVED`); main is open at all four (log ends
+  `PLAY READY`), no script or shader errors, clouds visibly moved between
+  tiles. Grader: VERDICT: PASS (it could not see the glow pulse or the
+  other-biome rule in this grid; both unchanged since 03:29).
+
 ## Remove cost.
 
 2026-09-30 11:10 EDT, builder. Nick (10:59): "remove cost". Read as the energy
