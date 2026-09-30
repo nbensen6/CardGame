@@ -51,13 +51,13 @@ run failed.
       Ask: HUD now reads like Slay the Spire: bars on creatures, piles as stacks. Right direction?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-sts-hud-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] **Cards fan and glow.**
+- [ ] 👀 **Cards fan and glow.**
       **Nick, 2026-09-30 09:44 ET:** remove this
       **Session, 2026-09-29 22:35 ET:** Fan the hand in a shallow arc with a slight tilt per card; the hovered card lifts, straightens and glows at its edge with `foil.gdshader`'s rim; the cost pip pulses while the card is playable. No card flight (Nick, 20:59). Done-when: the hover frame shows the lifted glowing card above its tilted neighbours. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20hover%3D1) · [[BUILDER-QUEUE-NOTES#Cards fan and glow.|details]]
-      Ask: Lifted card now glows ember-gold at its edge. Too strong?
+      Ask: Grader failed this: fan tilt and lift still there. Flatten the hand too?
       Test: state=3d beast=cinder_jackal hover=1
-      ![[agents/frames/builder/2026-09-30-cards-fan-after.png|420]] ^cards-fan-and-glow
+      ![[agents/frames/builder/2026-09-30-cards-fan-remove-after.png|420]] ^cards-fan-and-glow
 - [ ] **The intent badge reads like a warning.**
       **Nick, 2026-09-30 09:44 ET:** remove damage badge and put it somewhere else in the hud.
       **Session, 2026-09-29 22:35 ET:** The intent badge is a small boxed label that sometimes sits on a hunter. Make it bigger, red-rimmed, with an icon per move type, pinned above the jackal's head at every camera and never over a hunter. Done-when: rest and climb frames both show the badge above the head and clear of both hunters. Source: [[2026-09-29-intense-fight-plan]].
@@ -449,3 +449,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Climb gauge still wears the old panel look.** The right-hand rail is the one HUD piece not redesigned.
 - [ ] (proposed) **Energy orb with no card costs.** The orb still says 3 while no card shows what it spends.
 - [ ] (proposed) **Card name ribbons still inset for the gem.** The banner and borderless name keep their left gap for a gem that is gone.
+- [ ] (proposed) A small "<" chevron shows at the far left edge mid-screen in the hover frame; no owner found.

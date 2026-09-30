@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 11:10 EDT
+2026-09-30 11:24 EDT
 
-- **Did:** Removed the energy cost gem from every card face; energy itself still works.
-- **Worked?** Yes; VERDICT: PASS, all five hand cards lost their cost gems.
-- **Look at:** ![[frames/builder/2026-09-30-remove-cost-before.png]] then ![[frames/builder/2026-09-30-remove-cost-after.png]]
-- **Ask:** Cost gems gone from cards; energy still limits plays. Remove energy too?
+- **Did:** Removed the lifted card's ember-gold glow and the cost-gem pulse; the fan and lift stay.
+- **Worked?** Partly: the glow is gone, but the grader wanted the fan removed too. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-09-30-cards-fan-remove-before.png]] then ![[frames/builder/2026-09-30-cards-fan-remove-after.png]]
+- **Ask:** Should the hand also lose its tilt and lift, or just the glow?
 
 ## Notes
 
-- **Found:** The energy orb still says 3 while no card shows what it spends.
-- **Found:** Card name ribbons keep their left gap for the gem that is gone.
+- **Found:** A small "<" chevron shows at the far left edge mid-screen in the hover frame.
 
 ## Log
 
+- 2026-09-30 11:24 EDT — builder: cards fan and glow removed on Nick's word (09:44): reverse of 3aec5e3 (set_raised rim, foil.gdshader rim mode, pip_pulse) kept with remove-cost; fan/tilt/lift kept (predate the item, lift carries touch timing) + test; grader FAIL (wanted the fan gone too), shipped 👀 to ask; tests green, pushed.
 - 2026-09-30 11:10 EDT — builder: remove cost on Nick's word (10:59): CardView.SHOW_COST/shows_cost gate the framed gem, borderless gem and rail number; energy rule untouched + test; grader PASS; tests green, pushed.
 - 2026-09-30 11:02 EDT — builder: HUD redesigned after Slay the Spire on Nick's word (09:44): unit_bar.gd under each hunter and in party rows, beast plate under its feet, frameless intent, pile_badge.gd stacks, amber End Turn pill, obsidian_box.gd deleted + test; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-09-30 10:39 EDT — builder: low-health heartbeat vignette removed on Nick's word (09:44); jackal ember stream and `hp` command kept; grader FAIL (wanted a steady edge), shipped 👀 for Nick; tests green, pushed.

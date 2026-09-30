@@ -1254,6 +1254,20 @@ was missing was the glow and the pulse.
   `_test_cards_fan_cost_pip_pulse_stays_in_a_gentle_range`.
 - **Grader:** VERDICT: PASS (it noted the pulse cannot show in a still).
 
+2026-09-30 11:24 EDT. **Nick: "remove this".** Reverted what this item built: the ember-gold rim
+on the lifted card (`CardView.set_raised`, `foil.gdshader`'s rim mode) and the
+cost-gem pulse (`pip_pulse`, already invisible since Remove cost). The fan,
+per-card tilt, lift, straighten and 1.34 grow predate the item (backlog #86 and
+the Slay the Spire hand) and stay: the lift is what puts the timing strip on
+screen on touch and what reveals the rules text under the deep tuck.
+
+- **Grader:** VERDICT: FAIL. It read "remove this" as the whole item, so it
+  wanted the arc, tilt and lift gone too. Not done: removing the lift breaks
+  timed cards on touch. Its own FIX said to confirm with Nick first, so the
+  Ask does that.
+- **Test:** `_test_cards_fan_raised_card_has_no_glow`; the two rim/pulse tests went
+  with the code.
+
 ## The intent badge reads like a warning.
 
 2026-09-30 01:59 EDT, builder.

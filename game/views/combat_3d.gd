@@ -7479,9 +7479,6 @@ func _layout_hand() -> void:
 		# resting card read as borderless full art (Nick's screenshots).
 		# and comes to the front, or its neighbours overlap the thing you lifted.
 		c.z_index = 10 if raised else i
-		# The lifted card glows at its edge (Cards fan and glow, 2026-09-30).
-		if c is CardView:
-			(c as CardView).set_raised(raised)
 
 
 ## Whether a hand rebuild should run at all this refresh. A `state_updated`
