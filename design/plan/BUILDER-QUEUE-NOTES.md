@@ -1109,3 +1109,14 @@ Grader: three rounds. Round 1 FAIL: offset invisible (positional only) -> added 
 
 Tests: `_test_hits_stop_time` pins hit_shake, shake_offset, shake_tilt, impact_point, ember_reach and the distinct clock scales. ALL TESTS PASSED. Playtest (30 steps) shows `beast-behind-stone` failing 7 times; it was 6 on main before this change, so it is not from this change.
 
+## The jackal threatens between turns.
+
+Built 2026-09-30 00:48 EDT.
+
+- Threat = hunters ended / (hunters - 1), clamped 0..1: 0 at rest, 1 once only the last hunter acts (`beast_threat`). Eased in `_step_threat` (rate 4).
+- Head: new `HeadTrack` SkeletonModifier3D on the jackal rig turns `neck` (40 %) and `head` (60 %) about world up after the idle clip. Target is the only hunter still acting (`threat_focus`), or the bitten hunter during the beast's turn. True angle to the Goblin is 0.061 rad (he stands nearly dead ahead), so `HEAD_TURN_GAIN` 8 overshoots it to ~0.49 rad, clamped at 0.7.
+- Cracks: `glow_gain` x (1 + 3.0 x threat) plus a new `heat` uniform in toon.gdshader (a wider red-orange mask, 0 by default so every other model is unchanged) at 2.5 x threat. Before `heat`, only the ears brightened: the chest and leg markings are outside the strict glow mask.
+- Badge: scale 1 + 0.18 x threat, with a 1.4 Hz heartbeat of 0.07 x threat; the cracks beat on the same clock (3x the amplitude). The wind-up tween still owns the badge during the beast's turn.
+- Growl: new `growl` Sfx event plus `audio/growl.ogg` (synthesised low saw + filtered noise, 0.7 s), played once when threat reaches 1 in the same encounter (`growl_now`).
+- Grader rounds: 1 FAIL (head, cracks unseen; only badge), 2 FAIL (cracks and badge MET, head unreadable: a ~20 px silhouette behind stones), 3 FAIL after trying a whole-body turn (0.5 x head yaw): it turned the glowing chest behind a stone, so it was reverted. The shipped frame is the round-2 state.
+

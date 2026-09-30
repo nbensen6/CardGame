@@ -910,6 +910,7 @@ func _init() -> void:
 	# baseline used to be established a whole update LATE, so the update right
 	# after every resync hit a second, hidden resync instead of reacting.
 	_test_enemy_turn_beats_land_in_order()
+	_test_beast_threat_builds_between_turns()
 	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
 	_test_backlog86_react_plan_still_resyncs_on_a_party_size_change()
 	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
@@ -31148,3 +31149,20 @@ func _test_drag_road_clears_every_note() -> void:
 		"a tap ahead of the tail is led to")
 	_expect(not Combat3D.drag_leads(PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(200, 0), Vector2(120, 80)]), 0),
 		"a tap back behind the tail is not")
+
+
+func _test_beast_threat_builds_between_turns() -> void:
+	_expect(Combat3D.beast_threat([false, false]) == 0.0, "threat is 0 while both hunters still act")
+	_expect(Combat3D.beast_threat([true, false]) == 1.0, "threat is full once only the last hunter acts")
+	_expect(Combat3D.beast_threat([]) == 0.0, "no hunters, no threat")
+	_expect(Combat3D.threat_focus([true, false], 0) == 1, "the beast watches the only hunter still acting")
+	_expect(Combat3D.threat_focus([false, false], 0) == 0, "with both acting it watches the hunter you hold")
+	_expect(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(0, 0, 10)) == 0.0, "a hunter dead ahead needs no turn")
+	_expect(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(1, 0, 10)) > 0.0, "a hunter to +X turns the head to +X")
+	_expect(absf(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(-50, 0, 1))) <= Combat3D.HEAD_TURN_MAX, "the head turn is clamped")
+	_expect(Combat3D.intent_badge_scale(0.0, 0.3) == 1.0, "at rest the badge is its own size")
+	for t in [0.0, 0.1, 0.2, 0.3, 0.4]:
+		_expect(Combat3D.intent_badge_scale(1.0, t) > 1.05, "at full threat the badge is larger on every beat")
+	_expect(Combat3D.growl_now(0.0, 1.0, true), "growl when the last hunter's turn begins")
+	_expect(not Combat3D.growl_now(1.0, 1.0, true), "one growl, not one per snapshot")
+	_expect(not Combat3D.growl_now(0.0, 1.0, false), "no growl on a fight's first snapshot")

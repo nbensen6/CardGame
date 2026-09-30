@@ -242,9 +242,12 @@ run failed.
       Ask: Grader failed this: shake too small in stills. Is the hit kick strong enough?
       Test: state=3dstrike beast=cinder_jackal beat=impact
       ![[agents/frames/builder/2026-09-30-hit-stop-after.png|420]] ^hits-stop-time
-- [ ] **The jackal threatens between turns.**
+- [ ] 👀 **The jackal threatens between turns.**
       **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal endturn=1 ^the-jackal-threatens-between-turns
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal threatens between turns.|details]]
+      Ask: Grader failed this: head turn unreadable behind stones. End Turn: does the jackal read as angrier?
+      Test: state=3d beast=cinder_jackal endturn=1
+      ![[agents/frames/builder/2026-09-30-jackal-threatens-after.png|420]] ^the-jackal-threatens-between-turns
 - [ ] **Low health shows on screen.**
       **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal console=hp+10 ^low-health-shows-on-screen
@@ -378,3 +381,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) The damage number on a blow to the jackal is ~8 px tall from the strike camera (85 m away), easy to miss.
 - [ ] (proposed) A hit-stop's slow motion is skipped if one frame outlasts 0.15 s (timers tick once a frame).
 - [ ] (proposed) Playtest `beast-behind-stone` already fails on main (6 times in a 30-step run).
+- [ ] (proposed) Floating stones cover the jackal's head and chest from the rest camera, so any head or face change is hidden.
+- [ ] (proposed) The jackal's leg flame markings sit outside the toon glow mask; only the ears responded to glow_gain.
