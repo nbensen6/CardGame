@@ -911,7 +911,6 @@ func _init() -> void:
 	# baseline used to be established a whole update LATE, so the update right
 	# after every resync hit a second, hidden resync instead of reacting.
 	_test_enemy_turn_beats_land_in_order()
-	_test_beast_threat_builds_between_turns()
 	_test_low_health_shows_on_screen()
 	_test_beast_bar_reacts()
 	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
@@ -31233,23 +31232,6 @@ func _test_drag_road_clears_every_note() -> void:
 		"a tap back behind the tail is not")
 
 
-func _test_beast_threat_builds_between_turns() -> void:
-	_expect(Combat3D.beast_threat([false, false]) == 0.0, "threat is 0 while both hunters still act")
-	_expect(Combat3D.beast_threat([true, false]) == 1.0, "threat is full once only the last hunter acts")
-	_expect(Combat3D.beast_threat([]) == 0.0, "no hunters, no threat")
-	_expect(Combat3D.threat_focus([true, false], 0) == 1, "the beast watches the only hunter still acting")
-	_expect(Combat3D.threat_focus([false, false], 0) == 0, "with both acting it watches the hunter you hold")
-	_expect(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(0, 0, 10)) == 0.0, "a hunter dead ahead needs no turn")
-	_expect(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(1, 0, 10)) > 0.0, "a hunter to +X turns the head to +X")
-	_expect(absf(Combat3D.head_yaw_to(Vector3.ZERO, Vector3(-50, 0, 1))) <= Combat3D.HEAD_TURN_MAX, "the head turn is clamped")
-	_expect(Combat3D.intent_badge_scale(0.0, 0.3) == 1.0, "at rest the badge is its own size")
-	for t in [0.0, 0.1, 0.2, 0.3, 0.4]:
-		_expect(Combat3D.intent_badge_scale(1.0, t) > 1.05, "at full threat the badge is larger on every beat")
-	_expect(Combat3D.growl_now(0.0, 1.0, true), "growl when the last hunter's turn begins")
-	_expect(not Combat3D.growl_now(1.0, 1.0, true), "one growl, not one per snapshot")
-	_expect(not Combat3D.growl_now(0.0, 1.0, false), "no growl on a fight's first snapshot")
-
-
 func _test_low_health_shows_on_screen() -> void:
 	_expect(Combat3D.is_low_hp(10, 42), "10 of 42 is low health")
 	_expect(Combat3D.is_low_hp(15, 70), "the jackal at 15 of 70 is low health")
@@ -31268,7 +31250,7 @@ func _test_low_health_shows_on_screen() -> void:
 	_expect(Combat3D.beast_low_glow(0.0, 0.2) == 1.0, "a healthy beast glows as it always did")
 	for t in [0.0, 0.1, 0.2, 0.3]:
 		_expect(Combat3D.beast_low_glow(1.0, t) > 1.5, "a low beast glows hotter on every breath")
-	_expect(Combat3D.LOW_BEAST_BREATH_HZ > Combat3D.THREAT_BEAT_HZ, "a low beast breathes faster")
+	_expect(Combat3D.LOW_BEAST_BREATH_HZ > 1.0, "a low beast breathes fast")
 
 
 ## The beast's health bar reacts (queue, 2026-09-29): notches, the ghost of

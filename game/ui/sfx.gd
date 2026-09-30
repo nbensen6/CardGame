@@ -29,8 +29,6 @@ const DEFS := {
 	"reach_sigil": {"f": 780.0, "d": 0.18, "w": "sine"},
 	"shake": {"f": 90.0, "d": 0.30, "w": "square"},
 	"strike_weakpoint": {"f": 160.0, "d": 0.22, "w": "square"},
-	# the beast, when the last hunter's turn begins
-	"growl": {"f": 70.0, "d": 0.45, "w": "square"},
 }
 
 static var _players: Array = []

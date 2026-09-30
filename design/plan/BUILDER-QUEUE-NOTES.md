@@ -1134,6 +1134,13 @@ Built 2026-09-30 00:48 EDT.
 - Growl: new `growl` Sfx event plus `audio/growl.ogg` (synthesised low saw + filtered noise, 0.7 s), played once when threat reaches 1 in the same encounter (`growl_now`).
 - Grader rounds: 1 FAIL (head, cracks unseen; only badge), 2 FAIL (cracks and badge MET, head unreadable: a ~20 px silhouette behind stones), 3 FAIL after trying a whole-body turn (0.5 x head yaw): it turned the glowing chest behind a stone, so it was reverted. The shipped frame is the round-2 state.
 
+Reverted 2026-09-30 10:25 EDT (Nick, 09:44: "no revert this as the game is co op and we cannot make this work in multiplayer").
+
+- Removed: `beast_threat`, `threat_focus`, `head_yaw_to`, `threat_pulse`, `intent_badge_scale`, `growl_now`, `_update_threat`, `_step_threat`, the THREAT_* and HEAD_TURN_* constants, `HeadTrack` (views/head_track.gd), the toon `heat` uniform, the `growl` Sfx event and audio/growl.ogg, and their test.
+- Kept for low health (built on top of this): the beast glow-material list, now collected by `_rig_glow` (glow_gain and ember_gain only) and multiplied by `beast_low_glow` in `_step_low_health`. Its test's "breathes faster than THREAT_BEAT_HZ" check became "faster than 1 Hz".
+- Frames: before ![[agents/frames/builder/2026-09-30-threat-revert-before.png|420]] after ![[agents/frames/builder/2026-09-30-threat-revert-after.png|420]]. After one End Turn the badge is back to its rest size and the cracks are no hotter.
+- Grader: VERDICT: PASS (head-turn evidence weak at this distance; growl is audio).
+
 ## Low health shows on screen.
 
 2026-09-30 00:56 EDT, builder.

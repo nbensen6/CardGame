@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T10:11
-working_on: "Hits stop time."
+updated: 2026-09-30T10:25
+working_on: "The jackal threatens between turns."
 ---
 
 # builder
@@ -13,12 +13,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 10:11 EDT
+2026-09-30 10:25 EDT
 
-- **Did:** Removed hit-stop, the impact ember burst and the damage-scaled, tilting shake, as Nick asked.
-- **Worked?** Partly; VERDICT: FAIL, grader wants the old pre-existing strike shake (0.18 m) gone too.
-- **Look at:** ![[frames/builder/2026-09-30-hit-stop-remove-before.png]] then ![[frames/builder/2026-09-30-hit-stop-remove-after.png]]
-- **Ask:** The original strike shake still kicks the lens. Remove that too?
+- **Did:** Reverted the jackal's between-turn threat: head tracking, crack heat, badge pulse and growl, as Nick asked.
+- **Worked?** Yes; VERDICT: PASS, badge back to rest size and cracks no hotter after End Turn.
+- **Look at:** ![[frames/builder/2026-09-30-threat-revert-before.png]] then ![[frames/builder/2026-09-30-threat-revert-after.png]]
+- **Ask:** nothing
 
 ## Notes
 
@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-09-30 10:25 EDT — builder: jackal threat reverted on Nick's word (09:44): c5c33bd undone by hand (threat statics, _update/_step_threat, HeadTrack, toon heat, growl sfx+ogg, test); low health keeps the glow list via _rig_glow/_step_low_health; grader PASS; tests green, pushed.
 - 2026-09-30 10:11 EDT — builder: hits stop time removed on Nick's word (09:44): reverse of 991b33c in combat_3d.gd and run_tests.gd (hit-stop, slow motion, ember burst, hit_shake/tilt, _hunter_struck); beat=impact harness rewritten for the plain strike; grader FAIL on the pre-existing strike shake, shipped 👀; tests green, pushed.
 - 2026-09-30 09:56 EDT — builder: hop swing reverted on Nick's word (09:44): swing state, HOP_SWING_*, hop_swing/hop_swing_vec/_hop_landed and its test removed, _apply_orbit back on _pivot; harness touch= kept; grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:29 EDT — builder: a sky with ash (quarry_ember `ash_sky`; ash_sky.gdshader sky shader: fbm ash on a flat ceiling, red lower rims, 9 s glow swell, gradient-only cubemap pass; _light_for swaps it in and restores the plain sky; 1 test); grader FAIL x3 (sky notch too small to read clouds), shipped 👀; tests green, pushed.

@@ -44,11 +44,6 @@ uniform float spec_cut : hint_range(0.5, 1.0) = 0.94;
 // cannot key on UVs of a painted texture.
 uniform float glow_gain : hint_range(0.0, 4.0) = 1.2;
 uniform float glow_hue : hint_range(0.0, 1.0) = 0.07;   // orange
-// Heat: a wider, dimmer ember mask (reds and oranges at any brightness) that
-// lights the cracks the glow mask above is too strict to catch. 0 = off, so
-// every model that does not ask for it renders exactly as before. combat_3d
-// raises it as the beast's turn nears.
-uniform float heat : hint_range(0.0, 4.0) = 0.0;
 
 // IDLE LIFE — no rig, so the motion lives here. Masks are in the model's own
 // space (glTF: +Z toward the head, the hunters). All zero by default: a model
@@ -103,9 +98,6 @@ void fragment() {
 	float hue_d = min(abs(hsv.x - glow_hue), 1.0 - abs(hsv.x - glow_hue));
 	float hot = (1.0 - smoothstep(0.03, 0.08, hue_d)) * smoothstep(0.55, 0.8, hsv.y) * smoothstep(0.55, 0.85, hsv.z);
 	EMISSION = base * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
-	float warm_d = min(abs(hsv.x - 0.04), 1.0 - abs(hsv.x - 0.04));
-	float warm = (1.0 - smoothstep(0.05, 0.10, warm_d)) * smoothstep(0.45, 0.7, hsv.y) * smoothstep(0.15, 0.4, hsv.z);
-	EMISSION += base * warm * heat;
 }
 
 void light() {

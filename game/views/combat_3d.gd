@@ -805,17 +805,9 @@ var _lunge_gap := 0.0               # beast -> nearest hunter, world z, for beas
 var _lunge_x := 0.0                 # world x the lunge drives toward: the hunter it bites
 var _beast_target := -1             # the slot the beast's shown intent is aimed at
 var _prev_round := -1
-## The beast between turns: 0 while every hunter still has their turn, 1 once
-## the last one is acting. _threat is the snapshot's; _threat_shown eases to it.
-var _threat := 0.0
-var _threat_shown := 0.0
-var _threat_enc := -1               # the encounter _threat was read in, for the growl
-var _threat_focus := -1             # the slot the beast's head tracks
-var _head_track: HeadTrack = null
-var _head_yaw := 0.0
 var _glow_mats: Array = []          # [ShaderMaterial, uniform name, base value]
 var _low_me := 0.0                  # 1 while the hunter you watch is under LOW_HP_FRAC
-var _low_beast := 0.0               # 1 while the beast is; _step_threat reads it
+var _low_beast := 0.0               # 1 while the beast is; _step_low_health reads it
 var _low_me_shown := 0.0
 var _low_beast_shown := 0.0
 var _vignette: ColorRect
@@ -1877,7 +1869,6 @@ func _process(delta: float) -> void:
 	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
 	_step_enemy_turn(delta)
 	_step_low_health(delta)
-	_step_threat(delta)
 	if _beast != null:
 		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
 		# gets bigger and smaller. we can get rid of that." It was
@@ -2121,7 +2112,6 @@ func _refresh() -> void:
 	_update_climb_state(s)
 	_update_gauge(s)
 	_beast_target = int(boss.get("target", -1))
-	_update_threat(s, enc_now)
 	_update_low_health(s)
 	_render_party(s, _beast_target, boss.get("intent", {}),
 		any_add_attacking(boss.get("adds", [])))
@@ -2472,7 +2462,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		_beast_anim.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
 		_beast_anim.play("idle")
 	_shade_model(_beast)
-	_rig_threat()
+	_rig_glow()
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	_read_climb_points()
@@ -6842,93 +6832,12 @@ func _step_enemy_turn(delta: float) -> void:
 		_refresh()
 
 
-## The beast between turns (queue item "The jackal threatens between turns",
-## 2026-09-29): it only idled until End Turn, then everything happened at
-## once. Now the wait builds. Its head tracks the hunter still acting, its
-## ember cracks brighten as hunters end their turns, one growl marks the last
-## hunter's turn, and the intent badge swells and beats with the cracks.
-const THREAT_GLOW := 3.0            # extra crack glow at full threat, x the beast's own
-const THREAT_HEAT := 2.5            # toon.gdshader's wider crack mask at full threat
-const THREAT_BADGE := 0.18          # intent badge growth at full threat
-const THREAT_BEAT := 0.07           # badge heartbeat at full threat; the glow beats 3x this
-const THREAT_BEAT_HZ := 1.4
-const HEAD_TURN_MAX := 0.7          # radians either way
-## The hunters stand nearly dead ahead of a beast this far off: the true angle
-## to either is under 4 degrees and reads as no turn at all, so the head
-## overshoots toward whoever it watches.
-const HEAD_TURN_GAIN := 8.0
-
-## 0 while every hunter still has their turn, 1 once only the last is acting.
-static func beast_threat(ended: Array) -> float:
-	if ended.is_empty():
-		return 0.0
-	var done := 0
-	for e in ended:
-		if bool(e):
-			done += 1
-	return clampf(float(done) / float(maxi(ended.size() - 1, 1)), 0.0, 1.0)
-
-
-## Which hunter the beast watches: the only one still acting, else `me`.
-static func threat_focus(ended: Array, me: int) -> int:
-	var left := -1
-	for i in ended.size():
-		if not bool(ended[i]):
-			if left >= 0:
-				return me
-			left = i
-	return left if left >= 0 else me
-
-
-## The head's yaw, radians about world up, to look from `from` toward `to`
-## (HEAD_TURN_GAIN times the true angle); the beast faces world +Z, so
-## straight ahead is 0.
-static func head_yaw_to(from: Vector3, to: Vector3) -> float:
-	var d := to - from
-	if Vector2(d.x, d.z).length() < 0.001:
-		return 0.0
-	return clampf(atan2(d.x, d.z) * HEAD_TURN_GAIN, -HEAD_TURN_MAX, HEAD_TURN_MAX)
-
-
-## The shared heartbeat of the badge and the cracks at time t.
-static func threat_pulse(threat: float, t: float) -> float:
-	return threat * THREAT_BEAT * sin(t * TAU * THREAT_BEAT_HZ)
-
-
-static func intent_badge_scale(threat: float, t: float) -> float:
-	return 1.0 + THREAT_BADGE * threat + threat_pulse(threat, t)
-
-
-## Growl once, the moment the last hunter's turn begins, and never on the
-## first snapshot of a fight.
-static func growl_now(prev: float, now: float, same_fight: bool) -> bool:
-	return same_fight and prev < 1.0 and now >= 1.0
-
-
-func _update_threat(s: Dictionary, enc: int) -> void:
-	var ended: Array = []
-	for p in s.get("players", []):
-		ended.append(bool((p as Dictionary).get("ended", false)))
-	var t := beast_threat(ended)
-	if growl_now(_threat, t, enc == _threat_enc):
-		Sfx.play("growl")
-	_threat = t
-	_threat_enc = enc
-	_threat_focus = threat_focus(ended, _me())
-
-
-## Hang the head turn on the beast's skeleton and remember which of its
-## materials carry the crack glow, with their own resting value.
-func _rig_threat() -> void:
-	_head_track = null
+## Remember which of the beast's materials carry the crack glow, with their
+## own resting value, so low health can heat them.
+func _rig_glow() -> void:
 	_glow_mats = []
 	if _beast == null:
 		return
-	for sk in _beast.find_children("*", "Skeleton3D", true, false):
-		if (sk as Skeleton3D).find_bone("head") >= 0:
-			_head_track = HeadTrack.new()
-			sk.add_child(_head_track)
-			break
 	for node in _all_meshes(_beast):
 		var mi := node as MeshInstance3D
 		if mi == null:
@@ -6936,39 +6845,12 @@ func _rig_threat() -> void:
 		var mat := mi.material_override as ShaderMaterial
 		if mat == null or mat.shader == null:
 			continue
-		for u in ["glow_gain", "ember_gain", "heat"]:
+		for u in ["glow_gain", "ember_gain"]:
 			var base = mat.get_shader_parameter(u)
 			if base == null:
 				base = RenderingServer.shader_get_parameter_default(mat.shader.get_rid(), u)
 			if base != null:
 				_glow_mats.append([mat, u, float(base)])
-
-
-func _step_threat(delta: float) -> void:
-	_threat_shown = lerpf(_threat_shown, _threat, 1.0 - exp(-delta * 4.0))
-	var beat := threat_pulse(_threat_shown, _time)
-	var glow := (1.0 + THREAT_GLOW * _threat_shown + beat * 3.0) \
-		* beast_low_glow(_low_beast_shown, _time)
-	for g in _glow_mats:
-		var v := float(g[2]) * glow
-		if String(g[1]) == "heat":           # rests at 0, so it adds rather than scales
-			v = float(g[2]) + THREAT_HEAT * _threat_shown * (1.0 + beat * 3.0)
-		(g[0] as ShaderMaterial).set_shader_parameter(String(g[1]), v)
-	# The wind-up tween owns the badge while the beast's turn plays.
-	if _enemy_stage == "" and _intent_tag != null and _intent_tag.visible:
-		_intent_tag.pivot_offset = _intent_tag.size * 0.5
-		_intent_tag.scale = Vector2.ONE * intent_badge_scale(_threat_shown, _time)
-	if _head_track == null or not is_instance_valid(_head_track):
-		return
-	var slot := _beast_target if _enemy_stage != "" else _threat_focus
-	var want := 0.0
-	if slot >= 0 and slot < _hunters.size():
-		var n := (_hunters[slot] as Dictionary).get("node") as Node3D
-		if n != null and is_instance_valid(n):
-			want = head_yaw_to(Vector3(_beast_box.get_center().x, 0.0, _beast_box.end.z),
-				n.global_position)
-	_head_yaw = lerp_angle(_head_yaw, want, 1.0 - exp(-delta * 5.0))
-	_head_track.yaw = _head_yaw
 
 
 ## Low health (queue item "Low health shows on screen", 2026-09-29). A hunter
@@ -6978,7 +6860,7 @@ const LOW_HP_FRAC := 0.3
 const LOW_HEART_HZ := 1.2           # beats a second, a fast resting pulse
 const LOW_VIGNETTE := 0.8           # edge alpha at the top of a beat
 const LOW_BEAST_GLOW := 1.5         # extra crack glow when low, x the beast's own
-const LOW_BEAST_BREATH_HZ := 2.4    # vs THREAT_BEAT_HZ: it breathes faster
+const LOW_BEAST_BREATH_HZ := 2.4    # a fast breath
 const LOW_BEAST_BREATH := 0.35
 
 ## True under LOW_HP_FRAC of max and still alive.
@@ -7087,6 +6969,9 @@ func _step_low_health(delta: float) -> void:
 	var k := 1.0 - exp(-delta * 5.0)
 	_low_me_shown = lerpf(_low_me_shown, _low_me, k)
 	_low_beast_shown = lerpf(_low_beast_shown, _low_beast, k)
+	var glow := beast_low_glow(_low_beast_shown, _time)
+	for g in _glow_mats:
+		(g[0] as ShaderMaterial).set_shader_parameter(String(g[1]), float(g[2]) * glow)
 	if _vignette != null:
 		_vignette.visible = _low_me_shown > 0.01
 		(_vignette.material as ShaderMaterial).set_shader_parameter("alpha",

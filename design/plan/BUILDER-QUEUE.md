@@ -24,13 +24,13 @@ run failed.
       Ask: Grader failed this: old strike shake still moves lens. Remove that too?
       Test: state=3dstrike beast=cinder_jackal beat=impact
       ![[agents/frames/builder/2026-09-30-hit-stop-remove-after.png|420]] ^hits-stop-time
-- [ ] **The jackal threatens between turns.**
+- [ ] 👀 **The jackal threatens between turns.**
       **Nick, 2026-09-30 09:44 ET:** no revert this as the game is co op and we cannot make this work in multiplayer
       **Session, 2026-09-29 22:35 ET:** Between turns the jackal only idles. Make its head track the active hunter, brighten the ember cracks as its turn nears, play one growl when the last hunter turn begins, and pulse the intent badge in step. Done-when: rest vs after one End Turn shows the head turned to the hunter, the cracks brighter and the badge larger. Source: [[2026-09-29-intense-fight-plan]].
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal%20endturn%3D1) · [[BUILDER-QUEUE-NOTES#The jackal threatens between turns.|details]]
-      Ask: Grader failed this: head turn unreadable behind stones. End Turn: does the jackal read as angrier?
+      Ask: Reverted: no head turn, crack heat, badge beat or growl. Gone for good?
       Test: state=3d beast=cinder_jackal endturn=1
-      ![[agents/frames/builder/2026-09-30-jackal-threatens-after.png|420]] ^the-jackal-threatens-between-turns
+      ![[agents/frames/builder/2026-09-30-threat-revert-after.png|420]] ^the-jackal-threatens-between-turns
 - [ ] **Low health shows on screen.**
       **Nick, 2026-09-30 09:44 ET:** no remove the heartbeat
       **Session, 2026-09-29 22:35 ET:** A hunter under 30 % HP gets a red edge vignette that pulses with a heartbeat; the jackal under 30 % streams embers, breathes faster and glows hotter. Add a console command `hp 10` (active hunter) and `hp beast 15` so the frame can be set. Done-when: a frame with the Frog at 10 HP shows the red vignette and one with the jackal at 15 HP shows the ember stream. Source: [[2026-09-29-intense-fight-plan]].
