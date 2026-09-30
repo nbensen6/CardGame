@@ -911,6 +911,7 @@ func _init() -> void:
 	# after every resync hit a second, hidden resync instead of reacting.
 	_test_enemy_turn_beats_land_in_order()
 	_test_beast_threat_builds_between_turns()
+	_test_low_health_shows_on_screen()
 	_test_backlog86_react_plan_reacts_on_the_first_real_update_after_a_resync()
 	_test_backlog86_react_plan_still_resyncs_on_a_party_size_change()
 	# backlog #86 duty 3 (fiftieth pass): solo_view_slot/solo_cmd_slot/
@@ -31166,3 +31167,24 @@ func _test_beast_threat_builds_between_turns() -> void:
 	_expect(Combat3D.growl_now(0.0, 1.0, true), "growl when the last hunter's turn begins")
 	_expect(not Combat3D.growl_now(1.0, 1.0, true), "one growl, not one per snapshot")
 	_expect(not Combat3D.growl_now(0.0, 1.0, false), "no growl on a fight's first snapshot")
+
+
+func _test_low_health_shows_on_screen() -> void:
+	_expect(Combat3D.is_low_hp(10, 42), "10 of 42 is low health")
+	_expect(Combat3D.is_low_hp(15, 70), "the jackal at 15 of 70 is low health")
+	_expect(not Combat3D.is_low_hp(13, 42), "13 of 42 (31%) is not low yet")
+	_expect(not Combat3D.is_low_hp(0, 42), "a dead hunter shows no heartbeat")
+	_expect(not Combat3D.is_low_hp(42, 42), "full health is not low")
+	_expect(Combat3D.vignette_alpha(0.0, 0.3) == 0.0, "no vignette above the line")
+	var lo := 1.0
+	var hi := 0.0
+	for i in 100:
+		var a := Combat3D.vignette_alpha(1.0, i * 0.01)
+		lo = minf(lo, a)
+		hi = maxf(hi, a)
+	_expect(lo > 0.2, "the vignette never vanishes between beats")
+	_expect(hi - lo > 0.15, "the vignette beats like a heart")
+	_expect(Combat3D.beast_low_glow(0.0, 0.2) == 1.0, "a healthy beast glows as it always did")
+	for t in [0.0, 0.1, 0.2, 0.3]:
+		_expect(Combat3D.beast_low_glow(1.0, t) > 1.5, "a low beast glows hotter on every breath")
+	_expect(Combat3D.LOW_BEAST_BREATH_HZ > Combat3D.THREAT_BEAT_HZ, "a low beast breathes faster")

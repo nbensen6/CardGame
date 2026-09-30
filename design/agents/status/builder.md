@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T00:48
-working_on: "The jackal threatens between turns."
+updated: 2026-09-30T00:56
+working_on: "Low health shows on screen."
 ---
 
 # builder
@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 00:48 EDT
+2026-09-30 00:56 EDT
 
-- **Did:** Between turns the jackal's cracks heat up, its badge swells and beats, its head tracks, and it growls.
-- **Worked?** Partly; cracks and badge show, but grader VERDICT: FAIL, the head turn hides behind the floating stones.
-- **Look at:** ![[frames/builder/2026-09-30-jackal-threatens-before.png]] then ![[frames/builder/2026-09-30-jackal-threatens-after.png]]
-- **Ask:** After End Turn, does the jackal read as angrier?
+- **Did:** Low HP now shows: a red heartbeat edge for your hunter, a hotter ember-streaming jackal, and an `hp` console command.
+- **Worked?** Yes; VERDICT: PASS, both frames show it, though the pulse and breathing need motion to judge.
+- **Look at:** ![[frames/builder/2026-09-30-low-health-before.png]] then ![[frames/builder/2026-09-30-low-health-after.png]] and ![[frames/builder/2026-09-30-low-health-beast-after.png]]
+- **Ask:** Red heartbeat edge at 10 HP, embers off the jackal at 15. Strong enough?
 
 ## Notes
 
-- **Found:** floating stones cover the jackal's head and chest from the rest camera.
-- **Found:** the jackal's leg flame markings sit outside the toon glow mask; only its ears answered glow_gain.
+- **Found:** shots need `console=hp 10` with a real space; `+` only decodes in play mode.
 
 ## Log
 
+- 2026-09-30 00:56 EDT — builder: low health (console `hp N` / `hp beast N`; is_low_hp <30 %, vignette_alpha heartbeat ColorRect under the HUD, beast_low_glow hotter+2.4 Hz breath in _step_threat, LowHpEmbers CPUParticles3D stream over the beast box + test); grader PASS; tests green, pushed.
 - 2026-09-30 00:48 EDT — builder: jackal threat between turns (beast_threat/threat_focus/head_yaw_to/intent_badge_scale/growl_now + test; HeadTrack neck/head modifier, gain 8; toon `heat` uniform + glow_gain x(1+3t); badge 1+0.18t heartbeat; growl.ogg); grader FAIL x3 (head unseen behind stones; body-turn try reverted), escalated 👀; tests green, pushed.
 - 2026-09-29 23:38 EDT — builder: hop swing: _hop_landed callback at each touchdown sets _swing_vec (hop's screen-sideways travel x0.2, cap 0.5) and a 0.15 s sin bump offsets the orbit pivot (hop_swing, hop_swing_vec + test); harness touch=K,S freezes S s after the K-th touchdown without snapping; grader FAIL (graded the overshoot pair, wanted the done-when strip) then PASS; tests green, pushed.
 - 2026-09-29 23:14 EDT — builder: climb zigzag (route_pos inner rungs +-ZIGZAG_WIDTH 2.0 H, outward first; zigzag_along keeps hops even; _turn_toward faces the next stone); graded on state=3d; grader FAIL x2, escalated 👀; tests green, pushed.

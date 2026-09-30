@@ -1120,3 +1120,16 @@ Built 2026-09-30 00:48 EDT.
 - Growl: new `growl` Sfx event plus `audio/growl.ogg` (synthesised low saw + filtered noise, 0.7 s), played once when threat reaches 1 in the same encounter (`growl_now`).
 - Grader rounds: 1 FAIL (head, cracks unseen; only badge), 2 FAIL (cracks and badge MET, head unreadable: a ~20 px silhouette behind stones), 3 FAIL after trying a whole-body turn (0.5 x head yaw): it turned the glowing chest behind a stone, so it was reverted. The shipped frame is the round-2 state.
 
+## Low health shows on screen.
+
+2026-09-30 00:56 EDT, builder.
+
+- Console: `hp 10` sets the active hunter's HP (clamped 1..max), `hp beast 15` the beast's. Both push state.
+- Rule: `Combat3D.is_low_hp(hp, max)` is under 30 % (LOW_HP_FRAC) and alive. Read from the shared snapshot each refresh, for the hunter you are watching (`_me()`) and for the beast.
+- Hunter: a full-screen ColorRect with a canvas shader, first child of the HUD root so it tints the world and never the cards. Edge alpha `vignette_alpha` = 0.8 x (0.55 + 0.45 x heartbeat), a lub-dub at 1.2 beats/s; it never fades out between beats.
+- Beast: a continuous CPUParticles3D stream (160 soft round sparks, 2 s life, additive) filling the beast's box and rising; the crack glow is multiplied by `beast_low_glow` = 1 + 1.5 hotter + a 0.35 breath at 2.4 Hz (faster than the 1.4 Hz threat beat).
+- First pass was too faint (vignette 0.55, square 3.5 % sparks); raised to 0.8 and 7 % round sparks.
+- Frames: before (console had no `hp`, Frog 42/42), after Frog 10/42 with the red edge, after jackal 15/70 with embers: ![[agents/frames/builder/2026-09-30-low-health-beast-after.png|420]]
+- Grader: VERDICT: PASS (heartbeat and breath rate not judgeable from stills).
+- Tests: `_test_low_health_shows_on_screen`.
+

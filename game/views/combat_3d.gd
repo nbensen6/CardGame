@@ -720,6 +720,12 @@ var _threat_focus := -1             # the slot the beast's head tracks
 var _head_track: HeadTrack = null
 var _head_yaw := 0.0
 var _glow_mats: Array = []          # [ShaderMaterial, uniform name, base value]
+var _low_me := 0.0                  # 1 while the hunter you watch is under LOW_HP_FRAC
+var _low_beast := 0.0               # 1 while the beast is; _step_threat reads it
+var _low_me_shown := 0.0
+var _low_beast_shown := 0.0
+var _vignette: ColorRect
+var _beast_stream: CPUParticles3D
 # slot -> {g: remaining 0..1, target: the Height that ends the climb}. Solo
 # tracks BOTH hunters, since you can switch while a timer runs.
 var _climb: Dictionary = {}
@@ -1749,6 +1755,7 @@ func _process(delta: float) -> void:
 		st.rotation.y += delta * 0.25
 	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
 	_step_enemy_turn(delta)
+	_step_low_health(delta)
 	_step_threat(delta)
 	if _beast != null:
 		# No breathing pulse. Nick, 2026-09-08: "for whatever reason the beast
@@ -1994,6 +2001,7 @@ func _refresh() -> void:
 	_update_gauge(s)
 	_beast_target = int(boss.get("target", -1))
 	_update_threat(s, enc_now)
+	_update_low_health(s)
 	_render_party(s, _beast_target, boss.get("intent", {}),
 		any_add_attacking(boss.get("adds", [])))
 	_update_coach(s)
@@ -6474,7 +6482,8 @@ func _rig_threat() -> void:
 func _step_threat(delta: float) -> void:
 	_threat_shown = lerpf(_threat_shown, _threat, 1.0 - exp(-delta * 4.0))
 	var beat := threat_pulse(_threat_shown, _time)
-	var glow := 1.0 + THREAT_GLOW * _threat_shown + beat * 3.0
+	var glow := (1.0 + THREAT_GLOW * _threat_shown + beat * 3.0) \
+		* beast_low_glow(_low_beast_shown, _time)
 	for g in _glow_mats:
 		var v := float(g[2]) * glow
 		if String(g[1]) == "heat":           # rests at 0, so it adds rather than scales
@@ -6495,6 +6504,128 @@ func _step_threat(delta: float) -> void:
 				n.global_position)
 	_head_yaw = lerp_angle(_head_yaw, want, 1.0 - exp(-delta * 5.0))
 	_head_track.yaw = _head_yaw
+
+
+## Low health (queue item "Low health shows on screen", 2026-09-29). A hunter
+## under LOW_HP_FRAC gets a red edge vignette beating like a heart; the beast
+## under it streams embers, breathes its cracks faster and glows hotter.
+const LOW_HP_FRAC := 0.3
+const LOW_HEART_HZ := 1.2           # beats a second, a fast resting pulse
+const LOW_VIGNETTE := 0.8           # edge alpha at the top of a beat
+const LOW_BEAST_GLOW := 1.5         # extra crack glow when low, x the beast's own
+const LOW_BEAST_BREATH_HZ := 2.4    # vs THREAT_BEAT_HZ: it breathes faster
+const LOW_BEAST_BREATH := 0.35
+
+## True under LOW_HP_FRAC of max and still alive.
+static func is_low_hp(hp: int, max_hp: int) -> bool:
+	return hp > 0 and max_hp > 0 and float(hp) < LOW_HP_FRAC * float(max_hp)
+
+
+## A double-thump heartbeat, 0..1, at time t: lub, dub, rest.
+static func heartbeat(t: float) -> float:
+	var ph := fposmod(t * LOW_HEART_HZ, 1.0)
+	var lub := exp(-pow((ph - 0.08) / 0.06, 2.0))
+	var dub := 0.7 * exp(-pow((ph - 0.30) / 0.06, 2.0))
+	return clampf(lub + dub, 0.0, 1.0)
+
+
+## The vignette's edge alpha: a floor that never lets it vanish, plus the beat.
+static func vignette_alpha(low: float, t: float) -> float:
+	return low * LOW_VIGNETTE * (0.55 + 0.45 * heartbeat(t))
+
+
+## The beast's crack-glow multiplier when low: hotter, and a faster breath.
+static func beast_low_glow(low: float, t: float) -> float:
+	return 1.0 + low * (LOW_BEAST_GLOW
+		+ LOW_BEAST_BREATH * sin(t * TAU * LOW_BEAST_BREATH_HZ))
+
+
+func _update_low_health(s: Dictionary) -> void:
+	var players: Array = s.get("players", [])
+	var me := _me()
+	_low_me = 0.0
+	if me >= 0 and me < players.size():
+		var p := players[me] as Dictionary
+		_low_me = 1.0 if is_low_hp(int(p.get("hp", 0)), int(p.get("max_hp", 0))) else 0.0
+	var boss: Dictionary = s.get("boss", {})
+	_low_beast = 1.0 if is_low_hp(int(boss.get("hp", 0)), int(boss.get("max_hp", 0))) else 0.0
+	if _low_me > 0.0 and _vignette == null:
+		_vignette = ColorRect.new()
+		_vignette.name = "LowHpVignette"
+		_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_vignette.set_anchors_preset(Control.PRESET_FULL_RECT)
+		var sh := Shader.new()
+		sh.code = """shader_type canvas_item;
+uniform float alpha = 0.0;
+void fragment() {
+	vec2 d = (UV - 0.5) * vec2(1.0, 0.8) * 2.0;
+	float e = smoothstep(0.45, 1.15, length(d));
+	COLOR = vec4(0.75, 0.02, 0.02, e * alpha);
+}"""
+		var mat := ShaderMaterial.new()
+		mat.shader = sh
+		_vignette.material = mat
+		# Behind every HUD panel: it tints the world, never the cards.
+		_hud.add_child(_vignette)
+		_hud.move_child(_vignette, 0)
+	if _low_beast > 0.0 and _beast_stream == null and _beast != null:
+		_beast_stream = CPUParticles3D.new()
+		_beast_stream.name = "LowHpEmbers"
+		_beast_stream.amount = 160
+		_beast_stream.lifetime = 2.0
+		_beast_stream.preprocess = 2.0
+		_beast_stream.local_coords = false
+		var quad := QuadMesh.new()
+		var mat3 := StandardMaterial3D.new()
+		mat3.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		mat3.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+		mat3.vertex_color_use_as_albedo = true
+		mat3.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+		mat3.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+		mat3.disable_fog = true
+		# A soft round spark, not a square.
+		var dot := GradientTexture2D.new()
+		dot.fill = GradientTexture2D.FILL_RADIAL
+		dot.fill_from = Vector2(0.5, 0.5)
+		dot.fill_to = Vector2(1.0, 0.5)
+		var fall := Gradient.new()
+		fall.set_color(0, Color(1, 1, 1, 1))
+		fall.set_color(1, Color(1, 1, 1, 0))
+		dot.gradient = fall
+		mat3.albedo_texture = dot
+		quad.material = mat3
+		_beast_stream.mesh = quad
+		_beast_stream.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+		_beast_stream.direction = Vector3(0, 1, 0)
+		_beast_stream.spread = 20.0
+		_beast_stream.gravity = Vector3(0, 0.5, 0)
+		var ramp := Gradient.new()
+		ramp.set_color(0, Color(1.0, 0.9, 0.5, 1.0))
+		ramp.set_color(1, Color(1.0, 0.25, 0.02, 0.0))
+		ramp.add_point(0.5, Color(1.0, 0.55, 0.1, 0.9))
+		_beast_stream.color_ramp = ramp
+		add_child(_beast_stream)
+	if _beast_stream != null:
+		_beast_stream.emitting = _low_beast > 0.0
+		if _beast != null:
+			var c := _beast_box.get_center()
+			var sz := _beast_box.size
+			_beast_stream.position = c
+			_beast_stream.emission_box_extents = sz * Vector3(0.4, 0.45, 0.4)
+			var reach := maxf(sz.y, 1.0)
+			_beast_stream.initial_velocity_min = reach * 0.4
+			_beast_stream.initial_velocity_max = reach * 0.9
+			(_beast_stream.mesh as QuadMesh).size = Vector2.ONE * reach * 0.07
+
+
+func _step_low_health(delta: float) -> void:
+	var k := 1.0 - exp(-delta * 5.0)
+	_low_me_shown = lerpf(_low_me_shown, _low_me, k)
+	_low_beast_shown = lerpf(_low_beast_shown, _low_beast, k)
+	if _vignette != null:
+		_vignette.visible = _low_me_shown > 0.01
+		(_vignette.material as ShaderMaterial).set_shader_parameter("alpha",
+			vignette_alpha(_low_me_shown, _time))
 
 
 ## The hand band, hidden while the beast's turn plays out: the old hand is gone

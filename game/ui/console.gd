@@ -231,6 +231,7 @@ func _cmds() -> Dictionary:
 		"turn": ["turn 0.6 | off — pin a 3D window to one view", _cmd_turn],
 		"energy": ["energy 9 — set your energy this turn", _cmd_energy],
 		"climb": ["climb 4 — set your Height", _cmd_climb],
+		"hp": ["hp 10 — set your HP; hp beast 15 — set the beast's", _cmd_hp],
 		"beast": ["beast thrasher — swap the thing you are fighting", _cmd_beast],
 		"deck": ["open the deck screen (same as clicking the pile counts)", _cmd_deck],
 		"card": ["card 3 140 up — the Nth card, spun N degrees, `up` for its upgrade", _cmd_card],
@@ -433,6 +434,25 @@ func _cmd_climb(a: PackedStringArray) -> String:
 	_combat()._track_climb()
 	_push()
 	return "hunter %d is at Height %d" % [_slot(), _combat().players[_slot()].foothold]
+
+
+func _cmd_hp(a: PackedStringArray) -> String:
+	var why := _need_combat()
+	if why != "":
+		return why
+	if a.is_empty():
+		return "hp <n> | hp beast <n>"
+	if String(a[0]).to_lower() == "beast":
+		if a.size() < 2:
+			return "hp beast <n>"
+		var b := _combat().boss
+		b.hp = clampi(String(a[1]).to_int(), 1, b.max_hp)
+		_push()
+		return "%s is at %d / %d" % [b.name, b.hp, b.max_hp]
+	var c: Combatant = _combat().players[_slot()].combatant
+	c.hp = clampi(String(a[0]).to_int(), 1, c.max_hp)
+	_push()
+	return "hunter %d is at %d / %d" % [_slot(), c.hp, c.max_hp]
 
 
 func _cmd_beast(a: PackedStringArray) -> String:
