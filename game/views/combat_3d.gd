@@ -2526,6 +2526,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_show_env(beast_id, want_r, ground)
 	_dress_floor(beast_id, ground)
 	_add_lava(beast_id)
+	_add_embers(beast_id)
 	_light_for(beast_id)
 	_frame_beast()
 
@@ -2626,6 +2627,10 @@ const BIOME := {
 		# trench between the floor's edge and the wall, [inner, outer] in arena
 		# radii. See lava_ring() / _add_lava().
 		"lava": [1.0, 2.5],
+		# Embers in the air (session, 2026-09-29): sparks rising over the whole
+		# arena, sparks falling from lava seams in the wall, and orange light in
+		# those seams on the rock. See ember_field() / _add_embers().
+		"embers": true,
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -2843,6 +2848,140 @@ func _add_lava(beast_id: String) -> void:
 	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	band.position.y = pool.position.y + cyl.height * 0.5
 	_lava.add_child(band)
+
+
+## Whether a biome fills its air with embers and lights its wall's seams.
+## Static so run_tests.gd can pin which fights get them.
+static func ember_field(biome: String) -> bool:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return bool(b.get("embers", false))
+
+
+## The wall's lava seams, in arena radii: SEAMS points (no more than the 8
+## omni lights a mesh takes on the Compatibility renderer) out on the rock. The
+## env's Wall starts at 2.6 R but most of its rock stands 3.5-5 R out and up to
+## 4.5 R high (measured, 2026-09-30); lights at its inner face lit nothing the
+## camera sees. Heights step between low and high so the orange does not read
+## as one level band. Static so run_tests.gd can pin them.
+const SEAMS := 8
+const SEAM_R := 3.4
+static func seam_points(n: int) -> Array[Vector3]:
+	var out: Array[Vector3] = []
+	for i in n:
+		var a := TAU * (float(i) + 0.25) / float(n)
+		var h := 0.5 + 0.5 * float(i % 3)
+		out.append(Vector3(cos(a) * SEAM_R, h, sin(a) * SEAM_R))
+	return out
+
+
+## The render layer the seam lights shine on: the env's Wall alone, so the
+## rock takes their orange and the floor in front of the hunters stays dark.
+const SEAM_LIT_LAYER := 1 << 18
+
+var _ember_field: Node3D = null
+
+## Embers rising across the arena, sparks dropping from the wall's seams, and
+## an orange light in each seam that only the wall's rock takes
+## (SEAM_LIT_LAYER, so the floor stays dark and the cast keeps its colours).
+func _add_embers(beast_id: String) -> void:
+	if _ember_field != null:
+		_ember_field.queue_free()
+		_ember_field = null
+	if not ember_field(String(BEAST_BIOME.get(beast_id, "crag"))) or _env == null:
+		return
+	var r := _arena_r
+	var wall := _env.find_child("Wall", true, false)
+	if wall != null:
+		# The Compatibility renderer lights a mesh with at most 8 omni lights
+		# (rendering/limits/opengl/max_lights_per_object), and the Wall is one
+		# mesh. The lava's 8 lights stand at 1.2 R with a 0.6 R reach, so they
+		# never touch a wall past 2.55 R; on LAVA_LIT_LAYER they would still
+		# take the whole budget, so the Wall leaves it for the seam lights.
+		for node in _all_meshes(wall):
+			var vi := node as VisualInstance3D
+			vi.layers = (vi.layers & ~LAVA_LIT_LAYER) | SEAM_LIT_LAYER
+	_ember_field = Node3D.new()
+	_ember_field.name = "EmberField"
+	_rig.add_child(_ember_field)
+	# The rising field: a slab of air over the floor and the lava, out to the
+	# wall. Preprocessed so a still frame already has it full.
+	var air := _ember_particles(maxf(r * 0.022, 0.05))
+	air.name = "Rising"
+	air.amount = 500
+	air.lifetime = 7.0
+	air.preprocess = 7.0
+	air.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	air.emission_box_extents = Vector3(LAVA_MAX_R * r, 0.05 * r, LAVA_MAX_R * r)
+	air.position.y = 0.05 * r
+	air.direction = Vector3(0, 1, 0)
+	air.spread = 20.0
+	air.gravity = Vector3(0.02, 0.02, 0) * r
+	air.initial_velocity_min = 0.06 * r
+	air.initial_velocity_max = 0.16 * r
+	_ember_field.add_child(air)
+	for p in seam_points(SEAMS):
+		var at := p * r
+		var l := OmniLight3D.new()
+		l.light_color = Color(1.0, 0.45, 0.12)
+		l.light_energy = 150.0
+		l.omni_range = 1.4 * r
+		l.omni_attenuation = 1.0
+		l.shadow_enabled = false
+		l.light_cull_mask = SEAM_LIT_LAYER
+		l.position = at
+		_ember_field.add_child(l)
+		var drip := _ember_particles(maxf(r * 0.02, 0.04))
+		drip.amount = 60
+		drip.lifetime = 2.4
+		drip.preprocess = 2.4
+		drip.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+		drip.emission_sphere_radius = 0.02 * r
+		drip.direction = Vector3(-p.x, 0.0, -p.z).normalized()
+		drip.spread = 25.0
+		drip.gravity = Vector3(0, -0.35, 0) * r
+		drip.initial_velocity_min = 0.02 * r
+		drip.initial_velocity_max = 0.06 * r
+		drip.position = at
+		_ember_field.add_child(drip)
+
+
+## One ember emitter: unshaded, billboarded, out of the fog, hot white fading
+## to a dim red. `size` is the quad's side in world units.
+func _ember_particles(size: float) -> CPUParticles3D:
+	var e := CPUParticles3D.new()
+	e.local_coords = false
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * size
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
+	mat.vertex_color_use_as_albedo = true
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	mat.disable_fog = true
+	# A soft round spark, not a square: up close a flat quad reads as a chip.
+	var dot := GradientTexture2D.new()
+	dot.width = 32
+	dot.height = 32
+	dot.fill = GradientTexture2D.FILL_RADIAL
+	dot.fill_from = Vector2(0.5, 0.5)
+	dot.fill_to = Vector2(1.0, 0.5)
+	var fall := Gradient.new()
+	fall.set_color(0, Color(1, 1, 1, 1))
+	fall.set_color(1, Color(1, 1, 1, 0))
+	fall.add_point(0.35, Color(1, 1, 1, 0.9))
+	dot.gradient = fall
+	mat.albedo_texture = dot
+	quad.material = mat
+	e.mesh = quad
+	e.scale_amount_min = 0.6
+	e.scale_amount_max = 1.4
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.85, 0.5, 0.0))
+	ramp.set_color(1, Color(0.9, 0.2, 0.05, 0.0))
+	ramp.add_point(0.15, Color(1.0, 0.7, 0.3, 1.0))
+	ramp.add_point(0.7, Color(1.0, 0.4, 0.1, 0.9))
+	e.color_ramp = ramp
+	return e
 
 
 ## A flat ring, `inner` to `outer`, facing up, centred on its own origin.

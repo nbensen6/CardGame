@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T03:04
-working_on: "Lava flows around the arena."
+updated: 2026-09-30T03:15
+working_on: "Embers in the air."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 03:04 EDT
+2026-09-30 03:15 EDT
 
-- **Did:** A glowing lava ring now flows between the jackal arena's floor and wall, with heat shimmer above.
-- **Worked?** Partly; VERDICT: FAIL, lava glows across the horizon but the floor at the rim is not visibly orange.
-- **Look at:** ![[frames/builder/2026-09-30-lava-ring-before.png]] then ![[frames/builder/2026-09-30-lava-ring-after.png]]
-- **Ask:** Grader failed this: rim floor not visibly orange. Does the lava ring read?
+- **Did:** Embers now drift through the jackal arena, sparks drip off the cliffs, and seam lights glow orange on the rock.
+- **Worked?** Yes; VERDICT: PASS, embers across the air and orange-lit cliff rock on both sides.
+- **Look at:** ![[frames/builder/2026-09-30-embers-before.png]] then ![[frames/builder/2026-09-30-embers-after.png]]
+- **Ask:** Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
 
 ## Notes
 
-- **Found:** at the rest camera the far rim squeezes into a few rows at the horizon.
-- **Found:** from the low camera the lava's noise aliases into horizontal streaks.
+- **Found:** seam lights ring the wall evenly, not on the lava seams painted in its texture.
+- **Found:** the Compatibility renderer lights a mesh with 8 omni lights at most; the floor's lava lights use them all.
 
 ## Log
 
+- 2026-09-30 03:15 EDT — builder: embers in the air (quarry_ember `embers`; ember_field/seam_points; EmberField: 500 rising soft sparks, 8 seam omni lights at 3.4 R on a new SEAM_LIT_LAYER that takes the Wall off LAVA_LIT_LAYER (Compatibility 8-light cap), a spark drip per seam + 2 tests); grader FAIL then PASS; tests green, pushed.
 - 2026-09-30 03:04 EDT — builder: lava ring (quarry_ember `lava` [1.0, 2.5] R; lava_ring/lava_ring_mesh + lava.gdshader polar flow; 8 omni lights on LAVA_LIT_LAYER so the cast stays unlit; heat_shimmer.gdshader band past CAMERA_MAX_R; obsidian rim heat faded near the lens + 3 tests); grader FAIL x3 (rim floor not orange), escalated 👀; tests green, pushed.
 - 2026-09-30 02:40 EDT — builder: lava rock stones (lava_rock.gdshader: dark basalt x ROCK_DETAIL, emission on world-down faces + fresnel edge; stone_style/`"stone": "lava_rock"` on quarry_ember only, body+cap take it, ember rim kept + test); grader FAIL x2 (too orange, then Goblin off-frame), escalated 👀; tests green, pushed.
 - 2026-09-30 02:29 EDT — builder: obsidian floor (obsidian.gdshader: near-black base, view-space reflected sheen band, px-clamped Voronoi crack hairlines; floor_style/_dress_floor on env Floor + Ground for quarry_ember only + test); grader FAIL then PASS; tests green, pushed.

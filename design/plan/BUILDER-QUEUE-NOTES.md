@@ -1288,3 +1288,32 @@ Builder, 2026-09-30 03:04 EDT. Brief: the Session line on the queue item (plan i
   lights at energy 10 turned the whole foreground maroon, which goes against
   "dark ground". The wide shot (`wide`) shows the whole ring and the glow.
 
+## Embers in the air.
+
+Builder, 2026-09-30 03:15 EDT. Brief: the Session line on the queue item (from
+[[2026-09-29-intense-fight-plan]]).
+
+- **What landed.** `combat_3d.BIOME["quarry_ember"]["embers"] = true`; static
+  `ember_field(biome)` and `seam_points(n)`; `_add_embers` (after `_add_lava`)
+  builds an `EmberField` under `_rig`:
+  - a rising field: CPUParticles3D, 500 soft round sparks (radial
+    GradientTexture2D, quad 0.022 R), box out to LAVA_MAX_R, 7 s life,
+    preprocessed so a still frame is already full, fog off;
+  - SEAMS 8 seam points at SEAM_R 3.4 R, heights stepping 0.5 / 1.0 / 1.5 R.
+    Each has an OmniLight3D (energy 150, range 1.4 R) and a 60-spark drip
+    falling off the rock toward the arena.
+- **Why the light numbers are that big.** The env's `Wall` mesh starts at
+  2.6 R, but its median vertex is 4.4 R out and it stands 4.5 R tall
+  (measured). Lights at the wall's "inner face" (2.5 R) lit nothing the camera
+  sees. Energy 30 at 3.4 R was still invisible on the rock; 200 read clearly.
+- **Light budget.** The Compatibility renderer gives a mesh 8 omni lights. The
+  Wall sat on LAVA_LIT_LAYER, so the lava's 8 lights used its whole budget
+  (and they never reach it: 1.2 R + 0.6 R range). `_add_embers` moves the Wall
+  from LAVA_LIT_LAYER to its own SEAM_LIT_LAYER (bit 18). The seam lights
+  shine only there, so the floor in front of the hunters stays dark (an
+  unmasked try turned the whole floor red).
+- **Tests:** embers only in quarry_ember; seam points past LAVA_MAX_R and
+  CAMERA_MAX_R, above the floor, at more than one height, evenly round the
+  ring.
+- **Grader:** FAIL (no orange on the rock, sparks unreadable), then PASS.
+

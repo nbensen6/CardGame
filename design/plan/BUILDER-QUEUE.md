@@ -302,9 +302,12 @@ run failed.
       Ask: Grader failed this: rim floor not visibly orange. Does the lava ring read?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
-- [ ] **Embers in the air.**
+- [ ] 👀 **Embers in the air.**
       **Session, 2026-09-29 22:35 ET:** Rising ember particles across the arena, sparks falling from the wall's lava seams, and omni lights in the seams so they throw orange on the rock. Done-when: the rest frame shows embers in the air and orange light on the wall around the seams. Source: [[2026-09-29-intense-fight-plan]].
-      Test: state=3d beast=cinder_jackal ^embers-in-the-air
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Embers in the air.|details]]
+      Ask: Embers rise, sparks drip, cliffs glow orange. Glow too strong or right?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-09-30-embers-after.png|420]] ^embers-in-the-air
 - [ ] **A sky with ash.**
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
       Test: state=3d beast=cinder_jackal ^a-sky-with-ash
@@ -419,3 +422,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Frog stone lost against the jackal.** The dark lava stone has little contrast against the black jackal body behind it.
 - [ ] (proposed) **Rest camera flattens the far rim.** At rest the whole trench beyond the floor is a few rows at the horizon.
 - [ ] (proposed) **Lava streaks at grazing angles.** From the low camera the lava's noise aliases into horizontal stripes.
+- [ ] (proposed) **Seam lights are evenly spaced.** They ring the wall on a fixed pattern, not on the lava seams painted in its texture.
+- [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
