@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **One HUD style: carved obsidian.**
+- [x] **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes a second after opening
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
       **Nick, 2026-09-30 09:44 ET:** no. we need to redesign the display of information. reference how slay the spire ii displays information and try to use that as the bar
@@ -19,7 +19,7 @@ run failed.
       Ask: Window no longer closes after the idle frames. Does it stay open now?
       Test: state=3d beast=cinder_jackal slot=1 idleat=0,0.4,0.8,1.2
       ![[agents/frames/builder/2026-09-30-play-stays-open-after.png|420]] ^one-hud-style-carved-obsidian
-- [ ] 👀 **A sky with ash.**
+- [x] **A sky with ash.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes after a few seconds
       **Nick, 2026-09-30 09:44 ET:** sky looks fine, but clouds need to move.
       **Session, 2026-09-29 22:35 ET:** The sky is a two-colour gradient. Add a slow-moving ash cloud layer with a red-lit underside near the horizon and an occasional distant glow pulse, for `quarry_ember` only. Fog behind the wall stays. Done-when: the rest frame shows clouds above the wall with red at their base. Source: [[2026-09-29-intense-fight-plan]].
