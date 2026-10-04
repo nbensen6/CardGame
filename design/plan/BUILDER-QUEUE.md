@@ -10,9 +10,8 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Pick the target picture for the fight screen.**
+- [ ] **Scene pass 1 toward picture A: big lit jackal, readable floor.**
       **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
-      Ask: Which picture should the fight look like: A, B or C? Add anything you would change. A plain tick means A.
       A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
       B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
       C, dusk low-poly: ![[art/targets/2026-10-04-target-C-dusk-lowpoly.png|420]]
