@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Scene pass 1 toward picture A: big lit jackal, readable floor.**
+- [ ] 👀 **Scene pass 1 toward picture A: big lit jackal, readable floor.**
       **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
       A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
       B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
@@ -18,7 +18,10 @@ run failed.
       Now: ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]]
       The pictures are square and the game is 16:9: they set the look (beast size, light, colour, outline, card style), not the exact layout.
       Nick picked A for the scene and B for the cards and HUD. Both are saved as `design/art/targets/TARGET.png` and `TARGET-UI.png`, shown on [[JACKAL-BAR]], and the grader compares against them. Build pass 1 toward `TARGET.png`, in `state=3d`: the jackal fills the upper half of the frame, is lit so its shape reads and has the warm outline; the floor is readable instead of black. Cards and HUD are the next item, not this one.
-      Test: state=3d ^pick-the-target-picture
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Scene pass 1 toward picture A: big lit jackal, readable floor.|details]]
+      Ask: Grader failed this: a climb stone hides the face. Move the stones next?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]] ^pick-the-target-picture
 - [x] **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes a second after opening
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
@@ -480,3 +483,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.
 - [ ] (proposed) **Test this now links still carry idleat=.** The shot-only grid argument is harmless now but does nothing in play.
 - [ ] (proposed) The ash sky glow pulse (once per 9 s) has no frame proving it shows.
+- [ ] (proposed) **A climb stone sits in front of the jackal's face.** At the closer rest camera the third stone covers the head.
+- [ ] (proposed) **Standoff is shared by every beast.** GROUND_STANDOFF 4.2 -> 1.75 brings every fight's beast closer, not only the jackal.
+- [ ] (proposed) **The jackal is narrow head-on.** A front-facing quadruped is ~17% of frame width; A's beast spans most of it.

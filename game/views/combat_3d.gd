@@ -100,8 +100,15 @@ const AI_MOTION := {
 ## lights a whole flat facet at once, so on the jackal's low-poly head it drew
 ## pale peach triangles across the brow and snout: that was the gloss. Zero
 ## specular takes them off; every other model keeps the shader's default.
+## Scene pass 1 toward picture A (Nick, 2026-10-04: "A, but the cards and UI
+## from B"): the jackal reads as lit rock with a warm line round it, not a
+## black cut-out. `body_floor` (toon.gdshader) raises the near-black painted
+## body to the brown A shows; `outline_color` / `outline_width` go to the outline pass (see
+## toon_material), a thick ember line like A's.
 const SURFACE_FINISH := {
-	"cinder_jackal": {"spec_strength": 0.0},
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.19, 0.105, 0.075), "shadow_color": Color(0.50, 0.46, 0.56),
+		"half_level": 0.72,
+		"outline_color": Color(1.0, 0.72, 0.30), "outline_width": 0.006},
 }
 
 
@@ -402,7 +409,11 @@ const OVER_SHOULDER := 4.2
 ## "there is just not enough space between the characters and the beast."
 ## His reference has a wide stretch of empty ground between the two, and the
 ## stone path crosses it.
-const GROUND_STANDOFF := 4.2
+## Nick, 2026-10-04, picture A: the jackal fills the upper half of the frame.
+## At 4.2 the hunters stood 85 units out and the jackal was a fifth of the
+## frame, a dark speck on the horizon; 1.75 puts it ~45% of the frame tall,
+## ears near the top bar, paws on the lava line. See rest_beast_share.
+const GROUND_STANDOFF := 1.75
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -2737,6 +2748,9 @@ const BIOME := {
 		# band, faint orange cracks. The env's Floor mesh and the plain Ground
 		# disc both take it; see floor_style() / _dress_floor().
 		"floor": "obsidian",
+		# Scene pass 1 (Nick, 2026-10-04, picture A): the floor reads as dark
+		# slate you can see, not a black hole under the hunters.
+		"floor_tone": Color(0.17, 0.17, 0.19),
 		# Lava rock under the hunters (session, 2026-09-29): the climb stones
 		# go dark basalt with an ember glow at the underside and edges. See
 		# stone_style() / _add_float_stone().
@@ -2871,6 +2885,9 @@ func _dress_floor(beast_id: String, ground: CSGCylinder3D) -> void:
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = OBSIDIAN
+	var b: Dictionary = BIOME.get(String(BEAST_BIOME.get(beast_id, "crag")), {})
+	if b.has("floor_tone"):
+		mat.set_shader_parameter("tone", b["floor_tone"])
 	if ground != null:
 		ground.material = mat
 	var floor_node := _env.find_child("Floor", true, false) if _env != null else null
@@ -4539,7 +4556,12 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 			if not k.begins_with("glow_"):
 				line.set_shader_parameter(k, motion[k])
 		for k in finish:
-			mat.set_shader_parameter(k, finish[k])
+			if k == "outline_color":
+				line.set_shader_parameter("line_color", finish[k])
+			elif k == "outline_width":
+				line.set_shader_parameter("width", float(finish[k]) * outline_scale)
+			else:
+				mat.set_shader_parameter(k, finish[k])
 	else:
 		# An untextured part (the footholds) keeps its flat colour.
 		var had0 := mi.mesh.surface_get_material(0)
@@ -4881,6 +4903,15 @@ static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> 
 ## into `want_r`'s own max() is what stops the clamp from silently winning.
 static func ground_standoff_for(front_edge: float) -> float:
 	return front_edge * (1.0 + GROUND_STANDOFF)
+
+
+## How much of the frame's height a beast `beast_h` tall draws at its front
+## edge, from the rest camera FOLLOW_DIST behind a hunter standing at
+## ground_standoff_for(front_edge), through a `fov_deg` vertical lens. The rule
+## behind picture A's "jackal fills the upper half" (2026-10-04).
+static func rest_beast_share(front_edge: float, beast_h: float, fov_deg: float) -> float:
+	var dist := ground_standoff_for(front_edge) - front_edge + FOLLOW_DIST
+	return beast_h / (2.0 * maxf(dist, 0.01) * tan(deg_to_rad(fov_deg) * 0.5))
 
 
 ## The pure decision inside _stand_on_model: which z a hunter's clearance

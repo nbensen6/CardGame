@@ -210,3 +210,4 @@ appends here, never to the queue.
 - [ ] **Display-font digits read oddly.** KenneyFutureNarrow draws "7" like a hook; the intent badge's number may want the body font.
 - [ ] **Show more sky at rest.** Tilt or lower the rest camera so the ash clouds over the wall read.
 - [ ] **Hunters move: idle, hop, attack, hit.** The Frog and Goblin are still statues; give each a rig and four short animations (after the target picture is picked).
+- [ ] **Clear the climb stones off the jackal's face.** At the new closer rest camera the mid stones cover the head; route them beside it.

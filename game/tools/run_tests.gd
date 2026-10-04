@@ -2406,6 +2406,7 @@ func _init() -> void:
 	_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin()
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
+	_test_scene_pass1_picture_a()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
 	# between the hunters' ground and the wall, lens always inside the shimmer.
@@ -31111,6 +31112,30 @@ func _test_floor_style_obsidian_only_in_the_jackal_biome() -> void:
 		func(u: Dictionary) -> String: return String(u["name"]))
 	_expect(not params.has("band_strength"),
 		"the obsidian floor has no specular band (Nick, 2026-09-30: remove the band)")
+
+
+## Scene pass 1 toward picture A (Nick, 2026-10-04): the jackal fills the
+## upper half of the rest frame, is lit rock with a warm outline, and the floor
+## carries a slate tone instead of reading black.
+func _test_scene_pass1_picture_a() -> void:
+	# The jackal's live numbers: front edge 16.49, 20 units tall, 65-degree lens.
+	var share: float = Combat3D.rest_beast_share(16.494751, 20.0, 65.0)
+	_expect(share >= 0.35 and share <= 0.55,
+		"the jackal must fill roughly the upper half of the rest frame, not a speck on the horizon -- got %.2f" % share)
+	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
+	_expect(fin.has("body_floor") and (fin["body_floor"] as Vector3).x > 0.0,
+		"the jackal's near-black body is raised to lit rock")
+	_expect(fin.has("outline_color") and (fin["outline_color"] as Color).r > 0.8,
+		"the jackal carries the warm outline")
+	var toon_params: Array = (Combat3D.TOON as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	_expect(toon_params.has("body_floor"), "toon.gdshader takes a body_floor")
+	var floor_params: Array = (Combat3D.OBSIDIAN as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	_expect(floor_params.has("tone"), "the obsidian floor takes a slate tone")
+	var jb: Dictionary = Combat3D.BIOME["quarry_ember"]
+	_expect(jb.has("floor_tone") and (jb["floor_tone"] as Color).v > 0.1,
+		"the jackal's floor is readable, not black")
 
 
 func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:

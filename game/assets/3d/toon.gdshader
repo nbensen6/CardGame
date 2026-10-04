@@ -17,6 +17,10 @@ render_mode cull_back, diffuse_toon, specular_toon;
 // just its `tint`.
 uniform sampler2D albedo_tex : source_color, hint_default_white, filter_linear_mipmap, repeat_enable;
 uniform vec4 tint : source_color = vec4(1.0);
+// The darkest the lit body may paint, applied AFTER the glow mask is read, so
+// a near-black painted body reads as rock without any of it turning "hot"
+// (scene pass 1, picture A, 2026-10-04). Zero is a no-op.
+uniform vec3 body_floor = vec3(0.0);
 
 // One hard band: lit or shadow, no midtone step. Style C, Nick 2026-09-24
 // (Risk of Rain 2 / Hopoo Games — low-poly, flat-shaded, no gradient). Was
@@ -98,6 +102,7 @@ void fragment() {
 	float hue_d = min(abs(hsv.x - glow_hue), 1.0 - abs(hsv.x - glow_hue));
 	float hot = (1.0 - smoothstep(0.03, 0.08, hue_d)) * smoothstep(0.55, 0.8, hsv.y) * smoothstep(0.55, 0.85, hsv.z);
 	EMISSION = base * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
+	ALBEDO = max(base, body_floor);
 }
 
 void light() {

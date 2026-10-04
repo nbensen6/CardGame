@@ -13,6 +13,10 @@ render_mode cull_back, diffuse_toon, specular_toon;
 
 uniform vec4 base_color : source_color = vec4(0.035, 0.03, 0.045, 1.0);
 uniform vec4 shadow_color : source_color = vec4(0.30, 0.30, 0.50, 1.0);
+// Unlit slate tone the glass always shows, so the floor reads as ground and
+// not a black hole (scene pass 1, picture A, 2026-10-04). Emission rather than
+// a lighter albedo: the lava omni lights multiply albedo and turn any lift red.
+uniform vec4 tone : source_color = vec4(0.0, 0.0, 0.0, 1.0);
 
 // Cracks: cell size in world units, line width as a fraction of a cell.
 uniform vec4 crack_color : source_color = vec4(1.0, 0.46, 0.10, 1.0);
@@ -104,7 +108,8 @@ void fragment() {
 	}
 
 	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
-		+ rim_color.rgb * rim_gain * heat;
+		+ rim_color.rgb * rim_gain * heat
+		+ tone.rgb * (1.0 - crack);
 }
 
 void light() {

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-09-30T17:25
-working_on: "A sky with ash."
+updated: 2026-10-04T16:02
+working_on: "Scene pass 1 toward picture A: big lit jackal, readable floor."
 ---
 
 # builder
@@ -13,19 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-09-30 17:25 EDT
+2026-10-04 16:02 EDT
 
-- **Did:** Confirmed the sky scenario's "crash" was the window quitting after its frames; already fixed, now proven.
-- **Worked?** Yes, pre-fix closes by 9 s, main stays open past 20 s. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-09-30-sky-stays-open-before.png]] then ![[frames/builder/2026-09-30-sky-stays-open-after.png]]
-- **Ask:** Game now stays open with the drifting sky. Still crashing for you?
+- **Did:** Brought the jackal close enough to fill the upper half; lit its body, warm outline, slate floor.
+- **Worked?** Partly: the size, outline and floor land, but a climb stone hides the face. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-04-scene-pass1-before.png]] then ![[frames/builder/2026-10-04-scene-pass1-after.png]]
+- **Ask:** Grader failed this: a climb stone hides the face. Move the stones next?
 
 ## Notes
 
-- **Found:** The glow pulse (once per 9 s) was not caught in any of the four tiles; the grader could not confirm it.
+- **Found:** A climb stone sits in front of the jackal's face at the closer rest camera.
+- **Found:** GROUND_STANDOFF is shared, so every beast now stands closer, not only the jackal.
+- **Found:** Head-on, the jackal is ~17% of the frame's width; A's beast spans most of it.
 
 ## Log
 
+- 2026-10-04 16:02 EDT — builder: scene pass 1 toward picture A: GROUND_STANDOFF 4.2 -> 1.75 + rest_beast_share, toon body_floor/shadow lift and warm outline on the jackal, obsidian floor slate tone + test; grader FAIL x2 (a climb stone over the face), shipped 👀; tests green, pushed.
 - 2026-09-30 17:25 EDT — builder: sky "crash" answered (Nick 16:59): same play-mode quit as the HUD item, fixed at 17:12; proved with pre-fix vs main play runs sampled to +20 s; no code change; grader PASS; tests green, pushed.
 - 2026-09-30 17:12 EDT — builder: HUD "crash" answered (Nick 16:59): play mode quit after idleat/deathat/enemyat shots via _save_and_quit; now returns PLAY READY when quits_after_shot is false + test; grader FAIL (one still) then PASS on 8 s grid; tests green, pushed.
 - 2026-09-30 12:55 EDT — builder: sky clouds move on Nick's word (09:44): ash wind 0.018 -> (0.3, 0.1) cells/s via BIOME ash_wind + static ash_wind() + test; grader FAIL on half-size grid then PASS on 4x sky strips; tests green, pushed.

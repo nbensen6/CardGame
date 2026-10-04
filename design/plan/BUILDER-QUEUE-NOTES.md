@@ -1527,3 +1527,32 @@ lofted 9-slice (`frame_frog.png`) and a light steel name ribbon.
   Only in cloud: Blender is not installed, so the shader route, not frames.py.
 - Grader: VERDICT: PASS.
 - Test: `_test_cost_gems_back_on_a_redesigned_border`.
+
+## Scene pass 1 toward picture A: big lit jackal, readable floor.
+
+2026-10-04 builder run.
+
+- **Before:** hunters stood at 5.2x the jackal's front edge (z=85); the jackal
+  was ~150 px tall, a black shape on the horizon; the obsidian floor was near-black.
+- **Changes:**
+  - `GROUND_STANDOFF` 4.2 -> 1.75 (shared constant, every beast). New static
+    `rest_beast_share()` measures the rule: the jackal is now ~0.46 of frame height at
+    its front edge (ears at y≈5, paws on the lava line). Tried 1.0 and 1.5 (head cut off)
+    and 2.0 (~0.41, the round-1 frame).
+  - `toon.gdshader` gains `body_floor` (default 0, a no-op): `ALBEDO = max(base, body_floor)`,
+    applied after the glow mask so lifting the body never makes it "hot". A plain
+    multiply (`tint`/`lift`) was tried first: it made the whole jackal glow yellow and
+    left pure black untouched.
+  - `SURFACE_FINISH["cinder_jackal"]`: body_floor (0.19, 0.105, 0.075), shadow_color
+    (0.50, 0.46, 0.56), half_level 0.72, outline_color (1.0, 0.72, 0.30), outline_width
+    0.006. `toon_material` routes `outline_*` keys to the outline pass.
+  - `obsidian.gdshader` gains `tone`, an emissive slate floor colour; quarry_ember sets
+    `floor_tone` (0.17, 0.17, 0.19). Lightening `base_color` was tried first: the
+    lava omni lights multiply albedo, so the floor went orange (0.20) or red (0.075).
+- **Grader:** round 1 FAIL (jackal narrow, faces unlit): brighter body shading and a
+  closer standoff. Round 2 FAIL: "the head is a featureless black shape". The STONE dump
+  puts STONE2 at screen (731, 81), right on the face: it is a lava-rock climb stone in
+  front of the head, not the head. Moving the stone route is layout work outside this
+  item, so it is shipped 👀 for Nick to decide.
+- **Tests:** `_test_scene_pass1_picture_a`. ALL TESTS PASSED.
+
