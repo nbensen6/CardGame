@@ -10,6 +10,16 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Pick the target picture for the fight screen.**
+      **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
+      Ask: Which picture should the fight look like: A, B or C? Add anything you would change. A plain tick means A.
+      A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
+      B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
+      C, dusk low-poly: ![[art/targets/2026-10-04-target-C-dusk-lowpoly.png|420]]
+      Now: ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]]
+      The pictures are square and the game is 16:9: they set the look (beast size, light, colour, outline, card style), not the exact layout.
+      Nick picked A for the scene and B for the cards and HUD. Both are saved as `design/art/targets/TARGET.png` and `TARGET-UI.png`, shown on [[JACKAL-BAR]], and the grader compares against them. Build pass 1 toward `TARGET.png`, in `state=3d`: the jackal fills the upper half of the frame, is lit so its shape reads and has the warm outline; the floor is readable instead of black. Cards and HUD are the next item, not this one.
+      Test: state=3d ^pick-the-target-picture
 - [x] **One HUD style: carved obsidian.**
       **Nick, 2026-09-30 16:59 ET:** yes but game crashes a second after opening
       **Nick, 2026-09-30 11:44 ET:** the cinder jackal health can be in top left. remove the character information. also remove the big intent above the beast and make it small and next to its health. also stop the hunters from moving up and down while idle.
@@ -347,15 +357,6 @@ run failed.
 The builder skips this section. Answer here or in Home; the item then moves
 into Now.
 
-- [ ] **Pick the target picture for the fight screen.**
-      Ask: Which picture should the fight look like: A, B or C? Add anything you would change. A plain tick means A.
-      A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
-      B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
-      C, dusk low-poly: ![[art/targets/2026-10-04-target-C-dusk-lowpoly.png|420]]
-      Now: ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]]
-      The pictures are square and the game is 16:9: they set the look (beast size, light, colour, outline, card style), not the exact layout.
-      Nick picked A for the scene and B for the cards and HUD. Both are saved as `design/art/targets/TARGET.png` and `TARGET-UI.png`, shown on [[JACKAL-BAR]], and the grader compares against them. Build pass 1 toward `TARGET.png`, in `state=3d`: the jackal fills the upper half of the frame, is lit so its shape reads and has the warm outline; the floor is readable instead of black. Cards and HUD are the next item, not this one.
-      Test: state=3d ^pick-the-target-picture
 
 ## Open decisions, with the default the builder takes if Nick says nothing
 
