@@ -336,6 +336,12 @@ run failed.
       ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
 
 
+- [ ] **Cards and HUD in the style of picture B.**
+      **Nick, 2026-10-04 15:38 ET:** go with A, but the card and ui from b
+      Target: ![[art/targets/TARGET-UI.png|420]]
+      Work toward `design/art/targets/TARGET-UI.png`. Cards: one ornate gold frame on every card, a glowing edge on the cards that can be played, and card art in one painted style (repaint the faces that are pictograms or 3D renders). HUD: the jackal's name and health on a carved stone plate, the energy counter and End Turn as gold-framed pieces like the picture. Keep everything the picture dropped: the climb gauge, Switch, Log, Menu, the pile counts, the Attack intent and the cost gems. No bought packs; generate or build the art.
+      Test: state=3d ^cards-and-hud-in-the-style-of-picture-b
+
 ## Waiting on Nick
 
 The builder skips this section. Answer here or in Home; the item then moves
@@ -348,7 +354,7 @@ into Now.
       C, dusk low-poly: ![[art/targets/2026-10-04-target-C-dusk-lowpoly.png|420]]
       Now: ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]]
       The pictures are square and the game is 16:9: they set the look (beast size, light, colour, outline, card style), not the exact layout.
-      Once Nick answers, build this: copy his pick to `design/art/targets/TARGET.png`; embed it at the top of [[JACKAL-BAR]]; add to `.claude/agents/grader.md` "open design/art/targets/TARGET.png beside the after frame and name the three biggest differences in look; a frame no closer to the target than the before frame is a FAIL". Then pass 1 toward the target, in `state=3d`: the jackal fills the upper half of the frame and is lit so its shape reads, and the floor is readable instead of black. Nick's changes on his note override the picture.
+      Nick picked A for the scene and B for the cards and HUD. Both are saved as `design/art/targets/TARGET.png` and `TARGET-UI.png`, shown on [[JACKAL-BAR]], and the grader compares against them. Build pass 1 toward `TARGET.png`, in `state=3d`: the jackal fills the upper half of the frame, is lit so its shape reads and has the warm outline; the floor is readable instead of black. Cards and HUD are the next item, not this one.
       Test: state=3d ^pick-the-target-picture
 
 ## Open decisions, with the default the builder takes if Nick says nothing

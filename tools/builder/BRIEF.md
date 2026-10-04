@@ -62,7 +62,10 @@ stones climbing the gap between them, dark ground, cool sky.
      is not done**, whatever else you proved. Say so and stop.
    - **Get graded.** Run the `grader` agent (Agent tool, subagent_type
      "grader") with exactly: the item's full text, the absolute path of the
-     before frame, the absolute path of the after frame. Nothing else: not
+     before frame, the absolute path of the after frame, and the absolute
+     paths of `design/art/targets/TARGET.png` (the scene Nick picked) and
+     `design/art/targets/TARGET-UI.png` (the cards and HUD he picked). Look
+     at both targets yourself before you build. Nothing else: not
      your summary, not the diff. It answers PASS or FAIL with evidence. On
      FAIL, fix what it names and reshoot: at most two more rounds. Still
      FAIL after that: mark the item `👀` anyway and start its `Ask:` with

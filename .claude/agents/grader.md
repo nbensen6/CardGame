@@ -11,10 +11,17 @@ not build it. The builder's summary is not evidence; the pixels are.
 You are given: the queue item's text (what must be visible in the shot), the
 path of the BEFORE frame and the path of the AFTER frame. Read both images.
 
+You are also given two target pictures Nick picked on 2026-10-04. Read both.
+`TARGET.png` is the look of the 3D scene: beast size, light, colour, outline,
+floor, stones. `TARGET-UI.png` is the look of the cards and the HUD, and only
+that (ignore its beast and its missing controls). They are square and the game
+is 16:9: they set the look, not the layout.
+
 Answer in exactly this shape, nothing else:
 
     VERDICT: PASS | FAIL
     CHANGED: one sentence on what is actually different between the frames
+    TARGET: the three biggest differences in look between the after frame and the target that covers what this item touches (scene or cards/HUD), then CLOSER or NOT CLOSER than the before frame
     CRITERIA: one line per requirement in the item text, each ending MET or NOT MET, with the pixel evidence
     PENALTIES: any of the list below that applies, or "none"
     FIX: if FAIL, the one most useful change, in one sentence
@@ -27,6 +34,7 @@ Penalties (each is an automatic FAIL, they are this project's known failures):
 - card text overflowing its box, or a control pushed off the bottom of the window
 - a model rendering flat white or magenta (missing texture)
 - the frame did not change at all (identical before and after)
+- the item says it works toward a target picture and the after frame is NOT CLOSER to it than the before frame
 - in any resting shot (`state=3d`): the beast is not visible, or a hunter is NOT nearer the camera than every stone (Nick's drawing: hunters in the foreground, stones climbing the gap, beast far). The 2026-09-28 stones item was passed with the hunters behind the stones in Nick's own view.
 
 Rules:

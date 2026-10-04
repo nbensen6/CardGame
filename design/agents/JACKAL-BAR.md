@@ -5,6 +5,14 @@ tags:
 
 # The bar for the Cinder Jackal fight
 
+## What it should look like
+
+Nick, 2026-10-04: "go with A, but the card and ui from b". Every frame is graded against these two pictures. They are square and the game is 16:9: they set the look, not the layout.
+
+| The scene: beast, light, colour, outline, floor, stones | Cards and HUD only |
+|---|---|
+| ![[art/targets/TARGET.png\|420]] | ![[art/targets/TARGET-UI.png\|420]] |
+
 Nick, 2026-09-23: **no bought asset packs — everything here is generated or
 built by us** — and the Cinder Jackal fight reaches Slay the Spire quality
 before anything else gets attention.
