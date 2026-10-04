@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Scene pass 1 toward picture A: big lit jackal, readable floor.**
+- [x] **Scene pass 1 toward picture A: big lit jackal, readable floor.**
       **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
       A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
       B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
@@ -348,7 +348,7 @@ run failed.
       ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
 
 
-- [ ] 👀 **Cards and HUD in the style of picture B.**
+- [x] **Cards and HUD in the style of picture B.**
       **Nick, 2026-10-04 15:38 ET:** go with A, but the card and ui from b
       Target: ![[art/targets/TARGET-UI.png|420]]
       Work toward `design/art/targets/TARGET-UI.png`. Cards: one ornate gold frame on every card, a glowing edge on the cards that can be played, and card art in one painted style (repaint the faces that are pictograms or 3D renders). HUD: the jackal's name and health on a carved stone plate, the energy counter and End Turn as gold-framed pieces like the picture. Keep everything the picture dropped: the climb gauge, Switch, Log, Menu, the pile counts, the Attack intent and the cost gems. No bought packs; generate or build the art.
