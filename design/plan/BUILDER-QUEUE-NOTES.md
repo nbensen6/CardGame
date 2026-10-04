@@ -1556,3 +1556,13 @@ lofted 9-slice (`frame_frog.png`) and a light steel name ribbon.
   item, so it is shipped 👀 for Nick to decide.
 - **Tests:** `_test_scene_pass1_picture_a`. ALL TESTS PASSED.
 
+## Cards and HUD in the style of picture B.
+
+Run 2026-10-04 16:13 EDT. Frames: `2026-10-04-card-hud-before.png`, `-after.png` (`state=3d beast=cinder_jackal`).
+
+- Card border shader is now gold instead of obsidian: dark outer hairline, gold bevels, an engraved groove with a run of beads, dark fillet, the hunter's colour line kept. `BORDER_BAND` 9 -> 13 px; corner and foot studs scale with the band.
+- Playable cards get a gold halo (ground panel shadow, 16 px, `CardView.playable_glow`); unplayable cards none.
+- New `ui/plate_frame.gdshader` + `Combat3D.add_plate_frame()`: a framed ring laid over a Control (re-pinned after a Container sorts). Gold on the energy counter (dulls at 0 Energy) and End Turn; stone slab (grain, drawn behind the host) under the beast's name and bar.
+- Grader round 1 FAIL: frames too thin, plate not stone. Thickened frames, stronger halo, stone slab. Round 2 FAIL: only the card art (pictograms/3D render not repainted) and the plate's name tab. No 2D painting tool is in reach here and Meshy regeneration is off-limits, so the art repaint is left for Nick.
+- Final: VERDICT: FAIL (closer than before; card art not repainted).
+

@@ -154,7 +154,7 @@ var _frame_rect: ColorRect = null
 ## form and the deck list.
 const BORDER_SHADER := preload("res://ui/card_border.gdshader")
 ## Width of the dark face, px. The art starts band + 4.5 in.
-const BORDER_BAND := 9.0
+const BORDER_BAND := 13.0
 const BORDER_RADIUS := 12.0
 ## The name ribbon, darkened onto the border's obsidian.
 const BANNER_TINT := Color(0.34, 0.31, 0.33)
@@ -168,6 +168,17 @@ const BORDER_HUES := {
 	"lightbearer": [Color("D9A94E"), Color("F2D492")],
 	"common": [Color("5D6171"), Color("9AA0B2")],
 }
+
+
+## The warm halo round a playable card, px, and its colour.
+const PLAYABLE_GLOW_SIZE := 16
+const PLAYABLE_GLOW := Color(1.0, 0.70, 0.22, 0.85)
+
+
+## The halo a card wears: gold when it can be played, none when it cannot.
+## Static so a test can pin it.
+static func playable_glow(playable: bool) -> Color:
+	return PLAYABLE_GLOW if playable else Color(0, 0, 0, 0)
 
 
 ## The owner's line colour and its lit side. Static so a test can pin it.
@@ -449,6 +460,10 @@ func _build_face(data: Dictionary) -> void:
 	# curve at every corner - the zoom of Tongue Snap's top-right showed it
 	# plainly. The ground must always be the smaller shape.
 	gsb.set_corner_radius_all(13)
+	# Picture B's glowing edge on a card that can be played (Nick, 2026-10-04).
+	var glow := playable_glow(not disabled)
+	gsb.shadow_color = glow
+	gsb.shadow_size = PLAYABLE_GLOW_SIZE if glow.a > 0.0 else 0
 	ground.add_theme_stylebox_override("panel", gsb)
 	_layer(ground, 0, 0, 1, 1, 1.0, 1.0, -1.0, -1.0)
 

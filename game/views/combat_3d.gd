@@ -595,6 +595,56 @@ static func hud_font() -> Font:
 	return f
 
 
+## Picture B's framed pieces (Nick, 2026-10-04: "the card and ui from b"):
+## kind -> [dark side, lit side, band px, grain]. Gold for the energy counter
+## and End Turn, carved stone for the beast's name plate.
+const PLATE_FRAMES := {
+	"gold": [Color(0.55, 0.34, 0.10), Color(1.0, 0.86, 0.48), 10.0, 0.0],
+	"stone": [Color(0.27, 0.26, 0.25), Color(0.66, 0.64, 0.60), 11.0, 0.9],
+}
+const PLATE_FRAME_SHADER := preload("res://ui/plate_frame.gdshader")
+
+
+## The frame params for one kind. Static so a test can pin it.
+static func plate_frame(kind: String) -> Array:
+	return PLATE_FRAMES.get(kind, PLATE_FRAMES["gold"])
+
+
+## Lay a framed ring OVER `target`, clear in the middle so the target's own
+## fill and text show through. Over, not behind: a Button draws its stylebox
+## behind its children. A Container fits every child to its content rect, so
+## the ring re-pins itself to the full rect after each sort.
+static func add_plate_frame(target: Control, kind: String, radius: float = 10.0,
+		slab: bool = false) -> ColorRect:
+	var spec := plate_frame(kind)
+	var fr := ColorRect.new()
+	fr.name = "PlateFrame"
+	fr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = PLATE_FRAME_SHADER
+	mat.set_shader_parameter("metal", spec[0])
+	mat.set_shader_parameter("metal_lit", spec[1])
+	mat.set_shader_parameter("band", spec[2])
+	mat.set_shader_parameter("grain", spec[3])
+	mat.set_shader_parameter("radius", radius)
+	mat.set_shader_parameter("slab", 1.0 if slab else 0.0)
+	fr.material = mat
+	# A slab is the host's whole face, so it goes under the host's text.
+	fr.show_behind_parent = slab
+	target.add_child(fr)
+	var pin := func() -> void:
+		fr.position = Vector2.ZERO
+		fr.size = target.size
+		mat.set_shader_parameter("rect_size", target.size)
+	if target is Container:
+		(target as Container).sort_children.connect(pin)
+	else:
+		fr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	target.resized.connect(pin)
+	pin.call()
+	return fr
+
+
 ## The beast's bar, Slay the Spire red with the number inside it.
 static func beast_bar_styles() -> Dictionary:
 	var bg := StyleBoxFlat.new()
@@ -614,12 +664,16 @@ func _apply_sts_hud() -> void:
 	if top != null:
 		# Pinned top-left now (Nick, 2026-09-30), so it sits on the same glass
 		# as the intent chip beside it, not bare over the cliffs.
-		var plate := hud_style(HUD_EDGE, 1, 6)
-		plate.content_margin_left = 10.0
-		plate.content_margin_right = 8.0
-		plate.content_margin_top = 4.0
-		plate.content_margin_bottom = 4.0
+		# A carved stone plate, picture B's (Nick, 2026-10-04).
+		var plate := hud_style(HUD_EDGE, 0, 10)
+		plate.content_margin_left = 20.0
+		plate.content_margin_right = 18.0
+		plate.content_margin_top = 13.0
+		plate.content_margin_bottom = 13.0
 		top.add_theme_stylebox_override("panel", plate if BEAST_PLATE_ON_HUD else StyleBoxEmpty.new())
+		if BEAST_PLATE_ON_HUD:
+			plate.draw_center = false
+			add_plate_frame(top, "stone", 10.0, true)
 	var bar_st := beast_bar_styles()
 	for k in bar_st:
 		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
@@ -635,6 +689,8 @@ func _apply_sts_hud() -> void:
 		_end_btn.add_theme_stylebox_override(state, end_st[state])
 	_end_btn.custom_minimum_size = Vector2(150, 46)
 	_end_btn.add_theme_font_size_override("font_size", 19)
+	add_plate_frame(_end_btn, "gold", 22.0)
+	add_plate_frame(_energy_orb, "gold", 14.0)
 	var sw_st := hud_button_styles(Color(0.12, 0.2, 0.3, 0.85))
 	for state in sw_st:
 		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
@@ -8098,6 +8154,10 @@ func _render_energy(p: Dictionary) -> void:
 	# you have to react to in half a second wins it.
 	style.set_corner_radius_all(14)
 	_energy_orb.add_theme_stylebox_override("panel", style)
+	var ring := _energy_orb.get_node_or_null("PlateFrame") as CanvasItem
+	if ring != null:
+		# The gold goes dull with the Energy, like the number does.
+		ring.modulate = Color.WHITE if out > 0 else Color(0.5, 0.5, 0.52)
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",
 		Color(1, 0.87, 0.5) if out > 0 else Color(0.55, 0.52, 0.5))

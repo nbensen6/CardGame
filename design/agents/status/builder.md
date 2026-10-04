@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T16:02
-working_on: "Scene pass 1 toward picture A: big lit jackal, readable floor."
+updated: 2026-10-04T16:13
+working_on: "Cards and HUD in the style of picture B."
 ---
 
 # builder
@@ -13,18 +13,18 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 16:02 EDT
+2026-10-04 16:13 EDT
 
-- **Did:** Brought the jackal close enough to fill the upper half; lit its body, warm outline, slate floor.
-- **Worked?** Partly: the size, outline and floor land, but a climb stone hides the face. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-04-scene-pass1-before.png]] then ![[frames/builder/2026-10-04-scene-pass1-after.png]]
-- **Ask:** Grader failed this: a climb stone hides the face. Move the stones next?
+- **Did:** Gold ornate card frames with a playable glow; gold energy and End Turn; stone beast plate.
+- **Worked?** Partly: frames, glow and plates land, but card art is unrepainted. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-04-card-hud-before.png]] then ![[frames/builder/2026-10-04-card-hud-after.png]]
+- **Ask:** Grader failed this: card art not repainted. Generate painted faces next?
 
 ## Notes
 
-- **Found:** A climb stone sits in front of the jackal's face at the closer rest camera.
-- **Found:** GROUND_STANDOFF is shared, so every beast now stands closer, not only the jackal.
-- **Found:** Head-on, the jackal is ~17% of the frame's width; A's beast spans most of it.
+- **Found:** Card faces are still mixed: two pictograms and one 3D render beside painted Leap.
+- **Found:** The beast plate keeps the name inline; picture B puts it on its own tab.
+- **Found:** Gold HUD frames are bevelled rings, not picture B's scrolled end-caps.
 
 ## Log
 

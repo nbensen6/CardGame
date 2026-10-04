@@ -348,11 +348,14 @@ run failed.
       ![[agents/frames/builder/2026-09-30-lava-ring-after.png|420]] ^lava-flows-around-the-arena
 
 
-- [ ] **Cards and HUD in the style of picture B.**
+- [ ] 👀 **Cards and HUD in the style of picture B.**
       **Nick, 2026-10-04 15:38 ET:** go with A, but the card and ui from b
       Target: ![[art/targets/TARGET-UI.png|420]]
       Work toward `design/art/targets/TARGET-UI.png`. Cards: one ornate gold frame on every card, a glowing edge on the cards that can be played, and card art in one painted style (repaint the faces that are pictograms or 3D renders). HUD: the jackal's name and health on a carved stone plate, the energy counter and End Turn as gold-framed pieces like the picture. Keep everything the picture dropped: the climb gauge, Switch, Log, Menu, the pile counts, the Attack intent and the cost gems. No bought packs; generate or build the art.
-      Test: state=3d ^cards-and-hud-in-the-style-of-picture-b
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Cards and HUD in the style of picture B.|details]]
+      Ask: Grader failed this: card art not repainted. Generate painted faces next?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-card-hud-after.png|420]] ^cards-and-hud-in-the-style-of-picture-b
 
 ## Waiting on Nick
 
@@ -486,3 +489,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **A climb stone sits in front of the jackal's face.** At the closer rest camera the third stone covers the head.
 - [ ] (proposed) **Standoff is shared by every beast.** GROUND_STANDOFF 4.2 -> 1.75 brings every fight's beast closer, not only the jackal.
 - [ ] (proposed) **The jackal is narrow head-on.** A front-facing quadruped is ~17% of frame width; A's beast spans most of it.
+- [ ] (proposed) Card faces are still mixed: Tongue Snap, Tongue Flick are pictograms and Scramble a 3D render; needs a painted-art pipeline.
+- [ ] (proposed) The beast plate keeps the name inline; picture B sets the name on its own tab above a wide bar.
+- [ ] (proposed) Gold HUD frames are bevelled rings, not the scrolled end-caps and crown of picture B.

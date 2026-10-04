@@ -31365,6 +31365,23 @@ func _test_hud_reads_like_slay_the_spire() -> void:
 	_expect(end["disabled"].bg_color.s < 0.2, "sts hud: a disabled button greys out")
 	var bar: Dictionary = Combat3D.beast_bar_styles()
 	_expect(bar["fill"].bg_color == UB.FILL, "sts hud: the beast's bar is the same red")
+	# Picture B (Nick, 2026-10-04): gold frames on energy and End Turn, a
+	# carved stone plate under the beast's name, a gold halo on playable cards.
+	var gold: Array = Combat3D.plate_frame("gold")
+	var stone: Array = Combat3D.plate_frame("stone")
+	_expect(gold[1].r > 0.9 and gold[1].b < 0.6 and float(gold[3]) == 0.0,
+		"picture b: the gold frame is warm and smooth")
+	_expect(stone[1].s < 0.15 and float(stone[3]) > 0.0, "picture b: the plate is grey, grained stone")
+	_expect(Combat3D.plate_frame("nope") == gold, "picture b: an unknown frame falls back to gold")
+	var host := Button.new()
+	host.size = Vector2(150, 46)
+	var ring: ColorRect = Combat3D.add_plate_frame(host, "gold", 22.0)
+	_expect(ring.mouse_filter == Control.MOUSE_FILTER_IGNORE and ring.size == host.size,
+		"picture b: the frame covers its host and lets taps through")
+	host.free()
+	_expect(CardView.playable_glow(true).a > 0.3 and CardView.playable_glow(true).r > 0.9,
+		"picture b: a playable card glows gold")
+	_expect(CardView.playable_glow(false).a == 0.0, "picture b: an unplayable card does not glow")
 	# The beast plate: under its feet, lifted above a hunter standing there.
 	var vp := Vector2(1280, 720)
 	var plate := Vector2(380, 22)
