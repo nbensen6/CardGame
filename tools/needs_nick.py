@@ -173,7 +173,7 @@ def apply_requests(lines, reqs):
             test, where_note = where, ""
         else:
             test, where_note = "state=3d", f" (where: {where})"
-        note = attach_images(r["what"] + where_note + (" " + r["picture"] if r["picture"] else ""))
+        note = attach_images(r.get("note") or r["what"] + where_note + (" " + r["picture"] if r["picture"] else ""))
         block = [f"- [ ] **{title}**",
                  f"      **Nick, {STAMP}:** {note}",
                  f"      {test_link(test)} · [[BUILDER-QUEUE-NOTES#{title}|details]]",
@@ -189,6 +189,44 @@ def apply_requests(lines, reqs):
             lines[k:k] = block
         end += len(block)
     return True
+
+
+PROPOSED = ROOT / "design" / "plan" / "BUILDER-PROPOSED.md"
+PICK = re.compile(r"^- \[ \] (?:\(proposed\) )?\*\*(.+?)\*\* *(.*)$")
+
+
+def proposals():
+    """The builder's proposals Nick can pick from when the queue is empty:
+    [(title, body, line)], newest first. Only the one-line, bold-titled ones;
+    harness-internal titles (code in the title) stay off his page."""
+    if not PROPOSED.exists():
+        return []
+    out = []
+    for line in PROPOSED.read_text(encoding="utf-8").split("\n"):
+        m = PICK.match(line)
+        if m and not m.group(1).startswith("Built") and not re.search(r"[=`]", m.group(1)):
+            out.append((m.group(1), m.group(2).strip(), line))
+    return out[::-1]
+
+
+def read_picks():
+    """Proposals Nick ticked on the page, as requests for the end of Now.
+    Each leaves BUILDER-PROPOSED.md, so a stale page cannot queue it twice."""
+    if not OUT.exists():
+        return []
+    ticked = re.findall(r"^- \[x\] \*\*(.+?)\*\*", OUT.read_text(encoding="utf-8"), re.M)
+    props = {t: (body, line) for t, body, line in proposals()}
+    reqs = []
+    for t in ticked:
+        if t not in props:
+            continue
+        body, line = props[t]
+        PROPOSED.write_text(PROPOSED.read_text(encoding="utf-8").replace(line + "\n", "", 1), encoding="utf-8")
+        reqs.append({"what": t, "where": "rest", "priority": "later", "picture": "",
+                     "note": f"picked from the builder's proposals. {body}"})
+    if reqs:
+        git("add", str(PROPOSED))
+    return reqs
 
 
 REQUEST_FORM = ["## Ask the builder for something", "",
@@ -280,8 +318,16 @@ def write_page(lines, items):
         out += ["## Decide", ""] + [bullet(it) for it in decide] + [""]
     if now:
         out += ["## Look, then tick or send back", ""] + [bullet(it) for it in now] + [""]
-    if not decide and not now:
-        out += ["Nothing. The builder is running or waiting for a new line in [[BUILDER-QUEUE]].", ""]
+    idle = not any(it["mark"] == " " and section_of(lines, it["a"]).startswith("## Now") for it in items)
+    picks = proposals()[:8] if idle else []
+    if picks:
+        # An empty page left the builder idle for four days (2026-09-30 to
+        # 10-04): Nick had nothing to tick. Idle means he gets a menu.
+        out += ["## The builder has nothing to do. Tick what it builds next", ""]
+        first = re.compile(r"(?<=[.!?])\s")  # one sentence of the body is enough
+        out += [f"- [ ] **{t}** {first.split(body, 1)[0]}" for t, body, _ in picks] + [""]
+    elif not decide and not now:
+        out += ["Nothing for you. The builder is working through [[BUILDER-QUEUE]].", ""]
     out += REQUEST_FORM
     for _ in range(3):
         out += BLANK_SLOT
@@ -328,7 +374,7 @@ def apply_page(text):
     lines, items = parse(text)
     ensure_ids(lines, items)
     changed = apply_answers(lines, items, read_answers())
-    changed = apply_requests(lines, read_requests()) or changed
+    changed = apply_requests(lines, read_requests() + read_picks()) or changed
     return "\n".join(lines), changed
 
 
