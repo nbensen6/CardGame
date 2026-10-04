@@ -341,6 +341,16 @@ run failed.
 The builder skips this section. Answer here or in Home; the item then moves
 into Now.
 
+- [ ] **Pick the target picture for the fight screen.**
+      Ask: Which picture should the fight look like: A, B or C? Add anything you would change. A plain tick means A.
+      A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
+      B, painted: ![[art/targets/2026-10-04-target-B-painted.png|420]]
+      C, dusk low-poly: ![[art/targets/2026-10-04-target-C-dusk-lowpoly.png|420]]
+      Now: ![[agents/frames/builder/2026-09-30-floor-band-after.png|420]]
+      The pictures are square and the game is 16:9: they set the look (beast size, light, colour, outline, card style), not the exact layout.
+      Once Nick answers, build this: copy his pick to `design/art/targets/TARGET.png`; embed it at the top of [[JACKAL-BAR]]; add to `.claude/agents/grader.md` "open design/art/targets/TARGET.png beside the after frame and name the three biggest differences in look; a frame no closer to the target than the before frame is a FAIL". Then pass 1 toward the target, in `state=3d`: the jackal fills the upper half of the frame and is lit so its shape reads, and the floor is readable instead of black. Nick's changes on his note override the picture.
+      Test: state=3d ^pick-the-target-picture
+
 ## Open decisions, with the default the builder takes if Nick says nothing
 
 - #14 stones: five per hunter, as built.
