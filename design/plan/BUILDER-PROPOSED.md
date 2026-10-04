@@ -210,5 +210,5 @@ appends here, never to the queue.
 - [ ] **Display-font digits read oddly.** KenneyFutureNarrow draws "7" like a hook; the intent badge's number may want the body font.
 - [ ] **Rest of the HUD in obsidian.** Log, Menu, the pile counts and the hunters' tan HP bars were outside the item and still use the old style.
 - [ ] **Show more sky at rest.** Tilt or lower the rest camera so the ash clouds over the wall read.
-- [ ] **Hunters move: idle, hop, attack, hit.** After the target picture is picked. The Frog and Goblin are still statues; give each a rig and four short animations so the fight reads as alive.
-- [ ] **One card art style.** After the target picture is picked. The hand shows four art styles today; repaint every card face and frame in the style of the target picture.
+- [ ] **Hunters move: idle, hop, attack, hit.** The Frog and Goblin are still statues; give each a rig and four short animations (after the target picture is picked).
+- [ ] **One card art style.** The hand shows four art styles today; repaint every card in the style of the target picture (after it is picked).
