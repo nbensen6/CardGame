@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T16:13
-working_on: "Cards and HUD in the style of picture B."
+updated: 2026-10-04T19:30
+working_on: "Scene pass 2 toward picture A: grey stone steps, frog on a lit rock."
 ---
 
 # builder
@@ -13,21 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 16:13 EDT
+2026-10-04 19:30 EDT
 
-- **Did:** Gold ornate card frames with a playable glow; gold energy and End Turn; stone beast plate.
-- **Worked?** Partly: frames, glow and plates land, but card art is unrepainted. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-04-card-hud-before.png]] then ![[frames/builder/2026-10-04-card-hud-after.png]]
-- **Ask:** Grader failed this: card art not repainted. Generate painted faces next?
+- **Did:** Pale flat grey slabs, Frog on a raised hex rock, thick warm outlines on jackal and Frog.
+- **Worked?** Partly: slabs, rock and outlines land, but stones still ring the head. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-04-scene-pass2-before.png]] then ![[frames/builder/2026-10-04-scene-pass2-after.png]]
+- **Ask:** Grader failed this: stones still ring the head. End the climb at the chest?
 
 ## Notes
 
-- **Found:** Card faces are still mixed: two pictograms and one 3D render beside painted Leap.
-- **Found:** The beast plate keeps the name inline; picture B puts it on its own tab.
-- **Found:** Gold HUD frames are bevelled rings, not picture B's scrolled end-caps.
+- **Found:** The Frog has no contact shadow on its rock.
+- **Found:** The jackal's thick outline frays along the low-poly flanks.
 
 ## Log
 
+- 2026-10-04 19:30 EDT — builder: scene pass 2 toward picture A: jackal stones -> pale flat slabs (BIOME stone "slab"), raised rest rock under waiting hunters (rest_rock_lift), thick warm outline on jackal (0.018) and Frog + tests; grader FAIL x2 (stones ring the head: route geometry, Nick's call), shipped 👀; tests green, pushed.
 - 2026-10-04 16:02 EDT — builder: scene pass 1 toward picture A: GROUND_STANDOFF 4.2 -> 1.75 + rest_beast_share, toon body_floor/shadow lift and warm outline on the jackal, obsidian floor slate tone + test; grader FAIL x2 (a climb stone over the face), shipped 👀; tests green, pushed.
 - 2026-09-30 17:25 EDT — builder: sky "crash" answered (Nick 16:59): same play-mode quit as the HUD item, fixed at 17:12; proved with pre-fix vs main play runs sampled to +20 s; no code change; grader PASS; tests green, pushed.
 - 2026-09-30 17:12 EDT — builder: HUD "crash" answered (Nick 16:59): play mode quit after idleat/deathat/enemyat shots via _save_and_quit; now returns PLAY READY when quits_after_shot is false + test; grader FAIL (one still) then PASS on 8 s grid; tests green, pushed.

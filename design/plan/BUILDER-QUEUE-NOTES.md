@@ -1566,3 +1566,14 @@ Run 2026-10-04 16:13 EDT. Frames: `2026-10-04-card-hud-before.png`, `-after.png`
 - Grader round 1 FAIL: frames too thin, plate not stone. Thickened frames, stronger halo, stone slab. Round 2 FAIL: only the card art (pictograms/3D render not repainted) and the plate's name tab. No 2D painting tool is in reach here and Meshy regeneration is off-limits, so the art repaint is left for Nick.
 - Final: VERDICT: FAIL (closer than before; card art not repainted).
 
+## Scene pass 2 toward picture A: grey stone steps, frog on a lit rock.
+
+Builder, 2026-10-04 19:30 EDT.
+
+- **Stones:** the jackal's biome (`quarry_ember`) now asks for `"stone": "slab"` instead of `"lava_rock"`: pale cool grey body and cap, no ember rim, depth `SLAB_DEPTH` 0.32 of the radius at every rung (was 2.0 near, 0.9 at top). Reverting is one BIOME entry; the lava rock shader is untouched.
+- **Frog's rock:** new biome flag `"rest_rock": true`. `rest_rock_lift()` returns `REST_ROCK_HEIGHT` (0.55 hunter heights); `rest_pos_for()` takes it as a lift, so a waiting hunter stands on top of a dark hex rock (`_put_rest_rock`, one per slot, built in `_place_hunters` where the rest spot is decided). It is not a float stone: it doesn't bob or spin. First tried building it in `_build_float_stones`; there `ground_standoff_for` gave z=10.3 while `_place_hunters` gave 45.1 (the beast box differs by then), so the rock was off-screen. Building it at placement fixed that.
+- **Outlines:** jackal `outline_width` 0.006 -> 0.018, colour (1.0, 0.84, 0.50). The Frog gets a SURFACE_FINISH entry with only the line (0.013, same colour); its body keeps the toon defaults.
+- **Tests:** stone-style test now pins "slab", the flat depth, the rest lift (jackal only), rest_pos_for's lift, the thick jackal line and the Frog's line; the matte test now checks the Frog's body keeps default specular and uses goblin_mech for "no entry".
+- **Grader:** FAIL twice. Round 1: stones, face, Frog line and jackal line not met. Round 2 (thicker lines): lines and rock met; still NOT MET: stones ring the head instead of climbing one line to the chest, a slab over the muzzle, no contact shadow under the Frog.
+- **Why I stopped there:** the stone positions are the climb route. The top stone is the sigil hold, and the zigzag and one line per hunter are Nick's own rulings (#14, 2026-09-25, 2026-09-29). Ending the line at the chest moves where the hunters land, so it is his call. That is the Ask; it matches the proposed item "Clear the climb stones off the jackal's face".
+

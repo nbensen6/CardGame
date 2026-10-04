@@ -108,7 +108,10 @@ const AI_MOTION := {
 const SURFACE_FINISH := {
 	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.19, 0.105, 0.075), "shadow_color": Color(0.50, 0.46, 0.56),
 		"half_level": 0.72,
-		"outline_color": Color(1.0, 0.72, 0.30), "outline_width": 0.006},
+		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
+		"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.018},
+	# Scene pass 2 (picture A): the Frog wears the same warm line as the beast.
+	"frog": {"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.013},
 }
 
 
@@ -776,6 +779,9 @@ var _beast_scale := 1.0
 ## The floating stepping stones and where each one hangs at rest.
 var _float_stones: Array = []
 var _float_home: Array = []
+## The raised rocks waiting hunters stand on (_add_rest_rock). Kept apart from
+## _float_stones: they never bob or spin.
+var _rest_rocks: Array = []
 var _beast_height := 0.0
 var _hunters: Array = []          # slot -> {node, home}
 var _active_slot := 0
@@ -2807,10 +2813,14 @@ const BIOME := {
 		# Scene pass 1 (Nick, 2026-10-04, picture A): the floor reads as dark
 		# slate you can see, not a black hole under the hunters.
 		"floor_tone": Color(0.17, 0.17, 0.19),
-		# Lava rock under the hunters (session, 2026-09-29): the climb stones
-		# go dark basalt with an ember glow at the underside and edges. See
-		# stone_style() / _add_float_stone().
-		"stone": "lava_rock",
+		# Lava rock under the hunters (session, 2026-09-29) made the climb
+		# stones red-black crates. Scene pass 2 (picture A, Nick 2026-10-04):
+		# pale grey flat slabs instead, thin enough that a high one no longer
+		# hides the face. See stone_style() / _add_float_stone().
+		"stone": "slab",
+		# Scene pass 2 (picture A): a waiting hunter stands on a raised dark
+		# rock, lit, with its shadow on it. See rest_rock_lift().
+		"rest_rock": true,
 		# Lava round the arena (session, 2026-09-29): a molten ring in the
 		# trench between the floor's edge and the wall, [inner, outer] in arena
 		# radii. See lava_ring() / _add_lava().
@@ -2918,12 +2928,27 @@ static func floor_style(biome: String) -> String:
 	return String(b.get("floor", ""))
 
 
-## The climb stones' finish a biome asks for: "lava_rock", or "" for the pale
-## stones every other fight keeps. Static so run_tests.gd can pin which fights
+## The climb stones' finish a biome asks for: "lava_rock", "slab" (pale grey,
+## flat, no ember rim; picture A), or "" for the pale stones every other
+## fight keeps. Static so run_tests.gd can pin which fights
 ## get it.
 static func stone_style(biome: String) -> String:
 	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
 	return String(b.get("stone", ""))
+
+
+## How high a waiting hunter stands: on a raised rock in a biome that asks
+## for one (picture A: the Frog on a lit rock in the foreground), else on the
+## ground. Static so run_tests.gd can pin it.
+const REST_ROCK_HEIGHT := HUNTER_HEIGHT * 0.55
+static func rest_rock_lift(biome: String) -> float:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return REST_ROCK_HEIGHT if bool(b.get("rest_rock", false)) else 0.0
+
+
+## A slab stone's depth as a multiple of its radius: flat, like the slabs in
+## picture A, at every rung.
+const SLAB_DEPTH := 0.32
 
 
 var _ground_mat_default: Material = null
@@ -5417,8 +5442,8 @@ static func hunter_move_kind(placed: bool, was: int, foot: int, moved: bool) -> 
 ## 2026-09-28: "hunters are not starting in front of the stones" -- they used
 ## to stand ~1.2 either side of centre while the lines open out to ~4 each
 ## side, so the big stones flanked the hunters instead of leading from them.
-static func rest_pos_for(first_stone: Vector3, rest_z: float) -> Vector3:
-	return Vector3(first_stone.x, 0.0, rest_z)
+static func rest_pos_for(first_stone: Vector3, rest_z: float, lift: float = 0.0) -> Vector3:
+	return Vector3(first_stone.x, lift, rest_z)
 
 
 static func hunter_side_offset(players: Array, i: int, height: int) -> float:
@@ -5518,7 +5543,10 @@ func _place_hunters(s: Dictionary) -> void:
 				# stones"). Same slot convention and same call as that stone.
 				var rs: float = -1.0 if i == 0 else 1.0
 				pos = rest_pos_for(route_pos_cleared(_top_hold(rs), back, 0,
-					_rung_count(), route_sweep_for(rs)), pos.z)
+					_rung_count(), route_sweep_for(rs)), pos.z,
+					rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))))
+			if pos.y > 0.0:
+				_put_rest_rock(i, pos)
 		elif not _climb_points.is_empty():
 			# The model says where its ledges are, so stand on one. Fixed per
 			# slot (not the dynamic `side` above), so a hunter's own approach
@@ -6011,6 +6039,36 @@ static func stone_depth_ratio(recede: float) -> float:
 ## beast (Nick, 2026-09-24, with a drawing). Pulled out of _build_float_stones
 ## so building one hunter's line and then the other's is one call each, not a
 ## duplicated block.
+## The raised rock hunter `slot` waits on (rest_rock_lift): a dark hex slab,
+## its top at `top`, lit by the scene so the hunter's shadow lands on it. Not a
+## float stone: it does not bob, and nobody climbs it. Built once per slot,
+## moved if the rest spot moves.
+func _put_rest_rock(slot: int, top: Vector3) -> void:
+	while _rest_rocks.size() <= slot:
+		_rest_rocks.append(null)
+	var had: Variant = _rest_rocks[slot]
+	if had != null and is_instance_valid(had):
+		var old := had as MeshInstance3D
+		old.position = Vector3(top.x, top.y - (old.mesh as CylinderMesh).height * 0.5, top.z)
+		return
+	var rock := MeshInstance3D.new()
+	var m := CylinderMesh.new()
+	m.top_radius = HUNTER_HEIGHT * 1.35
+	m.bottom_radius = HUNTER_HEIGHT * 1.55
+	m.height = top.y + HUNTER_HEIGHT * 0.4
+	m.radial_segments = 6
+	rock.mesh = m
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = Color(0.36, 0.35, 0.38)
+	mat.albedo_texture = ROCK_DETAIL
+	mat.roughness = 0.9
+	rock.material_override = mat
+	rock.position = Vector3(top.x, top.y - m.height * 0.5, top.z)
+	rock.rotation.y = PI / 6.0
+	_rig.add_child(rock)
+	_rest_rocks[slot] = rock
+
+
 func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# A wrapper, not a mesh directly, so the bob/spin in _process (which
 	# reads/writes `st.position`/`st.rotation.y` by array index — see the
@@ -6037,7 +6095,8 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# the beast, landing by landing, not a flat size for every stone.
 	var recede: float = float(index) / float(maxi(count - 1, 1))
 	var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
-	var rock_height := rock_radius * stone_depth_ratio(recede)
+	var slab := stone_style(String(BEAST_BIOME.get(_beast_id, "crag"))) == "slab"
+	var rock_height := rock_radius * (SLAB_DEPTH if slab else stone_depth_ratio(recede))
 	# Sunk enough that the CAP below (not the bare rock) is what a
 	# hunter visually lands on, with no gap between the two.
 	var cap_height := HUNTER_HEIGHT * 0.22
@@ -6156,6 +6215,11 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	rim.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	rim.position = Vector3(0.0, -0.005, 0.0)   # just under the cap's own top face, at its edge
 	stone.add_child(rim)
+	if slab:
+		# Picture A's slabs are plain pale grey: no ember lip, a cooler stone.
+		rim.visible = false
+		body_mat.albedo_color = Color(0.62 + tint, 0.62 + tint, 0.63 + tint)
+		cap_mat.albedo_color = Color(0.80 + cap_tint, 0.80 + cap_tint, 0.81 + cap_tint)
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)

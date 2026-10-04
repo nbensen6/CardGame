@@ -25323,7 +25323,11 @@ func _test_wants_toon_false_for_an_untagged_hunter() -> void:
 func _test_jackal_toon_body_is_matte() -> void:
 	_expect(float(Combat3D.surface_finish("cinder_jackal").get("spec_strength", -1.0)) == 0.0,
 		"the jackal's toon body must carry spec_strength 0 -- the hard specular band lit whole head facets pale, which is the gloss Nick asked to lose")
-	_expect(Combat3D.surface_finish("frog").is_empty(),
+	# The Frog took a warm outline in scene pass 2, but only on the line pass:
+	# its body keeps toon.gdshader's own specular.
+	_expect(not Combat3D.surface_finish("frog").has("spec_strength"),
+		"the Frog's body keeps toon.gdshader's own specular")
+	_expect(Combat3D.surface_finish("goblin_mech").is_empty(),
 		"a model with no SURFACE_FINISH entry keeps toon.gdshader's own defaults")
 	var mi := MeshInstance3D.new()
 	mi.mesh = BoxMesh.new()
@@ -31139,8 +31143,18 @@ func _test_scene_pass1_picture_a() -> void:
 
 
 func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
-	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "lava_rock",
-		"the Cinder Jackal's climb stones are lava rock")
+	# Scene pass 2 (picture A): the jackal's stones are pale grey flat slabs.
+	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "slab",
+		"the Cinder Jackal's climb stones are pale slabs (picture A)")
+	_expect(Combat3D.SLAB_DEPTH < 0.5, "a slab is flat: shallower than half its radius")
+	var jb := String(Combat3D.BEAST_BIOME["cinder_jackal"])
+	_expect(Combat3D.rest_rock_lift(jb) > 0.0, "a waiting hunter stands on a raised rock in the jackal fight")
+	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")
+	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.4).y, 0.4),
+		"rest_pos_for stands the hunter on the rock's top")
+	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
+	_expect(float(fin.get("outline_width", 0.0)) >= 0.01, "the jackal's warm line is thick (picture A)")
+	_expect(Combat3D.surface_finish("frog").has("outline_color"), "the Frog wears the warm line too")
 	for biome in Combat3D.BIOME.keys():
 		if biome != "quarry_ember":
 			_expect(Combat3D.stone_style(biome) == "",

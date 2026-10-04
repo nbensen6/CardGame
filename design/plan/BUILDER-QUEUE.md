@@ -362,10 +362,13 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-card-hud-after.png|420]] ^cards-and-hud-in-the-style-of-picture-b
 
-- [ ] **Scene pass 2 toward picture A: grey stone steps, frog on a lit rock.**
+- [ ] 👀 **Scene pass 2 toward picture A: grey stone steps, frog on a lit rock.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Scene pass 2 toward picture A: grey stone steps, frog on a lit rock.|details]]
+      Ask: Grader failed this: stones still ring the head. End the climb at the chest?
       Checked 2026-10-04 against `design/art/targets/TARGET.png`. Pass 1 got the jackal tall, lit and outlined. Still far from the picture, in `state=3d`: (1) the stones are red-black crates scattered round the head, one over the face; the picture has pale grey flat slabs in one clear line from the hunter up to the chest, and the face stays visible. (2) The frog is flat-lit in front of a black box; the picture has it on a raised rock with a shadow under it and the same warm outline as the beast. (3) The jackal's outline is a thin line; the picture's is thick and glowing. Do not touch the jackal's model or pose: that is Nick's call.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^scene-pass-2-toward-picture-a
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-scene-pass2-after.png|420]] ^scene-pass-2-toward-picture-a
 
 ## Waiting on Nick
 
@@ -502,3 +505,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Card faces are still mixed: Tongue Snap, Tongue Flick are pictograms and Scramble a 3D render; needs a painted-art pipeline.
 - [ ] (proposed) The beast plate keeps the name inline; picture B sets the name on its own tab above a wide bar.
 - [ ] (proposed) Gold HUD frames are bevelled rings, not the scrolled end-caps and crown of picture B.
+- [ ] (proposed) **The Frog has no contact shadow on its rock.** The rest rock is lit, but no darker shadow shows under the feet.
+- [ ] (proposed) **The jackal's thick outline is ragged.** At width 0.018 the inverted hull frays along the low-poly flanks.
