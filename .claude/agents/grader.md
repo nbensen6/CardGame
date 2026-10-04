@@ -15,7 +15,9 @@ You are also given two target pictures Nick picked on 2026-10-04. Read both.
 `TARGET.png` is the look of the 3D scene: beast size, light, colour, outline,
 floor, stones. `TARGET-UI.png` is the look of the cards and the HUD, and only
 that (ignore its beast and its missing controls). They are square and the game
-is 16:9: they set the look, not the layout.
+is 16:9: they set the look, not the layout. On a cards item you may also be
+given Nick's own card references; for card faces and frames those outrank
+`TARGET-UI.png`.
 
 Answer in exactly this shape, nothing else:
 

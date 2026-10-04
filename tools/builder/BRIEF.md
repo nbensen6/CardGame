@@ -64,8 +64,11 @@ stones climbing the gap between them, dark ground, cool sky.
      "grader") with exactly: the item's full text, the absolute path of the
      before frame, the absolute path of the after frame, and the absolute
      paths of `design/art/targets/TARGET.png` (the scene Nick picked) and
-     `design/art/targets/TARGET-UI.png` (the cards and HUD he picked). Look
-     at both targets yourself before you build. Nothing else: not
+     `design/art/targets/TARGET-UI.png` (the cards and HUD he picked). On
+     an item that touches cards, add the absolute path of every picture in
+     `design/art/targets/cards/` (Nick's own card references; for cards they
+     outrank TARGET-UI). Look at the targets yourself before you build.
+     Nothing else: not
      your summary, not the diff. It answers PASS or FAIL with evidence. On
      FAIL, fix what it names and reshoot: at most two more rounds. Still
      FAIL after that: mark the item `👀` anyway and start its `Ask:` with

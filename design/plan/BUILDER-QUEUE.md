@@ -357,6 +357,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-card-hud-after.png|420]] ^cards-and-hud-in-the-style-of-picture-b
 
+- [ ] **Scene pass 2 toward picture A: grey stone steps, frog on a lit rock.**
+      Checked 2026-10-04 against `design/art/targets/TARGET.png`. Pass 1 got the jackal tall, lit and outlined. Still far from the picture, in `state=3d`: (1) the stones are red-black crates scattered round the head, one over the face; the picture has pale grey flat slabs in one clear line from the hunter up to the chest, and the face stays visible. (2) The frog is flat-lit in front of a black box; the picture has it on a raised rock with a shadow under it and the same warm outline as the beast. (3) The jackal's outline is a thin line; the picture's is thick and glowing. Do not touch the jackal's model or pose: that is Nick's call.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^scene-pass-2-toward-picture-a
+
 ## Waiting on Nick
 
 The builder skips this section. Answer here or in Home; the item then moves
