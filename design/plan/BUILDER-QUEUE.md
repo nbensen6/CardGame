@@ -10,6 +10,11 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Swap in the new upright jackal model.**
+      **Nick, 2026-10-04 19:17 ET:** yes generate a new jackal model from picture A
+      The model is generated and in the repo: `game/assets/3d/cast/cinder_jackal_v2.glb` (upright rock jackal from picture A, 29,628 triangles, 1.38 wide x 1.90 tall, texture embedded). Run `--import`, then use it for the Cinder Jackal in the fight in place of `cinder_jackal_ai.glb`; keep the old file. In `state=3d` it must fill the upper half of the frame like `design/art/targets/TARGET.png`, with the lava cracks glowing and the warm outline. Re-derive the stone route and the holds for the new shape: the climb still ends at the head, and the face stays visible at rest.
+      Concept: ![[art/targets/2026-10-04-jackal-concept.png|300]] Model: ![[renders/cinder_jackal_v2_pass1_front.png|300]] ![[renders/cinder_jackal_v2_pass1_34.png|300]]
+      Test: state=3d beast=cinder_jackal ^swap-in-the-new-upright-jackal-model
 - [x] **Scene pass 1 toward picture A: big lit jackal, readable floor.**
       **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
       A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
