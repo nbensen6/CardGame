@@ -47,7 +47,22 @@ const FOOTHOLD_ROCK := preload("res://assets/3d/env/foothold_rock.glb")
 ## recipe.md). They load <id><suffix>.glb and shade with TOON. Kept beside the
 ## Python-built model rather than over it, so `build.cmd cast` can never
 ## silently put the old one back.
-const AI_ART := {"cinder_jackal": "_ai"}
+## The Cinder Jackal is the upright rock jackal of picture A since 2026-10-04
+## (Nick: "generate a new jackal model from picture A"); "_ai" stays on disk.
+const AI_ART := {"cinder_jackal": "_v2"}
+
+
+## The file a beast variant loads from: <id><variant>.tscn first (a generated
+## mesh wrapped with its climb_/ledge_ markers, for a model no Blender pass
+## gave markers), then <id><variant>.glb; "" when neither exists.
+static func beast_variant_path(key: String, variant: String) -> String:
+	if variant == "":
+		return ""
+	for ext in [".tscn", ".glb"]:
+		var p: String = CAST + key + variant + ext
+		if ResourceLoader.exists(p):
+			return p
+	return ""
 ## Hunters rebuilt the same way (design/guide/ai-beast-recipe.md), the parallel table
 ## the 2026-09-23 hunter-display-path request asked for: a character id listed
 ## here loads <id><suffix>.glb over cast/<id>.glb (Cast.model_path's own
@@ -106,10 +121,15 @@ const AI_MOTION := {
 ## body to the brown A shows; `outline_color` / `outline_width` go to the outline pass (see
 ## toon_material), a thick ember line like A's.
 const SURFACE_FINISH := {
-	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.19, 0.105, 0.075), "shadow_color": Color(0.50, 0.46, 0.56),
+	# The upright model (2026-10-04) paints reddish-brown rock that the ember
+	# light turned red all over; a cool tint and a low floor keep it dark brown
+	# so the cracks carry the heat, as in A.
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.08, 0.05, 0.045), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.50, 0.46, 0.56),
 		"half_level": 0.72,
 		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
-		"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.018},
+		# 0.010 since the upright model (2026-10-04): at 0.018 its slimmer limbs
+		# drowned in a pale halo.
+		"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.010},
 	# Scene pass 2 (picture A): the Frog wears the same warm line as the beast.
 	"frog": {"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.013},
 }
@@ -417,6 +437,13 @@ const OVER_SHOULDER := 4.2
 ## frame, a dark speck on the horizon; 1.75 puts it ~45% of the frame tall,
 ## ears near the top bar, paws on the lava line. See rest_beast_share.
 const GROUND_STANDOFF := 1.75
+## The least gap between the beast's front face and the hunters, in beast-
+## heights. GROUND_STANDOFF scales off depth, and the upright jackal of
+## 2026-10-04 is a fifth as deep as the old quadruped: off depth alone the
+## Frog stood at its shins and the frame was two legs. At 1.5 the new jackal
+## stands whole with its ears clear of the top bar (the old one's own gap was
+## 1.44 heights); a beast deep enough to need more keeps GROUND_STANDOFF's.
+const GROUND_GAP_PER_HEIGHT := 1.5
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -2662,8 +2689,9 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	var variant: String = model_variant if model_variant != "" \
 		else ("" if classic else String(AI_ART.get(key, "")))
 	_beast_toon = toon
-	if variant != "" and ResourceLoader.exists(CAST + key + variant + ".glb"):
-		path = CAST + key + variant + ".glb"
+	var variant_path := beast_variant_path(key, variant)
+	if variant_path != "":
+		path = variant_path
 		_beast_toon = _beast_toon or AI_ART.has(key)
 	if not ResourceLoader.exists(path):
 		return
@@ -2709,7 +2737,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# guarantees the clamp never has to bite.
 	var want_r := maxf(_beast_height * 0.85,
 		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
-			ground_standoff_for(_beast_box.end.z) / 0.86))
+			ground_standoff_for(_beast_box.end.z, _beast_box.size.y) / 0.86))
 	_arena_r = want_r
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
@@ -4982,8 +5010,8 @@ static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> 
 ## (`_show_beast`'s `want_r`) was sized only off the beast's own footprint,
 ## never off how far out a hunter needs to stand. Wiring the SAME formula
 ## into `want_r`'s own max() is what stops the clamp from silently winning.
-static func ground_standoff_for(front_edge: float) -> float:
-	return front_edge * (1.0 + GROUND_STANDOFF)
+static func ground_standoff_for(front_edge: float, beast_h: float = 0.0) -> float:
+	return front_edge + maxf(front_edge * GROUND_STANDOFF, beast_h * GROUND_GAP_PER_HEIGHT)
 
 
 ## How much of the frame's height a beast `beast_h` tall draws at its front
@@ -4991,7 +5019,7 @@ static func ground_standoff_for(front_edge: float) -> float:
 ## ground_standoff_for(front_edge), through a `fov_deg` vertical lens. The rule
 ## behind picture A's "jackal fills the upper half" (2026-10-04).
 static func rest_beast_share(front_edge: float, beast_h: float, fov_deg: float) -> float:
-	var dist := ground_standoff_for(front_edge) - front_edge + FOLLOW_DIST
+	var dist := ground_standoff_for(front_edge, beast_h) - front_edge + FOLLOW_DIST
 	return beast_h / (2.0 * maxf(dist, 0.01) * tan(deg_to_rad(fov_deg) * 0.5))
 
 
@@ -5087,7 +5115,7 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	# came out wrong too. #26 "hops land on stones, not in the air".
 	if n <= 1 or i >= n - 1:
 		return _top_hold(route_side)
-	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z), i, n,
+	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z, _beast_box.size.y), i, n,
 		route_sweep_for(route_side))
 
 
@@ -5530,7 +5558,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# a fraction of the beast's own front-edge distance scales with the
 			# creature (ground_standoff_for above), and the clamp keeps them on
 			# the floor rather than out in the apron.
-			var back: float = ground_standoff_for(_beast_box.end.z)
+			var back: float = ground_standoff_for(_beast_box.end.z, _beast_box.size.y)
 			# Narrow, not the beast's own half-width: the grounded camera now
 			# stands 9 units behind the active hunter, and at that range a split
 			# sized off a 10-unit-wide beast threw the second hunter off the
@@ -6012,7 +6040,7 @@ func _build_float_stones() -> void:
 	# real foot at this same rung and side, so a hunter always lands
 	# exactly on its own line's own stone, top hold included (t=1 there is
 	# `top_pt` itself, already `_top_hold(side)` -- no separate case needed).
-	var ground_z: float = ground_standoff_for(_beast_box.end.z)
+	var ground_z: float = ground_standoff_for(_beast_box.end.z, _beast_box.size.y)
 	var n := _rung_count()
 	for side in [-1.0, 1.0]:
 		var top_pt: Vector3 = _top_hold(side)

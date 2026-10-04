@@ -2407,6 +2407,7 @@ func _init() -> void:
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_scene_pass1_picture_a()
+	_test_upright_jackal_v2()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
 	# between the hunters' ground and the wall, lens always inside the shimmer.
@@ -31470,3 +31471,39 @@ func _test_intent_badge_sits_in_a_fixed_hud_slot() -> void:
 	_expect(at.x + sz.x < 1130.0, "clear of Log/Menu")
 	_expect(Combat3D.INTENT_ICON_SIZE <= 20 and Combat3D.INTENT_FONT_SIZE <= 16, "small, not a banner")
 	_expect(Combat3D.hunter_idle_y(Vector3(1, 2.5, 3)) == 2.5, "an idle hunter stands still at home")
+
+
+## The upright rock jackal from picture A (Nick, 2026-10-04: "generate a new
+## jackal model from picture A"). The fight loads it through its marker
+## wrapper, the route still climbs to the head, and a shallow upright body
+## still stands the hunters far enough off to show it whole.
+func _test_upright_jackal_v2() -> void:
+	_expect(String(Combat3D.AI_ART.get("cinder_jackal", "")) == "_v2",
+		"the Cinder Jackal fights as the upright v2 model")
+	_expect(ResourceLoader.exists("res://assets/3d/cast/cinder_jackal_ai.glb"),
+		"the old jackal stays on disk")
+	var path: String = Combat3D.beast_variant_path("cinder_jackal", "_v2")
+	_expect(path.ends_with("cinder_jackal_v2.tscn"),
+		"the wrapper with climb markers beats the bare .glb -- got %s" % path)
+	_expect(Combat3D.beast_variant_path("cinder_jackal", "") == "", "no variant, no path")
+	var root: Node3D = (load(path) as PackedScene).instantiate()
+	var tops := {}
+	for c in root.get_children():
+		var m: Dictionary = Combat3D.climb_marker_for(String(c.name))
+		if String(m["kind"]) == "climb":
+			tops[int(m["height"])] = (c as Node3D).position
+	_expect(tops.size() == 6, "climb_0..climb_5 on the upright jackal -- got %d" % tops.size())
+	if tops.has(5) and tops.has(0):
+		var top: Vector3 = tops[5]
+		# Model is 1.90 tall, feet at 0: the head sits between chin and ears.
+		_expect(top.y > 1.2 and top.y < 1.7, "the climb ends at the head -- got y=%.2f" % top.y)
+		for h in range(1, 6):
+			_expect((tops[h] as Vector3).y > (tops[h - 1] as Vector3).y, "each rung climbs above the last")
+	root.free()
+	# Upright: front edge ~3.3 units at 20 tall. Off depth alone the hunters
+	# stood at its shins; the height floor keeps the whole beast in frame.
+	var share: float = Combat3D.rest_beast_share(3.3, 20.0, 65.0)
+	_expect(share >= 0.3 and share <= 0.55,
+		"the upright jackal fills the upper part of the rest frame, not just its legs -- got %.2f" % share)
+	_expect(is_equal_approx(Combat3D.ground_standoff_for(25.0, 20.0), Combat3D.ground_standoff_for(25.0)),
+		"a deep beast's standoff is unchanged by the height floor")

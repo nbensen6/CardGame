@@ -1577,3 +1577,15 @@ Builder, 2026-10-04 19:30 EDT.
 - **Grader:** FAIL twice. Round 1: stones, face, Frog line and jackal line not met. Round 2 (thicker lines): lines and rock met; still NOT MET: stones ring the head instead of climbing one line to the chest, a slab over the muzzle, no contact shadow under the Frog.
 - **Why I stopped there:** the stone positions are the climb route. The top stone is the sigil hold, and the zigzag and one line per hunter are Nick's own rulings (#14, 2026-09-25, 2026-09-29). Ending the line at the chest moves where the hunters land, so it is his call. That is the Ask; it matches the proposed item "Clear the climb stones off the jackal's face".
 
+
+## Swap in the new upright jackal model.
+
+2026-10-04 19:46 EDT. Before: old quadruped `_ai` jackal, small and pale-outlined. Picture A: upright rock brute, dark with orange cracks.
+
+- `AI_ART["cinder_jackal"]` is `"_v2"`; `cinder_jackal_ai.glb` stays on disk (and in its death-clip test).
+- `cinder_jackal_v2.glb` is a bare Meshy mesh: no nodes named, no rig, no markers, feet at y -0.95. No Blender in the cloud, and `ai_beast.py`'s four-foot gate refuses a biped anyway, so the markers live in a Godot wrapper, `cast/cinder_jackal_v2.tscn`: the glb lifted 0.9521 so the feet sit at 0, plus climb_0..5 and ledge_0/2/3/4 at the old route's height fractions (0, .32, .45, .575, .69, .76 of 1.90) up the camera-right side, z 0.25-0.3 (front is +Z). `beast_variant_path()` prefers `<id><variant>.tscn` over `.glb`. The stones and holds are derived from those plus the hull, as for every beast.
+- Root cause of "camera at its knees": `ground_standoff_for` scaled only off the front edge (depth); the v2 is ~0.32 deep against the old jackal's 2.5. Added `GROUND_GAP_PER_HEIGHT` (1.5 beast-heights, min gap); 1.4 clipped the ears at the top edge, 1.7 left it small. Deep beasts keep GROUND_STANDOFF.
+- Outline 0.018 -> 0.010: on the slimmer limbs 0.018 was a blobby pale halo. Body: the texture is reddish-brown (median sRGB 82,49,39) and the ember light painted it red all over; `tint` (0.7, 0.8, 0.85) and body_floor (0.08, 0.05, 0.045) bring it to dark rock with bright cracks.
+- Grader round 1 FAIL: too small, too red, stones not a route. Round 2 (gap 1.7 -> 1.5, tint) FAIL: "fills height (y 15-335) but only ~18% of width; TARGET covers ~63%". At 1.38:1.90 a full-height figure in 16:9 cannot be 60% wide without cropping the legs below the frame: that is a layout choice, so it went to Nick.
+- Final VERDICT: FAIL.
+

@@ -10,11 +10,14 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Swap in the new upright jackal model.**
+- [ ] 👀 **Swap in the new upright jackal model.**
       **Nick, 2026-10-04 19:17 ET:** yes generate a new jackal model from picture A
       The model is generated and in the repo: `game/assets/3d/cast/cinder_jackal_v2.glb` (upright rock jackal from picture A, 29,628 triangles, 1.38 wide x 1.90 tall, texture embedded). Run `--import`, then use it for the Cinder Jackal in the fight in place of `cinder_jackal_ai.glb`; keep the old file. In `state=3d` it must fill the upper half of the frame like `design/art/targets/TARGET.png`, with the lava cracks glowing and the warm outline. Re-derive the stone route and the holds for the new shape: the climb still ends at the head, and the face stays visible at rest.
       Concept: ![[art/targets/2026-10-04-jackal-concept.png|300]] Model: ![[renders/cinder_jackal_v2_pass1_front.png|300]] ![[renders/cinder_jackal_v2_pass1_34.png|300]]
-      Test: state=3d beast=cinder_jackal ^swap-in-the-new-upright-jackal-model
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Swap in the new upright jackal model.|details]]
+      Ask: Grader failed this: beast too narrow. Crop its legs to fill A's width?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]] ^swap-in-the-new-upright-jackal-model
 - [x] **Scene pass 1 toward picture A: big lit jackal, readable floor.**
       **Nick, 2026-10-04 15:38 ET:** A, but the cards and UI from B
       A, bold flat: ![[art/targets/2026-10-04-target-A-bold-flat.png|420]]
@@ -507,3 +510,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) Gold HUD frames are bevelled rings, not the scrolled end-caps and crown of picture B.
 - [ ] (proposed) **The Frog has no contact shadow on its rock.** The rest rock is lit, but no darker shadow shows under the feet.
 - [ ] (proposed) **The jackal's thick outline is ragged.** At width 0.018 the inverted hull frays along the low-poly flanks.
+- [ ] (proposed) **The v2 jackal has no rig.** No idle, attack, hit or death clips; the old `_ai` one had all four.
+- [ ] (proposed) **The sigil ring sits on the v2 jackal's forehead.** climb_5 at y 1.44 puts the ring over the eyes.
+- [ ] (proposed) **Stones still ring the beast.** Two lines flank the body instead of climbing the chest as in A.

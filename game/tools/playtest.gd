@@ -748,7 +748,7 @@ func _check(v: Node, when: String) -> void:
 			if int(hk2) > 0:
 				route_rungs.append(int(hk2))
 		route_rungs.sort()
-		route_ground_z = v.call("ground_standoff_for", box.end.z)
+		route_ground_z = v.call("ground_standoff_for", box.end.z, box.size.y)
 	if route_ok:
 		var width: float = (beast_box as AABB).size.x
 		var tol_x: float = width * 0.055 + 0.30 + 0.05  # stand_offset_x's own max side swing, +slack

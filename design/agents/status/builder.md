@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T19:30
-working_on: "Scene pass 2 toward picture A: grey stone steps, frog on a lit rock."
+updated: 2026-10-04T19:46
+working_on: "Swap in the new upright jackal model."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 19:30 EDT
+2026-10-04 19:46 EDT
 
-- **Did:** Pale flat grey slabs, Frog on a raised hex rock, thick warm outlines on jackal and Frog.
-- **Worked?** Partly: slabs, rock and outlines land, but stones still ring the head. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-04-scene-pass2-before.png]] then ![[frames/builder/2026-10-04-scene-pass2-after.png]]
-- **Ask:** Grader failed this: stones still ring the head. End the climb at the chest?
+- **Did:** The fight now shows the upright rock jackal, whole, dark rock with glowing cracks and a warm line.
+- **Worked?** Partly: model, cracks, outline and face land; it fills height, not A's width. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-04-jackal-v2-before.png]] then ![[frames/builder/2026-10-04-jackal-v2-after.png]]
+- **Ask:** Grader failed this: beast too narrow. Crop its legs to fill A's width?
 
 ## Notes
 
-- **Found:** The Frog has no contact shadow on its rock.
-- **Found:** The jackal's thick outline frays along the low-poly flanks.
+- **Found:** The v2 jackal has no rig: no idle, attack, hit or death clips.
+- **Found:** The sigil ring sits on the v2 jackal's forehead, over the eyes.
+- **Found:** Stones still ring the beast rather than climb its chest.
 
 ## Log
 
+- 2026-10-04 19:46 EDT — builder: Cinder Jackal fights as cinder_jackal_v2 (AI_ART "_v2", .tscn wrapper with climb/ledge markers, beast_variant_path), GROUND_GAP_PER_HEIGHT 1.5 height floor on the standoff, outline 0.010, cool tint + low body floor + test; grader FAIL x2 (beast fills height, not A's width), shipped 👀; tests green, pushed.
 - 2026-10-04 19:30 EDT — builder: scene pass 2 toward picture A: jackal stones -> pale flat slabs (BIOME stone "slab"), raised rest rock under waiting hunters (rest_rock_lift), thick warm outline on jackal (0.018) and Frog + tests; grader FAIL x2 (stones ring the head: route geometry, Nick's call), shipped 👀; tests green, pushed.
 - 2026-10-04 16:02 EDT — builder: scene pass 1 toward picture A: GROUND_STANDOFF 4.2 -> 1.75 + rest_beast_share, toon body_floor/shadow lift and warm outline on the jackal, obsidian floor slate tone + test; grader FAIL x2 (a climb stone over the face), shipped 👀; tests green, pushed.
 - 2026-09-30 17:25 EDT — builder: sky "crash" answered (Nick 16:59): same play-mode quit as the HUD item, fixed at 17:12; proved with pre-fix vs main play runs sampled to +20 s; no code change; grader PASS; tests green, pushed.
