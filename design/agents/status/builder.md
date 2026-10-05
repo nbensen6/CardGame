@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T21:56
-working_on: "Cliffs and floor in picture A's flat style."
+updated: 2026-10-04T22:13
+working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 21:56 EDT
+2026-10-04 22:13 EDT
 
-- **Did:** Jackal arena cliffs are flat slate in three tones; floor is big slabs with glowing orange seams.
-- **Worked?** Yes: VERDICT: PASS, first round.
-- **Look at:** ![[frames/builder/2026-10-05-cliffs-floor-before.png]] then ![[frames/builder/2026-10-05-cliffs-floor-after.png]]
-- **Ask:** Flatten the cobbled stones and hunter rocks the same way next?
+- **Did:** Overnight pass 1: the jackal's warm glowing outline now closes round its whole silhouette.
+- **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p1-before.png]] then ![[frames/builder/2026-10-05-overnight-p1-after.png]]
+- **Ask:** nothing
 
 ## Notes
 
-- **Found:** `floor_tone` is an sRGB `source_color`, so pass 1's 0.17 rendered almost black.
-- **Found:** The climb stones and rest rocks are now the only cobble-textured surfaces in frame.
+- **Found:** Skinning mangles a custom TANGENT; the rigged jackal's outline hull slid sideways until it moved to NORMAL.
+- **Found:** With the outline lit, the jackal's body reads a shade more orange; the cracks stand out less.
 
 ## Log
 
+- 2026-10-04 22:13 EDT — builder: overnight pass 1: outline hull welded normals in NORMAL for facet-lit (skinned) bodies, depth push along the view ray + tests; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 21:56 EDT — builder: cliffs and floor flat: cliff_flat.gdshader (3 flat slate tones by face normal, warm foot band) on the jackal wall via wall_style "flat"; obsidian slab_var + wider/hotter seams via floor_params, floor_tone 0.25 + test; grader PASS; tests green, pushed.
 
 - 2026-10-05 01:50 EDT — builder: stone staircase: jackal biome route_top 0.42 (route ends at chest), one_line (held hunter's line only, no zigzag), REST_ASIDE so the first block shows beside the Frog, slab blocks 1.4x wide with straight sides 1.05 tall + tests; grader FAIL then PASS; tests green, pushed.

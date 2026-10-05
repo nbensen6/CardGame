@@ -574,3 +574,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`.
 - [ ] (proposed) **Floor tone was near black.** `floor_tone` is an sRGB `source_color`, so 0.17 rendered almost black; raised to 0.25.
 - [ ] (proposed) **Stones and rest rocks still cobble-textured.** Beside the flat cliffs they are the last detailed-realistic surfaces in frame.
+- [ ] (proposed) **Skinned TANGENT is mangled.** Any rigged model's outline must carry welded normals in NORMAL, not TANGENT.
+- [ ] (proposed) **Jackal body a shade orange with the outline.** Cracks stand out less than in picture A.

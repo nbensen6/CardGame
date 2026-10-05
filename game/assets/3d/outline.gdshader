@@ -49,7 +49,11 @@ void vertex() {
 	vec3 view_n = normalize((MODELVIEW_MATRIX * vec4(push, 0.0)).xyz);
 	float reach = width * -view_pos.z;
 	view_pos.xyz += view_n * reach;
-	view_pos.z -= reach * depth_push;
+	// Back along the view ray, not along -z: -z shrinks the hull toward the
+	// screen centre, and on a beast high in the frame that ate the whole line
+	// on its top and outer edges (overnight pass 1, 2026-10-05). Along the ray
+	// the hull keeps its place on screen and only loses the depth test.
+	view_pos.xyz += normalize(view_pos.xyz) * reach * depth_push;
 	POSITION = PROJECTION_MATRIX * view_pos;
 }
 

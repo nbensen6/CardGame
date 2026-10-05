@@ -31236,6 +31236,20 @@ func _test_clean_shapes_welded_hull() -> void:
 	_expect(hull != null and (hull.surface_get_format(0) & Mesh.ARRAY_FORMAT_TANGENT) != 0,
 		"hull_mesh writes the welded normals into TANGENT")
 	_expect(Combat3D.hull_mesh(box) == hull, "hull_mesh is cached per mesh")
+	# Overnight pass 1: skinning mangles that TANGENT, so a body lit only from
+	# its facets carries the welded normals in NORMAL instead.
+	var flat_hull: ArrayMesh = Combat3D.hull_mesh(box, true)
+	_expect(flat_hull != null and flat_hull != hull, "the NORMAL-carrying hull is its own cached copy")
+	var fa := flat_hull.surface_get_arrays(0)
+	var fw := Combat3D.tangents_as_normals(Combat3D.welded_normals(fa[Mesh.ARRAY_VERTEX], box.surface_get_arrays(0)[Mesh.ARRAY_NORMAL]))
+	var same := true
+	for i in range(fw.size()):
+		same = same and (fa[Mesh.ARRAY_NORMAL][i] as Vector3).dot(fw[i]) > 0.999
+	_expect(same, "hull_mesh(into_normal) writes the welded normals over NORMAL")
+	_expect(Combat3D.hull_in_normal(Combat3D.surface_finish("cinder_jackal")),
+		"the jackal, lit only from its facets, carries its hull in NORMAL")
+	_expect(not Combat3D.hull_in_normal(Combat3D.surface_finish("frog")),
+		"the Frog keeps its own NORMAL and carries the hull in TANGENT")
 	var line_params: Array = (Combat3D.OUTLINE as Shader).get_shader_uniform_list().map(
 		func(u: Dictionary) -> String: return String(u["name"]))
 	_expect(line_params.has("welded") and line_params.has("depth_push") and line_params.has("energy"),

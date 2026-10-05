@@ -4849,10 +4849,11 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 	line.shader = OUTLINE
 	# The hull follows welded normals, not the faceted ones (Nick, 2026-10-04:
 	# "the outlines are really buggy"): see hull_mesh.
-	var welded := hull_mesh(mi.mesh)
+	var into_normal := hull_in_normal(finish)
+	var welded := hull_mesh(mi.mesh, into_normal)
 	if welded != null:
 		mi.mesh = welded
-		line.set_shader_parameter("welded", true)
+		line.set_shader_parameter("welded", not into_normal)
 	if outline_scale != 1.0:
 		line.set_shader_parameter("width", 0.0045 * outline_scale)
 	if tex != null:
@@ -4890,26 +4891,53 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 ## per corner, so the hull stays closed. NORMAL is untouched, so the body
 ## keeps its flat facets. Null for a mesh that is not an ArrayMesh or has
 ## blend shapes; the outline then falls back to NORMAL. Cached per mesh.
+##
+## `into_normal` writes the welded normals over NORMAL instead. Skinning
+## mangles a TANGENT that is not at right angles to NORMAL: on the rigged
+## jackal the whole hull slid sideways off the body and its left edge had no
+## line at all (overnight pass 1, 2026-10-05). NORMAL skins cleanly, and a
+## body shaded fully from its own facets (hull_in_normal) never reads it.
 static var _hull_cache := {}
-static func hull_mesh(mesh: Mesh) -> ArrayMesh:
+static func hull_mesh(mesh: Mesh, into_normal := false) -> ArrayMesh:
 	var src := mesh as ArrayMesh
 	if src == null or src.get_blend_shape_count() > 0:
 		return null
-	if _hull_cache.has(src):
-		return _hull_cache[src]
+	var key := [src, into_normal]
+	if _hull_cache.has(key):
+		return _hull_cache[key]
 	if src.has_meta("welded_hull"):
 		return src
 	var out := ArrayMesh.new()
 	for s in range(src.get_surface_count()):
 		var arrays := src.surface_get_arrays(s)
-		arrays[Mesh.ARRAY_TANGENT] = welded_normals(arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_NORMAL])
+		var t := welded_normals(arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_NORMAL])
+		if into_normal:
+			arrays[Mesh.ARRAY_NORMAL] = tangents_as_normals(t)
+		else:
+			arrays[Mesh.ARRAY_TANGENT] = t
 		var flags := src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
 		out.add_surface_from_arrays(src.surface_get_primitive_type(s), arrays, [], {}, flags)
 		out.surface_set_material(s, src.surface_get_material(s))
 		out.surface_set_name(s, src.surface_get_name(s))
 	out.set_meta("welded_hull", true)
-	_hull_cache[src] = out
+	_hull_cache[key] = out
 	return out
+
+
+## Whether a model's hull carries its welded normals in NORMAL: only when its
+## body takes every normal from its own facets (toon.gdshader `facet` 1.0), so
+## overwriting NORMAL cannot change how the body is lit.
+static func hull_in_normal(finish: Dictionary) -> bool:
+	return float(finish.get("facet", 0.0)) >= 1.0
+
+
+## welded_normals' packed TANGENT (x, y, z, w) as plain normals.
+static func tangents_as_normals(t: PackedFloat32Array) -> PackedVector3Array:
+	var n := PackedVector3Array()
+	n.resize(t.size() / 4)
+	for i in range(n.size()):
+		n[i] = Vector3(t[i * 4], t[i * 4 + 1], t[i * 4 + 2])
+	return n
 
 
 ## Per vertex, the normalised sum of the normals of every vertex at the same

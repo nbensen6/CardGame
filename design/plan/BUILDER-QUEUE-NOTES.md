@@ -1654,3 +1654,11 @@ Tests: ALL TESTS PASSED; new `_test_stone_staircase_is_one_line_to_the_chest`.
 - Tried: tone 0.30/0.29/0.36 read violet (74,52,80); crack_px 2.6 / gain 0.9 seams too hot.
 - Grader: round 1 VERDICT: PASS. It noted the stones and rest rocks keep their cobble texture (out of scope).
 - Tests: ALL TESTS PASSED; new `_test_cliffs_and_floor_flat_style`.
+
+## Overnight: keep closing the gap to picture A until 8 AM.
+
+Brief: the standing item; one pass per run. First before frame: `frames/builder/2026-10-05-overnight-p1-before.png`.
+
+- 2026-10-04 22:13 EDT — pass 1: the jackal's outline was missing on its top and left: skinning mangled the welded normals carried in TANGENT (hull slid sideways), and the -z depth push shrank the hull toward screen centre. Welded normals now ride in NORMAL for facet-lit bodies; depth push runs along the view ray. CLOSER (grader PASS). After: ![[agents/frames/builder/2026-10-05-overnight-p1-after.png|420]]
+  - Grader's remaining gaps, biggest first: beast size (~17% of width vs ~2/3; needs Nick's call, see "The jackal fills the frame"), horizon lava band too wide and hot, stones beige drums off to the beast's left, frog's rock beige not charcoal, floor seams too loud, sky red-magenta not violet, cliffs too blue.
+  - Needs new art (skipped): two upright ears, raised flaming fist, wide crouching stance.
