@@ -218,3 +218,4 @@ appends here, never to the queue.
 - [ ] **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`, so a rebuild indexes stale homes.
 
 - [ ] **Flat stones and rest rocks.** The climb stones and the hunters' rest rocks keep a cobble texture beside the now-flat cliffs and floor.
+- [ ] **Scene grade crushes dark colours.** Contrast 1.10 with saturation 1.18 zeroes dim channels, so every dark brown in the fight renders pure red.

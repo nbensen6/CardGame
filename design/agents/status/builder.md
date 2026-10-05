@@ -13,20 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 22:13 EDT
+2026-10-04 22:31 EDT
 
-- **Did:** Overnight pass 1: the jackal's warm glowing outline now closes round its whole silhouette.
+- **Did:** Overnight pass 2: the jackal's body reads dark brown with glowing cracks, not solid red.
 - **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p1-before.png]] then ![[frames/builder/2026-10-05-overnight-p1-after.png]]
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p2-before.png]] then ![[frames/builder/2026-10-05-overnight-p2-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** Skinning mangles a custom TANGENT; the rigged jackal's outline hull slid sideways until it moved to NORMAL.
-- **Found:** With the outline lit, the jackal's body reads a shade more orange; the cracks stand out less.
+- **Found:** The scene grade's contrast 1.10 zeroes any dark channel; dim browns anywhere render pure red.
 
 ## Log
 
+- 2026-10-04 22:31 EDT — builder: overnight pass 2: jackal body_floor (0.20,0.11,0.07) -> (0.22,0.20,0.19) so the grade keeps it brown + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:13 EDT — builder: overnight pass 1: outline hull welded normals in NORMAL for facet-lit (skinned) bodies, depth push along the view ray + tests; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 21:56 EDT — builder: cliffs and floor flat: cliff_flat.gdshader (3 flat slate tones by face normal, warm foot band) on the jackal wall via wall_style "flat"; obsidian slab_var + wider/hotter seams via floor_params, floor_tone 0.25 + test; grader PASS; tests green, pushed.
 
