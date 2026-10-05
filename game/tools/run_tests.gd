@@ -31303,6 +31303,8 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	var jb := String(Combat3D.BEAST_BIOME["cinder_jackal"])
 	_expect(Combat3D.rest_rock_lift(jb) > 0.0, "a waiting hunter stands on a raised rock in the jackal fight")
 	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")
+	_expect(Combat3D.REST_ROCK_TONE.get_luminance() < 0.2,
+		"the waiting rock is dark charcoal like picture A's pedestal, not pale beige")
 	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.4).y, 0.4),
 		"rest_pos_for stands the hunter on the rock's top")
 	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")

@@ -3122,6 +3122,13 @@ static func rest_rock_lift(biome: String) -> float:
 	return REST_ROCK_HEIGHT if bool(b.get("rest_rock", false)) else 0.0
 
 
+## The waiting rock's colour. Overnight pass 6 (picture A): its pedestal is a
+## dark charcoal hex pillar sunk into the floor; 0.36 grey with the cobble
+## texture rendered pale beige under the warm key and was the brightest thing
+## in the scene. Flat, no texture, so it matches the flat cliffs and slabs.
+const REST_ROCK_TONE := Color(0.12, 0.115, 0.135)
+
+
 ## A slab stone's depth as a multiple of its radius. Picture A's steps are
 ## chunky grey blocks about as tall as the Frog (Nick, 2026-10-04: "why does
 ## this look so different from the reference?"); 0.32 drew thin discs.
@@ -6431,8 +6438,7 @@ func _put_rest_rock(slot: int, top: Vector3) -> void:
 	m.radial_segments = 6
 	rock.mesh = m
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.36, 0.35, 0.38)
-	mat.albedo_texture = ROCK_DETAIL
+	mat.albedo_color = REST_ROCK_TONE
 	mat.roughness = 0.9
 	rock.material_override = mat
 	rock.position = Vector3(top.x, top.y - m.height * 0.5, top.z)
