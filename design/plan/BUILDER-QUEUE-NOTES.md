@@ -1589,3 +1589,18 @@ Builder, 2026-10-04 19:30 EDT.
 - Grader round 1 FAIL: too small, too red, stones not a route. Round 2 (gap 1.7 -> 1.5, tint) FAIL: "fills height (y 15-335) but only ~18% of width; TARGET covers ~63%". At 1.38:1.90 a full-height figure in 16:9 cannot be 60% wide without cropping the legs below the frame: that is a layout choice, so it went to Nick.
 - Final VERDICT: FAIL.
 
+
+
+## Clean shapes: flat planes, a smooth glowing outline.
+
+2026-10-04 20:50 EDT. Before: the jackal's hull is a pale, broken, stair-stepped band; the Frog wears a yellow halo; the rock is noisy dark red; nothing blooms. Picture A: thick smooth warm line, flat brown planes, cracks and eyes glowing into the air.
+
+- Root cause, measured: the v2 jackal is half-faceted, 35,475 vertices on 14,822 positions, so the hull pushed along NORMAL tore open at every facet edge. `Combat3D.hull_mesh()` copies each toon mesh and writes, into TANGENT (unused by toon.gdshader, skinned with the mesh), the average normal of every vertex at the same position (`welded_normals`, cached per mesh). `outline.gdshader` pushes along TANGENT when `welded` is set. NORMAL is untouched, so the body keeps its facets.
+- The welded hull at first painted pale lines over the cracks: in concave creases it pokes through the body. Fixed with `depth_push` (3 line widths back from the camera), so the line shows only past the silhouette.
+- MSAA 4x for 3D in project.godot (`anti_aliasing/quality/msaa_3d=2`).
+- Frog line: near-black, width 0.005 (was the jackal's warm 0.013).
+- Bloom: glow on in the fight's Environment (threshold 1.0, levels 1-3, additive). It renders on gl_compatibility (checked with an extreme setting). Jackal line `outline_energy` 2.2 with colour (1.0, 0.62, 0.24); crack `glow_gain` 0.55 -> 3.0.
+- Planes: toon.gdshader gained `tex_soften` (mip bias on the body colour only; the glow mask still reads the sharp texture), `facet` (face normal from screen derivatives), and `facet_shade` (a value shift per face direction). Jackal body_floor raised to (0.20, 0.11, 0.07) and shadow_color to (0.85, 0.74, 0.80), so the planes read instead of going black.
+- Eyes: `eye_l`/`eye_r`/`eye_radius`/`eye_gain` in toon.gdshader, a model-space mask that boosts hot texels. The v2's bright eye texels sit at x ±0.03-0.05, y ~0.575, z ~0.22 (found by probing texels; the inner ears are higher, y 0.72-0.95). At 6x zoom they now show as two pale slants, but at 1:1 they are 2-3 px and lose to the ears.
+- Grader: round 1 FAIL (planes, bloom). Round 2 FAIL (eyes only). Round 3 FAIL: outline, MSAA, Frog line, planes and crack bloom MET; eyes NOT MET at fight distance; rock still redder than A's brown.
+- Final VERDICT: FAIL.

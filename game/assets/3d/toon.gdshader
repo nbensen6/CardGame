@@ -21,6 +21,27 @@ uniform vec4 tint : source_color = vec4(1.0);
 // a near-black painted body reads as rock without any of it turning "hot"
 // (scene pass 1, picture A, 2026-10-04). Zero is a no-op.
 uniform vec3 body_floor = vec3(0.0);
+// Mip bias on the painted texture. A generated texture carries per-pixel
+// noise that reads as grit, not rock; sampling a blurrier mip turns it into
+// flat colour planes like picture A (Nick, 2026-10-04). Zero is a no-op.
+uniform float tex_soften = 0.0;
+// 1.0 lights each triangle with its own face normal (screen derivatives), so
+// the rock reads as cut flat planes, each one lit or in shadow whole. Zero
+// keeps the mesh's own normals.
+uniform float facet = 0.0;
+// How much each flat face is shaded by which way it faces (a fixed key from
+// upper front-left, in view space), so neighbouring planes differ in value
+// even in shadow, like a cut stone. Zero is a no-op.
+uniform float facet_shade = 0.0;
+// Eyes: two points in the model's own space whose hot pixels glow eye_gain
+// times harder, so the eyes read as two lit points and bloom at fight
+// distance instead of losing to the bigger hot patches (the inner ears).
+// eye_gain 0 is a no-op.
+uniform vec3 eye_l = vec3(0.0);
+uniform vec3 eye_r = vec3(0.0);
+uniform float eye_radius = 0.05;
+uniform float eye_gain = 0.0;
+varying vec3 v_model;
 
 // One hard band: lit or shadow, no midtone step. Style C, Nick 2026-09-24
 // (Risk of Rain 2 / Hopoo Games — low-poly, flat-shaded, no gradient). Was
@@ -76,6 +97,7 @@ vec3 idle(vec3 v, vec3 n) {
 
 void vertex() {
 	VERTEX = idle(VERTEX, NORMAL);
+	v_model = VERTEX;
 }
 
 vec3 rgb2hsv(vec3 c) {
@@ -93,7 +115,19 @@ void fragment() {
 	// hunters, whose auto-generated texture was noise, not detail, at their
 	// real ~40px on-screen size) supplies a plain white 1x1 albedo_tex so its
 	// true colour comes entirely from COLOR.
+	// The glow mask reads the sharp texture so the cracks stay crisp lines;
+	// only the body colour takes the softened mip.
 	vec3 base = texture(albedo_tex, UV).rgb * tint.rgb * COLOR.rgb;
+	vec3 body = texture(albedo_tex, UV, tex_soften).rgb * tint.rgb * COLOR.rgb;
+	if (facet > 0.0) {
+		vec3 fn = normalize(cross(dFdx(VERTEX), dFdy(VERTEX)));
+		NORMAL = normalize(mix(NORMAL, fn, facet));
+	}
+	float face = 1.0;
+	if (facet_shade > 0.0) {
+		vec3 fn = normalize(cross(dFdx(VERTEX), dFdy(VERTEX)));
+		face = mix(1.0, 0.45 + 0.9 * clamp(dot(fn, normalize(vec3(-0.35, 0.55, 0.75))), 0.0, 1.0), facet_shade);
+	}
 	ALBEDO = base;
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
@@ -102,7 +136,14 @@ void fragment() {
 	float hue_d = min(abs(hsv.x - glow_hue), 1.0 - abs(hsv.x - glow_hue));
 	float hot = (1.0 - smoothstep(0.03, 0.08, hue_d)) * smoothstep(0.55, 0.8, hsv.y) * smoothstep(0.55, 0.85, hsv.z);
 	EMISSION = base * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
-	ALBEDO = max(base, body_floor);
+	if (eye_gain > 0.0) {
+		float d = min(distance(v_model, eye_l), distance(v_model, eye_r));
+		float eye = 1.0 - smoothstep(eye_radius * 0.6, eye_radius, d);
+		EMISSION += base * hot * eye * eye_gain;
+	}
+	// The face shade goes on after the floor, so a floored body still shows
+	// its planes; the hot cracks keep their own colour.
+	ALBEDO = mix(max(body, body_floor) * face, base, hot);
 }
 
 void light() {

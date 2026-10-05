@@ -211,3 +211,5 @@ appends here, never to the queue.
 - [ ] **Show more sky at rest.** Tilt or lower the rest camera so the ash clouds over the wall read.
 - [ ] **Hunters move: idle, hop, attack, hit.** The Frog and Goblin are still statues; give each a rig and four short animations (after the target picture is picked).
 - [ ] **Clear the climb stones off the jackal's face.** At the new closer rest camera the mid stones cover the head; route them beside it.
+- [ ] **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
+- [ ] **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.

@@ -105,9 +105,11 @@ const ENV_AI_ART := {"cinder_jackal": "_ai"}
 const AI_MOTION := {
 	# Rigged (2026-09-22): tail and breath are bone animation now, so the
 	# shader only keeps the ember pulse.
-	# glow_gain down from 1.2: the Meshy jackal paints its inner ears the same
-	# hot orange as its markings, and at full gain they read as two flames.
-	"cinder_jackal": {"glow_pulse": 0.25, "glow_gain": 0.55},
+	# glow_gain 3.0 since the upright v2 model and the scene's glow pass
+	# (2026-10-04, clean shapes): its cracks are thin lines, and below the glow
+	# threshold they never bloomed. (0.55 was for the old Meshy jackal, whose
+	# orange inner ears read as two flames at full gain.)
+	"cinder_jackal": {"glow_pulse": 0.25, "glow_gain": 3.0},
 }
 ## Surface finish per toon-shaded model, set on the painted body only (never
 ## the outline, never an untextured foothold). Nick, 2026-09-29: "Make the
@@ -124,14 +126,22 @@ const SURFACE_FINISH := {
 	# The upright model (2026-10-04) paints reddish-brown rock that the ember
 	# light turned red all over; a cool tint and a low floor keep it dark brown
 	# so the cracks carry the heat, as in A.
-	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.08, 0.05, 0.045), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.50, 0.46, 0.56),
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.20, 0.11, 0.07), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
 		"half_level": 0.72,
 		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
 		# 0.010 since the upright model (2026-10-04): at 0.018 its slimmer limbs
 		# drowned in a pale halo.
-		"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.010},
-	# Scene pass 2 (picture A): the Frog wears the same warm line as the beast.
-	"frog": {"outline_color": Color(1.0, 0.84, 0.50), "outline_width": 0.013},
+		"outline_color": Color(1.0, 0.62, 0.24), "outline_width": 0.010,
+		# Clean shapes (Nick, 2026-10-04): the painted grit flattened into
+		# planes; the line pushed past white so the scene's glow blooms it.
+		"tex_soften": 6.0, "facet": 1.0, "facet_shade": 0.8, "outline_energy": 2.2,
+		# The eyes, in the v2 model's own space (found from its hot front-facing
+		# texels below the brow; the inner ears sit higher, y 0.72-0.95).
+		"eye_l": Vector3(-0.055, 0.58, 0.215), "eye_r": Vector3(0.055, 0.58, 0.215),
+		"eye_radius": 0.06, "eye_gain": 10.0},
+	# A thin dark line, not the beast's warm halo (Nick, 2026-10-04: "the
+	# outlines are really buggy"); picture A inks the Frog in near-black.
+	"frog": {"outline_color": Color(0.06, 0.05, 0.04), "outline_width": 0.005},
 }
 
 
@@ -4654,6 +4664,12 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 	mat.shader = TOON
 	var line := ShaderMaterial.new()
 	line.shader = OUTLINE
+	# The hull follows welded normals, not the faceted ones (Nick, 2026-10-04:
+	# "the outlines are really buggy"): see hull_mesh.
+	var welded := hull_mesh(mi.mesh)
+	if welded != null:
+		mi.mesh = welded
+		line.set_shader_parameter("welded", true)
 	if outline_scale != 1.0:
 		line.set_shader_parameter("width", 0.0045 * outline_scale)
 	if tex != null:
@@ -4667,6 +4683,8 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 		for k in finish:
 			if k == "outline_color":
 				line.set_shader_parameter("line_color", finish[k])
+			elif k == "outline_energy":
+				line.set_shader_parameter("energy", float(finish[k]))
 			elif k == "outline_width":
 				line.set_shader_parameter("width", float(finish[k]) * outline_scale)
 			else:
@@ -4678,6 +4696,60 @@ static func toon_material(mi: MeshInstance3D, tex: Texture2D,
 			mat.set_shader_parameter("tint", (had0 as StandardMaterial3D).albedo_color)
 	mat.next_pass = line
 	return mat
+
+
+## The outline hull is the mesh pushed out along its normals. On a faceted
+## model (hard edges, a vertex per face corner) every corner has as many
+## normals as faces meeting there, so the hull tears open at each facet edge
+## and the line goes broken and stair-stepped. This copy of `mesh` carries,
+## in TANGENT (unused by toon.gdshader, and skinned with the mesh), the
+## average of the normals of every vertex sharing a position: one direction
+## per corner, so the hull stays closed. NORMAL is untouched, so the body
+## keeps its flat facets. Null for a mesh that is not an ArrayMesh or has
+## blend shapes; the outline then falls back to NORMAL. Cached per mesh.
+static var _hull_cache := {}
+static func hull_mesh(mesh: Mesh) -> ArrayMesh:
+	var src := mesh as ArrayMesh
+	if src == null or src.get_blend_shape_count() > 0:
+		return null
+	if _hull_cache.has(src):
+		return _hull_cache[src]
+	if src.has_meta("welded_hull"):
+		return src
+	var out := ArrayMesh.new()
+	for s in range(src.get_surface_count()):
+		var arrays := src.surface_get_arrays(s)
+		arrays[Mesh.ARRAY_TANGENT] = welded_normals(arrays[Mesh.ARRAY_VERTEX], arrays[Mesh.ARRAY_NORMAL])
+		var flags := src.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS
+		out.add_surface_from_arrays(src.surface_get_primitive_type(s), arrays, [], {}, flags)
+		out.surface_set_material(s, src.surface_get_material(s))
+		out.surface_set_name(s, src.surface_get_name(s))
+	out.set_meta("welded_hull", true)
+	_hull_cache[src] = out
+	return out
+
+
+## Per vertex, the normalised sum of the normals of every vertex at the same
+## position (to 0.1 mm), packed as TANGENT (x, y, z, 1). Pure for the tests.
+static func welded_normals(verts: PackedVector3Array, normals: PackedVector3Array) -> PackedFloat32Array:
+	var sums := {}
+	var keys := []
+	keys.resize(verts.size())
+	for i in range(verts.size()):
+		var v := verts[i]
+		var k := Vector3i(roundi(v.x * 10000.0), roundi(v.y * 10000.0), roundi(v.z * 10000.0))
+		keys[i] = k
+		sums[k] = sums.get(k, Vector3.ZERO) + (normals[i] if i < normals.size() else Vector3.ZERO)
+	var t := PackedFloat32Array()
+	t.resize(verts.size() * 4)
+	for i in range(verts.size()):
+		var n: Vector3 = sums[keys[i]]
+		n = n.normalized() if n.length_squared() > 1e-12 else (normals[i] if i < normals.size() else Vector3.UP)
+		t[i * 4] = n.x
+		t[i * 4 + 1] = n.y
+		t[i * 4 + 2] = n.z
+		t[i * 4 + 3] = 1.0
+	return t
 
 
 ## Every mesh under `root`, toon-shaded. For a model loaded outside the fight.

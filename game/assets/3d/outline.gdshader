@@ -10,6 +10,17 @@ render_mode cull_front, unshaded, shadows_disabled;
 
 uniform vec4 line_color : source_color = vec4(0.07, 0.05, 0.08, 1.0);
 uniform float width : hint_range(0.0, 0.02) = 0.0045;
+// True when the mesh carries welded normals in TANGENT (Combat3D.hull_mesh):
+// the hull then pushes out along those, one direction per corner, and stays
+// closed over hard facet edges instead of splitting into a stair-step.
+uniform bool welded = false;
+// Above 1.0 the line passes the scene's glow threshold and blooms (the
+// jackal's warm line in picture A). 1.0 is a plain flat line.
+uniform float energy = 1.0;
+// The hull also steps back from the camera by this many line widths, so where
+// it pokes through a concave crease (the jackal's cracks) the body still hides
+// it and the line shows only past the silhouette.
+uniform float depth_push = 3.0;
 
 // Same idle motion as toon.gdshader, or the line peels off the moving tail.
 // Keep these two blocks identical.
@@ -34,11 +45,14 @@ vec3 idle(vec3 v, vec3 n) {
 void vertex() {
 	vec3 v = idle(VERTEX, NORMAL);
 	vec4 view_pos = MODELVIEW_MATRIX * vec4(v, 1.0);
-	vec3 view_n = normalize((MODELVIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
-	view_pos.xyz += view_n * width * -view_pos.z;
+	vec3 push = welded ? TANGENT : NORMAL;
+	vec3 view_n = normalize((MODELVIEW_MATRIX * vec4(push, 0.0)).xyz);
+	float reach = width * -view_pos.z;
+	view_pos.xyz += view_n * reach;
+	view_pos.z -= reach * depth_push;
 	POSITION = PROJECTION_MATRIX * view_pos;
 }
 
 void fragment() {
-	ALBEDO = line_color.rgb;
+	ALBEDO = line_color.rgb * energy;
 }

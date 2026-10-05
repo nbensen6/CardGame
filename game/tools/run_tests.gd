@@ -2407,6 +2407,7 @@ func _init() -> void:
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_scene_pass1_picture_a()
+	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
@@ -31143,6 +31144,50 @@ func _test_scene_pass1_picture_a() -> void:
 		"the jackal's floor is readable, not black")
 
 
+## Clean shapes (Nick, 2026-10-04: "the outlines are really buggy"): the
+## outline hull pushes along welded normals, so a faceted corner moves as one
+## point and the line stays closed; the jackal's line glows and its painted
+## grit is softened into planes.
+func _test_clean_shapes_welded_hull() -> void:
+	# Two faces meeting at a right-angle edge: four vertices, two positions
+	# shared, each pair with its own face's normal.
+	var verts := PackedVector3Array([Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(1, 0, 0), Vector3(0, 1, 0)])
+	var normals := PackedVector3Array([Vector3.UP, Vector3.RIGHT, Vector3.UP, Vector3.RIGHT])
+	var t: PackedFloat32Array = Combat3D.welded_normals(verts, normals)
+	_expect(t.size() == 16, "one TANGENT (x, y, z, w) per vertex")
+	var a := Vector3(t[0], t[1], t[2])
+	var b := Vector3(t[4], t[5], t[6])
+	_expect(a.is_equal_approx(b), "two vertices at one position push the hull the same way, so it cannot tear")
+	_expect(a.is_equal_approx(Vector3(1, 1, 0).normalized()), "the shared direction is the average of the faces' normals")
+	_expect(Vector3(t[8], t[9], t[10]).is_equal_approx(Vector3.UP), "a lone vertex keeps its own normal")
+	# The real mesh path: a faceted box comes back carrying TANGENT, NORMAL untouched.
+	var box := ArrayMesh.new()
+	box.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, BoxMesh.new().get_mesh_arrays())
+	var hull: ArrayMesh = Combat3D.hull_mesh(box)
+	_expect(hull != null and (hull.surface_get_format(0) & Mesh.ARRAY_FORMAT_TANGENT) != 0,
+		"hull_mesh writes the welded normals into TANGENT")
+	_expect(Combat3D.hull_mesh(box) == hull, "hull_mesh is cached per mesh")
+	var line_params: Array = (Combat3D.OUTLINE as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	_expect(line_params.has("welded") and line_params.has("depth_push") and line_params.has("energy"),
+		"outline.gdshader takes welded, depth_push and energy")
+	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
+	_expect(float(fin.get("outline_energy", 1.0)) > 1.0, "the jackal's line is bright enough to bloom")
+	_expect(float(fin.get("tex_soften", 0.0)) > 0.0, "the jackal's painted grit is softened into planes")
+	_expect(float(fin.get("facet", 0.0)) > 0.0 and float(fin.get("facet_shade", 0.0)) > 0.0,
+		"the jackal is lit and shaded per flat face, so its rock reads as planes")
+	var toon_params: Array = (Combat3D.TOON as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	_expect(toon_params.has("tex_soften") and toon_params.has("facet") and toon_params.has("facet_shade"),
+		"toon.gdshader takes tex_soften, facet and facet_shade")
+	_expect(toon_params.has("eye_gain") and float(fin.get("eye_gain", 0.0)) > 0.0
+		and (fin.get("eye_l", Vector3.ZERO) as Vector3).x < 0.0 and (fin.get("eye_r", Vector3.ZERO) as Vector3).x > 0.0,
+		"the jackal's two eyes glow on their own, one each side of its face")
+	_expect(float(Combat3D.surface_finish("frog").get("outline_width", 1.0)) < 0.008, "the Frog's line is thin")
+	_expect(int(ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d", 0)) >= 2,
+		"the 3D view is multisampled, so no outline stair-steps")
+
+
 func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	# Scene pass 2 (picture A): the jackal's stones are pale grey flat slabs.
 	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "slab",
@@ -31155,7 +31200,8 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 		"rest_pos_for stands the hunter on the rock's top")
 	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
 	_expect(float(fin.get("outline_width", 0.0)) >= 0.01, "the jackal's warm line is thick (picture A)")
-	_expect(Combat3D.surface_finish("frog").has("outline_color"), "the Frog wears the warm line too")
+	var frog_line: Color = Combat3D.surface_finish("frog").get("outline_color", Color.WHITE)
+	_expect(frog_line.v < 0.2, "the Frog wears a thin dark line, not the beast's warm halo (Nick, 2026-10-04)")
 	for biome in Combat3D.BIOME.keys():
 		if biome != "quarry_ember":
 			_expect(Combat3D.stone_style(biome) == "",

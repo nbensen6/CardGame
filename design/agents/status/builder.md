@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T19:46
-working_on: "Swap in the new upright jackal model."
+updated: 2026-10-04T20:50
+working_on: "Clean shapes: flat planes, a smooth glowing outline."
 ---
 
 # builder
@@ -13,21 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 19:46 EDT
+2026-10-04 20:50 EDT
 
-- **Did:** The fight now shows the upright rock jackal, whole, dark rock with glowing cracks and a warm line.
-- **Worked?** Partly: model, cracks, outline and face land; it fills height, not A's width. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-04-jackal-v2-before.png]] then ![[frames/builder/2026-10-04-jackal-v2-after.png]]
-- **Ask:** Grader failed this: beast too narrow. Crop its legs to fill A's width?
+- **Did:** Jackal outline now smooth and glowing, rock in flat planes, cracks bloom; Frog has a thin dark line.
+- **Worked?** Partly: outline, MSAA, Frog line, planes and crack bloom land; eyes too small. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-04-clean-shapes-before.png]] then ![[frames/builder/2026-10-04-clean-shapes-after.png]]
+- **Ask:** Grader failed this: eyes don't read at fight distance. Brighter eyes next?
 
 ## Notes
 
-- **Found:** The v2 jackal has no rig: no idle, attack, hit or death clips.
-- **Found:** The sigil ring sits on the v2 jackal's forehead, over the eyes.
-- **Found:** Stones still ring the beast rather than climb its chest.
+- **Found:** Jackal eyes are 2-3 px at rest; the glowing inner ears outshine them.
+- **Found:** Jackal rock still reads maroon, not picture A's brown.
 
 ## Log
 
+- 2026-10-04 20:50 EDT — builder: clean shapes: outline hull along welded normals (TANGENT) + depth push, MSAA 4x, Frog thin dark line, scene glow + hotter cracks and line, toon tex_soften/facet/facet_shade, eye mask + tests; grader FAIL x3 (eyes at 1:1), shipped 👀; tests green, pushed.
 - 2026-10-04 19:46 EDT — builder: Cinder Jackal fights as cinder_jackal_v2 (AI_ART "_v2", .tscn wrapper with climb/ledge markers, beast_variant_path), GROUND_GAP_PER_HEIGHT 1.5 height floor on the standoff, outline 0.010, cool tint + low body floor + test; grader FAIL x2 (beast fills height, not A's width), shipped 👀; tests green, pushed.
 - 2026-10-04 19:30 EDT — builder: scene pass 2 toward picture A: jackal stones -> pale flat slabs (BIOME stone "slab"), raised rest rock under waiting hunters (rest_rock_lift), thick warm outline on jackal (0.018) and Frog + tests; grader FAIL x2 (stones ring the head: route geometry, Nick's call), shipped 👀; tests green, pushed.
 - 2026-10-04 16:02 EDT — builder: scene pass 1 toward picture A: GROUND_STANDOFF 4.2 -> 1.75 + rest_beast_share, toon body_floor/shadow lift and warm outline on the jackal, obsidian floor slate tone + test; grader FAIL x2 (a climb stone over the face), shipped 👀; tests green, pushed.

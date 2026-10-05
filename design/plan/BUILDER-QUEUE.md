@@ -372,13 +372,16 @@ run failed.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]]
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-scene-pass2-after.png|420]] ^scene-pass-2-toward-picture-a
-- [ ] **Clean shapes: flat planes, a smooth glowing outline.**
+- [ ] 👀 **Clean shapes: flat planes, a smooth glowing outline.**
       **Nick, 2026-10-04 20:30 ET:** the outlines are really buggy to begin with
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       The outline first. It is an inverted hull pushed out along the normals (`game/assets/3d/outline.gdshader`); on a hard-edged faceted mesh the hull splits at every facet edge, which is the broken, blobby, stair-stepped line round the jackal and the Frog. Fix the cause: push the hull along smoothed normals (weld them or bake them into a spare vertex channel), or replace it with a screen-space edge pass; and turn MSAA on for the 3D view. The jackal keeps a warm outline; the Frog gets a thin dark one, not a yellow halo.
       The jackal's surface is a noisy dark-red texture and the outlines on the jackal and the Frog are jagged, pale and stair-stepped. The picture has flat colour planes (dark brown rock, bright orange cracks), a thick smooth warm outline, and the cracks and eyes glow into the air around them. Done when, at 1:1, no outline shows stair-steps, the rock reads as flat planes, and the cracks and eyes bloom.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^clean-shapes-flat-planes-a-smooth-glowing-outline
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Clean shapes: flat planes, a smooth glowing outline.|details]]
+      Ask: Grader failed this: eyes don't read at fight distance. Brighter eyes next?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-clean-shapes-after.png|420]] ^clean-shapes-flat-planes-a-smooth-glowing-outline
 - [ ] **The jackal fills the frame like picture A.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       In `state=3d` the jackal covers about a sixth of the frame's width; in `design/art/targets/TARGET.png` it covers over half. The beast is sized by height (`_fit_height`), and an upright body sized that way is narrow and far off. Done when, at rest, its shoulders span at least 45% of the frame's width, its head and eyes are inside the frame, and it reads as towering over the hunter. Scale it, bring it nearer or tilt the rest camera up; do not crop the model. Move the sigil ring off the eyes.
@@ -546,3 +549,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **The v2 jackal has no rig.** No idle, attack, hit or death clips; the old `_ai` one had all four.
 - [ ] (proposed) **The sigil ring sits on the v2 jackal's forehead.** climb_5 at y 1.44 puts the ring over the eyes.
 - [ ] (proposed) **Stones still ring the beast.** Two lines flank the body instead of climbing the chest as in A.
+- [ ] (proposed) **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
+- [ ] (proposed) **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
