@@ -3139,6 +3139,12 @@ const SLAB_SIZE := 1.4
 ## A slab block's height, the same at every rung: about a Frog and a half, so
 ## the far blocks still read as blocks and not as discs seen edge-on.
 const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 1.5
+## A slab stone's side and top colours. Overnight pass 7 (picture A): its steps
+## are flat neutral grey, ~(156,149,141); a neutral 0.62/0.80 grey with the
+## cobble texture rendered tan brick (~170,130,110) under the warm key and the
+## grade. Flat, no texture, and cooled so the warm light lands them on grey.
+const SLAB_SIDE_TONE := Color(0.46, 0.50, 0.55)
+const SLAB_TOP_TONE := Color(0.58, 0.62, 0.68)
 
 
 ## How high the stone route ends: the top climb point's own height, or, in a
@@ -6614,8 +6620,10 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	if slab:
 		# Picture A's slabs are plain pale grey: no ember lip, a cooler stone.
 		rim.visible = false
-		body_mat.albedo_color = Color(0.62 + tint, 0.62 + tint, 0.63 + tint)
-		cap_mat.albedo_color = Color(0.80 + cap_tint, 0.80 + cap_tint, 0.81 + cap_tint)
+		body_mat.albedo_color = SLAB_SIDE_TONE.lightened(tint)
+		cap_mat.albedo_color = SLAB_TOP_TONE.lightened(cap_tint)
+		body_mat.albedo_texture = null
+		cap_mat.albedo_texture = null
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)

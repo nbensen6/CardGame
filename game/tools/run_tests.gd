@@ -31305,6 +31305,12 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")
 	_expect(Combat3D.REST_ROCK_TONE.get_luminance() < 0.2,
 		"the waiting rock is dark charcoal like picture A's pedestal, not pale beige")
+	# Overnight pass 7: the slabs are cooled so the warm key lands them on
+	# picture A's neutral grey, not tan; blue leads red on both faces.
+	_expect(Combat3D.SLAB_SIDE_TONE.b > Combat3D.SLAB_SIDE_TONE.r and Combat3D.SLAB_TOP_TONE.b > Combat3D.SLAB_TOP_TONE.r,
+		"slab tones lean cool so they render grey under the warm key, not tan")
+	_expect(Combat3D.SLAB_TOP_TONE.get_luminance() > Combat3D.SLAB_SIDE_TONE.get_luminance(),
+		"a slab's top is paler than its side")
 	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.4).y, 0.4),
 		"rest_pos_for stands the hunter on the rock's top")
 	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
