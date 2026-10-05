@@ -31313,9 +31313,25 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	# Scene pass 2 (picture A): the jackal's stones are pale grey flat slabs.
 	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "slab",
 		"the Cinder Jackal's climb stones are pale slabs (picture A)")
-	# Stones are one staircase (Nick, 2026-10-04): chunky blocks about as tall
-	# as the Frog, even the smallest one at the top of the line.
-	_expect(Combat3D.SLAB_BLOCK_HEIGHT >= Combat3D.HUNTER_HEIGHT, "a slab is a block at every rung, not a disc: %s tall" % Combat3D.SLAB_BLOCK_HEIGHT)
+	# Nick, 2026-10-05: TARGET.png's stones are flat, wide, thin, slightly
+	# irregular slabs, not Frog-tall blocks.
+	_expect(Combat3D.SLAB_BLOCK_HEIGHT < Combat3D.HUNTER_HEIGHT * 0.6, "a slab is thin: %s thick" % Combat3D.SLAB_BLOCK_HEIGHT)
+	var ol: PackedVector2Array = Combat3D.slab_outline(7, 3.0)
+	var w := 0.0
+	var d := 0.0
+	var rmin := 1e9
+	var rmax := 0.0
+	for v in ol:
+		w = maxf(w, absf(v.x))
+		d = maxf(d, absf(v.y))
+		var r := Vector2(v.x, v.y / Combat3D.SLAB_ASPECT).length()
+		rmin = minf(rmin, r)
+		rmax = maxf(rmax, r)
+	_expect(w > d * 1.2, "a slab is wider than it is deep (%.2f x %.2f)" % [w, d])
+	_expect(rmax - rmin > 0.05, "a slab's outline is irregular, not a regular polygon")
+	_expect(Combat3D.SLAB_BLOCK_HEIGHT < w * 2.0 * 0.3, "a slab is under a third as thick as it is wide")
+	_expect(Combat3D.slab_outline(7, 3.0) == ol, "a slab's outline repeats for the same seed")
+	_expect(Combat3D.slab_mesh(ol, 0.5, Color.WHITE, Color.GRAY).get_surface_count() == 1, "slab_mesh builds one surface")
 	var jb := String(Combat3D.BEAST_BIOME["cinder_jackal"])
 	_expect(Combat3D.rest_rock_lift(jb) > 0.0, "a waiting hunter stands on a raised rock in the jackal fight")
 	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")

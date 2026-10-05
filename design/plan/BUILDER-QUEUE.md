@@ -22,12 +22,15 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-jackal-sprite-after.png|420]] ^the-jackal-becomes-a-2-5d-sprite-like-th
 
-- [ ] **Rebuild the stones to match the reference exactly.**
+- [ ] 👀 **Rebuild the stones to match the reference exactly.**
       **Nick, 2026-10-05:** "make sure it hits the mark on recreating the stones to match the reference."
       In `TARGET.png` the stones are flat, pale grey slabs — wide, thin, slightly irregular, a soft drop shadow under each, no rim and no lid. They climb away from the hunter toward the beast in clear perspective, biggest and lowest at the front. In the game they are pale boxes with an orange top.
       Match the reference: shape, colour, thickness, the shadow, the spacing, and how they diminish with distance. The near one is the biggest thing on the floor; the far one sits at the beast's chest.
       **Done when** the stones in `state=3d` are indistinguishable in style from the ones in `TARGET.png` at 1:1.
-      Test: state=3d beast=cinder_jackal ^rebuild-the-stones-to-match-the-referenc
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Rebuild the stones to match the reference exactly.|details]]
+      Ask: Grader failed this: no visible drop shadow, side face too thin. Thicken slabs?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-stones-after.png|420]] ^rebuild-the-stones-to-match-the-referenc
 
 - [ ] **Research: card frames, against real TCGs.**
       **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
@@ -626,3 +629,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stones sit beside the drawn jackal.** The climb staircase runs up its left flank, not across its front as in TARGET.
 - [ ] (proposed) **Hull code is now dead for the jackal only.** Other beasts still use foothold_anchor's hull, _front_of_beast and stand_z_for, so they stay.
 - [ ] (proposed) **Drawn jackal has no idle or attack motion.** The sprite is a still; a bob or squash on its turn would sell it.
+- [ ] (proposed) **Slab drop shadows don't show.** A black blur under each slab vanishes against the near-black floor and beast.
+- [ ] (proposed) **Near stone smaller than the Frog's plinth.** The rest rock is wider than the first slab; TARGET's first slab is the biggest thing on the floor.

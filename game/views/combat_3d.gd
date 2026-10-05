@@ -3000,7 +3000,7 @@ const BIOME := {
 		"stone": "slab",
 		# Stones are one staircase (Nick, 2026-10-04, picture A): the line ends
 		# at the jackal's chest, not above its head. See route_top_y().
-		"route_top": 0.42,
+		"route_top": 0.36,
 		# ONE line on screen: the hunter you hold shows its staircase, the
 		# other's stays hidden unless that hunter stands on it. See
 		# stone_line_shown().
@@ -3170,17 +3170,104 @@ const SLAB_DEPTH := 0.6
 ## A slab stone's width over the pale stones': picture A's steps are wide grey
 ## blocks that join into one staircase, not discs with ground between them.
 const SLAB_SIZE := 1.4
-## A slab block's height, the same at every rung: about a Frog and a half, so
-## the far blocks still read as blocks and not as discs seen edge-on.
-const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 1.5
+## A slab's thickness, the same at every rung. Nick, 2026-10-05 ("hits the
+## mark on recreating the stones"): TARGET.png's stones are flat, wide, thin
+## slabs, about a fifth as thick as they are wide, not the Frog-and-a-half
+## blocks of 2026-10-04, whose dark sides were most of every stone on screen.
+const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 0.4
+## The top slab's size over the near one's, on top of the pale stones' own
+## shrink: TARGET.png's far slab is about a third of its near one.
+const SLAB_FAR_SCALE := 0.65
+## A slab's depth over its width: TARGET.png's slabs are wider than deep.
+const SLAB_ASPECT := 0.62
+## How far a slab's outline wanders from an ellipse, as a fraction of its
+## radius: "slightly irregular", a cut stone, not a hexagon.
+const SLAB_JITTER := 0.26
+## How far a slab's top leans past facing the eye level, in radians.
+## TARGET.png looks DOWN onto every stone, even the ones at the beast's chest,
+## so each shows its pale top; the fight camera sits at the hunter's height,
+## below the upper stones, and showed only their dark under-edges. Leaning
+## each slab's top toward the camera is the reference's own cheat.
+const SLAB_VIEW_TILT := 0.42
+
+
+## The lean (rotation about x, toward +z where the camera is) that shows a
+## slab at `stone` its top from `eye` as if seen from SLAB_VIEW_TILT above.
+## Static so run_tests.gd can pin it.
+static func slab_tilt(stone: Vector3, eye: Vector3) -> float:
+	var elev := atan2(stone.y - eye.y, maxf(eye.z - stone.z, 0.01))
+	return clampf(elev + SLAB_VIEW_TILT, 0.0, 1.2)
+
+
+## The soft drop shadow under each slab (TARGET.png): its darkest alpha.
+const SLAB_SHADOW_ALPHA := 0.9
+
+
+## A slab's outline in its own XZ plane: `sides` corners on an ellipse of
+## half-width `rx` and half-depth `rx * SLAB_ASPECT`, each pushed in or out by
+## up to SLAB_JITTER, repeatable per `seed`. Static so run_tests.gd can pin
+## that it is wide, thin-cornered and irregular.
+static func slab_outline(seed: int, rx: float, sides: int = 9) -> PackedVector2Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed
+	var out := PackedVector2Array()
+	var phase := rng.randf_range(0.0, TAU / float(sides))
+	for i in range(sides):
+		var a := phase + TAU * float(i) / float(sides) + rng.randf_range(-0.25, 0.25) * TAU / float(sides)
+		var r := 1.0 + rng.randf_range(-SLAB_JITTER, SLAB_JITTER)
+		out.append(Vector2(cos(a) * rx * r, sin(a) * rx * SLAB_ASPECT * r))
+	# Chipped but convex, so slab_mesh's fan stays inside the outline; keep
+	# the corners in rising-angle order, the winding slab_mesh expects.
+	var hull := Array(Geometry2D.convex_hull(out))
+	hull.pop_back()
+	hull.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.angle() < q.angle())
+	return PackedVector2Array(hull)
+
+
+## A flat prism on `outline`: top face at y=0 in `top`, sides `thick` deep
+## shading from `side` at the lip to `side.darkened(0.45)` at the bottom, so
+## the under-edge reads dark like TARGET.png's, and a bottom face.
+static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, side: Color) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var n := outline.size()
+	var under := side.darkened(0.2)
+	# Each corner a touch lighter or darker, so the top reads as a drawn
+	# rock face with soft planes, not one flat sheet of grey.
+	var tops := []
+	for k in range(n):
+		tops.append(top.lightened(0.08) if k % 3 == 0 else (top.darkened(0.1) if k % 3 == 1 else top))
+	for i in range(1, n - 1):
+		st.set_normal(Vector3.UP)
+		for k in [0, i, i + 1]:
+			st.set_color(tops[k] as Color)
+			st.add_vertex(Vector3(outline[k].x, 0.0, outline[k].y))
+	for i in range(n):
+		var a := outline[i]
+		var b := outline[(i + 1) % n]
+		var nrm := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+		var verts := [
+			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, 0.0, b.y), side], [Vector3(b.x, -thick, b.y), under],
+			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, -thick, b.y), under], [Vector3(a.x, -thick, a.y), under],
+		]
+		for vc in verts:
+			st.set_color(vc[1] as Color)
+			st.set_normal(nrm)
+			st.add_vertex(vc[0] as Vector3)
+	for i in range(1, n - 1):
+		st.set_color(under)
+		st.set_normal(Vector3.DOWN)
+		for v in [outline[0], outline[i + 1], outline[i]]:
+			st.add_vertex(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
+	return st.commit()
 ## A slab stone's side and top colours. Overnight pass 7 (picture A): its steps
 ## are flat neutral grey, ~(156,149,141); a neutral 0.62/0.80 grey with the
 ## cobble texture rendered tan brick (~170,130,110) under the warm key and the
 ## grade. Flat, no texture, and cooled so the warm light lands them on grey.
 ## Pass 8: the sides face the warm key and rendered near-white (~218), the
 ## brightest thing on screen; A's sides are mid-grey (~157) under a lighter top.
-const SLAB_SIDE_TONE := Color(0.36, 0.39, 0.43)
-const SLAB_TOP_TONE := Color(0.58, 0.62, 0.68)
+const SLAB_SIDE_TONE := Color(0.34, 0.36, 0.40)
+const SLAB_TOP_TONE := Color(0.44, 0.47, 0.52)
 
 
 ## How high the stone route ends: the top climb point's own height, or, in a
@@ -6528,6 +6615,24 @@ func _put_rest_rock(slot: int, top: Vector3) -> void:
 	_rest_rocks[slot] = rock
 
 
+## The slab drop shadow's soft dark ellipse, built once.
+var _slab_shadow: Texture2D = null
+func _slab_shadow_tex() -> Texture2D:
+	if _slab_shadow == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(0.5, 0.0)
+		t.width = 256
+		t.height = 72
+		_slab_shadow = t
+	return _slab_shadow
+
+
 func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# A wrapper, not a mesh directly, so the bob/spin in _process (which
 	# reads/writes `st.position`/`st.rotation.y` by array index — see the
@@ -6556,7 +6661,9 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
 	var slab := stone_style(String(BEAST_BIOME.get(_beast_id, "crag"))) == "slab"
 	if slab:
-		rock_radius *= SLAB_SIZE
+		# TARGET.png's slabs shrink faster than the pale stones do, so the
+		# upper ones have clear air between them.
+		rock_radius *= SLAB_SIZE * lerpf(1.0, SLAB_FAR_SCALE, recede)
 	var rock_height := rock_radius * (SLAB_DEPTH if slab else stone_depth_ratio(recede))
 	# Sunk enough that the CAP below (not the bare rock) is what a
 	# hunter visually lands on, with no gap between the two.
@@ -6583,21 +6690,47 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# it would distort this mesh's shape unpredictably.
 	body.rotation.y = randf_range(0.0, TAU)
 	if slab:
-		# Picture A's steps are blocks with straight sides. The hull tapers to
-		# a point underneath, and from the low camera behind the hunter a
-		# stone above it showed only that underside: a thin pale wedge.
+		# TARGET.png's steps are flat, wide, thin slabs with a slightly irregular
+		# outline (Nick, 2026-10-05). The top face is the stone's origin, where
+		# _stand_on_model puts the hunter's feet; no cap, no rim.
 		body.free()
 		var block := MeshInstance3D.new()
-		var block_mesh := CylinderMesh.new()
-		block_mesh.top_radius = rock_radius
-		block_mesh.bottom_radius = rock_radius * 0.85
-		block_mesh.height = SLAB_BLOCK_HEIGHT
-		block_mesh.radial_segments = 6
-		block_mesh.rings = 1
-		block.mesh = block_mesh
-		block.position = Vector3(0.0, -cap_height * 0.5 - SLAB_BLOCK_HEIGHT * 0.5, 0.0)
-		block.rotation.y = randf_range(0.0, TAU)
+		var outline := slab_outline(randi(), rock_radius)
+		block.mesh = slab_mesh(outline, SLAB_BLOCK_HEIGHT,
+				SLAB_TOP_TONE.lightened(randf_range(-0.04, 0.04)), SLAB_SIDE_TONE)
+		block.rotation.y = randf_range(-0.25, 0.25)
+		# Lean the top toward the camera at the hunters' rest (+z, eye height).
+		var eye := Vector3(pos.x, HUNTER_HEIGHT * 1.5, _ground_back() + HUNTER_HEIGHT * 4.0)
+		block.rotation.x = slab_tilt(pos, eye)
+		# TARGET.png inks every stone with a dark line: an inverted hull, a
+		# little larger, drawn back faces only.
+		var ink := MeshInstance3D.new()
+		var ink_ol := PackedVector2Array()
+		for v in outline:
+			ink_ol.append(v * 1.05)
+		ink.mesh = slab_mesh(ink_ol, SLAB_BLOCK_HEIGHT * 1.1, Color.BLACK, Color.BLACK)
+		ink.position = Vector3(0.0, SLAB_BLOCK_HEIGHT * 0.05, 0.0)
+		var ink_mat := StandardMaterial3D.new()
+		ink_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		ink_mat.albedo_color = Color(0.05, 0.04, 0.05)
+		ink_mat.cull_mode = BaseMaterial3D.CULL_FRONT
+		ink.material_override = ink_mat
+		ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		block.add_child(ink)
 		body = block
+		# The soft drop shadow under each slab: a dark blur that faces the
+		# camera, just below the slab's under-edge. Unshaded, so it reads the
+		# same whatever the light does.
+		var shade := Sprite3D.new()
+		shade.texture = _slab_shadow_tex()
+		shade.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		shade.shaded = false
+		shade.transparent = true
+		shade.modulate = Color(0.0, 0.0, 0.0, SLAB_SHADOW_ALPHA)
+		shade.pixel_size = rock_radius * 2.8 / 256.0
+		shade.position = Vector3(0.0, -SLAB_BLOCK_HEIGHT - rock_radius * 0.45, -rock_radius * 0.6)
+		shade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		stone.add_child(shade)
 	stone.add_child(body)
 	# Geometry only — no colour/texture of its own (foothold_rock.md) —
 	# so the #12 palette and the ROCK_DETAIL multiply below still apply
@@ -6699,13 +6832,14 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		cap_mat.albedo_color = SLAB_TOP_TONE.lightened(cap_tint)
 		body_mat.albedo_texture = null
 		cap_mat.albedo_texture = null
-		# Overnight pass 8: the 8-sided cap, spun on its own, overhung the
-		# 6-sided block and cut dark notches round every rim. A slab's cap is
-		# the block's own top: same six sides, same radius, same spin.
-		cap_mesh.radial_segments = 6
-		cap_mesh.top_radius = rock_radius
-		cap_mesh.bottom_radius = rock_radius
-		cap.rotation.y = body.rotation.y
+		# The slab is its own top: its colours ride in the mesh.
+		cap.visible = false
+		body_mat.vertex_color_use_as_albedo = true
+		body_mat.albedo_color = Color.WHITE
+		body_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+		# Flat fills, like TARGET.png: no specular streak across the top.
+		body_mat.metallic_specular = 0.0
+		body_mat.roughness = 1.0
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)

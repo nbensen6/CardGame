@@ -1736,3 +1736,35 @@ Brief: the standing item; one pass per run. First before frame: `frames/builder/
 - Tests: `_test_jackal_is_a_drawing` covers the sprite (billboard, unshaded, flat), the six holds (rising, on the image, ending at the face) and the drawn gap. The v2 test no longer asserts that v2 ships. ALL TESTS PASSED.
 - **Grader, three rounds, all FAIL.** Round 1: thin rim, near-black fills, busy cracks, too small. Fixed with a thicker rim, mid-brown fills, bold cracks and the closer gap. Round 2: soft halo instead of an inked line, faceted fills. Fixed with a crisp cream stroke, a dark inner ink line, flatter tones and a smaller halo. Round 3: "CLOSER than the before frame... But the frame has not landed". The pose is the concept's (arms down, no flaming fist), the beast is about 25 % of the frame width against TARGET's ~65 %, the outline is too thin, and the face is too small to read. Final `VERDICT: FAIL`.
 - **What is left is the drawing itself, not the pipeline.** The sprite can only be as close as its source, and the source is an arms-down turnaround. To reach TARGET it needs a new illustration in TARGET's pose (raised flaming fist, big head) on a plain background. `tools/beast_sprite.py` will ink it and re-author the holds in one run. Making the beast fill ~65 % of the width also means a wider shot or a bigger beast than the current camera allows with the ears in.
+
+## Rebuild the stones to match the reference exactly.
+
+**Builder, 2026-10-05 15:17 EDT.** Before: five Frog-and-a-half-tall six-sided
+blocks with a lit cap, stacked tight up the jackal's left side. TARGET.png:
+wide, thin, slightly irregular grey slabs seen from above, dark under-edge,
+soft shadow, gaps between them.
+
+What changed (`_add_float_stone`, slab branch only; other biomes untouched):
+- `slab_outline()` / `slab_mesh()`: a 9-corner convex, jittered (0.26),
+  wider-than-deep (0.62) prism; top at the stone origin so hunters still land
+  on it. `SLAB_BLOCK_HEIGHT` 1.5 -> 0.4 Frog-heights. No cap, no rim.
+- `slab_tilt()`: each slab leans its top toward the rest camera
+  (elevation + 0.42 rad). The camera sits at Frog height, below the upper
+  stones, so flat slabs showed only their undersides.
+- Tops shaded per corner (+0.08 / -0.1) for soft planes; sides
+  `SLAB_SIDE_TONE` darkening 0.2 to the under-edge; no specular.
+  `SLAB_TOP_TONE` 0.58/0.62/0.68 -> 0.44/0.47/0.52 (rendered near-white before).
+- Ink: an inverted hull 1.05x, back faces, near-black.
+- Drop shadow: a billboard radial blur under each slab, alpha 0.9. It does
+  not read: the floor and the jackal behind are both near-black.
+- `SLAB_FAR_SCALE` 0.65: upper slabs shrink faster, so there is air between them.
+- Jackal biome `route_top` 0.42 -> 0.36: the top slab (and the top hold) now
+  sits at the chest ring, not the neck.
+
+Grader: FAIL x3. Round 1: too regular, near-white, no ink, no shadow, top at
+neck. Round 2: flat tops, near-black sides, no shadow. Round 3 (final):
+shape and colour MET, spacing MET, chest MET; thickness (wants a grey side
+about a third of the top's depth), drop shadow, and near slab vs the
+Frog's plinth NOT MET. Not done here: moving the near slab out onto the
+floor (route geometry and the rest-aside tests) and a zigzag (Nick asked
+for one straight line on 2026-10-04).

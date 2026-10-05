@@ -223,3 +223,4 @@ appends here, never to the queue.
 - [ ] **Matte floor.** The fight floor shows glossy grey-violet reflection patches; picture A's floor is matte charcoal.
 - [ ] **Stones step across the beast.** The climb blocks rise up the jackal's left side; picture A's step across the front of its body to the chest.
 - [ ] **Wide mauve sky between the cliffs.** Picture A opens a wide violet sky notch behind the beast with cliffs only at the edges; ours shows a small disc.
+- [ ] **Slab shadows on a lighter ground.** A floor-plane contact shadow per slab, since a black blur is invisible on the near-black floor.
