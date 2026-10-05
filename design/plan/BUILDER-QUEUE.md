@@ -17,14 +17,14 @@ run failed.
       **The climb holds become authored 2D points on that image**, not raycasts against a mesh. This deletes the fragile half of `combat_3d.gd`: `foothold_anchor`'s hull queries, `_front_of_beast`, `stand_z_for`. The route still ends at the head and the face stays visible at rest.
       Accept the flatness: the camera is front-on and locked, which is what the reference shows.
       **Done when** `state=3d` put beside `TARGET.png` reads as the same drawing — same outline weight, same flat fills, same glow — and the climb still plays start to finish.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^the-jackal-becomes-a-2-5d-sprite-like-th
 
 - [ ] **Rebuild the stones to match the reference exactly.**
       **Nick, 2026-10-05:** "make sure it hits the mark on recreating the stones to match the reference."
       In `TARGET.png` the stones are flat, pale grey slabs — wide, thin, slightly irregular, a soft drop shadow under each, no rim and no lid. They climb away from the hunter toward the beast in clear perspective, biggest and lowest at the front. In the game they are pale boxes with an orange top.
       Match the reference: shape, colour, thickness, the shadow, the spacing, and how they diminish with distance. The near one is the biggest thing on the floor; the far one sits at the beast's chest.
       **Done when** the stones in `state=3d` are indistinguishable in style from the ones in `TARGET.png` at 1:1.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^rebuild-the-stones-to-match-the-referenc
 
 - [ ] **Research: card frames, against real TCGs.**
       **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
@@ -34,7 +34,7 @@ run failed.
       Say what makes each read as expensive, and what our current frame does instead — ours is a thin outlined rectangle with a flat strip, and it looks cheap at hand size.
       **Deliver:** three mocked-up frame directions rendered on OUR cards (Tongue Snap, Leap, Scramble) at true hand size, each with the reference it comes from named and what was taken. Describe the references in words; do not put other games' images in this repo. Say which one you would pick and why. File it `to: nick` for the pick.
       **Done when** Nick has three frames to choose between, shown at the size he will actually see them.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^research-card-frames-against-real-tcgs
 
 - [ ] **A HUD that matches the chosen card frame.**
       **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
@@ -42,7 +42,7 @@ run failed.
       Reference how card games lay out and style a HUD — Slay the Spire, Hearthstone, Runeterra, Marvel Snap — and say what you took. `TARGET-UI.png` is Nick's own pick for the cards and HUD and stays the arbiter.
       Meshy may be used for any panel ornament that is genuinely easier sculpted than drawn — a carved frame corner, an energy orb — rendered once to a texture. Ask Nick before spending credits; it is not required, and a drawn panel that matches is worth more than a sculpted one that does not.
       **Done when** every HUD element and the cards read as one set, nothing clips at 1280x720, and the rest frame beside `TARGET-UI.png` shows the same material.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^a-hud-that-matches-the-chosen-card-frame
 
 - [ ] 👀 **Swap in the new upright jackal model.**
       **Nick, 2026-10-04 19:17 ET:** yes generate a new jackal model from picture A
