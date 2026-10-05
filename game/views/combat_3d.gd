@@ -2967,11 +2967,14 @@ const BIOME := {
 		# Overnight pass 11 (picture A): its floor is even dark warm slate
 		# (~42,36,40); a cool tone stepped up by slab_var 0.5 rendered the far
 		# right slabs as pale lavender patches (~106,96,112).
-		"floor_tone": Color(0.25, 0.235, 0.24),
+		# Overnight pass 12: that still rendered maroon (~49,31,34) with red
+		# seams; A's tiles are dark plum-charcoal (~30,21,30) with orange seams.
+		# This renders ~(33,19,27); crack_color below turns the seams orange.
+		"floor_tone": Color(0.205, 0.2, 0.22),
 		# Cliffs and floor in picture A's flat style (Nick, 2026-10-04): big
 		# slabs in flat steps of tone with seams that glow, not hairlines on
 		# one sheet. Obsidian shader uniforms, see _dress_floor().
-		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.3, "slab_var": 0.2},
+		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.3, "slab_var": 0.2, "crack_color": Color(1.0, 0.62, 0.2)},
 		# ...and dark slate cliffs in three flat tones instead of the painted,
 		# lava-lit rock. See wall_style() / _dress_wall().
 		"wall": "flat",

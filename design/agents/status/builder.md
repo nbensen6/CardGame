@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T00:41
+updated: 2026-10-05T00:55
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 00:41 EDT
+2026-10-05 00:55 EDT
 
-- **Did:** Overnight pass 11: the floor is warmer, even slate; the pale lavender slabs on the right are gone.
-- **Worked?** Partly: grader said CLOSER, but credited the jackal's shading, not the floor. VERDICT: CLOSER (PASS).
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p11-before.png]] then ![[frames/builder/2026-10-05-overnight-p11-after.png]]
+- **Did:** Overnight pass 12: floor tiles now dark plum-charcoal with orange seams, not maroon with red ones.
+- **Worked?** Yes, grader saw the seams glow orange like A's hex seams. VERDICT: PASS (CLOSER).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p12-before.png]] then ![[frames/builder/2026-10-05-overnight-p12-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** The jackal's idle pose differs between shots, so a grader can credit changes nobody made.
+- **Found:** Two pale ring markers sit on the jackal's chest; A has none (may be gameplay sigils).
 
 ## Log
 
+- 2026-10-05 00:55 EDT — builder: overnight pass 12: quarry_ember floor_tone (0.25,0.235,0.24) -> (0.205,0.2,0.22), floor crack_color -> (1.0,0.62,0.2) via floor_params; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 00:41 EDT — builder: overnight pass 11: quarry_ember floor_tone (0.25,0.245,0.27) -> (0.25,0.235,0.24), floor slab_var 0.5 -> 0.2; grader PASS (CLOSER, on beast shading not the floor); tests green, pushed.
 - 2026-10-05 00:33 EDT — builder: overnight pass 10: cliff_flat lit/side/shade tones blue slate -> neutral charcoal (0.23,0.235,0.26)/(0.145,0.148,0.165)/(0.075,0.075,0.085); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 00:10 EDT — builder: overnight pass 9: quarry_ember sky top/horizon navy+red -> violet (0.26,0.12,0.28)/(0.66,0.26,0.44), ash_params (pink-violet under, cover 0.3, pulse 0.3) via ash_params() + test; grader PASS (CLOSER); tests green, pushed.
