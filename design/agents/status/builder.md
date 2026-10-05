@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T21:26
-working_on: "The jackal idles and punches."
+updated: 2026-10-05T01:50
+working_on: "Stones are one staircase of chunky blocks."
 ---
 
 # builder
@@ -13,22 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 21:26 EDT
+2026-10-05 01:50 EDT
 
-- **Did:** Jackal fights rigged: Idle loops, Punch_Combo plays once, damage lands on the haymaker.
-- **Worked?** Yes: VERDICT: PASS, two idle frames differ, punch, hit at 35/42, back to idle.
-- **Look at:** ![[frames/builder/2026-10-05-jackal-idle-before.png]] then ![[frames/builder/2026-10-05-jackal-idle-after-grid.png]]
-- **Ask:** Idle bows the head, hiding the eyes. Hold the head up too?
+- **Did:** Jackal stones are one straight staircase of grey blocks from beside the Frog to the chest.
+- **Worked?** Yes: VERDICT: PASS, after one FAIL for thin upper stones and a zigzag knot.
+- **Look at:** ![[frames/builder/2026-10-05-stone-staircase-before.png]] then ![[frames/builder/2026-10-05-stone-staircase-after.png]]
+- **Ask:** The climb now tops out at the chest, not the head. Keep that?
 
 ## Notes
 
-- **Found:** The stones stay where they are while the jackal punches, so the body swings out from under them.
-- **Found:** The idle tips the jackal's head down, so its face and eyes are hard to see at rest.
-- **Found:** Mid-combo the raised fist and head go past the top of the frame.
-- **Found:** An enemyat= time later than the beast's turn uses the wall clock, which runs ahead of game time under software render.
+- **Found:** The jackal's top stone is now at the chest, about 7 units below the head's sigil.
+- **Found:** Two gold sigil rings sit over the jackal's chest at rest.
+- **Found:** Rebuilding the float stones never clears their stored home positions.
 
 ## Log
 
+- 2026-10-05 01:50 EDT — builder: stone staircase: jackal biome route_top 0.42 (route ends at chest), one_line (held hunter's line only, no zigzag), REST_ASIDE so the first block shows beside the Frog, slab blocks 1.4x wide with straight sides 1.05 tall + tests; grader FAIL then PASS; tests green, pushed.
 - 2026-10-04 21:26 EDT — builder: jackal rigged: v2 wrapper -> rigged glb, Idle/Punch_Combo grafted (BEAST_CLIPS, 0.3 s blend), hit at f39/60, mesh_xform for skinned measure (fixed 100x fit), idle hips/spine yaw held front, lunge share 0.3 + test; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-10-04 21:01 EDT — builder: jackal-fills-frame investigated: 45% shoulder width impossible with head, Frog and whole model in frame (body ~1050 px tall at that width); standoff/tilt sweep peaks ~21%; sunk-legs option frame ~30%; no code change, marked 👀 for Nick's call; pushed notes only.
 - 2026-10-04 20:50 EDT — builder: clean shapes: outline hull along welded normals (TANGENT) + depth push, MSAA 4x, Frog thin dark line, scene glow + hotter cracks and line, toon tex_soften/facet/facet_shade, eye mask + tests; grader FAIL x3 (eyes at 1:1), shipped 👀; tests green, pushed.

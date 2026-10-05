@@ -2411,6 +2411,7 @@ func _init() -> void:
 	_test_upright_jackal_v2()
 	_test_rigged_jackal_idles_and_punches()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
+	_test_stone_staircase_is_one_line_to_the_chest()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
 	# between the hunters' ground and the wall, lens always inside the shimmer.
 	_test_lava_ring_only_in_the_jackal_biome()
@@ -31235,7 +31236,9 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	# Scene pass 2 (picture A): the jackal's stones are pale grey flat slabs.
 	_expect(Combat3D.stone_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "slab",
 		"the Cinder Jackal's climb stones are pale slabs (picture A)")
-	_expect(Combat3D.SLAB_DEPTH < 0.5, "a slab is flat: shallower than half its radius")
+	# Stones are one staircase (Nick, 2026-10-04): chunky blocks about as tall
+	# as the Frog, even the smallest one at the top of the line.
+	_expect(Combat3D.SLAB_BLOCK_HEIGHT >= Combat3D.HUNTER_HEIGHT, "a slab is a block at every rung, not a disc: %s tall" % Combat3D.SLAB_BLOCK_HEIGHT)
 	var jb := String(Combat3D.BEAST_BIOME["cinder_jackal"])
 	_expect(Combat3D.rest_rock_lift(jb) > 0.0, "a waiting hunter stands on a raised rock in the jackal fight")
 	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")
@@ -31251,6 +31254,36 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 				"biome %s keeps its pale stones" % biome)
 	_expect(Combat3D.stone_style("no_such_biome") == "", "an unknown biome keeps the pale stones")
 	_expect(Combat3D.LAVA_ROCK is Shader, "the lava rock shader loads")
+
+
+func _test_stone_staircase_is_one_line_to_the_chest() -> void:
+	var jb := String(Combat3D.BEAST_BIOME["cinder_jackal"])
+	# The route ends at the chest in the jackal fight, the sigil elsewhere.
+	_expect(Combat3D.route_top_y(15.2, 20.0, jb) < 20.0 * 0.5, "the jackal's staircase ends below mid-body (the chest)")
+	_expect(is_equal_approx(Combat3D.route_top_y(5.0, 20.0, jb), 5.0), "an anchor already below the chest is kept")
+	_expect(is_equal_approx(Combat3D.route_top_y(15.2, 20.0, "crag"), 15.2), "other fights end the route at the sigil")
+	# One line on screen: the held hunter's, plus a stone the other stands on.
+	_expect(Combat3D.stone_line_shown(-1.0, 0, false), "slot 0 held: its own line shows")
+	_expect(not Combat3D.stone_line_shown(1.0, 0, false), "slot 0 held: the other line hides")
+	_expect(Combat3D.stone_line_shown(1.0, 0, true), "a stone the other hunter stands on still shows")
+	_expect(Combat3D.stone_line_shown(1.0, 1, false), "slot 1 held: its own line shows")
+	# No zigzag: every rung on one straight, rising line.
+	var top := Vector3(-2.8, 8.4, 9.3)
+	var prev := Vector3(0, -1e9, 0)
+	for i in range(5):
+		var p: Vector3 = Combat3D.route_pos_cleared(top, 33.0, i, 5, 1.4, false)
+		_expect(p.y > prev.y, "rung %d is higher than the one before" % i)
+		if i > 0 and i < 4:
+			var line_pt: Vector3 = Combat3D.route_pos(top, 33.0, 0, 5, 1.4, false).lerp(top, float(i) / 4.0)
+			_expect(p.distance_to(line_pt) < 0.001, "rung %d sits on the straight line" % i)
+		prev = p
+	# The waiting hunter stands inside its first stone, toward the middle.
+	_expect(Combat3D.rest_aside_for(-1.0, true) > 0.0 and Combat3D.rest_aside_for(1.0, true) < 0.0,
+		"each hunter waits inside its own first stone")
+	_expect(is_zero_approx(Combat3D.rest_aside_for(-1.0, false)), "two-line fights keep the hunter in front of its stone")
+	_expect(Combat3D.REST_ASIDE > Combat3D.HUNTER_HEIGHT * 1.5 * Combat3D.SLAB_SIZE,
+		"the aside clears the near block's radius, so the block shows beside the hunter")
+	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.0, 2.0).x, 3.0), "rest_pos_for moves the hunter by the aside")
 
 
 func _test_lava_ring_only_in_the_jackal_biome() -> void:

@@ -903,6 +903,8 @@ var _beast_scale := 1.0
 ## The floating stepping stones and where each one hangs at rest.
 var _float_stones: Array = []
 var _float_home: Array = []
+## Which hunter's line each float stone belongs to: -1 slot 0's, +1 slot 1's.
+var _float_side: Array = []
 ## The raised rocks waiting hunters stand on (_add_rest_rock). Kept apart from
 ## _float_stones: they never bob or spin.
 var _rest_rocks: Array = []
@@ -2092,10 +2094,13 @@ func _process(delta: float) -> void:
 	var ridden := {}
 	for h in _hunters:
 		ridden[riding_stone((h as Dictionary)["home"] as Vector3, _float_home)] = true
+	var one_line := _one_line()
 	for i in _float_stones.size():
 		var st := _float_stones[i] as Node3D
 		if not is_instance_valid(st):
 			continue
+		if one_line and i < _float_side.size():
+			st.visible = stone_line_shown(float(_float_side[i]), _active_slot, ridden.has(i))
 		var home: Vector3 = _float_home[i]
 		st.position.y = home.y + (0.0 if ridden.has(i) else stone_bob(_time, i))
 		st.rotation.y += delta * 0.25
@@ -2948,6 +2953,13 @@ const BIOME := {
 		# pale grey flat slabs instead, thin enough that a high one no longer
 		# hides the face. See stone_style() / _add_float_stone().
 		"stone": "slab",
+		# Stones are one staircase (Nick, 2026-10-04, picture A): the line ends
+		# at the jackal's chest, not above its head. See route_top_y().
+		"route_top": 0.42,
+		# ONE line on screen: the hunter you hold shows its staircase, the
+		# other's stays hidden unless that hunter stands on it. See
+		# stone_line_shown().
+		"one_line": true,
 		# Scene pass 2 (picture A): a waiting hunter stands on a raised dark
 		# rock, lit, with its shadow on it. See rest_rock_lift().
 		"rest_rock": true,
@@ -3076,9 +3088,29 @@ static func rest_rock_lift(biome: String) -> float:
 	return REST_ROCK_HEIGHT if bool(b.get("rest_rock", false)) else 0.0
 
 
-## A slab stone's depth as a multiple of its radius: flat, like the slabs in
-## picture A, at every rung.
-const SLAB_DEPTH := 0.32
+## A slab stone's depth as a multiple of its radius. Picture A's steps are
+## chunky grey blocks about as tall as the Frog (Nick, 2026-10-04: "why does
+## this look so different from the reference?"); 0.32 drew thin discs.
+const SLAB_DEPTH := 0.6
+## A slab stone's width over the pale stones': picture A's steps are wide grey
+## blocks that join into one staircase, not discs with ground between them.
+const SLAB_SIZE := 1.4
+## A slab block's height, the same at every rung: about a Frog and a half, so
+## the far blocks still read as blocks and not as discs seen edge-on.
+const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 1.5
+
+
+## How high the stone route ends: the top climb point's own height, or, in a
+## biome that names `route_top`, that fraction of the beast's height when it
+## is lower. Picture A's staircase climbs from the Frog to the chest; ending at
+## the sigil on a 20-unit jackal put the last stones above its head on screen.
+## Static so run_tests.gd can pin it.
+static func route_top_y(anchor_y: float, beast_h: float, biome: String) -> float:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	var frac: float = float(b.get("route_top", 0.0))
+	if frac <= 0.0:
+		return anchor_y
+	return minf(anchor_y, beast_h * frac)
 
 
 var _ground_mat_default: Material = null
@@ -3970,6 +4002,7 @@ func _top_hold(side: float = 0.0) -> Vector3:
 	for h in _climb_points.keys():
 		top = maxi(top, int(h))
 	var p: Vector3 = foothold_anchor(_climb_points, top)
+	p.y = route_top_y(p.y, _beast_box.size.y, String(BEAST_BIOME.get(_beast_id, "crag")))
 	var x: float = route_offset_x(_head_x(p), side, _beast_box.size.x)
 	# The last stone stands IN FRONT of the head (Nick's drawing, 2026-09-25),
 	# not on the sigil's anchor. The anchor is a point on the skin where the
@@ -5297,7 +5330,7 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	if n <= 1 or i >= n - 1:
 		return _top_hold(route_side)
 	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z, _beast_box.size.y), i, n,
-		route_sweep_for(route_side))
+		route_sweep_for(route_side), not _one_line())
 
 
 ## The LEDGES strictly between two footholds — the flat ground a hunter can
@@ -5651,8 +5684,20 @@ static func hunter_move_kind(placed: bool, was: int, foot: int, moved: bool) -> 
 ## 2026-09-28: "hunters are not starting in front of the stones" -- they used
 ## to stand ~1.2 either side of centre while the lines open out to ~4 each
 ## side, so the big stones flanked the hunters instead of leading from them.
-static func rest_pos_for(first_stone: Vector3, rest_z: float, lift: float = 0.0) -> Vector3:
-	return Vector3(first_stone.x, lift, rest_z)
+##
+## `aside` (one-line biomes, Nick 2026-10-04, picture A) moves the hunter that
+## far along x off its stone's line, so from the camera behind it the first
+## stone shows beside it instead of hidden by its body.
+static func rest_pos_for(first_stone: Vector3, rest_z: float, lift: float = 0.0,
+		aside: float = 0.0) -> Vector3:
+	return Vector3(first_stone.x + aside, lift, rest_z)
+
+
+## How far a waiting hunter on line `side` stands inside its first stone in a
+## one-line biome: toward the beast's middle, about a near stone's width.
+const REST_ASIDE := HUNTER_HEIGHT * 3.0
+static func rest_aside_for(side: float, one_line: bool) -> float:
+	return -signf(side) * REST_ASIDE if one_line else 0.0
 
 
 static func hunter_side_offset(players: Array, i: int, height: int) -> float:
@@ -5694,6 +5739,19 @@ static func stone_bob(time: float, k: int) -> float:
 
 ## Index of the stone whose home is where a hunter at `home` stands, or -1
 ## (on the ground, on the body). A hunter on a stone rides its drift.
+## Whether a stone on line `side` (-1 slot 0's, +1 slot 1's) is drawn in a
+## one-line biome: the held hunter's whole line, and of the other line only the
+## stone that hunter stands on. Picture A has ONE staircase from the Frog to
+## the chest (Nick, 2026-10-04); two lines read as stones ringing the beast.
+## Whether this fight's biome draws ONE staircase (stone_line_shown, no zigzag).
+func _one_line() -> bool:
+	return bool((BIOME.get(String(BEAST_BIOME.get(_beast_id, "crag")), {}) as Dictionary).get("one_line", false))
+
+
+static func stone_line_shown(side: float, active_slot: int, ridden: bool) -> bool:
+	return ridden or side == (-1.0 if active_slot == 0 else 1.0)
+
+
 static func riding_stone(home: Vector3, stone_homes: Array) -> int:
 	for k in stone_homes.size():
 		var sh: Vector3 = stone_homes[k]
@@ -5751,9 +5809,10 @@ func _place_hunters(s: Dictionary) -> void:
 				# (Nick, 2026-09-28: "hunters are not starting in front of the
 				# stones"). Same slot convention and same call as that stone.
 				var rs: float = -1.0 if i == 0 else 1.0
+				var biome := String(BEAST_BIOME.get(_beast_id, "crag"))
 				pos = rest_pos_for(route_pos_cleared(_top_hold(rs), back, 0,
-					_rung_count(), route_sweep_for(rs)), pos.z,
-					rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))))
+					_rung_count(), route_sweep_for(rs)), pos.z, rest_rock_lift(biome),
+					rest_aside_for(rs, _one_line()))
 			if pos.y > 0.0:
 				_put_rest_rock(i, pos)
 		elif not _climb_points.is_empty():
@@ -6048,8 +6107,12 @@ static func stone_point(on_skin: Vector3) -> Vector3:
 ## as well as z/y, so the "one line, even steps" spacing Nick measured
 ## (b0648db) is unchanged -- a straight line has the same even Euclidean
 ## spacing wherever it points.
+##
+## `zigzag` false (one-line biomes, picture A) keeps every rung on the straight
+## line: seen from behind the hunter the zigzag's inner rungs overlapped in one
+## knot at the jackal's chest instead of reading as a rising staircase.
 static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
-		half_width: float) -> Vector3:
+		half_width: float, zigzag: bool = true) -> Vector3:
 	if n <= 1:
 		return top
 	# ONE straight line from the ground to the top hold, with the rungs spaced
@@ -6066,7 +6129,7 @@ static func route_pos(top: Vector3, ground_z: float, i: int, n: int,
 	# floating rock, not a first step.
 	var start := Vector3(top.x - half_width, HUNTER_HEIGHT * 1.6,
 		ground_z - HUNTER_HEIGHT * 6.0)
-	if n <= 2:
+	if n <= 2 or not zigzag:
 		return start.lerp(top, t)
 	# The zigzag (2026-09-29-intense-fight-plan): every rung between the two
 	# ends steps off the line, alternating sides, so each hop is a diagonal
@@ -6191,8 +6254,8 @@ static func chest_clear_push(t: float) -> float:
 ## pure and untouched (its own "one line, even steps" tests keep pinning the
 ## un-pushed geometry).
 static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
-		half_width: float) -> Vector3:
-	var p := route_pos(top, ground_z, i, n, half_width)
+		half_width: float, zigzag: bool = true) -> Vector3:
+	var p := route_pos(top, ground_z, i, n, half_width, zigzag)
 	if n <= 1:
 		return p
 	var t := clampf(float(i) / float(n - 1), 0.0, 1.0)
@@ -6204,6 +6267,7 @@ func _build_float_stones() -> void:
 	for st in _float_stones:
 		(st as Node3D).queue_free()
 	_float_stones.clear()
+	_float_side.clear()
 	if _beast == null:
 		return
 	# One stone per named climb Height, one set per hunter -- Nick,
@@ -6226,8 +6290,9 @@ func _build_float_stones() -> void:
 	for side in [-1.0, 1.0]:
 		var top_pt: Vector3 = _top_hold(side)
 		for index in range(n):
-			var pos: Vector3 = route_pos_cleared(top_pt, ground_z, index, n, route_sweep_for(side))
+			var pos: Vector3 = route_pos_cleared(top_pt, ground_z, index, n, route_sweep_for(side), not _one_line())
 			_add_float_stone(pos, index, n)
+			_float_side.append(side)
 
 
 ## How deep a stone's rock runs under its cap, as a multiple of its radius,
@@ -6305,6 +6370,8 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	var recede: float = float(index) / float(maxi(count - 1, 1))
 	var rock_radius := lerpf(HUNTER_HEIGHT * 1.5, HUNTER_HEIGHT * 1.0, recede)
 	var slab := stone_style(String(BEAST_BIOME.get(_beast_id, "crag"))) == "slab"
+	if slab:
+		rock_radius *= SLAB_SIZE
 	var rock_height := rock_radius * (SLAB_DEPTH if slab else stone_depth_ratio(recede))
 	# Sunk enough that the CAP below (not the bare rock) is what a
 	# hunter visually lands on, with no gap between the two.
@@ -6330,6 +6397,22 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 	# own handoff dropped tilt/squash on purpose — tuned for a sphere,
 	# it would distort this mesh's shape unpredictably.
 	body.rotation.y = randf_range(0.0, TAU)
+	if slab:
+		# Picture A's steps are blocks with straight sides. The hull tapers to
+		# a point underneath, and from the low camera behind the hunter a
+		# stone above it showed only that underside: a thin pale wedge.
+		body.free()
+		var block := MeshInstance3D.new()
+		var block_mesh := CylinderMesh.new()
+		block_mesh.top_radius = rock_radius
+		block_mesh.bottom_radius = rock_radius * 0.85
+		block_mesh.height = SLAB_BLOCK_HEIGHT
+		block_mesh.radial_segments = 6
+		block_mesh.rings = 1
+		block.mesh = block_mesh
+		block.position = Vector3(0.0, -cap_height * 0.5 - SLAB_BLOCK_HEIGHT * 0.5, 0.0)
+		block.rotation.y = randf_range(0.0, TAU)
+		body = block
 	stone.add_child(body)
 	# Geometry only — no colour/texture of its own (foothold_rock.md) —
 	# so the #12 palette and the ROCK_DETAIL multiply below still apply

@@ -1628,3 +1628,19 @@ Built 2026-10-04 21:26 EDT (builder, cloud).
 - Punch_Combo reads as a blow on its own. The old full body lunge (35% of the gap) pushed the fists and head off the frame, so the `lunge` share is 0.3 for this clip (`beast_lunge_scale`).
 - Grader: FAIL (idle pair identical at half size; no hit frame), FAIL (no return-to-idle frame), then PASS on the grid: idle t=1/t=2 crops; mid-punch (`endturn=2 enemyat=1.95`); hit +0.3 s showing 35/42 (`enemyat=2.3`); return to idle (`enemyat=12`).
 - Test: `_test_rigged_jackal_idles_and_punches`.
+
+
+## Stones are one staircase of chunky blocks.
+
+2026-10-05 01:37 ET, builder. Before: ten thin pale discs, two lines per jackal (one per hunter), zigzagging up to y 15 (head height) and pulled 6 units toward the camera, so on screen they ringed and topped the head.
+
+What changed, all scoped to the jackal's biome (`quarry_ember`), other fights untouched:
+- `route_top` 0.42 (`route_top_y`): the route's top hold sits at 0.42 of the beast's height (y 8.4 on the 20-unit jackal) instead of the sigil's y 15.2. Hunters and stones both read `_top_hold`, so they still agree. **This moves the end of the climb to the chest** (the Ask).
+- `one_line` (`stone_line_shown`, `_one_line`): only the held hunter's line is drawn; the other line shows only the stone its hunter stands on. No zigzag on that line (`route_pos(..., zigzag=false)`), so the five rungs rise evenly on one straight line.
+- `rest_aside_for` / `REST_ASIDE` (2.1): a waiting hunter stands inside its first stone, so from behind the Frog that block shows beside it instead of hidden by it. Side effect: the Goblin is now in frame at rest (VIS hunter1 OK; was FAIL at x 1565).
+- Slabs are blocks: `SLAB_SIZE` 1.4x radius, straight-sided 6-sided body `SLAB_BLOCK_HEIGHT` (1.05, a Frog and a half) at every rung, replacing the tapered hull whose underside read as a thin wedge from the low camera.
+- Screen positions after: stones at (538,323) (602,253) (634,214) (654,188) (667,174).
+
+Grader: round 1 FAIL (upper stones thin, zigzag knot at the chest) -> fixed with fixed block height and no zigzag; round 2 VERDICT: PASS.
+Tests: ALL TESTS PASSED; new `_test_stone_staircase_is_one_line_to_the_chest`.
+

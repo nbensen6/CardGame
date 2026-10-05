@@ -397,11 +397,14 @@ run failed.
       Ask: Idle bows the head, hiding the eyes. Hold the head up too?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-jackal-idle-after-grid.png|420]] ^the-jackal-idles-and-punches
-- [ ] **Stones are one staircase of chunky blocks.**
+- [ ] 👀 **Stones are one staircase of chunky blocks.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones are one staircase of chunky blocks.|details]]
+      Ask: The climb now tops out at the chest, not the head. Keep that?
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       Today thin grey discs float in a ring round the jackal. The picture has thick grey blocks, each about as tall as the Frog, in ONE rising line from the Frog's rock to the jackal's chest, biggest nearest the camera. Done when a player can trace the climb with a finger from the Frog to the chest in `state=3d`, and no stone floats beside or behind the beast.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^stones-are-one-staircase-of-chunky-blocks
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-stone-staircase-after.png|420]] ^stones-are-one-staircase-of-chunky-blocks
 - [ ] **Cliffs and floor in picture A's flat style.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       The cliffs are detailed realistic rock and the floor is a flat dark sheet with thin lines; beside the flat jackal they look like a different game. The picture has dark angular cliffs in two or three flat tones and a floor of big cracked slabs with glowing seams. Done when the cliffs, the floor, the jackal and the Frog read as one style in `state=3d`.
@@ -563,3 +566,7 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Idle bows the jackal's head.** At rest the face and eyes tip down out of view.
 - [ ] (proposed) **Punch leaves the frame top.** Mid-combo the raised fist and head cross the top edge.
 - [ ] (proposed) **enemyat= past the beast's turn runs on wall clock.** Under software render it gets ahead of game time.
+- [ ] (proposed) **Sigil above the climb's end.** The jackal's top stone is now at the chest, ~7 units below the head's sigil.
+- [ ] (proposed) **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest under the staircase's top.
+- [ ] (proposed) **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`.
+

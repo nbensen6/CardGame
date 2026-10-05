@@ -213,3 +213,7 @@ appends here, never to the queue.
 - [ ] **Clear the climb stones off the jackal's face.** At the new closer rest camera the mid stones cover the head; route them beside it.
 - [ ] **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
 - [ ] **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
+- [ ] **Sigil above the climb's end.** In the jackal fight the top stone is now at the chest; the hunter strikes from ~7 units below the head's sigil.
+- [ ] **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest, under the staircase's top.
+- [ ] **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`, so a rebuild indexes stale homes.
+
