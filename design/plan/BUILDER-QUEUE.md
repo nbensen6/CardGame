@@ -413,13 +413,16 @@ run failed.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-cliffs-floor-after.png|420]] ^cliffs-and-floor-in-picture-a-s-flat-style
-- [ ] **Overnight: keep closing the gap to picture A until 8 AM.**
+- [ ] 👀 **Overnight: keep closing the gap to picture A until 8 AM.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Overnight: keep closing the gap to picture A until 8 AM.|details]]
+      Ask: Biggest gap left is beast size: bring the jackal closer so it fills the frame?
       **Nick, 2026-10-04 20:30 ET:** i want the builder to do passes over night until it gets it as close to the reference as possible. the outlines are really buggy to begin with
       A standing item (see "Standing items" in the brief). Each run is ONE pass: shoot `state=3d beast=cinder_jackal`; give the grader that frame and `design/art/targets/TARGET.png`; take the biggest difference it names that code can fix; fix that one thing; reshoot; the grader says CLOSER or NOT CLOSER. NOT CLOSER: revert the change and do not push it. Add one line per pass to this item's entry in [[BUILDER-QUEUE-NOTES]]: time, what changed, CLOSER or NOT CLOSER, the after frame. Leave this item `- [ ]`.
       Do not change: the rules or any number, the HUD layout, the cards, the camera sitting behind the hunter, the jackal's model. Skip differences that need new art (card faces, a new pose): list them in the notes instead. Tests stay green on every pass.
       Stop and mark it `👀` when the clock passes 08:00 ET on 2026-10-05, or when three passes in a row were NOT CLOSER. Then embed the first before frame and the last after frame side by side here, and ask Nick about the one biggest thing still different.
       Target: ![[art/targets/TARGET.png|420]]
-      Test: state=3d beast=cinder_jackal ^overnight-keep-closing-the-gap-to-picture-a
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-overnight-p1-before.png|420]] ![[agents/frames/builder/2026-10-05-overnight-p20-after.png|420]] ^overnight-keep-closing-the-gap-to-picture-a
 
 ## Waiting on Nick
 
@@ -582,3 +585,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Ring markers on the jackal's chest.** Two pale rings sit on its chest at rest; picture A has none.
 - [ ] (proposed) A thin magenta streak sits at the far-left horizon in state=3d; picture A has none.
 - [ ] (proposed) **Frog's outline is invisible.** Its dark line exists but vanishes against the dark plinth and floor.
+- [ ] (proposed) **Embers are random between shots.** Small tone changes drown in ember scatter, so the grader calls them unchanged; seed them in shots.

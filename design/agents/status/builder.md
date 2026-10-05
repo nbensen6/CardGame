@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 03:34 EDT
+2026-10-05 03:58 EDT
 
-- **Did:** Overnight pass 22: redder, darker jackal cracks toward picture A; reverted.
-- **Worked?** No, the grader saw no change and a crack-colour test failed. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p22-before.png]] then ![[frames/builder/2026-10-05-overnight-p22-after.png]]
-- **Ask:** nothing
+- **Did:** Overnight pass 23: orange glow at the cliffs' feet; reverted. Third miss in a row, so overnight stopped.
+- **Worked?** No, the grader saw only ember scatter, not the glow band. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p1-before.png]] then ![[frames/builder/2026-10-05-overnight-p20-after.png]]
+- **Ask:** Biggest gap left is beast size: bring the jackal closer so it fills the frame?
 
 ## Notes
 
-- **Found:** The cracks' yellow comes from the scene-wide bloom, not the jackal's material.
-- **Found:** Two pale ring markers sit on the jackal's chest; A has none (may be gameplay sigils).
+- **Found:** The grader cannot see small tone changes under random embers; three passes failed this way.
+- **Found:** Two pale ring markers sit on the jackal's chest; A has none (ledge rings, gameplay info).
 
 ## Log
 
+- 2026-10-05 03:58 EDT — builder: overnight pass 23: per-biome wall_heat 1.0 for the cliffs' foot band; grader FAIL (NOT CLOSER); reverted, notes only pushed. 3 NOT CLOSER in a row: standing item stopped, marked 👀.
 - 2026-10-05 03:34 EDT — builder: overnight pass 22: darker, redder jackal crack glow; grader FAIL (NOT CLOSER) and a crack-colour test failed; reverted, notes only pushed. 2 NOT CLOSER in a row.
 - 2026-10-05 02:41 EDT — builder: overnight pass 19: dark cull-front hull round each climb slab (ink line, 0.045 Frog-heights); grader FAIL (NOT CLOSER, line not seen); reverted, notes only pushed. 2 NOT CLOSER in a row.
 - 2026-10-05 02:35 EDT — builder: overnight pass 18: embers 420+8x60 -> 140+8x18, alpha 0.55; grader FAIL (NOT CLOSER); reverted, notes only pushed. 1 NOT CLOSER in a row.
