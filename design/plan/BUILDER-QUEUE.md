@@ -581,3 +581,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Idle pose varies between shots.** The jackal's idle differs frame to frame, so graders credit changes nobody made.
 - [ ] (proposed) **Ring markers on the jackal's chest.** Two pale rings sit on its chest at rest; picture A has none.
 - [ ] (proposed) A thin magenta streak sits at the far-left horizon in state=3d; picture A has none.
+- [ ] (proposed) **Frog's outline is invisible.** Its dark line exists but vanishes against the dark plinth and floor.

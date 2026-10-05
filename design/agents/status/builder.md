@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T02:35
+updated: 2026-10-05T02:41
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 02:35 EDT
+2026-10-05 02:41 EDT
 
-- **Did:** Overnight pass 18: thinned and dimmed the embers over the sky; reverted, not pushed.
-- **Worked?** No, grader saw only particle scatter. VERDICT: FAIL (fewer embers do not move any of the three biggest gaps).
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p18-before.png]] then ![[frames/builder/2026-10-05-overnight-p18-after.png]]
+- **Did:** Overnight pass 19: gave the climb stones a dark ink outline; reverted, not pushed.
+- **Worked?** No, grader didn't see the thin line at full frame. VERDICT: FAIL (only ember scatter and 2-5 px stone shifts changed).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p19-before.png]] then ![[frames/builder/2026-10-05-overnight-p19-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
+- **Found:** The Frog already has its dark outline; it vanishes against the dark plinth and floor.
 - **Found:** A thin magenta streak sits at the far-left horizon (~60,300); A has none.
 - **Found:** Two pale ring markers sit on the jackal's chest; A has none (may be gameplay sigils).
 
 ## Log
 
+- 2026-10-05 02:41 EDT — builder: overnight pass 19: dark cull-front hull round each climb slab (ink line, 0.045 Frog-heights); grader FAIL (NOT CLOSER, line not seen); reverted, notes only pushed. 2 NOT CLOSER in a row.
 - 2026-10-05 02:35 EDT — builder: overnight pass 18: embers 420+8x60 -> 140+8x18, alpha 0.55; grader FAIL (NOT CLOSER); reverted, notes only pushed. 1 NOT CLOSER in a row.
 - 2026-10-05 02:10 EDT — builder: overnight pass 17: new per-biome haze_glow/haze_color (quarry_ember 0.85, (1.0,0.56,0.14)) drive the heat haze band only, lava_glow 0.45 still scales pool/rim/cliffs + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:55 EDT — builder: overnight pass 16: cliff_flat lit/side/shade (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125) -> (0.21,0.205,0.235)/(0.12,0.118,0.135)/(0.055,0.054,0.062); grader PASS (CLOSER); tests green, pushed.
