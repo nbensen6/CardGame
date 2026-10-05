@@ -372,6 +372,13 @@ run failed.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]]
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-scene-pass2-after.png|420]] ^scene-pass-2-toward-picture-a
+- [ ] **Clean shapes: flat planes, a smooth glowing outline.**
+      **Nick, 2026-10-04 20:30 ET:** the outlines are really buggy to begin with
+      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
+      The outline first. It is an inverted hull pushed out along the normals (`game/assets/3d/outline.gdshader`); on a hard-edged faceted mesh the hull splits at every facet edge, which is the broken, blobby, stair-stepped line round the jackal and the Frog. Fix the cause: push the hull along smoothed normals (weld them or bake them into a spare vertex channel), or replace it with a screen-space edge pass; and turn MSAA on for the 3D view. The jackal keeps a warm outline; the Frog gets a thin dark one, not a yellow halo.
+      The jackal's surface is a noisy dark-red texture and the outlines on the jackal and the Frog are jagged, pale and stair-stepped. The picture has flat colour planes (dark brown rock, bright orange cracks), a thick smooth warm outline, and the cracks and eyes glow into the air around them. Done when, at 1:1, no outline shows stair-steps, the rock reads as flat planes, and the cracks and eyes bloom.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^clean-shapes-flat-planes-a-smooth-glowing-outline
 - [ ] **The jackal fills the frame like picture A.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       In `state=3d` the jackal covers about a sixth of the frame's width; in `design/art/targets/TARGET.png` it covers over half. The beast is sized by height (`_fit_height`), and an upright body sized that way is narrow and far off. Done when, at rest, its shoulders span at least 45% of the frame's width, its head and eyes are inside the frame, and it reads as towering over the hunter. Scale it, bring it nearer or tilt the rest camera up; do not crop the model. Move the sigil ring off the eyes.
@@ -382,16 +389,18 @@ run failed.
       Today thin grey discs float in a ring round the jackal. The picture has thick grey blocks, each about as tall as the Frog, in ONE rising line from the Frog's rock to the jackal's chest, biggest nearest the camera. Done when a player can trace the climb with a finger from the Frog to the chest in `state=3d`, and no stone floats beside or behind the beast.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
       Test: state=3d beast=cinder_jackal ^stones-are-one-staircase-of-chunky-blocks
-- [ ] **Clean shapes: flat planes, a smooth glowing outline.**
-      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
-      The jackal's surface is a noisy dark-red texture and the outlines on the jackal and the Frog are jagged, pale and stair-stepped. The picture has flat colour planes (dark brown rock, bright orange cracks), a thick smooth warm outline, and the cracks and eyes glow into the air around them. Done when, at 1:1, no outline shows stair-steps, the rock reads as flat planes, and the cracks and eyes bloom.
-      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^clean-shapes-flat-planes-a-smooth-glowing-outline
 - [ ] **Cliffs and floor in picture A's flat style.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       The cliffs are detailed realistic rock and the floor is a flat dark sheet with thin lines; beside the flat jackal they look like a different game. The picture has dark angular cliffs in two or three flat tones and a floor of big cracked slabs with glowing seams. Done when the cliffs, the floor, the jackal and the Frog read as one style in `state=3d`.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
       Test: state=3d beast=cinder_jackal ^cliffs-and-floor-in-picture-a-s-flat-style
+- [ ] **Overnight: keep closing the gap to picture A until 8 AM.**
+      **Nick, 2026-10-04 20:30 ET:** i want the builder to do passes over night until it gets it as close to the reference as possible. the outlines are really buggy to begin with
+      A standing item (see "Standing items" in the brief). Each run is ONE pass: shoot `state=3d beast=cinder_jackal`; give the grader that frame and `design/art/targets/TARGET.png`; take the biggest difference it names that code can fix; fix that one thing; reshoot; the grader says CLOSER or NOT CLOSER. NOT CLOSER: revert the change and do not push it. Add one line per pass to this item's entry in [[BUILDER-QUEUE-NOTES]]: time, what changed, CLOSER or NOT CLOSER, the after frame. Leave this item `- [ ]`.
+      Do not change: the rules or any number, the HUD layout, the cards, the camera sitting behind the hunter, the jackal's model. Skip differences that need new art (card faces, a new pose): list them in the notes instead. Tests stay green on every pass.
+      Stop and mark it `👀` when the clock passes 08:00 ET on 2026-10-05, or when three passes in a row were NOT CLOSER. Then embed the first before frame and the last after frame side by side here, and ask Nick about the one biggest thing still different.
+      Target: ![[art/targets/TARGET.png|420]]
+      Test: state=3d beast=cinder_jackal ^overnight-keep-closing-the-gap-to-picture-a
 
 ## Waiting on Nick
 

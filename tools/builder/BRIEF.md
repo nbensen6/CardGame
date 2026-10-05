@@ -44,6 +44,15 @@ stones climbing the gap between them, dark ground, cool sky.
    think is more important. The top one. Never touch `## Waiting on Nick` or
    `## Proposed`. If `## Now` has no unticked item, stop and say so.
 
+   **Standing items.** An item whose text says "A standing item" is taken
+   only when every item above it is built, and it is NOT marked `👀` after
+   a run: it stays `- [ ]` so the next run takes it again, until its own
+   stop rule is met. Each run does one pass of it, commits that pass on its
+   own (`builder: pass N — …`), and adds one line to the item's entry in
+   `BUILDER-QUEUE-NOTES.md`. A pass the grader calls NOT CLOSER is reverted
+   and not pushed; only its line in the notes is. Overwrite `## This run`
+   in the status note as usual.
+
 3. **Shoot the BEFORE frame** with the item's named shot (default below):
 
        tools\shot.cmd out=design\agents\frames\builder\<date>-<slug>-before.png state=3d beast=cinder_jackal
