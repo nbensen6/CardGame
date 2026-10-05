@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T20:50
-working_on: "Clean shapes: flat planes, a smooth glowing outline."
+updated: 2026-10-04T21:20
+working_on: "The jackal fills the frame like picture A."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 20:50 EDT
+2026-10-04 21:20 EDT
 
-- **Did:** Jackal outline now smooth and glowing, rock in flat planes, cracks bloom; Frog has a thin dark line.
-- **Worked?** Partly: outline, MSAA, Frog line, planes and crack bloom land; eyes too small. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-04-clean-shapes-before.png]] then ![[frames/builder/2026-10-04-clean-shapes-after.png]]
-- **Ask:** Grader failed this: eyes don't read at fight distance. Brighter eyes next?
+- **Did:** Measured the jackal framing; 45% width can't coexist with head, Frog and whole model in frame.
+- **Worked?** No: nothing shipped; best tilt and standoff reached ~21% width, not 45%. Grader not run.
+- **Look at:** ![[frames/builder/2026-10-04-jackal-fills-before.png]] then ![[frames/builder/2026-10-04-jackal-fills-option-sunk.png]]
+- **Ask:** Not built: 45% width can't fit head and Frog. Hide its legs below the floor?
 
 ## Notes
 
-- **Found:** Jackal eyes are 2-3 px at rest; the glowing inner ears outshine them.
-- **Found:** Jackal rock still reads maroon, not picture A's brown.
+- **Found:** The sigil ring sits on the jackal's brow, between the eyes.
+- **Found:** At a nearer standoff the lava ring shows as an orange slab bottom-left.
+- **Found:** CAMERA_FLOOR stops the rest camera tilting up past about -0.10 pitch.
 
 ## Log
 
+- 2026-10-04 21:20 EDT — builder: jackal-fills-frame investigated: 45% shoulder width impossible with head, Frog and whole model in frame (body ~1050 px tall at that width); standoff/tilt sweep peaks ~21%; sunk-legs option frame ~30%; no code change, marked 👀 for Nick's call; pushed notes only.
 - 2026-10-04 20:50 EDT — builder: clean shapes: outline hull along welded normals (TANGENT) + depth push, MSAA 4x, Frog thin dark line, scene glow + hotter cracks and line, toon tex_soften/facet/facet_shade, eye mask + tests; grader FAIL x3 (eyes at 1:1), shipped 👀; tests green, pushed.
 - 2026-10-04 19:46 EDT — builder: Cinder Jackal fights as cinder_jackal_v2 (AI_ART "_v2", .tscn wrapper with climb/ledge markers, beast_variant_path), GROUND_GAP_PER_HEIGHT 1.5 height floor on the standoff, outline 0.010, cool tint + low body floor + test; grader FAIL x2 (beast fills height, not A's width), shipped 👀; tests green, pushed.
 - 2026-10-04 19:30 EDT — builder: scene pass 2 toward picture A: jackal stones -> pale flat slabs (BIOME stone "slab"), raised rest rock under waiting hunters (rest_rock_lift), thick warm outline on jackal (0.018) and Frog + tests; grader FAIL x2 (stones ring the head: route geometry, Nick's call), shipped 👀; tests green, pushed.

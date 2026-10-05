@@ -382,11 +382,14 @@ run failed.
       Ask: Grader failed this: eyes don't read at fight distance. Brighter eyes next?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-clean-shapes-after.png|420]] ^clean-shapes-flat-planes-a-smooth-glowing-outline
-- [ ] **The jackal fills the frame like picture A.**
+- [ ] 👀 **The jackal fills the frame like picture A.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       In `state=3d` the jackal covers about a sixth of the frame's width; in `design/art/targets/TARGET.png` it covers over half. The beast is sized by height (`_fit_height`), and an upright body sized that way is narrow and far off. Done when, at rest, its shoulders span at least 45% of the frame's width, its head and eyes are inside the frame, and it reads as towering over the hunter. Scale it, bring it nearer or tilt the rest camera up; do not crop the model. Move the sigil ring off the eyes.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^the-jackal-fills-the-frame-like-picture-a
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The jackal fills the frame like picture A.|details]]
+      Ask: Not built: 45% width can't fit head and Frog. Hide its legs below the floor?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-04-jackal-fills-before.png|420]] ![[agents/frames/builder/2026-10-04-jackal-fills-option-sunk.png|420]] ^the-jackal-fills-the-frame-like-picture-a
 - [ ] **The jackal idles and punches.**
       **Nick, 2026-10-04 20:30 ET:** yes rig the jackal and add the animations
       The jackal now has a skeleton (24 bones) and two clips, all in `game/assets/3d/cast/`: `cinder_jackal_v2_rigged.glb` (the skinned model), `cinder_jackal_v2_idle.glb` (clip `Idle`, 97 frames at 24 fps, loop it) and `cinder_jackal_v2_punch.glb` (clip `Punch_Combo`, 60 frames). Each file carries the same mesh; use the rigged one in the fight and take only the animation from the other two. Run `--import` first. Done when: at rest the jackal plays Idle on a loop; when it attacks it plays Punch_Combo once, the damage lands on the hit, and it returns to Idle; the toon material, the glow and the outline still apply to the skinned mesh; the holds and the stone route still sit on the body. Prove it with two `state=3d` frames a second apart that differ in the jackal's pose, and one frame mid-punch.
@@ -551,3 +554,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stones still ring the beast.** Two lines flank the body instead of climbing the chest as in A.
 - [ ] (proposed) **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
 - [ ] (proposed) **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
+- [ ] (proposed) **Lava ring shows near the camera at a closer standoff.** Below gap ~1.2 an orange slab fills the bottom-left.
+- [ ] (proposed) **CAMERA_FLOOR caps the rest tilt.** Pitch below about -0.10 no longer tilts the rest camera up.

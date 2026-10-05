@@ -1604,3 +1604,14 @@ Builder, 2026-10-04 19:30 EDT.
 - Eyes: `eye_l`/`eye_r`/`eye_radius`/`eye_gain` in toon.gdshader, a model-space mask that boosts hot texels. The v2's bright eye texels sit at x ±0.03-0.05, y ~0.575, z ~0.22 (found by probing texels; the inner ears are higher, y 0.72-0.95). At 6x zoom they now show as two pale slants, but at 1:1 they are 2-3 px and lose to the ears.
 - Grader: round 1 FAIL (planes, bloom). Round 2 FAIL (eyes only). Round 3 FAIL: outline, MSAA, Frog line, planes and crack bloom MET; eyes NOT MET at fight distance; rock still redder than A's brown.
 - Final VERDICT: FAIL.
+
+## The jackal fills the frame like picture A.
+
+2026-10-04 21:20 EDT. Not built: the done-when cannot be met inside the item's own limits, so no code changed.
+
+- **Before** (`2026-10-04-jackal-fills-before.png`, `state=3d beast=cinder_jackal`): the jackal spans x 600-830 of 1280 (~18% with arms), ears at y≈20, feet on the lava line at y≈335, the Frog at y 340-420 just in front of its feet. The sigil ring sits on the brow between the eyes: it is placed at climb_5 (y 1.44 of 1.90, chin) plus 1.7 hunter heights of lift, which lands at ~0.82 of the height, eye level on this model.
+- **Why 45% can't fit:** the v2 body is 1.38 wide by 1.90 tall, shoulders about half its height. Shoulders across 45% of a 16:9 frame (576 px) make the whole body ~1050 px tall in a 720 px frame. With the head inside, the bottom third must leave the frame; and the Frog stands on the ground nearer the camera than the beast, so it always projects BELOW the beast's feet. Head in frame + Frog visible + whole model + 45% width cannot all hold. Scaling the beast changes nothing (angles only depend on size over distance).
+- **Tried** (all reverted): `GROUND_GAP_PER_HEIGHT` 1.5 -> 1.2/1.1/1.0/0.9/0.8/0.7 with `GROUND_VIEW_PITCH` 0.08 -> 0/-0.10/-0.20/-0.25/-0.28 (and `ORBIT_PITCH_MIN` opened to -0.30). Negative pitch tilts up with the Frog pinned at y≈416, but `CAMERA_FLOOR` (0.5 + lens lift) holds the lens up from about -0.10, so more tilt buys nothing. Best with head and Frog both in frame: gap 1.1, pitch -0.10, ~21% width. Below gap ~1.2 the lava ring shows as an orange slab in the bottom-left under the energy counter.
+- **Option frame** (`2026-10-04-jackal-fills-option-sunk.png`, a throwaway hack, not shipped): gap 0.55 and the jackal sunk 0.42 of its height into the floor, which is what picture A does (its waist sits on the lava line). Even then the shoulders reach ~30%: A's jackal is far broader in the chest than this model. Sinking also breaks the stone route (holds are on the legs) and needs the lava-ring fix above.
+- **What would reach A:** hide the legs below a floor edge (Nick's call, the earlier "crop its legs" ask), and a broader-chested model or pose for the last ~15%.
+- Grader not run: there is no after frame.
