@@ -32,22 +32,41 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-stones-after.png|420]] ^rebuild-the-stones-to-match-the-referenc
 
-- [ ] 👀 **Research: card frames, against real TCGs.**
-      **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
-      **The research is already done — read [[art/card-frame-research]] and mock, do not re-research.**
-      It has our own card pulled apart at 3x (floating cost orb, uncontained art, overhanging ribbon, no bevel, aliased edges), how real frames are built, the six things that make one read as expensive, and three directions spec'd: A carved obsidian, B printed card, C sculpted relic. Build those three.
-      Reference, for the shape of the task only: Pokémon, Magic, Hearthstone, Legends of Runeterra, Marvel Snap. Look at the frame itself, not the art: border weight and colour, the inner bevel, how the art window is cut, where the cost sits and how it is set into the frame, the name plate, the type bar, the text box's fill and separator, the rarity cue, how a foil or premium treatment is layered on.
-      Say what makes each read as expensive, and what our current frame does instead — ours is a thin outlined rectangle with a flat strip, and it looks cheap at hand size.
-      **Deliver:** three mocked-up frame directions rendered on OUR cards (Tongue Snap, Leap, Scramble) at true hand size, each with the reference it comes from named and what was taken. Describe the references in words; do not put other games' images in this repo. Say which one you would pick and why. File it `to: nick` for the pick.
-      **Done when** Nick has three frames to choose between, shown at the size he will actually see them.
-      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Research: card frames, against real TCGs.|details]]
-      Ask: Which card frame: A obsidian, B printed, or C gold relic (my pick)?
-      Test: state=3d beast=cinder_jackal cardframe=C
-      ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]] ^research-card-frames-against-real-tcgs
+- [ ] **Ship the A1 card frame, tinted per seat.**
+      **Nick, 2026-10-05:** "A1, but i need the orange color to be editable to match the color of different characters. also make sure that things match up within the card. IE the energy numbers need to be reduced in size and fit within the circle and are matched to be inside."
+      The frame is already split into two files by `tools/cardframe_a1.py`:
+      `game/assets/ui/card_frame_a1_base.png` (neutral stone, no ember) and
+      `card_frame_a1_glow.png` (white glow on transparent). Stack them in
+      `card_view.gd` and set `self_modulate` on the glow one. **No baked colour
+      anywhere** — a blue card must not keep a warm cast.
+      The tint comes from the seat, the way `combat_3d.gd`'s `SLOT_TINT` /
+      `slot_tint(slot)` already colours the floor markers: extend that table to
+      one colour per character rather than inventing a second scheme.
+      Author these boxes, normalised against the card, straight from
+      `tools/cardframe_a1.py` (they are measured off the generation):
+      socket centre `(0.126, 0.0874)` r `0.0478` · title `(0.205, 0.045, 0.945, 0.130)` ·
+      art `(0.095, 0.150, 0.905, 0.560)` · type `(0.112, 0.585, 0.900, 0.640)` ·
+      text `(0.112, 0.665, 0.900, 0.925)`.
+      **The cost number is centred in the socket and fits inside it** — shrink the
+      number to the disc, never the disc to the number. Nothing on the card may
+      cross a panel edge: name starts clear of the socket, art fills its window
+      without touching the frame, rules text wraps inside the text box.
+      The frame stretches as a nine-patch; the socket and the corners do not.
+      **Done when** a hand in `state=3d` shows every card in its own seat colour,
+      the costs sit inside their sockets at hand size, and nothing clips at 1280x720.
+      Mockups: ![[art/cards/a1-hand.png|420]] ![[art/cards/a1-tints.png|420]]
+      Test: state=3d beast=cinder_jackal ^ship-the-a1-card-frame-tinted-per-seat
+
+- [x] **Research: card frames, against real TCGs.** — done by the session.
+      [[art/card-frame-research]], three mockups, four Meshy passes over A and B.
+      **Nick picked A1 (carved obsidian)** on 2026-10-05, so the builder's own
+      ask on this item is answered. Superseded by the item above.
+      Builder's pass: ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]]
 
 - [ ] **A HUD that matches the chosen card frame.**
       **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
-      **Blocked until Nick picks a card frame.** Then re-theme the whole overlay in that same material: the beast's health bar, the intent badge, the energy orb, the climb gauge, the party health plates, End Turn and Switch.
+      **Nick picked A1 (carved obsidian), 2026-10-05.** Re-theme the whole overlay in that same material: the beast's health bar, the intent badge, the energy orb, the climb gauge, the party health plates, End Turn and Switch.
+      Same two-layer rule as the cards: neutral stone plus a glow layer that takes the seat colour, so a player's HUD and their hand light up together.
       Reference how card games lay out and style a HUD — Slay the Spire, Hearthstone, Runeterra, Marvel Snap — and say what you took. `TARGET-UI.png` is Nick's own pick for the cards and HUD and stays the arbiter.
       Meshy may be used for any panel ornament that is genuinely easier sculpted than drawn — a carved frame corner, an energy orb — rendered once to a texture. Ask Nick before spending credits; it is not required, and a drawn panel that matches is worth more than a sculpted one that does not.
       **Done when** every HUD element and the cards read as one set, nothing clips at 1280x720, and the rest frame beside `TARGET-UI.png` shows the same material.
