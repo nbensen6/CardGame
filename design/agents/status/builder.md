@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T01:27
+updated: 2026-10-05T01:55
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 01:50 EDT
+2026-10-05 01:55 EDT
 
-- **Did:** Overnight pass 15: tried pulling the slate cliffs halfway back toward near-black; reverted, not pushed.
-- **Worked?** No, grader saw no change beyond particle noise. VERDICT: FAIL (not closer): the only change is a stone a few pixels wider, and none of the three biggest differences from TARGET.png moved.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p15-before.png]] then ![[frames/builder/2026-10-05-overnight-p15-after.png]]
+- **Did:** Overnight pass 16: darkened the cliffs from lit slate blue to near-black charcoal, facets still separate.
+- **Worked?** Yes, grader called it closer. VERDICT: PASS (the darker cliffs now match the target's charcoal rock mass and the beast stands out more).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p16-before.png]] then ![[frames/builder/2026-10-05-overnight-p16-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** Pass 15's grader missed a measured cliff darkening (median 59->40); graders may not see tone-only changes.
+- **Found:** A thin magenta streak sits at the far-left horizon (~60,300); A has none.
 - **Found:** Two pale ring markers sit on the jackal's chest; A has none (may be gameplay sigils).
 
 ## Log
 
+- 2026-10-05 01:55 EDT — builder: overnight pass 16: cliff_flat lit/side/shade (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125) -> (0.21,0.205,0.235)/(0.12,0.118,0.135)/(0.055,0.054,0.062); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:50 EDT — builder: overnight pass 15: cliff_flat lit/side/shade (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125) -> (0.26,0.268,0.305)/(0.165,0.17,0.195)/(0.09,0.09,0.103) (sampled wall median ~(59,63,84) -> ~(40,42,57)); grader FAIL (NOT CLOSER, saw no change); reverted, not pushed. 1 NOT CLOSER in a row.
 - 2026-10-05 01:27 EDT — builder: overnight pass 14: toon.gdshader glow_color uniform (no-op default); jackal cracks glow (1.0,0.58,0.16,0.85), mask reads paint 1/4 back from the tint + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:10 EDT — builder: overnight pass 13: cliff_flat lit/side/shade (0.23,0.235,0.26)/(0.145,0.148,0.165)/(0.075,0.075,0.085) -> (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125); grader PASS (CLOSER); tests green, pushed.
