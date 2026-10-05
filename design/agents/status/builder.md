@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T00:33
+updated: 2026-10-05T00:41
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 00:33 EDT
+2026-10-05 00:41 EDT
 
-- **Did:** Overnight pass 10: the jackal's cliffs are now A's charcoal, not navy blue.
-- **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p10-before.png]] then ![[frames/builder/2026-10-05-overnight-p10-after.png]]
+- **Did:** Overnight pass 11: the floor is warmer, even slate; the pale lavender slabs on the right are gone.
+- **Worked?** Partly: grader said CLOSER, but credited the jackal's shading, not the floor. VERDICT: CLOSER (PASS).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p11-before.png]] then ![[frames/builder/2026-10-05-overnight-p11-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** A's sky is a wide mauve notch; ours is a small disc between cliffs.
+- **Found:** The jackal's idle pose differs between shots, so a grader can credit changes nobody made.
 
 ## Log
 
+- 2026-10-05 00:41 EDT — builder: overnight pass 11: quarry_ember floor_tone (0.25,0.245,0.27) -> (0.25,0.235,0.24), floor slab_var 0.5 -> 0.2; grader PASS (CLOSER, on beast shading not the floor); tests green, pushed.
 - 2026-10-05 00:33 EDT — builder: overnight pass 10: cliff_flat lit/side/shade tones blue slate -> neutral charcoal (0.23,0.235,0.26)/(0.145,0.148,0.165)/(0.075,0.075,0.085); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 00:10 EDT — builder: overnight pass 9: quarry_ember sky top/horizon navy+red -> violet (0.26,0.12,0.28)/(0.66,0.26,0.44), ash_params (pink-violet under, cover 0.3, pulse 0.3) via ash_params() + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:58 EDT — builder: overnight pass 8: slab cap matches the 6-sided block (segments, radius, spin), SLAB_SIDE_TONE (0.46,0.50,0.55) -> (0.36,0.39,0.43); grader PASS (CLOSER); tests green, pushed.
