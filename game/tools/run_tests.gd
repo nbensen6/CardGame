@@ -2408,6 +2408,7 @@ func _init() -> void:
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_scene_pass1_picture_a()
 	_test_overnight_p3_lava_glow()
+	_test_overnight_p17_haze_glow()
 	_test_cliffs_and_floor_flat_style()
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
@@ -31193,6 +31194,17 @@ func _test_cliffs_and_floor_flat_style() -> void:
 ## Overnight pass 3 (picture A): the jackal's lava is a thin hot line on the
 ## horizon, not a wide yellow band, and its floor's seams barely glow; every
 ## other lava biome keeps full heat.
+## Overnight pass 17 (picture A): the horizon haze glows hotter than the lava
+## pool and floor rim, so A's soft orange band returns without pass 3's orange
+## floor.
+func _test_overnight_p17_haze_glow() -> void:
+	var lava := Combat3D.lava_glow("quarry_ember")
+	var haze := Combat3D.haze_glow("quarry_ember")
+	_expect(haze > lava, "the jackal's horizon haze burns hotter than its pool -- haze %.2f, lava %.2f" % [haze, lava])
+	_expect(lava < 0.6, "the jackal's pool and floor rim stay dim -- got %.2f" % lava)
+	_expect(Combat3D.haze_glow("crag") == Combat3D.lava_glow("crag"), "a biome that names no haze_glow keeps its lava_glow")
+
+
 func _test_overnight_p3_lava_glow() -> void:
 	var g := Combat3D.lava_glow("quarry_ember")
 	_expect(g > 0.0 and g < 0.6, "the jackal's lava burns dim enough to be a line, not a band -- got %.2f" % g)

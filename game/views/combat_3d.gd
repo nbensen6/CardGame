@@ -3006,6 +3006,12 @@ const BIOME := {
 		# the pool, its lights, the floor's rim heat, the heat haze's glow band
 		# and the warm band at the cliffs' foot; see lava_glow() / _add_lava() / _dress_wall().
 		"lava_glow": 0.45,
+		# Overnight pass 17 (picture A): A's horizon is a soft orange-yellow
+		# glow rising behind the beast, not pass 3's thin red line. The heat
+		# haze alone burns hotter, taller and yellower; the pool, the floor's
+		# rim and the cliffs keep lava_glow. See haze_glow() / _add_lava().
+		"haze_glow": 0.85,
+		"haze_color": Color(1.0, 0.56, 0.14),
 		# Embers in the air (session, 2026-09-29): sparks rising over the whole
 		# arena, sparks falling from lava seams in the wall, and orange light in
 		# those seams on the rock. See ember_field() / _add_embers().
@@ -3253,6 +3259,14 @@ static func lava_glow(biome: String) -> float:
 	return clampf(float(b.get("lava_glow", 1.0)), 0.0, 1.0)
 
 
+## How hot the heat haze's glow band over the lava burns, 0..1: lava_glow
+## unless the biome names its own, so the horizon can glow without the floor
+## turning orange. Static so run_tests.gd can pin it.
+static func haze_glow(biome: String) -> float:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return clampf(float(b.get("haze_glow", lava_glow(biome))), 0.0, 1.0)
+
+
 ## The shimmer band stands here, in arena radii: past CAMERA_MAX_R, so the lens
 ## is always inside it and it can only ever wobble what lies beyond the lava.
 const SHIMMER_R := 2.46
@@ -3322,7 +3336,8 @@ func _add_lava(beast_id: String) -> void:
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = SHIMMER_R * r
 	cyl.bottom_radius = SHIMMER_R * r
-	cyl.height = 0.3 * r * maxf(glow, 0.1)
+	var haze := haze_glow(biome)
+	cyl.height = 0.3 * r * maxf(haze, 0.1)
 	cyl.cap_top = false
 	cyl.cap_bottom = false
 	cyl.radial_segments = 64
@@ -3331,7 +3346,10 @@ func _add_lava(beast_id: String) -> void:
 	var heat := ShaderMaterial.new()
 	heat.shader = HEAT_SHIMMER
 	heat.set_shader_parameter("band_height", cyl.height)
-	heat.set_shader_parameter("glow_gain", 0.9 * glow)
+	heat.set_shader_parameter("glow_gain", 0.9 * haze)
+	var bd: Dictionary = BIOME.get(biome, BIOME["crag"])
+	if bd.has("haze_color"):
+		heat.set_shader_parameter("glow_color", bd["haze_color"])
 	band.material_override = heat
 	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	band.position.y = pool.position.y + cyl.height * 0.5
