@@ -2280,6 +2280,7 @@ func _init() -> void:
 	# _rarity_pips before this.
 	_test_card_frame_mocks_keep_every_piece_inside_the_card()
 	_test_card_frame_mock_spec_resolves_rarity_and_type()
+	_test_hud_wears_the_a1_card_material()
 	_test_backlog86_rarity_pips_count_matches_the_tier_for_every_rarity()
 	_test_backlog86_rarity_pips_falls_back_to_one_common_gem_for_missing_or_unknown_rarity()
 	_test_backlog86_rarity_of_gem_colour_actually_differs_per_tier()
@@ -31859,3 +31860,44 @@ func _test_card_frame_mock_spec_resolves_rarity_and_type() -> void:
 	var b_atk: Dictionary = CardView.frame_mock_spec("B", {"type": "attack"})
 	var b_sk: Dictionary = CardView.frame_mock_spec("B", {"type": "skill"})
 	_expect(b_atk["plate_top"] != b_sk["plate_top"], "frame B: the plate is tinted by card type")
+
+
+## "A HUD that matches the chosen card frame" (Nick, 2026-10-05): every HUD
+## panel is the A1 card's stone plus a white glow, and only the glow is
+## coloured, by the seat, so the HUD and the hand light up together.
+func _test_hud_wears_the_a1_card_material() -> void:
+	# The bands never meet: a small panel draws its frame smaller.
+	var k := Combat3D.hud_panel_scale(Vector2(400, 300))
+	_expect(is_equal_approx(k, Combat3D.HUD_PANEL_K), "a1 hud: a big panel uses the standard scale")
+	var small := Vector2(90, 30)
+	k = Combat3D.hud_panel_scale(small)
+	_expect(2.0 * Combat3D.HUD_PANEL_PATCH * k <= small.y + 0.01,
+		"a1 hud: a short panel's two carved bands fit inside it")
+	_expect(Combat3D.HUD_PANEL_K <= 1.5 * 176.0 / CardView.A1_SRC.x,
+		"a1 hud: the HUD frame stays near a hand card's weight")
+	# The layers: stone untinted, glow additive and tinted, all behind and tap-through.
+	var host := PanelContainer.new()
+	host.size = Vector2(150, 46)
+	var tint := CardView.seat_tint("mountain_climbers")
+	var glow: NinePatchRect = Combat3D.add_a1_panel(host, tint, 4.0)
+	var base := host.get_node("A1/A1Base") as NinePatchRect
+	_expect(glow.self_modulate == tint and glow.material is CanvasItemMaterial
+		and (glow.material as CanvasItemMaterial).blend_mode == CanvasItemMaterial.BLEND_MODE_ADD,
+		"a1 hud: only the glow is coloured, added over the stone")
+	_expect(base.self_modulate.s < 0.05, "a1 hud: the stone keeps no colour of its own")
+	_expect((host.get_node("A1") as Control).show_behind_parent
+		and base.mouse_filter == Control.MOUSE_FILTER_IGNORE and glow.mouse_filter == Control.MOUSE_FILTER_IGNORE,
+		"a1 hud: the panel sits behind its host and lets taps through")
+	var drawn := base.size * base.scale.x
+	_expect(drawn.is_equal_approx(host.size + Vector2(8, 8)) and base.position == Vector2(-4, -4),
+		"a1 hud: the panel covers its host, grown by its pad")
+	_expect(host.get_combined_minimum_size().y < 2.0 * Combat3D.HUD_PANEL_PATCH,
+		"a1 hud: the nine-patch does not grow the container it decorates")
+	host.free()
+	# End Turn is still the loud one; Switch is not.
+	var loud: Dictionary = Combat3D.a1_button_styles(tint, true)
+	var quiet: Dictionary = Combat3D.a1_button_styles(tint, false)
+	_expect(loud["normal"].draw_center and not quiet["normal"].draw_center,
+		"a1 hud: only End Turn has a face of its own at rest")
+	_expect(loud["normal"].bg_color.r > 0.6 and loud["normal"].bg_color.b < 0.3,
+		"a1 hud: End Turn's face is warm whatever the seat")

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T16:05
-working_on: "Ship the A1 card frame, tinted per seat."
+updated: 2026-10-05T16:18
+working_on: "A HUD that matches the chosen card frame."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 16:05 EDT
+2026-10-05 16:18 EDT
 
-- **Did:** Shipped the A1 stone card frame; its glow takes each seat's colour, and costs sit inside their sockets.
-- **Worked?** Partly: the frame, tint and sockets work; the grader failed it because the tucked hand runs off the bottom edge. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-05-a1-frame-before.png]] then ![[frames/builder/2026-10-05-a1-frame-after.png]]
-- **Ask:** Raise the resting hand so whole cards show, or keep the deep tuck?
+- **Did:** Re-skinned every HUD panel in the A1 card stone, its glow lit by the held hunter's seat colour.
+- **Worked?** Partly: one material with the cards, but the grader wants TARGET-UI's grey/gold stone. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-05-a1-hud-before.png]] then ![[frames/builder/2026-10-05-a1-hud-after.png]]
+- **Ask:** Seat-colour glow, or TARGET-UI's grey stone and gold: which wins?
 
 ## Notes
 
-- **Found:** The second seat's blue hand isn't in the rest shot; only the Frog's green cards show.
-- **Found:** At hand size the A1 socket is 15px wide, so the cost digit is 11px however bold it is.
+- **Found:** Short panels (beast plate, intent, Switch, health plates) clamp the A1 band thin; it reads as an outline.
+- **Found:** Draw, discard and burn badges are still brass card stacks, outside A1.
 
 ## Log
 
+- 2026-10-05 16:18 EDT — builder: A1 HUD (hudpanel_a1.py pair, Combat3D.add_a1_panel on beast plate, intent, energy, gauge, End Turn, Switch, health plates; seat re-tint) + tests; grader FAIL x3 on TARGET-UI material; marked 👀 for Nick; tests green, pushed.
 - 2026-10-05 16:05 EDT — builder: A1 card frame shipped (CardView.SHIP_A1, stone + glow nine-patches, SEAT_TINT feeding SLOT_TINT, boxes from cardframe_a1.py, cost sized to socket) + tests; grader FAIL twice on the hand's bottom tuck; marked 👀 for Nick; tests green, pushed.
 
 - 2026-10-05 15:33 EDT — builder: card-frame mocks A/B/C (CardView.frame_mock, FRAME_MOCKS, frame_mock_layout, card_frame_mock + card_plate shaders, harness cardframe=) on the real hand + layout tests; grader FAIL (labels) then PASS; marked 👀 for Nick's pick; tests green, pushed.

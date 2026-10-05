@@ -66,14 +66,17 @@ run failed.
       ask on this item is answered. Superseded by the item above.
       Builder's pass: ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]] ^research-card-frames-against-real-tcgs
 
-- [ ] **A HUD that matches the chosen card frame.**
+- [ ] 👀 **A HUD that matches the chosen card frame.**
       **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
       **Nick picked A1 (carved obsidian), 2026-10-05.** Re-theme the whole overlay in that same material: the beast's health bar, the intent badge, the energy orb, the climb gauge, the party health plates, End Turn and Switch.
       Same two-layer rule as the cards: neutral stone plus a glow layer that takes the seat colour, so a player's HUD and their hand light up together.
       Reference how card games lay out and style a HUD — Slay the Spire, Hearthstone, Runeterra, Marvel Snap — and say what you took. `TARGET-UI.png` is Nick's own pick for the cards and HUD and stays the arbiter.
       Meshy may be used for any panel ornament that is genuinely easier sculpted than drawn — a carved frame corner, an energy orb — rendered once to a texture. Ask Nick before spending credits; it is not required, and a drawn panel that matches is worth more than a sculpted one that does not.
       **Done when** every HUD element and the cards read as one set, nothing clips at 1280x720, and the rest frame beside `TARGET-UI.png` shows the same material.
-      Test: state=3d beast=cinder_jackal ^a-hud-that-matches-the-chosen-card-frame
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#A HUD that matches the chosen card frame.|details]]
+      Ask: Grader failed this: wants TARGET-UI's grey/gold stone, not seat glow. Which wins?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-a1-hud-after.png|420]] ^a-hud-that-matches-the-chosen-card-frame
 
 - [ ] 👀 **Swap in the new upright jackal model.**
       **Nick, 2026-10-04 19:17 ET:** yes generate a new jackal model from picture A
@@ -659,3 +662,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Hand fan hides the card footer.** At rest every card is cut at the screen's bottom edge, so a footer or rarity token never shows.
 - [ ] (proposed) **Raised card's title clipped in shots.** hover= lifts the card past the top of the fan, cutting off its name plate.
 - [ ] (proposed) **Second seat's blue hand unshot.** The rest frame only shows the Frog's green cards; a switch= shot would prove blue.
+- [ ] (proposed) **Thin HUD panels lose their stone.** The beast plate, intent, plates and Switch are so short the A1 band reads as an outline.
+- [ ] (proposed) **Pile badges still brass.** Draw, discard and burn are the old brown card stacks, the one HUD piece not in A1.

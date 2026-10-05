@@ -1831,3 +1831,44 @@ Grader round 1 FAILED because the frame itself didn't show the sources or the pi
 - **Grader, pass 1:** FAIL. Costs inside but barely readable; cards run off the bottom of the window. Fixed the digit (bigger, bold). The bottom overhang is the hand's deliberate deep tuck (FAN_TUCK + 52, the Slay the Spire hand), and TARGET-UI's cards also run off the bottom, so I left it alone.
 - The second seat (the Climbers, blue) is not in the rest shot. Switch to it to see the blue hand.
 - **Grader, pass 2:** VERDICT: FAIL. Same reason: the resting hand runs off the bottom of the window. Stopped there and marked it for Nick; raising the hand changes the fan's tuck, which is a separate decision.
+
+## A HUD that matches the chosen card frame.
+
+Builder, 2026-10-05 16:18 EDT.
+
+**What was built.** `tools/hudpanel_a1.py` cuts the A1 card pair's bottom-right
+quarter (carved corner, two edges, cracked interior stone) and mirrors it into
+a panel with no socket or art window: `hud_panel_a1_base.png` (neutral stone)
+and `hud_panel_a1_glow.png` (white glow). `Combat3D.add_a1_panel()` stacks them
+behind any control as nine-patches (margin 72 source px, drawn at 0.32, less on
+a short panel so the bands never meet), glow additive and tinted. It sits in a
+zero-min-size holder so it never grows the container it decorates.
+
+Applied to: beast plate and intent (beast ember, intent red while hostile),
+energy counter, climb gauge, End Turn (seat glow, re-tinted on Switch by
+`_retint_seat_panels`), Switch (neutral glow), and a thin plate under each
+hunter's health bar in that hunter's seat colour. Meshy not used, no credits spent.
+
+**What I took from other card games.**
+- Slay the Spire: one loud button. End Turn keeps a warm amber face (TARGET-UI's
+  colour too) while everything else stays quiet stone; energy stays the one
+  big un-shrunk number beside the hand.
+- Hearthstone: every HUD piece is cut from the same physical material as the
+  cards, so the board reads as one object. Here literally the same pixels.
+- Runeterra: the player's colour lives in a rim light, not in the panel fill,
+  so seat identity is a glow and the stone stays neutral.
+- Marvel Snap: thin, flat plates for health under each unit, no boxes round
+  the creature; the health bar keeps its red and the plate is just a sill.
+
+**Grader.** Three rounds, FAIL each time. Round 1: carved band read as a
+hairline, beast glow read pink. Round 2 (scale 0.2 -> 0.32, stone lifted 1.3x,
+gold beast glow, panels padded outward): energy/gauge/End Turn now read as the
+card's stone, but it judged the result further from TARGET-UI than the old
+grey-riveted plate and gold End Turn. Round 3: End Turn face back to amber.
+Still FAIL: it wants TARGET-UI's grey carved stone with bolts and gold energy,
+which conflicts with the item's own "glow takes the seat colour" rule. Short
+panels (beast plate 50px, intent, Switch, health plates) clamp the frame scale
+and read as pale outlines. Final VERDICT: FAIL.
+
+Test: `state=3d beast=cinder_jackal`.
+

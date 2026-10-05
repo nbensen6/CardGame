@@ -800,6 +800,135 @@ static func add_plate_frame(target: Control, kind: String, radius: float = 10.0,
 	return fr
 
 
+## The A1 material on the HUD (Nick, 2026-10-05, "A HUD that matches the
+## chosen card frame"): the same stone and the same white glow as the cards,
+## cut from the card pair by tools/hudpanel_a1.py, so a panel and a card are
+## literally one material. Only the glow is coloured, by the seat, which is
+## how a player's HUD and their hand light up together.
+const HUD_PANEL_BASE := preload("res://assets/ui/hud_panel_a1_base.png")
+const HUD_PANEL_GLOW := preload("res://assets/ui/hud_panel_a1_glow.png")
+## Nine-patch margin in source px: the carved band plus a little stone.
+const HUD_PANEL_PATCH := 72.0
+## Source px -> screen px. A card in the hand is drawn at ~0.25; the HUD's
+## panels are fewer and further apart, and at that scale their carved band
+## read as a hairline (grader, 2026-10-05), so they draw a little heavier.
+const HUD_PANEL_K := 0.32
+## How much brighter the HUD's stone is drawn than the card's.
+const HUD_STONE_LIFT := Color(1.3, 1.3, 1.34)
+## The beast's own colour on its plate and intent, so it never reads as a seat.
+const BEAST_GLOW := Color(1.0, 0.62, 0.16)
+## Every seat-lit panel, re-tinted when the held hunter changes.
+var _seat_panels: Array = []
+
+
+## The draw scale of a panel this size: HUD_PANEL_K, or less on a small panel
+## so its two carved bands never meet. Static so a test can pin it.
+static func hud_panel_scale(sz: Vector2, k: float = HUD_PANEL_K) -> float:
+	var room := minf(sz.x, sz.y) / (2.0 * HUD_PANEL_PATCH)
+	return maxf(0.02, minf(k, room))
+
+
+## Lay the A1 stone and its glow BEHIND `target` (grown by `pad` on every side),
+## glow tinted `tint`. The target's own stylebox should be clear for the stone
+## to show. Returns the glow layer, the only thing a caller re-tints.
+static func add_a1_panel(target: Control, tint: Color, pad: float = 0.0,
+		k: float = HUD_PANEL_K) -> NinePatchRect:
+	# A plain holder between the target and the layers: a NinePatchRect's
+	# minimum size is its margins, and a Container would grow to fit that.
+	var holder := Control.new()
+	holder.name = "A1"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.show_behind_parent = true
+	target.add_child(holder)
+	target.move_child(holder, 0)
+	var layers: Array = []
+	for tex in [HUD_PANEL_BASE, HUD_PANEL_GLOW]:
+		var np := NinePatchRect.new()
+		np.name = "A1Base" if tex == HUD_PANEL_BASE else "A1Glow"
+		np.texture = tex
+		np.patch_margin_left = int(HUD_PANEL_PATCH)
+		np.patch_margin_top = int(HUD_PANEL_PATCH)
+		np.patch_margin_right = int(HUD_PANEL_PATCH)
+		np.patch_margin_bottom = int(HUD_PANEL_PATCH)
+		np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		if tex == HUD_PANEL_BASE:
+			# Lifted a step: the card's stone is lit by its art and glow, a lone
+			# HUD panel on a night scene read as flat black (grader, 2026-10-05).
+			np.self_modulate = HUD_STONE_LIFT
+		holder.add_child(np)
+		layers.append(np)
+	var glow: NinePatchRect = layers[1]
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = add
+	glow.self_modulate = tint
+	var pin := func() -> void:
+		holder.position = Vector2.ZERO
+		holder.size = target.size
+		var full := target.size + Vector2(pad, pad) * 2.0
+		var s := hud_panel_scale(full, k)
+		for np in layers:
+			(np as Control).position = -Vector2(pad, pad)
+			(np as Control).scale = Vector2(s, s)
+			(np as Control).size = full / s
+	if target is Container:
+		(target as Container).sort_children.connect(pin)
+	target.resized.connect(pin)
+	pin.call()
+	return glow
+
+
+## A stylebox that draws nothing but keeps the host's padding, so the A1
+## stone behind it shows. `wash` tints the face (a Button's hover and press).
+static func a1_clear_style(margin_x: float, margin_y: float,
+		wash: Color = Color(0, 0, 0, 0)) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = wash
+	st.draw_center = wash.a > 0.0
+	st.set_corner_radius_all(3)
+	st.content_margin_left = margin_x
+	st.content_margin_right = margin_x
+	st.content_margin_top = margin_y
+	st.content_margin_bottom = margin_y
+	return st
+
+
+## A Button's states on the A1 stone: clear at rest, a lit wash on hover, a
+## dark one on press, grey when disabled. `loud` washes the rest state in the
+## seat colour too: End Turn stays the one button that shouts.
+static func a1_button_styles(tint: Color, loud: bool) -> Dictionary:
+	# End Turn's face is TARGET-UI's amber (the one loud button); its rim is
+	# still the seat's glow.
+	var rest := Color(END_TURN_FILL, 0.78) if loud else Color(0, 0, 0, 0)
+	var hover := Color(END_TURN_FILL.lightened(0.18), 0.9) if loud else Color(tint, 0.3)
+	return {
+		"normal": a1_clear_style(20.0, 8.0, rest),
+		"hover": a1_clear_style(20.0, 8.0, hover),
+		"pressed": a1_clear_style(20.0, 8.0, Color(0, 0, 0, 0.45)),
+		"disabled": a1_clear_style(20.0, 8.0, Color(0.3, 0.3, 0.3, 0.55)),
+		"focus": StyleBoxEmpty.new(),
+	}
+
+
+## The held hunter's colour: what their hand's frames glow, so the HUD agrees.
+func _seat_tint_now() -> Color:
+	if _client == null:                  # the HUD is themed before the client lands
+		return _slot_color(0)
+	return _slot_color(_me())
+
+
+## Re-light every seat panel for the hunter now held.
+func _retint_seat_panels() -> void:
+	var t := _seat_tint_now()
+	for g in _seat_panels:
+		if is_instance_valid(g):
+			(g as CanvasItem).self_modulate = t
+	_end_btn.add_theme_color_override("font_color", Color(1, 0.97, 0.9))
+	var end_st := a1_button_styles(t, true)
+	for state in end_st:
+		_end_btn.add_theme_stylebox_override(state, end_st[state])
+
+
 ## The beast's bar, Slay the Spire red with the number inside it.
 static func beast_bar_styles() -> Dictionary:
 	var bg := StyleBoxFlat.new()
@@ -827,8 +956,10 @@ func _apply_sts_hud() -> void:
 		plate.content_margin_bottom = 13.0
 		top.add_theme_stylebox_override("panel", plate if BEAST_PLATE_ON_HUD else StyleBoxEmpty.new())
 		if BEAST_PLATE_ON_HUD:
+			# The A1 stone, lit in the beast's own ember (Nick, 2026-10-05).
 			plate.draw_center = false
-			add_plate_frame(top, "stone", 10.0, true)
+			plate.shadow_size = 0
+			add_a1_panel(top, BEAST_GLOW, 6.0)
 	var bar_st := beast_bar_styles()
 	for k in bar_st:
 		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
@@ -839,17 +970,19 @@ func _apply_sts_hud() -> void:
 	_beast_bar.name = "BeastBarFx"
 	_hp_bar.add_child(_beast_bar)
 	_hp_bar.move_child(_hp, -1)          # the number reads over the notches
-	var end_st := hud_button_styles(END_TURN_FILL)
-	for state in end_st:
-		_end_btn.add_theme_stylebox_override(state, end_st[state])
+	# End Turn, Switch and the energy counter: the A1 stone, glowing in the
+	# held hunter's seat colour like their cards (_retint_seat_panels).
 	_end_btn.custom_minimum_size = Vector2(150, 46)
 	_end_btn.add_theme_font_size_override("font_size", 19)
-	add_plate_frame(_end_btn, "gold", 22.0)
-	add_plate_frame(_energy_orb, "gold", 14.0)
-	var sw_st := hud_button_styles(Color(0.12, 0.2, 0.3, 0.85))
+	_seat_panels.append(add_a1_panel(_end_btn, _seat_tint_now(), 4.0))
+	_seat_panels.append(add_a1_panel(_energy_orb, _seat_tint_now(), 6.0))
+	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
 		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
 	_switch_btn.custom_minimum_size = Vector2(118, 46)
+	var sw_glow := add_a1_panel(_switch_btn, Color(0.6, 0.6, 0.62), 4.0)
+	sw_glow.modulate.a = 0.6
+	_retint_seat_panels()
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
 		(b as Button).add_theme_constant_override("outline_size", 5)
@@ -1255,7 +1388,9 @@ func _build_gauge() -> void:
 	panel.offset_bottom = GAUGE_H * 0.5
 	# The same carved obsidian as the rest of the HUD (queue, "The climb gauge
 	# stands beside the beast", 2026-09-29): it was the last flat brown box.
-	panel.add_theme_stylebox_override("panel", hud_style(HUD_EDGE, 1, 8))
+	panel.add_theme_stylebox_override("panel", a1_clear_style(0.0, 0.0))
+	# The A1 stone, in the held hunter's colour (Nick, 2026-10-05).
+	_seat_panels.append(add_a1_panel(panel, _seat_tint_now()))
 
 	_gauge = Control.new()
 	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2393,6 +2528,9 @@ func _refresh() -> void:
 ##
 ## Aggressive moves wear the alarm colour; defensive and utility ones don't, so a
 ## turn where the beast isn't swinging reads as safe at a glance.
+var _intent_glow: NinePatchRect = null
+
+
 func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	var txt := _intent_text(boss, s)
 	_intent.text = "[center]%s[/center]" % txt
@@ -2413,12 +2551,11 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	# Small, beside the beast's bar (Nick, 2026-09-30 11:44): no "Next:", the
 	# icon at text size, a thin rim.
 	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
-	var style := hud_style(Color(0.9, 0.2, 0.14, 0.9) if hostile else HUD_EDGE, 1, 6)
-	style.content_margin_left = 8.0
-	style.content_margin_right = 8.0
-	style.content_margin_top = 0.0
-	style.content_margin_bottom = 0.0
-	_intent_tag.add_theme_stylebox_override("panel", style)
+	# The A1 stone, its glow red while the beast is swinging (Nick, 2026-10-05).
+	_intent_tag.add_theme_stylebox_override("panel", a1_clear_style(12.0, 4.0))
+	if _intent_glow == null:
+		_intent_glow = add_a1_panel(_intent_tag, BEAST_GLOW, 6.0)
+	_intent_glow.self_modulate = Color(1.0, 0.22, 0.12) if hostile else Color(0.55, 0.55, 0.55)
 	_intent_tag.reset_size()             # shrink to the words, not the old banner
 
 
@@ -8444,6 +8581,7 @@ func _render_hand() -> void:
 	_status.text = _selection_prompt() if selecting else ""
 	_status.visible = bool(outcome["status_visible"])   # a transient instruction, not an identity
 	_render_energy(me)
+	_retint_seat_panels()
 	_show_switch_target(players)
 	_end_btn.disabled = bool(priv.get("ended", false)) or _enemy_stage != ""
 	if bool(outcome["hover_reset"]):
@@ -8779,6 +8917,9 @@ func _render_party(s: Dictionary, boss_target: int, move: Dictionary, add_attack
 		var ub: Control = UnitBar.new()
 		ub.size = Vector2(124, 24)
 		ub.visible = false
+		# A thin A1 plate under the bar, glowing in that hunter's seat colour
+		# like the marker over their head (Nick, 2026-10-05).
+		add_a1_panel(ub, _slot_color(_unit_bars.size()), 6.0, 0.16)
 		_hud.add_child(ub)
 		_hud.move_child(ub, 0)             # under every panel and the hand
 		_unit_bars.append(ub)
@@ -8841,14 +8982,17 @@ func _render_energy(p: Dictionary) -> void:
 	# design as the osu numbers"). Two things cannot share one shape, and the one
 	# you have to react to in half a second wins it.
 	style.set_corner_radius_all(14)
-	_energy_orb.add_theme_stylebox_override("panel", style)
-	var ring := _energy_orb.get_node_or_null("PlateFrame") as CanvasItem
-	if ring != null:
-		# The gold goes dull with the Energy, like the number does.
-		ring.modulate = Color.WHITE if out > 0 else Color(0.5, 0.5, 0.52)
+	# On the A1 stone now (Nick, 2026-10-05): the face is clear, and the glow,
+	# in the seat colour, goes dark with the Energy like the number does.
+	var seat := _seat_tint_now()
+	_energy_orb.add_theme_stylebox_override("panel", a1_clear_style(style.content_margin_left,
+		style.content_margin_top, Color(seat, 0.14) if out > 0 else Color(0, 0, 0, 0)))
+	var glow := _energy_orb.get_node_or_null("A1/A1Glow") as CanvasItem
+	if glow != null:
+		glow.modulate = Color.WHITE if out > 0 else Color(0.3, 0.3, 0.3)
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",
-		Color(1, 0.87, 0.5) if out > 0 else Color(0.55, 0.52, 0.5))
+		Color(1, 1, 1).lerp(seat, 0.3) if out > 0 else Color(0.55, 0.52, 0.5))
 
 	# Pile counts tucked under the orb. Small on purpose: they matter to the Goblin,
 	# whose kit scales off the burn pile, and to nobody else most turns.
