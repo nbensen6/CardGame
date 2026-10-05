@@ -32,7 +32,7 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-stones-after.png|420]] ^rebuild-the-stones-to-match-the-referenc
 
-- [ ] **Research: card frames, against real TCGs.**
+- [ ] 👀 **Research: card frames, against real TCGs.**
       **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
       **The research is already done — read [[art/card-frame-research]] and mock, do not re-research.**
       It has our own card pulled apart at 3x (floating cost orb, uncontained art, overhanging ribbon, no bevel, aliased edges), how real frames are built, the six things that make one read as expensive, and three directions spec'd: A carved obsidian, B printed card, C sculpted relic. Build those three.
@@ -40,7 +40,10 @@ run failed.
       Say what makes each read as expensive, and what our current frame does instead — ours is a thin outlined rectangle with a flat strip, and it looks cheap at hand size.
       **Deliver:** three mocked-up frame directions rendered on OUR cards (Tongue Snap, Leap, Scramble) at true hand size, each with the reference it comes from named and what was taken. Describe the references in words; do not put other games' images in this repo. Say which one you would pick and why. File it `to: nick` for the pick.
       **Done when** Nick has three frames to choose between, shown at the size he will actually see them.
-      Test: state=3d beast=cinder_jackal ^research-card-frames-against-real-tcgs
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Research: card frames, against real TCGs.|details]]
+      Ask: Which card frame: A obsidian, B printed, or C gold relic (my pick)?
+      Test: state=3d beast=cinder_jackal cardframe=C
+      ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]] ^research-card-frames-against-real-tcgs
 
 - [ ] **A HUD that matches the chosen card frame.**
       **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
@@ -631,3 +634,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Drawn jackal has no idle or attack motion.** The sprite is a still; a bob or squash on its turn would sell it.
 - [ ] (proposed) **Slab drop shadows don't show.** A black blur under each slab vanishes against the near-black floor and beast.
 - [ ] (proposed) **Near stone smaller than the Frog's plinth.** The rest rock is wider than the first slab; TARGET's first slab is the biggest thing on the floor.
+- [ ] (proposed) **Hand fan hides the card footer.** At rest every card is cut at the screen's bottom edge, so a footer or rarity token never shows.
+- [ ] (proposed) **Raised card's title clipped in shots.** hover= lifts the card past the top of the fan, cutting off its name plate.

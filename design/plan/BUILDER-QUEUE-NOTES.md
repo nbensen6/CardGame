@@ -1768,3 +1768,53 @@ about a third of the top's depth), drop shadow, and near slab vs the
 Frog's plinth NOT MET. Not done here: moving the near slab out onto the
 floor (route geometry and the rest-aside tests) and a zigzag (Nick asked
 for one straight line on 2026-10-04).
+
+## Research: card frames, against real TCGs.
+
+2026-10-05, builder. Worked from `design/art/card-frame-research.md`, so nothing was re-researched. All three directions are built on the real card and switched by the harness flag `cardframe=A|B|C`. The shipping frame is unchanged until Nick picks.
+
+**Look at:** ![[agents/frames/builder/2026-10-05-card-frames-after.png]] It shows the three strips, 1:1, from the real `state=3d` fight: Tongue Snap, Leap, Scramble and Tongue Flick in the hand. The full shots are `2026-10-05-card-frames-A.png`, `-B.png` and `-C.png`.
+
+**What ours does instead.** It's a gold strip with a hairline of the hunter's colour. The cost orb hangs off the corner, the name ribbon overhangs both edges, and the art runs to the border with nothing to contain it. Nothing marks rarity. At 160px it reads as a widget, not a card.
+
+**All three fix the same five things:**
+- The cost sits inside the silhouette.
+- The art sits in a cut window with a keyline and an inner shadow, and the frame overlaps it.
+- The title plate stays inside the edge.
+- The outer edge is anti-aliased in the shader, which fixes the stair-stepping on rotated cards.
+- One rarity token sits in a fixed place.
+
+**A, carved obsidian** (from Hearthstone's socketed stats and Runeterra's restraint):
+- Near-black bevelled stone plate with a little grain, lit top-left.
+- Cost in an inset socket at the left end of the title plate.
+- Raised title plate, and a stone type bar in small caps.
+- Inset dark text box with a hairline rule in the keyline colour.
+- Rarity is the keyline round the art: ember for common, ice for uncommon, gold for rare. There is also a diamond in the footer.
+- Expensive because it has thickness and the cuts read as cuts. Its weakness is that it is dark on a dark fight, so the hand loses some separation from the scene.
+
+**B, printed card** (from Magic's M15 frame, plus Pokémon's fixed rarity/set marks):
+- A hard 4.5px black border.
+- The frame is tinted by type: attack is brick red, skill is slate blue, power is green.
+- Light title plate with the name left-aligned and the cost right-aligned inside it.
+- Parchment type line with a rarity diamond at its right end.
+- Parchment rules box with black text. Keyword and live-number colours are darkened so they still read on parchment.
+- Expensive because it reads as a printed object, and it has the best legibility. Its weakness is that it is furthest from TARGET-UI and from the rest of our dark/gold UI. Its cost is also the smallest of the three.
+
+**C, sculpted relic** (from Hearthstone's frame-as-object):
+- A thick gold plate with an engraved groove and domed bosses at the corners.
+- The art window is arched at the top.
+- The cost is a large gem set into the top-left corner, still inside the card.
+- Dark wooden title plate.
+- The type is a gold ribbon across the foot of the art.
+- Dark inset text box, and a rarity diamond in the footer.
+- Expensive because the frame is an object. It is closest to TARGET-UI: gold edge, big green cost gem, pill type, dark text panel.
+
+**Pick: C.** It keeps TARGET-UI's two strongest cues, the gold frame and the large cost gem. It fixes every defect in the research. It also gives the HUD item one material to theme with. A is the fallback if Nick wants the frame to recede.
+
+Grader round 1 FAILED because the frame itself didn't show the sources or the pick. The strips are now labelled. A's cost socket also went from 26 to 30px. Round 2: VERDICT: PASS. The grader noted that B is furthest from TARGET-UI and that C is CLOSER.
+
+**Code:**
+- `CardView.frame_mock` (static), `FRAME_MOCKS`, `frame_mock_spec()`, `frame_mock_layout()` and `_build_mock_frame()`.
+- New shaders `card_frame_mock.gdshader` (the plate with the art window cut out) and `card_plate.gdshader` (bevelled raised/inset plates).
+- Tests pin, at three card sizes, that every piece stays inside the card and the pieces don't overlap.
+- When Nick picks, the follow-up is to make that spec the default and delete the other two.

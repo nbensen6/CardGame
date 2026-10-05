@@ -162,6 +162,8 @@ func _initialize() -> void:
 			CardView.force_foil = true
 		if a == "borderless":
 			CardView.force_borderless = true
+		if a.begins_with("cardframe="):
+			CardView.frame_mock = a.substr(10)
 		if a.begins_with("turn="):
 			CardView.force_turn = float(a.substr(5))
 		if a.begins_with("hover="):

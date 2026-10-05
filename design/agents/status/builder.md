@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T15:17
-working_on: "Rebuild the stones to match the reference exactly."
+updated: 2026-10-05T15:33
+working_on: "Research: card frames, against real TCGs."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 15:17 EDT
+2026-10-05 15:33 EDT
 
-- **Did:** The climb stones are now thin, irregular, inked grey slabs tilted to show their tops, ending at the chest.
-- **Worked?** Partly: shape, colour, spacing and the chest stop match, but no visible shadow and sides too thin. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-05-stones-before.png]] then ![[frames/builder/2026-10-05-stones-after.png]]
-- **Ask:** Should the slabs be thicker, with a grey side a third of their depth?
+- **Did:** Built three card frames (obsidian, printed, gold relic) on our real hand, switchable for Nick to pick.
+- **Worked?** Yes: all three render at hand size with sources and a pick. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-05-card-frames-before.png]] then ![[frames/builder/2026-10-05-card-frames-after.png]]
+- **Ask:** Which card frame: A obsidian, B printed, or C gold relic (my pick)?
 
 ## Notes
 
-- **Found:** Slab drop shadows don't show against the near-black floor and beast.
-- **Found:** The near stone is smaller than the Frog's plinth; TARGET's is the biggest on the floor.
+- **Found:** At rest the hand fan cuts every card off at the screen's bottom edge, so the footer and rarity token never show.
+- **Found:** hover= raises a card past the top of the fan's clip, so its title is cut off in a shot.
 
 ## Log
 
+- 2026-10-05 15:33 EDT — builder: card-frame mocks A/B/C (CardView.frame_mock, FRAME_MOCKS, frame_mock_layout, card_frame_mock + card_plate shaders, harness cardframe=) on the real hand + layout tests; grader FAIL (labels) then PASS; marked 👀 for Nick's pick; tests green, pushed.
 - 2026-10-05 15:17 EDT — builder: jackal slabs: slab_outline/slab_mesh thin irregular prism (0.4 Frog-heights), slab_tilt toward camera, ink hull, billboard shadow, SLAB_FAR_SCALE 0.65, route_top 0.36 + tests; grader FAIL x3 (shadow, thickness); marked 👀; tests green, pushed.
 - 2026-10-05 14:50 EDT — builder: Cinder Jackal as a billboard Sprite3D (tools/beast_sprite.py inks the concept; holds authored on the image), hull skipped for drawn beasts, DRAWN_GAP_PER_HEIGHT 1.1 + test; grader FAIL x3 (pose/scale); marked 👀; tests green, pushed.
 - 2026-10-05 03:58 EDT — builder: overnight pass 23: per-biome wall_heat 1.0 for the cliffs' foot band; grader FAIL (NOT CLOSER); reverted, notes only pushed. 3 NOT CLOSER in a row: standing item stopped, marked 👀.

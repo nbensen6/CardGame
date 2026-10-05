@@ -2277,6 +2277,8 @@ func _init() -> void:
 	# two uncommon, three rare" as a colour-blind-safe count -- see the tests'
 	# own header comment for why nothing had ever called _rarity_of/
 	# _rarity_pips before this.
+	_test_card_frame_mocks_keep_every_piece_inside_the_card()
+	_test_card_frame_mock_spec_resolves_rarity_and_type()
 	_test_backlog86_rarity_pips_count_matches_the_tier_for_every_rarity()
 	_test_backlog86_rarity_pips_falls_back_to_one_common_gem_for_missing_or_unknown_rarity()
 	_test_backlog86_rarity_of_gem_colour_actually_differs_per_tier()
@@ -31782,3 +31784,35 @@ func _test_upright_jackal_v2() -> void:
 		"the upright jackal fills the upper part of the rest frame, not just its legs -- got %.2f" % share)
 	_expect(is_equal_approx(Combat3D.ground_standoff_for(25.0, 20.0), Combat3D.ground_standoff_for(25.0)),
 		"a deep beast's standoff is unchanged by the height floor")
+
+
+## Nick, 2026-10-05: the three card-frame directions. Whatever he picks, the
+## research's fixes must hold: the cost inside the silhouette, the art in a
+## window under the title, nothing overlapping the piece below it.
+func _test_card_frame_mocks_keep_every_piece_inside_the_card() -> void:
+	for style in ["A", "B", "C"]:
+		var spec: Dictionary = CardView.frame_mock_spec(style, {"rarity": "uncommon", "type": "attack"})
+		for sz in [CardView.BOX_DESKTOP_NORMAL, CardView.BOX_HANDHELD_NORMAL, CardView.BOX_DESKTOP_BIG]:
+			var card := Rect2(Vector2.ZERO, sz)
+			var at: Dictionary = CardView.frame_mock_layout(spec, sz.x, sz.y)
+			for k in ["title", "art", "text", "cost"]:
+				_expect(card.encloses(at[k]), "frame %s at %s: %s sits inside the card" % [style, sz, k])
+			var title: Rect2 = at["title"]
+			var art: Rect2 = at["art"]
+			var text: Rect2 = at["text"]
+			_expect(art.position.y >= title.end.y, "frame %s: the art window starts below the title plate" % style)
+			_expect(text.position.y >= art.end.y, "frame %s: the text box starts below the art" % style)
+			_expect(text.size.y >= 40.0, "frame %s at %s: the text box has room for two lines" % [style, sz])
+			_expect(card.has_point(at["rarity"]), "frame %s: the rarity token is on the card" % style)
+
+
+func _test_card_frame_mock_spec_resolves_rarity_and_type() -> void:
+	_expect(CardView.frame_mock_spec("", {}).is_empty(), "no mock asked for: the shipping frame")
+	_expect(CardView.frame_mock_spec("Z", {}).is_empty(), "an unknown mock is ignored, not guessed")
+	var a_c: Dictionary = CardView.frame_mock_spec("A", {"rarity": "common"})
+	var a_r: Dictionary = CardView.frame_mock_spec("A", {"rarity": "rare"})
+	_expect(a_c["keyline"] != a_r["keyline"], "frame A: rarity is the keyline's colour")
+	_expect(CardView.frame_mock_spec("A", {"rarity": "mythic"})["rarity"] == "common", "an unknown rarity falls back to common")
+	var b_atk: Dictionary = CardView.frame_mock_spec("B", {"type": "attack"})
+	var b_sk: Dictionary = CardView.frame_mock_spec("B", {"type": "skill"})
+	_expect(b_atk["plate_top"] != b_sk["plate_top"], "frame B: the plate is tinted by card type")

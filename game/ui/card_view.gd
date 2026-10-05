@@ -208,6 +208,9 @@ static var force_turn := 2.0
 ## itself. _layer() reads this, so nothing else has to know which kind of card
 ## it is building.
 var _face_host: Control = null
+## The full-bleed painting, when this card has one; a frame mock re-cuts it to
+## its own art window. null on an icon card.
+var _art_full: TextureRect = null
 
 ## The 3D window, when this card has one (backlog #84). See _window_art().
 var _win: AtlasTexture = null
@@ -396,6 +399,7 @@ func setup(data: Dictionary, playable: bool = true, compact: bool = false) -> vo
 	for child in get_children():
 		child.queue_free()
 	_face_host = null   # _build_borderless sets it; _layer() and _build_foil read it
+	_art_full = null
 	_win = null         # _window_art() sets it if this card has a 3D window
 
 	if compact:
@@ -493,11 +497,15 @@ func _build_face(data: Dictionary) -> void:
 	# at the bottom (Nick's screenshot of Leap shows both). The border frames
 	# the art; the art does not wear the border.
 	_layer(art, 0, 0, 1, 1, 8.0, 8.0, -8.0, -10.0)
+	_art_full = art
 	_build_upper(data)
 
 
 ## Layers 2 and up: everything that sits ON the art.
 func _build_upper(data: Dictionary) -> void:
+	if FRAME_MOCKS.has(frame_mock):
+		_build_mock_frame(frame_mock_spec(frame_mock, _data))
+		return
 	# 2 - scrim. Cream rules text over a bright sky is unreadable, and the
 	# reference darkens the foot of the art for exactly this reason.
 	# SOLID, not a scrim. Nick: "make sure the black space at the bottom of the
@@ -587,6 +595,311 @@ func _build_upper(data: Dictionary) -> void:
 		add_child(_cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", ""))))
 
+
+
+# --- Card-frame mocks (Nick, 2026-10-05) ------------------------------------
+#
+# "the card template for the outer layer of the cards looks low quality.
+# reference real tcgs like pokemon and mtg and prepare a redesign."
+# design/art/card-frame-research.md takes our frame apart and specs three
+# directions; these are those three, on the real card, so Nick picks at the
+# size he plays at. Off unless asked for: the harness's `cardframe=A|B|C`.
+#
+# All three fix the same five things the research found, whichever wins:
+# the cost is inside the card, the art has a keyline and a window, the name
+# plate stays inside the edge, the edge is anti-aliased in the shader, and
+# rarity sits in one fixed place.
+#
+#   A  carved obsidian  the fight's own stone, an ember keyline (Hearthstone's
+#                       socketed cost, Runeterra's restraint)
+#   B  printed card     Magic's M15 logic: hard black border, frame tinted by
+#                       type, cost right-aligned in the title, parchment rules
+#   C  sculpted relic   Hearthstone's: a thick gold frame with bosses, an
+#                       arched art window, the cost as a gem, a type ribbon
+
+## "" = the shipping frame. Set by tools/screenshot.gd's `cardframe=`.
+static var frame_mock := ""
+
+const FRAME_MOCK_SHADER := preload("res://ui/card_frame_mock.gdshader")
+const PLATE_SHADER := preload("res://ui/card_plate.gdshader")
+
+## Each direction's numbers. Pixels are of the card's own rect, so 135, 162
+## and 191 wide all get the same strokes; the art/text split is a fraction.
+const FRAME_MOCKS := {
+	"A": {
+		"name": "Carved obsidian", "radius": 10.0, "band": 7.0, "outer_w": 1.5,
+		"title_h": 24.0, "type_h": 14.0, "footer_h": 11.0, "art_split": 0.55,
+		"art_arch": 0.0, "ornament": 0.0, "grain": 0.35,
+		"plate_top": Color("2a2629"), "plate_bottom": Color("141215"),
+		"lit": Color("6a6268"), "outer": Color("050405"),
+		"title_top": Color("332e31"), "title_bottom": Color("1e1b1d"),
+		"text_top": Color("0d0c0e"), "text_bottom": Color("151316"),
+		"ink": Color(1.0, 0.93, 0.80), "name_align": "center",
+		"cost": "socket", "cost_d": 30.0, "type": "bar",
+		# Rarity is the keyline (research, direction A).
+		"keylines": {"common": Color("e8752a"), "uncommon": Color("7cc4ff"), "rare": Color("ffd25e")},
+	},
+	"B": {
+		"name": "Printed card", "radius": 8.0, "band": 9.0, "outer_w": 4.5,
+		"title_h": 21.0, "type_h": 14.0, "footer_h": 0.0, "art_split": 0.53,
+		"art_arch": 0.0, "ornament": 0.0, "grain": 0.0,
+		"outer": Color("060606"), "lit": Color(1, 1, 1, 0.55),
+		# The frame is tinted by what the card IS, Magic's colour identity.
+		"tints": {
+			"attack": [Color("b0563a"), Color("6e2c1c")],
+			"skill": [Color("4f7fae"), Color("274563")],
+			"power": [Color("5c9a5a"), Color("2c5a2c")],
+		},
+		"title_top": Color("f3ead6"), "title_bottom": Color("ddd0b2"),
+		"text_top": Color("f2ead8"), "text_bottom": Color("e3d7bb"),
+		"ink": Color(0.10, 0.08, 0.06), "name_align": "left",
+		"cost": "in_title", "cost_d": 19.0, "type": "line",
+		"keylines": {"common": Color("060606"), "uncommon": Color("060606"), "rare": Color("060606")},
+	},
+	"C": {
+		"name": "Sculpted relic", "radius": 12.0, "band": 11.0, "outer_w": 1.5,
+		"title_h": 21.0, "type_h": 0.0, "footer_h": 10.0, "art_split": 0.57,
+		"art_arch": 20.0, "ornament": 1.0, "grain": 0.0,
+		"plate_top": Color("e2ad55"), "plate_bottom": Color("8a5a22"),
+		"lit": Color("fff0c0"), "outer": Color("1c1206"),
+		"title_top": Color("4a3020"), "title_bottom": Color("2a1a10"),
+		"text_top": Color("2a1c12"), "text_bottom": Color("1a110a"),
+		"ink": Color(1.0, 0.93, 0.78), "name_align": "center",
+		"cost": "gem", "cost_d": 32.0, "type": "ribbon",
+		"keylines": {"common": Color("1c1206"), "uncommon": Color("1c1206"), "rare": Color("1c1206")},
+	},
+}
+
+
+## One direction's spec, with this card's own colours resolved in: the
+## keyline by rarity, B's plate by type. Static so a test can pin it.
+static func frame_mock_spec(style: String, data: Dictionary) -> Dictionary:
+	var spec: Dictionary = FRAME_MOCKS.get(style, {}).duplicate()
+	if spec.is_empty():
+		return spec
+	var rarity := String(data.get("rarity", "common"))
+	if not RARITY.has(rarity):
+		rarity = "common"
+	spec["rarity"] = rarity
+	spec["keyline"] = spec["keylines"][rarity]
+	if spec.has("tints"):
+		var t: Array = spec["tints"].get(String(data.get("type", "")), spec["tints"]["skill"])
+		spec["plate_top"] = t[0]
+		spec["plate_bottom"] = t[1]
+	return spec
+
+
+## Where each piece of a mock frame goes, in px of a card w x h. Static so a
+## test can hold the five fixes: everything inside the card, the art in a
+## window, nothing overlapping the next piece down.
+static func frame_mock_layout(spec: Dictionary, w: float, h: float) -> Dictionary:
+	var b: float = spec["band"]
+	var title := Rect2(b, b, w - 2.0 * b, spec["title_h"])
+	var art_top := title.end.y + 2.0
+	var art_bot := roundf(h * float(spec["art_split"]))
+	var art := Rect2(b + 1.0, art_top, w - 2.0 * b - 2.0, art_bot - art_top)
+	var type_rect := Rect2()
+	var text_top := art_bot + 3.0
+	match String(spec["type"]):
+		"bar", "line":
+			type_rect = Rect2(b, art_bot + 2.0, w - 2.0 * b, spec["type_h"])
+			text_top = type_rect.end.y + 2.0
+		"ribbon":
+			type_rect = Rect2(w * 0.27, art_bot - 8.0, w * 0.46, 15.0)
+			text_top = art_bot + 8.0
+	var foot: float = spec["footer_h"]
+	var text := Rect2(b + 1.0, text_top, w - 2.0 * b - 2.0, h - b - foot - text_top)
+	var d: float = spec["cost_d"]
+	var cost := Rect2()
+	match String(spec["cost"]):
+		"socket":
+			cost = Rect2(title.position.x + 1.0, title.position.y + (title.size.y - d) * 0.5, d, d)
+		"in_title":
+			cost = Rect2(title.end.x - d - 3.0, title.position.y + (title.size.y - d) * 0.5, d, d)
+		"gem":
+			cost = Rect2(3.0, 3.0, d, d)
+	var rarity_at := Vector2(w * 0.5, h - b - foot * 0.5) if foot > 0.0 \
+		else Vector2(type_rect.end.x - 9.0, type_rect.get_center().y)
+	return {"title": title, "art": art, "type": type_rect, "text": text,
+		"cost": cost, "rarity": rarity_at}
+
+
+func _place(node: Control, r: Rect2) -> Control:
+	return _layer(node, 0, 0, 0, 0, r.position.x, r.position.y, r.end.x, r.end.y)
+
+
+func _mock_plate(r: Rect2, top: Color, bottom: Color, lit: Color, outline: Color,
+		inset: bool, radius: float = 3.0, rule: Color = Color(0, 0, 0, 0)) -> ColorRect:
+	var cr := ColorRect.new()
+	var m := ShaderMaterial.new()
+	m.shader = PLATE_SHADER
+	m.set_shader_parameter("rect_size", r.size)
+	m.set_shader_parameter("radius", radius)
+	m.set_shader_parameter("fill_top", top)
+	m.set_shader_parameter("fill_bottom", bottom)
+	m.set_shader_parameter("lit", lit)
+	m.set_shader_parameter("dark", Color(0, 0, 0, 1))
+	m.set_shader_parameter("outline", outline)
+	m.set_shader_parameter("inset", 1.0 if inset else 0.0)
+	if rule.a > 0.0:
+		m.set_shader_parameter("rule_y", 3.0)
+		m.set_shader_parameter("rule_col", rule)
+	cr.material = m
+	_place(cr, r)
+	return cr
+
+
+func _build_mock_frame(spec: Dictionary) -> void:
+	var w := custom_minimum_size.x
+	var h := custom_minimum_size.y
+	var at := frame_mock_layout(spec, w, h)
+	var ink: Color = spec["ink"]
+	var key: Color = spec["keyline"]
+	var who := String(_data.get("character", ""))
+	var hues := border_hues(who)
+
+	# The painting, re-cut to the window so it is centred in it.
+	if _art_full != null:
+		var ar: Rect2 = at["art"]
+		_art_full.offset_left = ar.position.x
+		_art_full.offset_top = ar.position.y
+		_art_full.offset_right = ar.end.x - w
+		_art_full.offset_bottom = ar.end.y - h
+
+	# The text box goes UNDER the plate's hole edge but is its own panel.
+	var tr: Rect2 = at["text"]
+	var rule := key if String(spec["type"]) == "bar" else Color(0, 0, 0, 0)
+	if rule.a > 0.0:
+		rule.a = 0.7
+	var box := _mock_plate(tr, spec["text_top"], spec["text_bottom"],
+		Color(1, 1, 1, 1).lerp(spec["text_top"], 0.6), Color(0, 0, 0, 0.9), true, 3.0, rule)
+	_panel = null
+
+	# The plate itself, art window cut out of it.
+	var fr := ColorRect.new()
+	var mat := ShaderMaterial.new()
+	mat.shader = FRAME_MOCK_SHADER
+	var art_r: Rect2 = at["art"]
+	mat.set_shader_parameter("rect_size", Vector2(w, h))
+	mat.set_shader_parameter("radius", spec["radius"])
+	mat.set_shader_parameter("art_rect", Vector4(art_r.position.x, art_r.position.y, art_r.end.x, art_r.end.y))
+	mat.set_shader_parameter("art_arch", spec["art_arch"])
+	mat.set_shader_parameter("outer_col", spec["outer"])
+	mat.set_shader_parameter("outer_w", spec["outer_w"])
+	mat.set_shader_parameter("plate_top", spec["plate_top"])
+	mat.set_shader_parameter("plate_bottom", spec["plate_bottom"])
+	mat.set_shader_parameter("lit", spec["lit"])
+	mat.set_shader_parameter("keyline", key)
+	mat.set_shader_parameter("ornament", spec["ornament"])
+	mat.set_shader_parameter("grain", spec["grain"])
+	fr.material = mat
+	_frame_rect = fr
+	_layer(fr, 0, 0, 1, 1)
+	# The text box sits in front of the plate: move the plate under it.
+	move_child(fr, box.get_index())
+
+	# The title plate, inside the edge, never overhanging it.
+	var ti: Rect2 = at["title"]
+	_mock_plate(ti, spec["title_top"], spec["title_bottom"],
+		Color(1, 1, 1).lerp(spec["title_top"], 0.45), Color(0, 0, 0, 0.9), false)
+	var name_r := ti.grow_individual(-6.0, 0.0, -6.0, 0.0)
+	var cr: Rect2 = at["cost"]
+	if shows_cost(_data):
+		match String(spec["cost"]):
+			"socket", "gem":
+				name_r.position.x = maxf(name_r.position.x, cr.end.x + 2.0)
+				name_r.size.x = ti.end.x - 6.0 - name_r.position.x
+			"in_title":
+				name_r.size.x = cr.position.x - 3.0 - name_r.position.x
+	var nm := _label(String(_data.get("name", "")), 13 if w < 170 else 15)
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if String(spec["name_align"]) == "left" \
+		else HORIZONTAL_ALIGNMENT_CENTER
+	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.add_theme_color_override("font_color", ink)
+	if ink.get_luminance() > 0.5:
+		nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.8))
+		nm.add_theme_constant_override("outline_size", 3)
+	_place(nm, name_r)
+
+	# The type: a stone bar (A), a printed type line (B), a ribbon over the
+	# foot of the art (C).
+	var ty: Rect2 = at["type"]
+	var kind := String(_data.get("type", "")).capitalize()
+	if ty.size.x > 0.0 and kind != "":
+		var ribbon := String(spec["type"]) == "ribbon"
+		var tt: Color = spec["title_top"]
+		var tb: Color = spec["title_bottom"]
+		if ribbon:
+			tt = spec["plate_top"]
+			tb = spec["plate_bottom"]
+		_mock_plate(ty, tt, tb, Color(1, 1, 1).lerp(tt, 0.45), Color(0, 0, 0, 0.9),
+			false, 6.0 if ribbon else 2.0)
+		var tl := _label(kind if String(spec["type"]) != "bar" else kind.to_upper(), 10)
+		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT if String(spec["type"]) == "line" \
+			else HORIZONTAL_ALIGNMENT_CENTER
+		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var tink := ink
+		if ribbon:
+			tink = Color(0.16, 0.09, 0.03)
+		elif String(spec["type"]) == "bar":
+			tink = ink.lerp(key, 0.2)
+		tl.add_theme_color_override("font_color", tink)
+		_place(tl, ty.grow_individual(-6.0, 0.0, -6.0, 0.0))
+	_pill = null
+
+	# The rules.
+	_rules = _rich_body(_data, 13, 30)
+	var t := "[center]" + _rules.text + "[/center]"
+	if ink.get_luminance() < 0.5:
+		# Printed on parchment: the live/nailed/keyword colours are tuned for a
+		# dark panel and vanish on a light one.
+		t = t.replace(LIVE_COLOR, "2e6f1c").replace(NAILED_COLOR, "8a5a00") \
+			.replace(KEYWORD_COLOR, "8a3f0c")
+	_rules.text = t
+	_rules.add_theme_color_override("default_color", ink)
+	_place(_rules, tr.grow_individual(-4.0, -5.0, -4.0, -2.0))
+	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
+
+	# Rarity, one token in one place: a diamond in the footer (A, C) or at the
+	# right end of the type line (B), set in the frame.
+	var rc: Color = _rarity_of(_data)["pip"]
+	var gem := ColorRect.new()
+	gem.color = rc
+	var gs := 7.0
+	gem.pivot_offset = Vector2(gs, gs) * 0.5
+	gem.rotation = PI * 0.25
+	var gp: Vector2 = at["rarity"]
+	var ring := ColorRect.new()
+	ring.color = Color(0, 0, 0, 0.9)
+	ring.pivot_offset = Vector2(gs + 2.0, gs + 2.0) * 0.5
+	ring.rotation = PI * 0.25
+	_place(ring, Rect2(gp - Vector2(gs + 2.0, gs + 2.0) * 0.5, Vector2(gs + 2.0, gs + 2.0)))
+	_place(gem, Rect2(gp - Vector2(gs, gs) * 0.5, Vector2(gs, gs)))
+
+	# The cost, inside the silhouette.
+	if shows_cost(_data):
+		var style := String(spec["cost"])
+		var fill_t: Color = hues[1]
+		var fill_b: Color = hues[0].darkened(0.35)
+		var socket := _mock_plate(cr, Color("0a090a"), Color("0a090a"), Color("4a4448"),
+			Color(0, 0, 0, 1), true, cr.size.x * 0.5)
+		if style == "gem":
+			socket.material.set_shader_parameter("fill_top", Color("fff0c0"))
+			socket.material.set_shader_parameter("fill_bottom", Color("8a5a22"))
+			socket.material.set_shader_parameter("inset", 0.0)
+		var inner := cr.grow(-2.5 if style != "in_title" else -1.0)
+		var disc := _mock_plate(inner, fill_t, fill_b, Color(1, 1, 1).lerp(fill_t, 0.3),
+			key if style == "socket" else Color(0, 0, 0, 1), false, inner.size.x * 0.5)
+		if style == "socket":
+			disc.material.set_shader_parameter("outline_w", 1.5)
+		var cl := _label(str(int(_data.get("cost", 0))), int(round(cr.size.x * 0.6)))
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		cl.add_theme_color_override("font_color", Color(1, 0.98, 0.92))
+		cl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+		cl.add_theme_constant_override("outline_size", 4)
+		_place(cl, cr)
 
 
 # --- The 3D window, for rares (backlog #84) --------------------------------
