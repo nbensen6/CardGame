@@ -10,6 +10,38 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **The jackal becomes a 2.5D sprite, like the reference.**
+      **Nick, 2026-10-05:** "the new model still doesn't match the style of the reference. could going to a vector 2d style boss help? have the builder do the 2.5D like in the reference."
+      `TARGET.png` is a 2D illustration — hard ink outline, flat colour fills, drawn lava cracks, a painted rim light. None of it is lit geometry, and three weeks of 3D have not reached it: the inverted-hull outline breaks up, per-facet shading reads as noise, and the texture turns to mush at play size. So stop fighting it.
+      **Render the Cinder Jackal as a billboard sprite in the existing 3D scene.** Floor, stones, hunters and the climb stay 3D. The sprite is a single high-resolution illustration in `TARGET.png`'s style: thick dark outline, flat fills, hard-edged glowing cracks, warm rim. It always faces the camera. Supersedes the `cinder_jackal_v2.glb` item above — keep both files, ship neither mesh.
+      **The climb holds become authored 2D points on that image**, not raycasts against a mesh. This deletes the fragile half of `combat_3d.gd`: `foothold_anchor`'s hull queries, `_front_of_beast`, `stand_z_for`. The route still ends at the head and the face stays visible at rest.
+      Accept the flatness: the camera is front-on and locked, which is what the reference shows.
+      **Done when** `state=3d` put beside `TARGET.png` reads as the same drawing — same outline weight, same flat fills, same glow — and the climb still plays start to finish.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Rebuild the stones to match the reference exactly.**
+      **Nick, 2026-10-05:** "make sure it hits the mark on recreating the stones to match the reference."
+      In `TARGET.png` the stones are flat, pale grey slabs — wide, thin, slightly irregular, a soft drop shadow under each, no rim and no lid. They climb away from the hunter toward the beast in clear perspective, biggest and lowest at the front. In the game they are pale boxes with an orange top.
+      Match the reference: shape, colour, thickness, the shadow, the spacing, and how they diminish with distance. The near one is the biggest thing on the floor; the far one sits at the beast's chest.
+      **Done when** the stones in `state=3d` are indistinguishable in style from the ones in `TARGET.png` at 1:1.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Research: card frames, against real TCGs.**
+      **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
+      Research only — build nothing this run. Study how real trading cards are constructed: Pokémon, Magic, Hearthstone, Legends of Runeterra, Marvel Snap. Look at the frame itself, not the art: border weight and colour, the inner bevel, how the art window is cut, where the cost sits and how it is set into the frame, the name plate, the type bar, the text box's fill and separator, the rarity cue, how a foil or premium treatment is layered on.
+      Say what makes each read as expensive, and what our current frame does instead — ours is a thin outlined rectangle with a flat strip, and it looks cheap at hand size.
+      **Deliver:** three mocked-up frame directions rendered on OUR cards (Tongue Snap, Leap, Scramble) at true hand size, each with the reference it comes from named and what was taken. Describe the references in words; do not put other games' images in this repo. Say which one you would pick and why. File it `to: nick` for the pick.
+      **Done when** Nick has three frames to choose between, shown at the size he will actually see them.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **A HUD that matches the chosen card frame.**
+      **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
+      **Blocked until Nick picks a card frame.** Then re-theme the whole overlay in that same material: the beast's health bar, the intent badge, the energy orb, the climb gauge, the party health plates, End Turn and Switch.
+      Reference how card games lay out and style a HUD — Slay the Spire, Hearthstone, Runeterra, Marvel Snap — and say what you took. `TARGET-UI.png` is Nick's own pick for the cards and HUD and stays the arbiter.
+      Meshy may be used for any panel ornament that is genuinely easier sculpted than drawn — a carved frame corner, an energy orb — rendered once to a texture. Ask Nick before spending credits; it is not required, and a drawn panel that matches is worth more than a sculpted one that does not.
+      **Done when** every HUD element and the cards read as one set, nothing clips at 1280x720, and the rest frame beside `TARGET-UI.png` shows the same material.
+      Test: state=3d beast=cinder_jackal
+
 - [ ] 👀 **Swap in the new upright jackal model.**
       **Nick, 2026-10-04 19:17 ET:** yes generate a new jackal model from picture A
       The model is generated and in the repo: `game/assets/3d/cast/cinder_jackal_v2.glb` (upright rock jackal from picture A, 29,628 triangles, 1.38 wide x 1.90 tall, texture embedded). Run `--import`, then use it for the Cinder Jackal in the fight in place of `cinder_jackal_ai.glb`; keep the old file. In `state=3d` it must fill the upper half of the frame like `design/art/targets/TARGET.png`, with the lava cracks glowing and the warm outline. Re-derive the stone route and the holds for the new shape: the climb still ends at the head, and the face stays visible at rest.

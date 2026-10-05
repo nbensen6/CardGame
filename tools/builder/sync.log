@@ -1,0 +1,753 @@
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 1 to look at
+pushed
+error: Pulling is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+Needs Nick.md: 0 to decide, 1 to look at
+pushed
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 2 to look at
+pushed
+error: Pulling is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+warning: in the working copy of 'design/.obsidian/app.json', LF will be replaced by CRLF the next time Git touches it
+Created autostash: f28a5ba7
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+warning: in the working copy of 'design/.obsidian/app.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'design/.obsidian/plugins/obsidian-shellcommands/data.json', LF will be replaced by CRLF the next time Git touches it
+Created autostash: b9fac0d2
+Applied autostash.
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: 0cc6a70b
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: d548007f
+Applied autostash.
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: e9847663
+Applied autostash.
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: 38890dbf
+Applied autostash.
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: 86db14c5
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: 4af62772
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: ffcfd46d
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: 756441b7
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: f033a87a
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: c7b278e3
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: b603082b
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Created autostash: e1a63f35
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: 5863916e
+Applied autostash.
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+G:\Co Op Game\tools\needs_nick.py:162: DeprecationWarning: 'maxsplit' is passed as positional argument
+  first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 5 to decide, 0 to look at
+Created autostash: d54d9aa1
+Applied autostash.
+Needs Nick.md: 5 to decide, 1 to look at
+Needs Nick.md: 5 to decide, 1 to look at
+Created autostash: 9f010bd9
+Applied autostash.
+Needs Nick.md: 5 to decide, 1 to look at
+Needs Nick.md: 5 to decide, 1 to look at
+Needs Nick.md: 5 to decide, 1 to look at
+Needs Nick.md: 1 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 1 to decide, 1 to look at
+G:\Co Op Game\tools\needs_nick.py:162: DeprecationWarning: 'maxsplit' is passed as positional argument
+  first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Created autostash: 49b86324
+Applied autostash.
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+error: Pulling is not possible because you have unmerged files.
+hint: Fix them up in the work tree, and then use 'git add/rm <file>'
+hint: as appropriate to mark resolution and make a commit.
+fatal: Exiting because of an unresolved conflict.
+Needs Nick.md: 0 to decide, 3 to look at
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+pushed
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+fatal: It seems that there is already a rebase-merge directory, and
+I wonder if you are in the middle of another rebase.  If that is the
+case, please try
+	git rebase (--continue | --abort | --skip)
+If that is not the case, please
+	rm -fr ".git/rebase-merge"
+and run me again.  I am stopping in case you still have something
+valuable there.
+
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+pushed
+Needs Nick.md: 0 to decide, 4 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 4 to look at, answers applied
+Needs Nick.md: 0 to decide, 5 to look at
+Needs Nick.md: 0 to decide, 5 to look at
+Needs Nick.md: 0 to decide, 6 to look at
+Needs Nick.md: 0 to decide, 7 to look at
+Needs Nick.md: 0 to decide, 7 to look at
+Needs Nick.md: 0 to decide, 8 to look at
+Needs Nick.md: 0 to decide, 10 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+Needs Nick.md: 0 to decide, 11 to look at
+pushed
+Needs Nick.md: 0 to decide, 5 to look at, answers applied
+G:\Co Op Game\tools\needs_nick.py:162: DeprecationWarning: 'maxsplit' is passed as positional argument
+  first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 17 to look at
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 1 to look at
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+G:\Co Op Game\tools\needs_nick.py:162: DeprecationWarning: 'maxsplit' is passed as positional argument
+  first = re.split(r"(?<=[.!?])\s", r["what"], 1)[0].strip().rstrip(".!?")
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+Needs Nick.md: 0 to decide, 2 to look at
+pushed
+Needs Nick.md: 0 to decide, 1 to look at, answers applied
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+Needs Nick.md: 0 to decide, 4 to look at
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+pushed
+Needs Nick.md: 0 to decide, 0 to look at, answers applied
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 0 to look at
+Needs Nick.md: 0 to decide, 1 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 2 to look at
+Needs Nick.md: 0 to decide, 3 to look at
+Needs Nick.md: 0 to decide, 8 to look at
+Needs Nick.md: 0 to decide, 8 to look at
+Needs Nick.md: 0 to decide, 8 to look at
+Needs Nick.md: 0 to decide, 8 to look at
+Needs Nick.md: 0 to decide, 8 to look at

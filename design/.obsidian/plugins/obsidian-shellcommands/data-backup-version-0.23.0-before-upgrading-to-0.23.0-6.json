@@ -282,7 +282,7 @@
       },
       "shells": {},
       "alias": "Test this scenario (from a ticket link)",
-      "icon": "lucide-play",
+      "icon": "play",
       "confirm_execution": false,
       "ignore_error_codes": [],
       "input_contents": {
