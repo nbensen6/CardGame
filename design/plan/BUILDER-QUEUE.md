@@ -372,6 +372,26 @@ run failed.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-scene-pass1-after.png|420]]
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-scene-pass2-after.png|420]] ^scene-pass-2-toward-picture-a
+- [ ] **The jackal fills the frame like picture A.**
+      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
+      In `state=3d` the jackal covers about a sixth of the frame's width; in `design/art/targets/TARGET.png` it covers over half. The beast is sized by height (`_fit_height`), and an upright body sized that way is narrow and far off. Done when, at rest, its shoulders span at least 45% of the frame's width, its head and eyes are inside the frame, and it reads as towering over the hunter. Scale it, bring it nearer or tilt the rest camera up; do not crop the model. Move the sigil ring off the eyes.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^the-jackal-fills-the-frame-like-picture-a
+- [ ] **Stones are one staircase of chunky blocks.**
+      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
+      Today thin grey discs float in a ring round the jackal. The picture has thick grey blocks, each about as tall as the Frog, in ONE rising line from the Frog's rock to the jackal's chest, biggest nearest the camera. Done when a player can trace the climb with a finger from the Frog to the chest in `state=3d`, and no stone floats beside or behind the beast.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^stones-are-one-staircase-of-chunky-blocks
+- [ ] **Clean shapes: flat planes, a smooth glowing outline.**
+      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
+      The jackal's surface is a noisy dark-red texture and the outlines on the jackal and the Frog are jagged, pale and stair-stepped. The picture has flat colour planes (dark brown rock, bright orange cracks), a thick smooth warm outline, and the cracks and eyes glow into the air around them. Done when, at 1:1, no outline shows stair-steps, the rock reads as flat planes, and the cracks and eyes bloom.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^clean-shapes-flat-planes-a-smooth-glowing-outline
+- [ ] **Cliffs and floor in picture A's flat style.**
+      **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
+      The cliffs are detailed realistic rock and the floor is a flat dark sheet with thin lines; beside the flat jackal they look like a different game. The picture has dark angular cliffs in two or three flat tones and a floor of big cracked slabs with glowing seams. Done when the cliffs, the floor, the jackal and the Frog read as one style in `state=3d`.
+      Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
+      Test: state=3d beast=cinder_jackal ^cliffs-and-floor-in-picture-a-s-flat-style
 
 ## Waiting on Nick
 
