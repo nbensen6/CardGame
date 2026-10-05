@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T02:10
+updated: 2026-10-05T02:35
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 02:10 EDT
+2026-10-05 02:35 EDT
 
-- **Did:** Overnight pass 17: the lava horizon is a taller, warmer orange glow band; floor and pool unchanged.
-- **Worked?** Yes, grader called it closer. VERDICT: PASS (the stronger, wider horizon band moves toward the target's bright orange lava line).
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p17-before.png]] then ![[frames/builder/2026-10-05-overnight-p17-after.png]]
+- **Did:** Overnight pass 18: thinned and dimmed the embers over the sky; reverted, not pushed.
+- **Worked?** No, grader saw only particle scatter. VERDICT: FAIL (fewer embers do not move any of the three biggest gaps).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p18-before.png]] then ![[frames/builder/2026-10-05-overnight-p18-after.png]]
 - **Ask:** nothing
 
 ## Notes
@@ -27,6 +27,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-10-05 02:35 EDT — builder: overnight pass 18: embers 420+8x60 -> 140+8x18, alpha 0.55; grader FAIL (NOT CLOSER); reverted, notes only pushed. 1 NOT CLOSER in a row.
 - 2026-10-05 02:10 EDT — builder: overnight pass 17: new per-biome haze_glow/haze_color (quarry_ember 0.85, (1.0,0.56,0.14)) drive the heat haze band only, lava_glow 0.45 still scales pool/rim/cliffs + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:55 EDT — builder: overnight pass 16: cliff_flat lit/side/shade (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125) -> (0.21,0.205,0.235)/(0.12,0.118,0.135)/(0.055,0.054,0.062); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:50 EDT — builder: overnight pass 15: cliff_flat lit/side/shade (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125) -> (0.26,0.268,0.305)/(0.165,0.17,0.195)/(0.09,0.09,0.103) (sampled wall median ~(59,63,84) -> ~(40,42,57)); grader FAIL (NOT CLOSER, saw no change); reverted, not pushed. 1 NOT CLOSER in a row.
