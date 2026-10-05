@@ -669,7 +669,9 @@ const COACH_SECONDS := 7.0
 ## floating over their model in the scene, the frame around the portrait in the
 ## rail, their party card. One source so those can never drift apart — the whole
 ## point is that the green frame and the green pip are obviously the same hunter.
-const SLOT_TINT := [Color(0.45, 0.95, 0.5), Color(0.55, 0.82, 1.0)]
+## One colour per seat. The per-character table is CardView.SEAT_TINT, which
+## also lights the A1 card frame, so the markers and the hand agree.
+const SLOT_TINT := [CardView.SEAT_TINT["frog"], CardView.SEAT_TINT["mountain_climbers"]]
 
 ## The HUD reads like Slay the Spire's (Nick, 2026-09-30, "One HUD style": "we
 ## need to redesign the display of information. reference how slay the spire ii

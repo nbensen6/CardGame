@@ -1818,3 +1818,16 @@ Grader round 1 FAILED because the frame itself didn't show the sources or the pi
 - New shaders `card_frame_mock.gdshader` (the plate with the art window cut out) and `card_plate.gdshader` (bevelled raised/inset plates).
 - Tests pin, at three card sizes, that every piece stays inside the card and the pieces don't overlap.
 - When Nick picks, the follow-up is to make that spec the default and delete the other two.
+
+## Ship the A1 card frame, tinted per seat.
+
+2026-10-05, builder. The A1 pair from `tools/cardframe_a1.py` is now the shipping frame, behind `CardView.SHIP_A1` (false brings the carved-obsidian border back).
+
+- **Layers:** ground (rounded, carries the playable halo) → A1 stone nine-patch → art in its window → A1 glow nine-patch (additive, `self_modulate` = seat tint) → name, type, rarity, rules, cost.
+- **Nine-patch:** drawn at the source's 690x984 and scaled down by card width / 690, so the margins (130 left/top, 60 right/bottom, socket inside the top-left one) keep their shape and only the runs stretch. At 162x228 the centre squeezes 13 source px; nothing visible.
+- **Tint:** `CardView.SEAT_TINT`, one colour per character. `combat_3d.gd`'s `SLOT_TINT` now reads its two entries from it, so the floor markers and the hand are one table. The playable halo takes the seat colour too (`seat_glow`), so a Frog hand has no gold left on it.
+- **Boxes:** authored exactly as given (socket, title, art, type, text), normalised against the card. Icon-only cards put the icon inside the art window.
+- **Cost:** font = 1.5 × socket radius, emboldened. At hand size the socket is 15px across and the digit 11px. The test checks two digits fit at 135, 162 and 191 wide.
+- **Grader, pass 1:** FAIL. Costs inside but barely readable; cards run off the bottom of the window. Fixed the digit (bigger, bold). The bottom overhang is the hand's deliberate deep tuck (FAN_TUCK + 52, the Slay the Spire hand), and TARGET-UI's cards also run off the bottom, so I left it alone.
+- The second seat (the Climbers, blue) is not in the rest shot. Switch to it to see the blue hand.
+- **Grader, pass 2:** VERDICT: FAIL. Same reason: the resting hand runs off the bottom of the window. Stopped there and marked it for Nick; raising the hand changes the fan's tuck, which is a separate decision.

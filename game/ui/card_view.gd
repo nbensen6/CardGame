@@ -147,7 +147,7 @@ static func shows_cost(data: Dictionary) -> bool:
 	return SHOW_COST and not bool(data.get("no_cost", false))
 ## The moulding, drawn as a layer OVER the art rather than as the Button's
 ## stylebox - a stylebox draws behind every child and the art would hide it.
-var _frame_rect: ColorRect = null
+var _frame_rect: Control = null
 ## The border (Nick, 2026-09-30: "a redesign of the card borders is needed"):
 ## carved obsidian with a brass fillet and a thin line of the hunter's colour,
 ## drawn by card_border.gdshader. FRAMES and frames.py still dress the rail
@@ -466,6 +466,8 @@ func _build_face(data: Dictionary) -> void:
 	gsb.set_corner_radius_all(13)
 	# Picture B's glowing edge on a card that can be played (Nick, 2026-10-04).
 	var glow := playable_glow(not disabled)
+	if SHIP_A1:
+		glow = seat_glow(not disabled, String(data.get("character", "")))
 	gsb.shadow_color = glow
 	gsb.shadow_size = PLAYABLE_GLOW_SIZE if glow.a > 0.0 else 0
 	ground.add_theme_stylebox_override("panel", gsb)
@@ -486,7 +488,11 @@ func _build_face(data: Dictionary) -> void:
 		art.texture = ICONS[String(data.get("icon", ""))]
 		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		_layer(art, 0.18, 0.12, 0.82, 0.52)
+		if SHIP_A1:
+			# inside the A1 art window, clear of the title plate
+			_layer(art, 0.20, 0.18, 0.80, 0.53)
+		else:
+			_layer(art, 0.18, 0.12, 0.82, 0.52)
 		_build_upper(data)
 		return
 	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -505,6 +511,9 @@ func _build_face(data: Dictionary) -> void:
 func _build_upper(data: Dictionary) -> void:
 	if FRAME_MOCKS.has(frame_mock):
 		_build_mock_frame(frame_mock_spec(frame_mock, _data))
+		return
+	if SHIP_A1:
+		_build_a1()
 		return
 	# 2 - scrim. Cream rules text over a bright sky is unreadable, and the
 	# reference darkens the foot of the art for exactly this reason.
@@ -595,6 +604,188 @@ func _build_upper(data: Dictionary) -> void:
 		add_child(_cost_orb(int(_data.get("cost", 0)),
 			String(_data.get("character", ""))))
 
+
+
+# --- The A1 frame, tinted per seat (Nick, 2026-10-05) -----------------------
+#
+# "A1, but i need the orange color to be editable to match the color of
+# different characters. also make sure that things match up within the card."
+#
+# tools/cardframe_a1.py split the generation into two files: neutral stone and
+# a white glow. They are stacked here and ONLY the glow is coloured, by the
+# seat's tint, so a blue hand has no warm cast left anywhere on it.
+
+## The switch, like SHOW_COST: false draws the carved-obsidian border again.
+const SHIP_A1 := true
+const A1_BASE := preload("res://assets/ui/card_frame_a1_base.png")
+const A1_GLOW := preload("res://assets/ui/card_frame_a1_glow.png")
+## The source pair's size, px. The nine-patch is drawn at this size and scaled
+## down to the card, so the corners (and the socket in the top-left one) keep
+## their shape and only the straight runs between them stretch.
+const A1_SRC := Vector2(690, 984)
+## Nine-patch margins in source px: left/top hold the socket, the others the
+## carved corner.
+const A1_PATCH := [130, 130, 60, 60]   # left, top, right, bottom
+## Boxes measured off the generation by tools/cardframe_a1.py, normalised
+## against the card. The socket is centre + radius (radius as a fraction of
+## the WIDTH), because the cost is centred in it, not boxed.
+const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
+const A1_TITLE := Rect2(0.205, 0.045, 0.945 - 0.205, 0.130 - 0.045)
+const A1_ART := Rect2(0.095, 0.150, 0.905 - 0.095, 0.560 - 0.150)
+const A1_TYPE := Rect2(0.112, 0.585, 0.900 - 0.112, 0.640 - 0.585)
+const A1_TEXT := Rect2(0.112, 0.665, 0.900 - 0.112, 0.925 - 0.665)
+
+## One colour per character: the glow on their cards and the halo round a
+## playable one. The Frog and the Climbers are combat_3d.gd's SLOT_TINT, which
+## now reads from here, so the cards match the markers on the floor.
+const SEAT_TINT := {
+	"frog": Color(0.45, 0.95, 0.5),
+	"mountain_climbers": Color(0.55, 0.82, 1.0),
+	"vine_weaver": Color(0.73, 0.49, 0.93),
+	"lightbearer": Color(0.97, 0.84, 0.47),
+	"goblin_mech": Color(0.93, 0.47, 0.16),
+	"common": Color(0.93, 0.47, 0.16),
+}
+
+
+## The seat colour a character's cards wear. Static so a test can pin it.
+static func seat_tint(character: String) -> Color:
+	return SEAT_TINT.get(character, SEAT_TINT["common"])
+
+
+## The halo a card wears on the A1 frame: its seat colour when it can be
+## played, none when it cannot.
+static func seat_glow(playable: bool, character: String) -> Color:
+	if not playable:
+		return Color(0, 0, 0, 0)
+	var c := seat_tint(character)
+	c.a = PLAYABLE_GLOW.a
+	return c
+
+
+## A normalised box in px of a card w x h.
+static func a1_box(r: Rect2, w: float, h: float) -> Rect2:
+	return Rect2(r.position.x * w, r.position.y * h, r.size.x * w, r.size.y * h)
+
+
+## The socket's centre and radius in px of a card w x h.
+static func a1_socket(w: float, h: float) -> Vector3:
+	return Vector3(A1_SOCKET.x * w, A1_SOCKET.y * h, A1_SOCKET.z * w)
+
+
+## The cost's font size: the number shrinks to the disc, never the disc to the
+## number. A digit is about 0.6 em wide and 0.75 em tall, so 1.5 x the radius
+## keeps a two-digit cost inside the circle too.
+static func a1_cost_font_size(radius: float) -> int:
+	return maxi(6, int(floor(radius * 1.5)))
+
+
+## The stone or glow layer, as a nine-patch drawn at source size and scaled.
+func _a1_patch(tex: Texture2D) -> NinePatchRect:
+	var np := NinePatchRect.new()
+	np.texture = tex
+	np.patch_margin_left = A1_PATCH[0]
+	np.patch_margin_top = A1_PATCH[1]
+	np.patch_margin_right = A1_PATCH[2]
+	np.patch_margin_bottom = A1_PATCH[3]
+	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(np)
+	return np
+
+
+## Fit a source-size nine-patch over a card of this size.
+static func a1_patch_fit(card: Vector2) -> Array:
+	var k := card.x / A1_SRC.x
+	return [Vector2(k, k), card / k]
+
+
+func _a1_fit(np: NinePatchRect) -> void:
+	var card := size if size.x > 0.0 else custom_minimum_size
+	var fit := a1_patch_fit(card)
+	np.position = Vector2.ZERO
+	np.scale = fit[0]
+	np.size = fit[1]
+
+
+func _build_a1() -> void:
+	var w := custom_minimum_size.x
+	var h := custom_minimum_size.y
+	var who := String(_data.get("character", ""))
+	var tint := seat_tint(who)
+
+	# 1 - the stone, UNDER the art: the base is opaque, the art sits in its
+	# window. Straight after the ground.
+	var base := _a1_patch(A1_BASE)
+	move_child(base, 1)
+	_a1_fit(base)
+	_frame_rect = base
+	_panel = null
+	_pill = null
+
+	# 2 - the art, re-cut to the window.
+	var ar := a1_box(A1_ART, w, h)
+	if _art_full != null:
+		_art_full.offset_left = ar.position.x + 1.0
+		_art_full.offset_top = ar.position.y + 1.0
+		_art_full.offset_right = ar.end.x - 1.0 - w
+		_art_full.offset_bottom = ar.end.y - 1.0 - h
+
+	# 3 - the glow, the ONLY coloured thing on the frame.
+	var glow := _a1_patch(A1_GLOW)
+	_a1_fit(glow)
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	glow.material = add
+	glow.self_modulate = tint
+	resized.connect(func() -> void:
+		_a1_fit(base)
+		_a1_fit(glow))
+
+	# 4 - the name, starting clear of the socket.
+	var tr := a1_box(A1_TITLE, w, h)
+	var nm := _label(String(_data.get("name", "")), 13 if w < 170 else 15)
+	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	nm.clip_text = true
+	nm.add_theme_color_override("font_color", Color(0.96, 0.93, 0.88))
+	nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
+	nm.add_theme_constant_override("outline_size", 3)
+	_place(nm, tr.grow_individual(-2.0, 0.0, -3.0, 0.0))
+
+	# 5 - the type bar, with rarity at its right end.
+	var ty := a1_box(A1_TYPE, w, h)
+	var kind := String(_data.get("type", ""))
+	if kind != "":
+		var tl := _label(kind.to_upper(), 9)
+		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		tl.add_theme_color_override("font_color", Color(0.78, 0.69, 0.59))
+		_place(tl, ty.grow_individual(-4.0, 0.0, -24.0, 0.0))
+	_place(_rarity_pips(_data), Rect2(ty.end.x - 26.0, ty.get_center().y - 3.0, 22.0, 6.0))
+
+	# 6 - the rules, wrapped inside the text box.
+	var xr := a1_box(A1_TEXT, w, h)
+	_rules = _rich_body(_data, 12, int(xr.size.y) - 6)
+	_rules.text = "[center]" + _rules.text + "[/center]"
+	_place(_rules, xr.grow_individual(-4.0, -4.0, -4.0, -2.0))
+	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
+
+	# 7 - the cost, centred in the socket and sized to it.
+	if shows_cost(_data):
+		var so := a1_socket(w, h)
+		var d := so.z * 2.0
+		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z))
+		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		cl.add_theme_color_override("font_color", Color(1, 1, 1).lerp(tint, 0.3))
+		cl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		cl.add_theme_constant_override("outline_size", 2)
+		# Heavy, so a 10px digit still reads at hand size (the grader, on the
+		# first pass: "barely readable").
+		var heavy := FontVariation.new()
+		heavy.base_font = cl.get_theme_font("font")
+		heavy.variation_embolden = 0.9
+		cl.add_theme_font_override("font", heavy)
+		_place(cl, Rect2(so.x - so.z, so.y - so.z + 0.5, d, d))
 
 
 # --- Card-frame mocks (Nick, 2026-10-05) ------------------------------------

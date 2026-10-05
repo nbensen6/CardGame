@@ -1104,6 +1104,7 @@ func _init() -> void:
 	# borders get a redesign.
 	_test_cost_gems_back_on_a_redesigned_border()
 	_test_cards_fan_raised_card_has_no_glow()
+	_test_a1_frame_tinted_per_seat()
 	# backlog #86 duty 2: should_rebuild_hand -- state_updated fires on EVERY
 	# player's action, not just this client's own, so a teammate's turn used
 	# to blow away this player's own in-flight sweep-bar timing card mid-swing.
@@ -22174,18 +22175,60 @@ func _test_cost_gems_back_on_a_redesigned_border() -> void:
 	var cv := CardView.new()
 	cv.setup({"name": "Slash", "cost": 2, "character": "goblin_mech",
 		"text": "Deal 6 damage."}, true)
+	# Nick, 2026-10-05: A1 replaced the shader border; the cost now sits in
+	# the frame's own socket rather than on a hung gem.
 	var fr = cv._frame_rect
-	_expect(fr is ColorRect and fr.material is ShaderMaterial
-		and fr.material.shader == CardView.BORDER_SHADER,
-		"the border is the carved-obsidian shader, not the old 9-slice")
-	_expect(fr.material.get_shader_parameter("hue") == Color("C07E4F"),
-		"the Goblin's card carries the Goblin's line colour")
-	var gems := 0
+	_expect(fr is NinePatchRect and fr.texture == CardView.A1_BASE,
+		"the border is the A1 stone nine-patch")
+	var glows := 0
+	var costs := 0
 	for c in cv.get_children():
-		if c is TextureRect and CardView.ORBS.values().has(c.texture):
-			gems += 1
-	_expect(gems == 1, "a playable card hangs exactly one cost gem (got %d)" % gems)
+		if c is NinePatchRect and c.texture == CardView.A1_GLOW:
+			glows += 1
+			_expect(c.self_modulate == CardView.seat_tint("goblin_mech"),
+				"the Goblin's card glows in the Goblin's seat colour")
+		if c is Label and c.text == "2":
+			costs += 1
+	_expect(glows == 1, "an A1 card stacks exactly one glow layer (got %d)" % glows)
+	_expect(costs == 1, "a playable card draws its cost exactly once (got %d)" % costs)
 	cv.free()
+
+
+## Nick, 2026-10-05, "Ship the A1 card frame, tinted per seat": no baked
+## colour, the cost inside its socket, nothing across a panel edge.
+func _test_a1_frame_tinted_per_seat() -> void:
+	_expect(CardView.seat_tint("frog") == Combat3D.SLOT_TINT[0]
+		and CardView.seat_tint("mountain_climbers") == Combat3D.SLOT_TINT[1],
+		"a1: the seat table is the floor markers' table, not a second scheme")
+	_expect(CardView.seat_tint("nobody") == CardView.seat_tint("common"),
+		"a1: an unknown owner falls back to the common tint")
+	_expect(CardView.seat_tint("frog") != CardView.seat_tint("mountain_climbers"),
+		"a1: two seats never share a colour")
+	_expect(CardView.seat_glow(false, "frog").a == 0.0
+		and CardView.seat_glow(true, "frog").g > 0.9,
+		"a1: a playable Frog card glows green, an unplayable one not at all")
+	for box in [CardView.BOX_DESKTOP_NORMAL, CardView.BOX_HANDHELD_NORMAL, CardView.BOX_DESKTOP_BIG]:
+		var w: float = box.x
+		var h: float = box.y
+		var so: Vector3 = CardView.a1_socket(w, h)
+		var fs := CardView.a1_cost_font_size(so.z)
+		# two digits at ~0.6 em each, and a cap height of ~0.75 em, inside the disc
+		_expect(fs * 1.25 <= so.z * 2.0 and fs * 0.75 <= so.z * 2.0,
+			"a1: the cost fits its socket at %dx%d (font %d, r %.1f)" % [w, h, fs, so.z])
+		var title := CardView.a1_box(CardView.A1_TITLE, w, h)
+		_expect(title.position.x >= so.x + so.z,
+			"a1: the name starts clear of the socket at %dx%d" % [w, h])
+		var boxes := [title, CardView.a1_box(CardView.A1_ART, w, h),
+			CardView.a1_box(CardView.A1_TYPE, w, h), CardView.a1_box(CardView.A1_TEXT, w, h)]
+		for i in range(boxes.size()):
+			_expect(Rect2(0, 0, w, h).encloses(boxes[i]), "a1: box %d inside the card" % i)
+			if i > 0:
+				_expect(boxes[i - 1].end.y <= boxes[i].position.y,
+					"a1: box %d does not overlap the one above" % i)
+		var fit: Array = CardView.a1_patch_fit(box)
+		_expect(absf((fit[1] as Vector2).x * (fit[0] as Vector2).x - w) < 0.01
+			and (fit[1] as Vector2).y >= CardView.A1_PATCH[1] + CardView.A1_PATCH[3],
+			"a1: the nine-patch covers the card and keeps its corners at %dx%d" % [w, h])
 
 
 ## Nick, 2026-09-30, on Cards fan and glow: "remove this". The lifted card

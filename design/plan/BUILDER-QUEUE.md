@@ -32,7 +32,7 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-stones-after.png|420]] ^rebuild-the-stones-to-match-the-referenc
 
-- [ ] **Ship the A1 card frame, tinted per seat.**
+- [ ] 👀 **Ship the A1 card frame, tinted per seat.**
       **Nick, 2026-10-05:** "A1, but i need the orange color to be editable to match the color of different characters. also make sure that things match up within the card. IE the energy numbers need to be reduced in size and fit within the circle and are matched to be inside."
       The frame is already split into two files by `tools/cardframe_a1.py`:
       `game/assets/ui/card_frame_a1_base.png` (neutral stone, no ember) and
@@ -55,7 +55,10 @@ run failed.
       **Done when** a hand in `state=3d` shows every card in its own seat colour,
       the costs sit inside their sockets at hand size, and nothing clips at 1280x720.
       Mockups: ![[art/cards/a1-hand.png|420]] ![[art/cards/a1-tints.png|420]]
-      Test: state=3d beast=cinder_jackal ^ship-the-a1-card-frame-tinted-per-seat
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Ship the A1 card frame, tinted per seat.|details]]
+      Ask: Grader failed this: resting hand runs off screen bottom. Raise the hand?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-a1-frame-after.png|420]] ^ship-the-a1-card-frame-tinted-per-seat
 
 - [x] **Research: card frames, against real TCGs.** — done by the session.
       [[art/card-frame-research]], three mockups, four Meshy passes over A and B.
@@ -655,3 +658,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Near stone smaller than the Frog's plinth.** The rest rock is wider than the first slab; TARGET's first slab is the biggest thing on the floor.
 - [ ] (proposed) **Hand fan hides the card footer.** At rest every card is cut at the screen's bottom edge, so a footer or rarity token never shows.
 - [ ] (proposed) **Raised card's title clipped in shots.** hover= lifts the card past the top of the fan, cutting off its name plate.
+- [ ] (proposed) **Second seat's blue hand unshot.** The rest frame only shows the Frog's green cards; a switch= shot would prove blue.

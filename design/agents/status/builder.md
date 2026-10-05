@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T15:33
-working_on: "Research: card frames, against real TCGs."
+updated: 2026-10-05T16:05
+working_on: "Ship the A1 card frame, tinted per seat."
 ---
 
 # builder
@@ -13,19 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 15:33 EDT
+2026-10-05 16:05 EDT
 
-- **Did:** Built three card frames (obsidian, printed, gold relic) on our real hand, switchable for Nick to pick.
-- **Worked?** Yes: all three render at hand size with sources and a pick. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-05-card-frames-before.png]] then ![[frames/builder/2026-10-05-card-frames-after.png]]
-- **Ask:** Which card frame: A obsidian, B printed, or C gold relic (my pick)?
+- **Did:** Shipped the A1 stone card frame; its glow takes each seat's colour, and costs sit inside their sockets.
+- **Worked?** Partly: the frame, tint and sockets work; the grader failed it because the tucked hand runs off the bottom edge. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-05-a1-frame-before.png]] then ![[frames/builder/2026-10-05-a1-frame-after.png]]
+- **Ask:** Raise the resting hand so whole cards show, or keep the deep tuck?
 
 ## Notes
 
-- **Found:** At rest the hand fan cuts every card off at the screen's bottom edge, so the footer and rarity token never show.
-- **Found:** hover= raises a card past the top of the fan's clip, so its title is cut off in a shot.
+- **Found:** The second seat's blue hand isn't in the rest shot; only the Frog's green cards show.
+- **Found:** At hand size the A1 socket is 15px wide, so the cost digit is 11px however bold it is.
 
 ## Log
+
+- 2026-10-05 16:05 EDT — builder: A1 card frame shipped (CardView.SHIP_A1, stone + glow nine-patches, SEAT_TINT feeding SLOT_TINT, boxes from cardframe_a1.py, cost sized to socket) + tests; grader FAIL twice on the hand's bottom tuck; marked 👀 for Nick; tests green, pushed.
 
 - 2026-10-05 15:33 EDT — builder: card-frame mocks A/B/C (CardView.frame_mock, FRAME_MOCKS, frame_mock_layout, card_frame_mock + card_plate shaders, harness cardframe=) on the real hand + layout tests; grader FAIL (labels) then PASS; marked 👀 for Nick's pick; tests green, pushed.
 - 2026-10-05 15:17 EDT — builder: jackal slabs: slab_outline/slab_mesh thin irregular prism (0.4 Frog-heights), slab_tilt toward camera, ink hull, billboard shadow, SLAB_FAR_SCALE 0.65, route_top 0.36 + tests; grader FAIL x3 (shadow, thickness); marked 👀; tests green, pushed.
