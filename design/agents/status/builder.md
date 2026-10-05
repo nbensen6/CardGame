@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T03:34
-working_on: "Overnight: keep closing the gap to picture A until 8 AM."
+updated: 2026-10-05T14:50
+working_on: "The jackal becomes a 2.5D sprite, like the reference."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 03:58 EDT
+2026-10-05 14:50 EDT
 
-- **Did:** Overnight pass 23: orange glow at the cliffs' feet; reverted. Third miss in a row, so overnight stopped.
-- **Worked?** No, the grader saw only ember scatter, not the glow band. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p1-before.png]] then ![[frames/builder/2026-10-05-overnight-p20-after.png]]
-- **Ask:** Biggest gap left is beast size: bring the jackal closer so it fills the frame?
+- **Did:** The Cinder Jackal is now a flat inked drawing that always faces the camera, with its climb holds placed on the image.
+- **Worked?** Partly. It is a drawing now and the climb still plays, but the pose and size are not TARGET's. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-05-jackal-sprite-before.png]] then ![[frames/builder/2026-10-05-jackal-sprite-after.png]]
+- **Ask:** Should the jackal be redrawn in TARGET's raised-fist pose, or keep the concept pose?
 
 ## Notes
 
-- **Found:** The grader cannot see small tone changes under random embers; three passes failed this way.
-- **Found:** Two pale ring markers sit on the jackal's chest; A has none (ledge rings, gameplay info).
+- **Found:** The stones climb beside the drawn jackal, not across its front.
+- **Found:** The hull code stays for the other beasts; only the jackal skips it.
+- **Found:** The drawn jackal is a still: no idle and no attack motion.
 
 ## Log
 
+- 2026-10-05 14:50 EDT — builder: Cinder Jackal as a billboard Sprite3D (tools/beast_sprite.py inks the concept; holds authored on the image), hull skipped for drawn beasts, DRAWN_GAP_PER_HEIGHT 1.1 + test; grader FAIL x3 (pose/scale); marked 👀; tests green, pushed.
 - 2026-10-05 03:58 EDT — builder: overnight pass 23: per-biome wall_heat 1.0 for the cliffs' foot band; grader FAIL (NOT CLOSER); reverted, notes only pushed. 3 NOT CLOSER in a row: standing item stopped, marked 👀.
 - 2026-10-05 03:34 EDT — builder: overnight pass 22: darker, redder jackal crack glow; grader FAIL (NOT CLOSER) and a crack-colour test failed; reverted, notes only pushed. 2 NOT CLOSER in a row.
 - 2026-10-05 02:41 EDT — builder: overnight pass 19: dark cull-front hull round each climb slab (ink line, 0.045 Frog-heights); grader FAIL (NOT CLOSER, line not seen); reverted, notes only pushed. 2 NOT CLOSER in a row.

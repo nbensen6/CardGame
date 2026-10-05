@@ -1,0 +1,45 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/3d/cast/cinder_jackal_2d.png" id="1"]
+
+[node name="cinder_jackal_2d" type="Node3D"]
+
+[node name="Body" type="Sprite3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0000, 0.9500, 0)
+pixel_size = 0.001017
+billboard = 2
+shaded = false
+double_sided = false
+alpha_cut = 2
+texture_filter = 3
+texture = ExtResource("1")
+
+[node name="climb_0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.179, 0.045, 0.25)
+
+[node name="climb_1" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.204, 0.451, 0.25)
+
+[node name="climb_2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.159, 0.777, 0.25)
+
+[node name="climb_3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098, 1.122, 0.25)
+
+[node name="climb_4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, 1.326, 0.25)
+
+[node name="climb_5" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.001, 1.539, 0.25)
+
+[node name="ledge_0" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.179, 0.045, 0.25)
+
+[node name="ledge_2" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.159, 0.777, 0.25)
+
+[node name="ledge_3" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098, 1.122, 0.25)
+
+[node name="ledge_4" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, 1.326, 0.25)

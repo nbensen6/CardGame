@@ -52,7 +52,11 @@ const FOOTHOLD_ROCK := preload("res://assets/3d/env/foothold_rock.glb")
 ## silently put the old one back.
 ## The Cinder Jackal is the upright rock jackal of picture A since 2026-10-04
 ## (Nick: "generate a new jackal model from picture A"); "_ai" stays on disk.
-const AI_ART := {"cinder_jackal": "_v2"}
+## Since 2026-10-05 it is a drawing, not a mesh (Nick: "have the builder do the
+## 2.5D like in the reference"): "_2d" is a billboard Sprite3D of the inked
+## jackal, its climb holds authored as points on the image by
+## tools/beast_sprite.py. "_v2" stays on disk.
+const AI_ART := {"cinder_jackal": "_2d"}
 
 
 ## The file a beast variant loads from: <id><variant>.tscn first (a generated
@@ -558,6 +562,11 @@ const GROUND_STANDOFF := 1.75
 ## stands whole with its ears clear of the top bar (the old one's own gap was
 ## 1.44 heights); a beast deep enough to need more keeps GROUND_STANDOFF's.
 const GROUND_GAP_PER_HEIGHT := 1.5
+## The same gap for a DRAWN beast (a flat sprite, no hull). A drawing has no
+## depth to keep clear and TARGET.png's jackal towers over the stones, so the
+## hunters stand closer: the jackal's body fills about half the rest frame, ears in
+## instead of ~40 % (Nick, 2026-10-05, "do the 2.5D like in the reference").
+const DRAWN_GAP_PER_HEIGHT := 1.1
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -2861,7 +2870,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# guarantees the clamp never has to bite.
 	var want_r := maxf(_beast_height * 0.85,
 		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
-			ground_standoff_for(_beast_box.end.z, _beast_box.size.y) / 0.86))
+			_ground_back() / 0.86))
 	_arena_r = want_r
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
@@ -4907,6 +4916,8 @@ const HULL_Y := 20     # bands up it
 ## front reach per (x band, y band), in beast-local units, or an empty array
 ## before the first beast has spawned.
 var _hull: PackedFloat32Array = PackedFloat32Array()
+## True when the beast on stage is a drawing (no mesh to build a hull from).
+var _beast_drawn := false
 
 
 ## Put every creature on the stylized shader.
@@ -5180,6 +5191,7 @@ func _tint_rims() -> void:
 
 func _build_hull() -> void:
 	_hull = PackedFloat32Array()
+	_beast_drawn = false
 	if _beast == null:
 		return
 	_hull.resize(HULL_X * HULL_Y)
@@ -5188,10 +5200,12 @@ func _build_hull() -> void:
 	if box.size.x <= 0.0001 or box.size.y <= 0.0001:
 		_hull = PackedFloat32Array()
 		return
+	var any := false
 	for node in _all_meshes(_beast):
 		var mi := node as MeshInstance3D
 		if mi == null or mi.mesh == null:
 			continue
+		any = true
 		var xf := mesh_xform(mi)
 		for surf in range(mi.mesh.get_surface_count()):
 			var arrays: Array = mi.mesh.surface_get_arrays(surf)
@@ -5204,6 +5218,11 @@ func _build_hull() -> void:
 				var at := idx.y * HULL_X + idx.x
 				if w.z > _hull[at]:
 					_hull[at] = w.z
+	# A drawn beast (a Sprite3D, no mesh) is one flat plane: no hull, so
+	# _front_of_beast reads the box's front, which IS the drawing.
+	_beast_drawn = not any
+	if not any:
+		_hull = PackedFloat32Array()
 
 
 ## The pure half of _build_hull's own scatter and of _front_of_beast below:
@@ -5384,8 +5403,15 @@ static func stand_offset_x(anchor_x: float, side: float, beast_width: float) -> 
 ## (`_show_beast`'s `want_r`) was sized only off the beast's own footprint,
 ## never off how far out a hunter needs to stand. Wiring the SAME formula
 ## into `want_r`'s own max() is what stops the clamp from silently winning.
-static func ground_standoff_for(front_edge: float, beast_h: float = 0.0) -> float:
-	return front_edge + maxf(front_edge * GROUND_STANDOFF, beast_h * GROUND_GAP_PER_HEIGHT)
+static func ground_standoff_for(front_edge: float, beast_h: float = 0.0,
+		gap_per_height: float = GROUND_GAP_PER_HEIGHT) -> float:
+	return front_edge + maxf(front_edge * GROUND_STANDOFF, beast_h * gap_per_height)
+
+
+## ground_standoff_for for the beast on stage: a drawn one takes the closer gap.
+func _ground_back() -> float:
+	return ground_standoff_for(_beast_box.end.z, _beast_box.size.y,
+		DRAWN_GAP_PER_HEIGHT if _beast_drawn else GROUND_GAP_PER_HEIGHT)
 
 
 ## How much of the frame's height a beast `beast_h` tall draws at its front
@@ -5489,7 +5515,7 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	# came out wrong too. #26 "hops land on stones, not in the air".
 	if n <= 1 or i >= n - 1:
 		return _top_hold(route_side)
-	return route_pos_cleared(_top_hold(route_side), ground_standoff_for(_beast_box.end.z, _beast_box.size.y), i, n,
+	return route_pos_cleared(_top_hold(route_side), _ground_back(), i, n,
 		route_sweep_for(route_side), not _one_line())
 
 
@@ -5957,7 +5983,7 @@ func _place_hunters(s: Dictionary) -> void:
 			# a fraction of the beast's own front-edge distance scales with the
 			# creature (ground_standoff_for above), and the clamp keeps them on
 			# the floor rather than out in the apron.
-			var back: float = ground_standoff_for(_beast_box.end.z, _beast_box.size.y)
+			var back: float = _ground_back()
 			# Narrow, not the beast's own half-width: the grounded camera now
 			# stands 9 units behind the active hunter, and at that range a split
 			# sized off a 10-unit-wide beast threw the second hunter off the
@@ -6445,7 +6471,7 @@ func _build_float_stones() -> void:
 	# real foot at this same rung and side, so a hunter always lands
 	# exactly on its own line's own stone, top hold included (t=1 there is
 	# `top_pt` itself, already `_top_hold(side)` -- no separate case needed).
-	var ground_z: float = ground_standoff_for(_beast_box.end.z, _beast_box.size.y)
+	var ground_z: float = _ground_back()
 	var n := _rung_count()
 	for side in [-1.0, 1.0]:
 		var top_pt: Vector3 = _top_hold(side)

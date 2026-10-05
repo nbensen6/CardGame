@@ -10,14 +10,17 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **The jackal becomes a 2.5D sprite, like the reference.**
+- [ ] 👀 **The jackal becomes a 2.5D sprite, like the reference.**
       **Nick, 2026-10-05:** "the new model still doesn't match the style of the reference. could going to a vector 2d style boss help? have the builder do the 2.5D like in the reference."
       `TARGET.png` is a 2D illustration — hard ink outline, flat colour fills, drawn lava cracks, a painted rim light. None of it is lit geometry, and three weeks of 3D have not reached it: the inverted-hull outline breaks up, per-facet shading reads as noise, and the texture turns to mush at play size. So stop fighting it.
       **Render the Cinder Jackal as a billboard sprite in the existing 3D scene.** Floor, stones, hunters and the climb stay 3D. The sprite is a single high-resolution illustration in `TARGET.png`'s style: thick dark outline, flat fills, hard-edged glowing cracks, warm rim. It always faces the camera. Supersedes the `cinder_jackal_v2.glb` item above — keep both files, ship neither mesh.
       **The climb holds become authored 2D points on that image**, not raycasts against a mesh. This deletes the fragile half of `combat_3d.gd`: `foothold_anchor`'s hull queries, `_front_of_beast`, `stand_z_for`. The route still ends at the head and the face stays visible at rest.
       Accept the flatness: the camera is front-on and locked, which is what the reference shows.
       **Done when** `state=3d` put beside `TARGET.png` reads as the same drawing — same outline weight, same flat fills, same glow — and the climb still plays start to finish.
-      Test: state=3d beast=cinder_jackal ^the-jackal-becomes-a-2-5d-sprite-like-th
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#The jackal becomes a 2.5D sprite, like the reference.|details]]
+      Ask: Grader failed this: concept's arms-down pose, no flaming fist. Draw TARGET's pose?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-jackal-sprite-after.png|420]] ^the-jackal-becomes-a-2-5d-sprite-like-th
 
 - [ ] **Rebuild the stones to match the reference exactly.**
       **Nick, 2026-10-05:** "make sure it hits the mark on recreating the stones to match the reference."
@@ -620,3 +623,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) A thin magenta streak sits at the far-left horizon in state=3d; picture A has none.
 - [ ] (proposed) **Frog's outline is invisible.** Its dark line exists but vanishes against the dark plinth and floor.
 - [ ] (proposed) **Embers are random between shots.** Small tone changes drown in ember scatter, so the grader calls them unchanged; seed them in shots.
+- [ ] (proposed) **Stones sit beside the drawn jackal.** The climb staircase runs up its left flank, not across its front as in TARGET.
+- [ ] (proposed) **Hull code is now dead for the jackal only.** Other beasts still use foothold_anchor's hull, _front_of_beast and stand_z_for, so they stay.
+- [ ] (proposed) **Drawn jackal has no idle or attack motion.** The sprite is a still; a bob or squash on its turn would sell it.

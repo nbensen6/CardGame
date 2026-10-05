@@ -2412,6 +2412,7 @@ func _init() -> void:
 	_test_cliffs_and_floor_flat_style()
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
+	_test_jackal_is_a_drawing()
 	_test_rigged_jackal_idles_and_punches()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	_test_stone_staircase_is_one_line_to_the_chest()
@@ -31688,13 +31689,56 @@ func _test_intent_badge_sits_in_a_fixed_hud_slot() -> void:
 	_expect(Combat3D.hunter_idle_y(Vector3(1, 2.5, 3)) == 2.5, "an idle hunter stands still at home")
 
 
+## The jackal is a drawing (Nick, 2026-10-05: "have the builder do the 2.5D
+## like in the reference"): a billboard sprite that always faces the camera,
+## with its climb holds authored as points on the image, climbing to the face.
+func _test_jackal_is_a_drawing() -> void:
+	_expect(String(Combat3D.AI_ART.get("cinder_jackal", "")) == "_2d",
+		"the Cinder Jackal fights as the 2D sprite")
+	var path: String = Combat3D.beast_variant_path("cinder_jackal", "_2d")
+	_expect(path.ends_with("cinder_jackal_2d.tscn"), "the sprite wrapper loads -- got %s" % path)
+	if path == "":
+		return
+	var root: Node3D = (load(path) as PackedScene).instantiate()
+	var spr := root.get_node_or_null("Body") as Sprite3D
+	_expect(spr != null and spr.texture != null, "the jackal is a textured Sprite3D")
+	if spr != null:
+		_expect(spr.billboard == BaseMaterial3D.BILLBOARD_FIXED_Y, "the drawing always faces the camera, upright")
+		_expect(not spr.shaded, "the drawing carries its own light: unshaded")
+	var box := Combat3D._merged_aabb(root)
+	_expect(box.size.z < 0.05, "a drawing is flat -- got depth %.2f" % box.size.z)
+	var tops := {}
+	for c in root.get_children():
+		var m: Dictionary = Combat3D.climb_marker_for(String(c.name))
+		if String(m["kind"]) == "climb":
+			tops[int(m["height"])] = (c as Node3D).position
+	_expect(tops.size() == 6, "climb_0..climb_5 authored on the image -- got %d" % tops.size())
+	for h in range(1, tops.size()):
+		_expect((tops[h] as Vector3).y > (tops[h - 1] as Vector3).y, "each hold climbs above the last")
+	if spr != null and spr.texture != null:
+		var half := Vector2(spr.texture.get_size()) * spr.pixel_size * 0.5
+		var c := Vector2(spr.position.x, spr.position.y)
+		for h in tops:
+			var p: Vector3 = tops[h]
+			_expect(absf(p.x - c.x) < half.x and absf(p.y - c.y) < half.y,
+				"hold %d is on the drawing -- got (%.2f, %.2f)" % [h, p.x, p.y])
+	if tops.has(5):
+		_expect((tops[5] as Vector3).y > 1.35, "the climb ends at the face -- got y=%.2f" % (tops[5] as Vector3).y)
+	root.free()
+	# A drawing has no depth to clear: hunters stand closer, so it towers.
+	var drawn: float = Combat3D.ground_standoff_for(0.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT)
+	_expect(drawn < Combat3D.ground_standoff_for(0.0, 20.0), "a drawn beast stands the hunters closer")
+	_expect(is_equal_approx(Combat3D.ground_standoff_for(25.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT),
+		Combat3D.ground_standoff_for(25.0, 20.0)), "a deep beast's standoff is still set by its depth")
+
+
 ## The upright rock jackal from picture A (Nick, 2026-10-04: "generate a new
 ## jackal model from picture A"). The fight loads it through its marker
 ## wrapper, the route still climbs to the head, and a shallow upright body
 ## still stands the hunters far enough off to show it whole.
 func _test_upright_jackal_v2() -> void:
-	_expect(String(Combat3D.AI_ART.get("cinder_jackal", "")) == "_v2",
-		"the Cinder Jackal fights as the upright v2 model")
+	_expect(ResourceLoader.exists("res://assets/3d/cast/cinder_jackal_v2.tscn"),
+		"the upright v2 model stays on disk")
 	_expect(ResourceLoader.exists("res://assets/3d/cast/cinder_jackal_ai.glb"),
 		"the old jackal stays on disk")
 	var path: String = Combat3D.beast_variant_path("cinder_jackal", "_v2")
