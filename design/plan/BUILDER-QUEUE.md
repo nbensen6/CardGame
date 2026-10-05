@@ -405,11 +405,14 @@ run failed.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-stone-staircase-after.png|420]] ^stones-are-one-staircase-of-chunky-blocks
-- [ ] **Cliffs and floor in picture A's flat style.**
+- [ ] 👀 **Cliffs and floor in picture A's flat style.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#Cliffs and floor in picture A's flat style.|details]]
+      Ask: Flatten the cobbled stones and hunter rocks the same way next?
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       The cliffs are detailed realistic rock and the floor is a flat dark sheet with thin lines; beside the flat jackal they look like a different game. The picture has dark angular cliffs in two or three flat tones and a floor of big cracked slabs with glowing seams. Done when the cliffs, the floor, the jackal and the Frog read as one style in `state=3d`.
       Target: ![[art/targets/TARGET.png|420]] Now: ![[agents/frames/builder/2026-10-04-jackal-v2-after.png|420]]
-      Test: state=3d beast=cinder_jackal ^cliffs-and-floor-in-picture-a-s-flat-style
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-cliffs-floor-after.png|420]] ^cliffs-and-floor-in-picture-a-s-flat-style
 - [ ] **Overnight: keep closing the gap to picture A until 8 AM.**
       **Nick, 2026-10-04 20:30 ET:** i want the builder to do passes over night until it gets it as close to the reference as possible. the outlines are really buggy to begin with
       A standing item (see "Standing items" in the brief). Each run is ONE pass: shoot `state=3d beast=cinder_jackal`; give the grader that frame and `design/art/targets/TARGET.png`; take the biggest difference it names that code can fix; fix that one thing; reshoot; the grader says CLOSER or NOT CLOSER. NOT CLOSER: revert the change and do not push it. Add one line per pass to this item's entry in [[BUILDER-QUEUE-NOTES]]: time, what changed, CLOSER or NOT CLOSER, the after frame. Leave this item `- [ ]`.
@@ -569,4 +572,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Sigil above the climb's end.** The jackal's top stone is now at the chest, ~7 units below the head's sigil.
 - [ ] (proposed) **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest under the staircase's top.
 - [ ] (proposed) **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`.
-
+- [ ] (proposed) **Floor tone was near black.** `floor_tone` is an sRGB `source_color`, so 0.17 rendered almost black; raised to 0.25.
+- [ ] (proposed) **Stones and rest rocks still cobble-textured.** Beside the flat cliffs they are the last detailed-realistic surfaces in frame.

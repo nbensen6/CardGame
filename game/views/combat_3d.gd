@@ -25,6 +25,9 @@ const TOON := preload("res://assets/3d/toon.gdshader")
 const OUTLINE := preload("res://assets/3d/outline.gdshader")
 ## Black-glass arena floor for a biome that names `"floor": "obsidian"`.
 const OBSIDIAN := preload("res://assets/3d/obsidian.gdshader")
+## Dark slate cliffs in three flat tones for a biome that names
+## `"wall": "flat"`. See wall_style().
+const CLIFF_FLAT := preload("res://assets/3d/cliff_flat.gdshader")
 ## The molten ring round the arena for a biome that names `"lava"`.
 const LAVA := preload("res://assets/3d/lava.gdshader")
 const HEAT_SHIMMER := preload("res://assets/3d/heat_shimmer.gdshader")
@@ -2851,6 +2854,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		ground.radius = maxf(9.0, want_r)
 	_show_env(beast_id, want_r, ground)
 	_dress_floor(beast_id, ground)
+	_dress_wall(beast_id)
 	_add_lava(beast_id)
 	_add_embers(beast_id)
 	_light_for(beast_id)
@@ -2947,7 +2951,14 @@ const BIOME := {
 		"floor": "obsidian",
 		# Scene pass 1 (Nick, 2026-10-04, picture A): the floor reads as dark
 		# slate you can see, not a black hole under the hunters.
-		"floor_tone": Color(0.17, 0.17, 0.19),
+		"floor_tone": Color(0.25, 0.245, 0.27),
+		# Cliffs and floor in picture A's flat style (Nick, 2026-10-04): big
+		# slabs in flat steps of tone with seams that glow, not hairlines on
+		# one sheet. Obsidian shader uniforms, see _dress_floor().
+		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.7, "slab_var": 0.5},
+		# ...and dark slate cliffs in three flat tones instead of the painted,
+		# lava-lit rock. See wall_style() / _dress_wall().
+		"wall": "flat",
 		# Lava rock under the hunters (session, 2026-09-29) made the climb
 		# stones red-black crates. Scene pass 2 (picture A, Nick 2026-10-04):
 		# pale grey flat slabs instead, thin enough that a high one no longer
@@ -3070,6 +3081,14 @@ static func floor_style(biome: String) -> String:
 	return String(b.get("floor", ""))
 
 
+## The cliffs' finish a biome asks for: "flat" (dark slate in three flat
+## tones, picture A) or "" for the env's own painted rock. Static so
+## run_tests.gd can pin which fights get it.
+static func wall_style(biome: String) -> String:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return String(b.get("wall", ""))
+
+
 ## The climb stones' finish a biome asks for: "lava_rock", "slab" (pale grey,
 ## flat, no ember rim; picture A), or "" for the pale stones every other
 ## fight keeps. Static so run_tests.gd can pin which fights
@@ -3131,6 +3150,9 @@ func _dress_floor(beast_id: String, ground: CSGCylinder3D) -> void:
 	var b: Dictionary = BIOME.get(String(BEAST_BIOME.get(beast_id, "crag")), {})
 	if b.has("floor_tone"):
 		mat.set_shader_parameter("tone", b["floor_tone"])
+	var fp: Dictionary = b.get("floor_params", {})
+	for k in fp:
+		mat.set_shader_parameter(k, fp[k])
 	if ground != null:
 		ground.material = mat
 	var floor_node := _env.find_child("Floor", true, false) if _env != null else null
@@ -3138,6 +3160,25 @@ func _dress_floor(beast_id: String, ground: CSGCylinder3D) -> void:
 		for node in _all_meshes(floor_node):
 			if node is MeshInstance3D:
 				(node as MeshInstance3D).material_override = mat
+
+
+## Flat slate cliffs (wall_style "flat"): the env's Wall drops its painted
+## rock for CLIFF_FLAT, with the warm band at its foot scaled to the arena.
+func _dress_wall(beast_id: String) -> void:
+	if wall_style(String(BEAST_BIOME.get(beast_id, "crag"))) != "flat" or _env == null:
+		return
+	var wall := _env.find_child("Wall", true, false)
+	if wall == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = CLIFF_FLAT
+	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * _arena_r)
+	for node in _all_meshes(wall):
+		(node as GeometryInstance3D).material_override = mat
+
+
+## How high the lava's warm band climbs the flat cliffs, in arena radii.
+const WALL_HEAT_HEIGHT := 0.35
 
 
 ## Where a biome's lava ring runs, [inner, outer] in arena radii, or ZERO for

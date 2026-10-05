@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T01:50
-working_on: "Stones are one staircase of chunky blocks."
+updated: 2026-10-04T21:56
+working_on: "Cliffs and floor in picture A's flat style."
 ---
 
 # builder
@@ -13,20 +13,21 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 01:50 EDT
+2026-10-04 21:56 EDT
 
-- **Did:** Jackal stones are one straight staircase of grey blocks from beside the Frog to the chest.
-- **Worked?** Yes: VERDICT: PASS, after one FAIL for thin upper stones and a zigzag knot.
-- **Look at:** ![[frames/builder/2026-10-05-stone-staircase-before.png]] then ![[frames/builder/2026-10-05-stone-staircase-after.png]]
-- **Ask:** The climb now tops out at the chest, not the head. Keep that?
+- **Did:** Jackal arena cliffs are flat slate in three tones; floor is big slabs with glowing orange seams.
+- **Worked?** Yes: VERDICT: PASS, first round.
+- **Look at:** ![[frames/builder/2026-10-05-cliffs-floor-before.png]] then ![[frames/builder/2026-10-05-cliffs-floor-after.png]]
+- **Ask:** Flatten the cobbled stones and hunter rocks the same way next?
 
 ## Notes
 
-- **Found:** The jackal's top stone is now at the chest, about 7 units below the head's sigil.
-- **Found:** Two gold sigil rings sit over the jackal's chest at rest.
-- **Found:** Rebuilding the float stones never clears their stored home positions.
+- **Found:** `floor_tone` is an sRGB `source_color`, so pass 1's 0.17 rendered almost black.
+- **Found:** The climb stones and rest rocks are now the only cobble-textured surfaces in frame.
 
 ## Log
+
+- 2026-10-04 21:56 EDT — builder: cliffs and floor flat: cliff_flat.gdshader (3 flat slate tones by face normal, warm foot band) on the jackal wall via wall_style "flat"; obsidian slab_var + wider/hotter seams via floor_params, floor_tone 0.25 + test; grader PASS; tests green, pushed.
 
 - 2026-10-05 01:50 EDT — builder: stone staircase: jackal biome route_top 0.42 (route ends at chest), one_line (held hunter's line only, no zigzag), REST_ASIDE so the first block shows beside the Frog, slab blocks 1.4x wide with straight sides 1.05 tall + tests; grader FAIL then PASS; tests green, pushed.
 - 2026-10-04 21:26 EDT — builder: jackal rigged: v2 wrapper -> rigged glb, Idle/Punch_Combo grafted (BEAST_CLIPS, 0.3 s blend), hit at f39/60, mesh_xform for skinned measure (fixed 100x fit), idle hips/spine yaw held front, lunge share 0.3 + test; grader FAIL x2 then PASS; tests green, pushed.

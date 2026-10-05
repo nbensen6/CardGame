@@ -1644,3 +1644,13 @@ What changed, all scoped to the jackal's biome (`quarry_ember`), other fights un
 Grader: round 1 FAIL (upper stones thin, zigzag knot at the chest) -> fixed with fixed block height and no zigzag; round 2 VERDICT: PASS.
 Tests: ALL TESTS PASSED; new `_test_stone_staircase_is_one_line_to_the_chest`.
 
+
+## Cliffs and floor in picture A's flat style.
+
+2026-10-04 21:56 EDT
+- Before: cliffs were the env's painted rock texture (creature shader) lit orange by the eight seam lights; floor was obsidian with hairline cracks and a `floor_tone` of 0.17 that, being an sRGB `source_color`, rendered near black (sampled (32,12,24) vs the picture's ~(41,29,39)).
+- Cliffs: new `game/assets/3d/cliff_flat.gdshader`, unshaded, face normal from screen derivatives picks one of three cool slate tones (lit / side / shade) by a fixed key direction; a warm band at the wall's foot (0.35 arena radii) stands in for the lava's glow. Applied by `_dress_wall()` when the biome names `"wall": "flat"` (quarry_ember only, `wall_style()`).
+- Floor: obsidian shader gains `slab_var` (each Voronoi cell one of three flat tone steps); biome `floor_params` sets crack_cell 6, crack_px 2.2, crack_gain 0.7, slab_var 0.5; `floor_tone` 0.25/0.245/0.27. Floor now samples (58,35,45).
+- Tried: tone 0.30/0.29/0.36 read violet (74,52,80); crack_px 2.6 / gain 0.9 seams too hot.
+- Grader: round 1 VERDICT: PASS. It noted the stones and rest rocks keep their cobble texture (out of scope).
+- Tests: ALL TESTS PASSED; new `_test_cliffs_and_floor_flat_style`.

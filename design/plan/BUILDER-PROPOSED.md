@@ -217,3 +217,4 @@ appends here, never to the queue.
 - [ ] **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest, under the staircase's top.
 - [ ] **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`, so a rebuild indexes stale homes.
 
+- [ ] **Flat stones and rest rocks.** The climb stones and the hunters' rest rocks keep a cobble texture beside the now-flat cliffs and floor.

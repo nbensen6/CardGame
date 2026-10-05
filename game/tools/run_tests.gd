@@ -2407,6 +2407,7 @@ func _init() -> void:
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_scene_pass1_picture_a()
+	_test_cliffs_and_floor_flat_style()
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
 	_test_rigged_jackal_idles_and_punches()
@@ -31162,6 +31163,30 @@ func _test_floor_style_obsidian_only_in_the_jackal_biome() -> void:
 		func(u: Dictionary) -> String: return String(u["name"]))
 	_expect(not params.has("band_strength"),
 		"the obsidian floor has no specular band (Nick, 2026-09-30: remove the band)")
+
+
+## Cliffs and floor in picture A's flat style (Nick, 2026-10-04): the jackal's
+## wall is flat slate in three tones and its floor is big slabs with glowing
+## seams; every other fight keeps its own rock.
+func _test_cliffs_and_floor_flat_style() -> void:
+	_expect(Combat3D.wall_style(String(Combat3D.BEAST_BIOME["cinder_jackal"])) == "flat",
+		"the Cinder Jackal's cliffs are flat slate")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(Combat3D.wall_style(biome) == "", "biome %s keeps its own cliffs" % biome)
+	_expect(Combat3D.wall_style("no_such_biome") == "", "an unknown biome keeps its own cliffs")
+	_expect(Combat3D.CLIFF_FLAT is Shader, "the flat cliff shader loads")
+	var cliff: Array = (Combat3D.CLIFF_FLAT as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	for k in ["lit_color", "side_color", "shade_color", "heat_height"]:
+		_expect(cliff.has(k), "the flat cliff shader takes %s" % k)
+	var floor_params: Array = (Combat3D.OBSIDIAN as Shader).get_shader_uniform_list().map(
+		func(u: Dictionary) -> String: return String(u["name"]))
+	var fp: Dictionary = Combat3D.BIOME["quarry_ember"].get("floor_params", {})
+	for k in fp:
+		_expect(floor_params.has(k), "the obsidian floor takes %s" % k)
+	_expect(float(fp.get("slab_var", 0.0)) > 0.0, "the jackal's floor is slabs in steps of tone")
+	_expect(float(fp.get("crack_px", 0.0)) > 1.2, "the jackal's seams are wider than hairlines")
 
 
 ## Scene pass 1 toward picture A (Nick, 2026-10-04): the jackal fills the

@@ -24,6 +24,10 @@ uniform float crack_gain : hint_range(0.0, 4.0) = 0.35;
 uniform float crack_cell = 4.0;
 uniform float crack_width : hint_range(0.0, 0.3) = 0.018;
 uniform float crack_px : hint_range(0.5, 4.0) = 1.2;
+// Slabs (picture A, 2026-10-05): each Voronoi cell is one flat slab whose
+// tone steps up or down by up to this much, so the floor reads as big cracked
+// slabs, not one sheet with lines drawn on it. 0 = one tone everywhere.
+uniform float slab_var : hint_range(0.0, 1.0) = 0.0;
 
 // Rim heat — "Lava flows around the arena", 2026-09-30. Where lava rings the
 // floor (combat_3d._add_lava sets these), the glass nearest it glows orange
@@ -51,7 +55,7 @@ vec2 hash2(vec2 p) {
 
 // Distance to the nearest Voronoi edge (F2 - F1 style, Inigo Quilez's exact
 // border distance), in cell units.
-float crack_edge(vec2 p) {
+float crack_edge(vec2 p, out vec2 cell) {
 	vec2 n = floor(p);
 	vec2 f = fract(p);
 	vec2 mr = vec2(0.0);
@@ -65,6 +69,7 @@ float crack_edge(vec2 p) {
 			if (d < md) { md = d; mr = r; mg = g; }
 		}
 	}
+	cell = n + mg;
 	md = 8.0;
 	for (int j = -2; j <= 2; j++) {
 		for (int i = -2; i <= 2; i++) {
@@ -80,7 +85,11 @@ float crack_edge(vec2 p) {
 
 void fragment() {
 	vec2 cp = world_pos.xz / crack_cell;
-	float e = crack_edge(cp);
+	vec2 cell;
+	float e = crack_edge(cp, cell);
+	// Three flat steps per slab, never a gradient: picture A's floor is flat
+	// planes like its cliffs.
+	float slab = 1.0 + slab_var * (floor(hash2(cell * 1.7 + 3.1).x * 3.0) - 1.0);
 	// Hairlines: the width is the smaller of a fraction of a cell and a couple
 	// of screen pixels, so a crack at the hunter's feet stays as thin on screen
 	// as one at the far wall instead of swelling into a bar.
@@ -109,7 +118,7 @@ void fragment() {
 
 	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
 		+ rim_color.rgb * rim_gain * heat
-		+ tone.rgb * (1.0 - crack);
+		+ tone.rgb * slab * (1.0 - crack);
 }
 
 void light() {
