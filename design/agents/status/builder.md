@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T23:58
+updated: 2026-10-05T00:10
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 23:58 EDT
+2026-10-05 00:10 EDT
 
-- **Did:** Overnight pass 8: climb slabs now have mid-grey sides under lighter tops, no dark rim notches.
+- **Did:** Overnight pass 9: the jackal's sky is now A's violet dusk, not navy with orange cloud.
 - **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p8-before.png]] then ![[frames/builder/2026-10-05-overnight-p8-after.png]]
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p9-before.png]] then ![[frames/builder/2026-10-05-overnight-p9-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** The floor shows glossy grey-violet patches; picture A's floor is matte charcoal.
+- **Found:** Stones still climb left of the beast; A's step across its front toward the chest.
 
 ## Log
 
+- 2026-10-05 00:10 EDT — builder: overnight pass 9: quarry_ember sky top/horizon navy+red -> violet (0.26,0.12,0.28)/(0.66,0.26,0.44), ash_params (pink-violet under, cover 0.3, pulse 0.3) via ash_params() + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:58 EDT — builder: overnight pass 8: slab cap matches the 6-sided block (segments, radius, spin), SLAB_SIDE_TONE (0.46,0.50,0.55) -> (0.36,0.39,0.43); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:40 EDT — builder: overnight pass 7: slab stones neutral grey+cobble texture -> flat cooled SLAB_SIDE_TONE/SLAB_TOP_TONE + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:24 EDT — builder: overnight pass 6: rest rock albedo 0.36 + ROCK_DETAIL -> flat REST_ROCK_TONE (0.12,0.115,0.135) + test; grader PASS (CLOSER); tests green, pushed.

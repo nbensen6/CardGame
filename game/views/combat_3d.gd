@@ -2930,7 +2930,10 @@ const BIOME := {
 		"key": Color(1.0, 0.88, 0.68), "energy": 1.30,
 		"fill": Color(0.58, 0.62, 0.80), "ambient": Color(0.24, 0.22, 0.32),
 		"fog": Color(0.34, 0.28, 0.38), "density": 0.014,
-		"top": Color(0.20, 0.23, 0.41), "horizon": Color(0.80, 0.36, 0.38),
+		# Overnight pass 9 (picture A): its sky is a calm violet dusk, plum at
+		# the top (~41,20,37) into magenta low down (~127,53,90); navy over a
+		# red horizon rendered a near-black top under orange-lit cloud.
+		"top": Color(0.26, 0.12, 0.28), "horizon": Color(0.66, 0.26, 0.44),
 		# #19: at this beast's low, close ground camera, ProceduralSkyMaterial's
 		# engine-default curves (sky 0.15 / ground 0.02) put the ENTIRE transition
 		# from this horizon colour to sky_top/ground_bottom inside 1-2 screen rows
@@ -3005,6 +3008,10 @@ const BIOME := {
 		# need to move" -- the first 0.018 took ~55 s per cell and read as a
 		# painted backdrop. See ash_wind().
 		"ash_wind": Vector2(0.3, 0.1),
+		# Overnight pass 9 (picture A): the ash is sparse violet haze lit
+		# dusky pink from below, not a sky of orange-rimmed cloud. ash_sky
+		# shader uniforms, see ash_params().
+		"ash_params": {"under_color": Color(0.50, 0.20, 0.38), "ash_color": Color(0.16, 0.08, 0.17), "cover": 0.3, "pulse_gain": 0.3},
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,
@@ -3533,6 +3540,9 @@ func _light_for(beast_id: String) -> void:
 		ash.set_shader_parameter("top_color", b["top"])
 		ash.set_shader_parameter("horizon_color", b["horizon"])
 		ash.set_shader_parameter("wind", ash_wind(name))
+		var ap := ash_params(name)
+		for k in ap:
+			ash.set_shader_parameter(k, ap[k])
 		sky.sky_material = ash
 	elif sky != null and _plain_sky != null:
 		sky.sky_material = _plain_sky
@@ -3561,6 +3571,13 @@ static func ash_sky(biome: String) -> bool:
 static func ash_wind(biome: String) -> Vector2:
 	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
 	return b.get("ash_wind", Vector2(0.3, 0.1))
+
+
+## A biome's overrides for the ash sky shader's cloud uniforms (empty keeps the
+## shader's own). Static so run_tests.gd can hold picture A's dusk.
+static func ash_params(biome: String) -> Dictionary:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return b.get("ash_params", {})
 
 
 ## The scene's own ProceduralSkyMaterial, kept while a biome's ash sky stands
