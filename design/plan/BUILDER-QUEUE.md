@@ -61,7 +61,7 @@ run failed.
       [[art/card-frame-research]], three mockups, four Meshy passes over A and B.
       **Nick picked A1 (carved obsidian)** on 2026-10-05, so the builder's own
       ask on this item is answered. Superseded by the item above.
-      Builder's pass: ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]]
+      Builder's pass: ![[agents/frames/builder/2026-10-05-card-frames-after.png|420]] ^research-card-frames-against-real-tcgs
 
 - [ ] **A HUD that matches the chosen card frame.**
       **Nick, 2026-10-05:** "once the research is done use meshy to help design a new overlay hud that matches the new card templates. reference huds of other card games."
