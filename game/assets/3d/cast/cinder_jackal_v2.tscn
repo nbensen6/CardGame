@@ -1,11 +1,10 @@
 [gd_scene load_steps=2 format=3]
 
-[ext_resource type="PackedScene" uid="uid://cxb64uev12e28" path="res://assets/3d/cast/cinder_jackal_v2.glb" id="1"]
+[ext_resource type="PackedScene" uid="uid://bxk7rg4bfu68p" path="res://assets/3d/cast/cinder_jackal_v2_rigged.glb" id="1"]
 
 [node name="cinder_jackal_v2" type="Node3D"]
 
 [node name="Body" parent="." instance=ExtResource("1")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9521, 0)
 
 [node name="climb_0" type="Node3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 0.02, 0.3)

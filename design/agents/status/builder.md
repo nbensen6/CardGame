@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T21:01
-working_on: "The jackal fills the frame like picture A."
+updated: 2026-10-04T21:26
+working_on: "The jackal idles and punches."
 ---
 
 # builder
@@ -13,21 +13,23 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 21:01 EDT
+2026-10-04 21:26 EDT
 
-- **Did:** Measured the jackal framing; 45% width can't coexist with head, Frog and whole model in frame.
-- **Worked?** No: nothing shipped; best tilt and standoff reached ~21% width, not 45%. Grader not run.
-- **Look at:** ![[frames/builder/2026-10-04-jackal-fills-before.png]] then ![[frames/builder/2026-10-04-jackal-fills-option-sunk.png]]
-- **Ask:** Not built: 45% width can't fit head and Frog. Hide its legs below the floor?
+- **Did:** Jackal fights rigged: Idle loops, Punch_Combo plays once, damage lands on the haymaker.
+- **Worked?** Yes: VERDICT: PASS, two idle frames differ, punch, hit at 35/42, back to idle.
+- **Look at:** ![[frames/builder/2026-10-05-jackal-idle-before.png]] then ![[frames/builder/2026-10-05-jackal-idle-after-grid.png]]
+- **Ask:** Idle bows the head, hiding the eyes. Hold the head up too?
 
 ## Notes
 
-- **Found:** The sigil ring sits on the jackal's brow, between the eyes.
-- **Found:** At a nearer standoff the lava ring shows as an orange slab bottom-left.
-- **Found:** CAMERA_FLOOR stops the rest camera tilting up past about -0.10 pitch.
+- **Found:** The stones stay where they are while the jackal punches, so the body swings out from under them.
+- **Found:** The idle tips the jackal's head down, so its face and eyes are hard to see at rest.
+- **Found:** Mid-combo the raised fist and head go past the top of the frame.
+- **Found:** An enemyat= time later than the beast's turn uses the wall clock, which runs ahead of game time under software render.
 
 ## Log
 
+- 2026-10-04 21:26 EDT — builder: jackal rigged: v2 wrapper -> rigged glb, Idle/Punch_Combo grafted (BEAST_CLIPS, 0.3 s blend), hit at f39/60, mesh_xform for skinned measure (fixed 100x fit), idle hips/spine yaw held front, lunge share 0.3 + test; grader FAIL x2 then PASS; tests green, pushed.
 - 2026-10-04 21:01 EDT — builder: jackal-fills-frame investigated: 45% shoulder width impossible with head, Frog and whole model in frame (body ~1050 px tall at that width); standoff/tilt sweep peaks ~21%; sunk-legs option frame ~30%; no code change, marked 👀 for Nick's call; pushed notes only.
 - 2026-10-04 20:50 EDT — builder: clean shapes: outline hull along welded normals (TANGENT) + depth push, MSAA 4x, Frog thin dark line, scene glow + hotter cracks and line, toon tex_soften/facet/facet_shade, eye mask + tests; grader FAIL x3 (eyes at 1:1), shipped 👀; tests green, pushed.
 - 2026-10-04 19:46 EDT — builder: Cinder Jackal fights as cinder_jackal_v2 (AI_ART "_v2", .tscn wrapper with climb/ledge markers, beast_variant_path), GROUND_GAP_PER_HEIGHT 1.5 height floor on the standoff, outline 0.010, cool tint + low body floor + test; grader FAIL x2 (beast fills height, not A's width), shipped 👀; tests green, pushed.

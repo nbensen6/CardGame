@@ -1615,3 +1615,16 @@ Builder, 2026-10-04 19:30 EDT.
 - **Option frame** (`2026-10-04-jackal-fills-option-sunk.png`, a throwaway hack, not shipped): gap 0.55 and the jackal sunk 0.42 of its height into the floor, which is what picture A does (its waist sits on the lava line). Even then the shoulders reach ~30%: A's jackal is far broader in the chest than this model. Sinking also breaks the stone route (holds are on the legs) and needs the lava-ring fix above.
 - **What would reach A:** hide the legs below a floor edge (Nick's call, the earlier "crop its legs" ask), and a broader-chested model or pose for the last ~15%.
 - Grader not run: there is no after frame.
+
+## The jackal idles and punches.
+
+Built 2026-10-04 21:26 EDT (builder, cloud).
+
+- `cinder_jackal_v2.tscn` now instances `cinder_jackal_v2_rigged.glb` (feet at 0, so the old 0.9521 lift is gone); the climb/ledge markers are unchanged. `cinder_jackal_v2.glb` stays on disk.
+- `Combat3D.BEAST_CLIPS["cinder_jackal_v2"]` names the sources; `graft_beast_clips` copies `Idle` -> "idle" (loop) and `Punch_Combo` -> "attack" (once) onto the rigged AnimationPlayer. All three files share `Armature/Skeleton3D` track paths. Crossfade 0.3 s each way: Idle hangs the arms low, Punch_Combo starts in a high guard.
+- Hit: sampled the hands through Punch_Combo. Jabs at f15 and f27, then the right haymaker reaches furthest forward (z 0.61) at f39 of 60. So `hit` = 39/60, and the bite lands at 0.4 + 2.5 x 0.65 = 2.025 s into the beast's turn.
+- Root cause of a 100x jackal: the skinned mesh sits under a 0.01 Armature with centimetre bones. `_merged_aabb` and `_build_hull` used the mesh node's own transform (1.9 cm tall). New `mesh_xform` goes through the skeleton's bind instead (skeleton x bone rest x bind pose). For unskinned meshes it is the same as before.
+- Idle is a look-around that twists hips and spine up to 90 degrees off camera, and the jackal read side-on. `face_front` removes the yaw from Hips/Spine02/Spine01/Spine and keeps pitch and roll. The head still glances left and right.
+- Punch_Combo reads as a blow on its own. The old full body lunge (35% of the gap) pushed the fists and head off the frame, so the `lunge` share is 0.3 for this clip (`beast_lunge_scale`).
+- Grader: FAIL (idle pair identical at half size; no hit frame), FAIL (no return-to-idle frame), then PASS on the grid: idle t=1/t=2 crops; mid-punch (`endturn=2 enemyat=1.95`); hit +0.3 s showing 35/42 (`enemyat=2.3`); return to idle (`enemyat=12`).
+- Test: `_test_rigged_jackal_idles_and_punches`.

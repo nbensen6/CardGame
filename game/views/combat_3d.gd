@@ -158,6 +158,93 @@ var _beast_toon := false
 ## The beast's own AnimationPlayer, when its model is rigged (AI_ART beasts).
 ## Plays "idle" on a loop; "attack" and "hit" are one-shots that fall back to it.
 var _beast_anim: AnimationPlayer = null
+## Where in the "attack" clip the blow lands, 0..1 (enemy_turn_beats).
+var _beast_hit_frac := ENEMY_BITE_FRAC
+## How much of beast_lunge's body drive the attack gets: 1 for a clip that
+## does not read as a blow on its own, less for one that does (BEAST_CLIPS).
+var _beast_lunge_k := 1.0
+
+## Clips a rigged beast takes from sibling .glb files, keyed by the file it
+## loads from (key + variant). Each source carries the same skeleton, so its
+## track paths fit the loaded model; only the animation is taken. `hit` is the
+## fraction of the clip where the blow lands: Punch_Combo jabs at frames 15
+## and 27 and its right haymaker reaches furthest forward at frame 39 of 60.
+## `face_front` bones lose the clip's turn about the vertical: Idle looks
+## around by twisting the hips and spine up to 90 degrees off the camera, and a side-on
+## jackal hides the face the fight is framed on. `lunge` scales beast_lunge's
+## body drive: the punch reads by itself, and the full drive carried its fists
+## and head off the top of the frame.
+## Nick, 2026-10-04: "yes rig the jackal and add the animations".
+const BEAST_CLIPS := {
+	"cinder_jackal_v2": {
+		"idle": {"from": "cinder_jackal_v2_idle.glb", "clip": "Idle", "face_front": ["Hips", "Spine02", "Spine01", "Spine"]},
+		"attack": {"from": "cinder_jackal_v2_punch.glb", "clip": "Punch_Combo", "hit": 39.0 / 60.0, "lunge": 0.3},
+	},
+}
+## Crossfade between grafted clips, seconds: Idle hangs the arms at the hips
+## and Punch_Combo starts in a high guard, so a snap reads as a glitch.
+const BEAST_CLIP_BLEND := 0.3
+
+
+## The clip in `anim` whose name is `clip` or carries it as a "|"-part
+## (a glb names it "Armature|Idle|baselayer"); null when there is none.
+static func find_clip(anim: AnimationPlayer, clip: String) -> Animation:
+	for n in anim.get_animation_list():
+		if n == clip or clip in String(n).split("|"):
+			return anim.get_animation(n)
+	return null
+
+
+## Strips the turn about the vertical from `bone`'s rotation keys in `a`,
+## keeping its pitch and roll (the breathing and the weight shift).
+static func face_front(a: Animation, bone: String) -> void:
+	for t in a.get_track_count():
+		if a.track_get_type(t) != Animation.TYPE_ROTATION_3D \
+				or String(a.track_get_path(t).get_concatenated_subnames()) != bone:
+			continue
+		for k in a.track_get_key_count(t):
+			var e := Basis(a.track_get_key_value(t, k) as Quaternion).get_euler()
+			e.y = 0.0
+			a.track_set_key_value(t, k, Basis.from_euler(e).get_rotation_quaternion())
+
+
+## The share of beast_lunge's body drive a BEAST_CLIPS entry asks for.
+static func beast_lunge_scale(table: Dictionary) -> float:
+	return float((table.get("attack", {}) as Dictionary).get("lunge", 1.0))
+
+
+## Adds each clip of `table` (a BEAST_CLIPS entry) to `anim` under its own
+## name, copied from its source file. Returns the attack's hit fraction, or
+## ENEMY_BITE_FRAC when the table names none.
+static func graft_beast_clips(anim: AnimationPlayer, table: Dictionary) -> float:
+	var hit := ENEMY_BITE_FRAC
+	if not anim.has_animation_library(""):
+		anim.add_animation_library("", AnimationLibrary.new())
+	var lib := anim.get_animation_library("")
+	for clip_name in table:
+		var spec: Dictionary = table[clip_name]
+		var src_path: String = CAST + String(spec["from"])
+		if not ResourceLoader.exists(src_path):
+			continue
+		var src := (load(src_path) as PackedScene).instantiate()
+		var src_anim := _find_anim(src)
+		var a: Animation = find_clip(src_anim, String(spec["clip"])) if src_anim != null else null
+		if a != null:
+			a = a.duplicate()
+			for bone in spec.get("face_front", []):
+				face_front(a, String(bone))
+			a.loop_mode = Animation.LOOP_LINEAR if clip_name == "idle" else Animation.LOOP_NONE
+			if lib.has_animation(clip_name):
+				lib.remove_animation(clip_name)
+			lib.add_animation(clip_name, a)
+			if spec.has("hit"):
+				hit = float(spec["hit"])
+		src.free()
+	for from in table:
+		for to in table:
+			if from != to:
+				anim.set_blend_time(from, to, BEAST_CLIP_BLEND)
+	return hit
 
 ## Jump-point rings. Dim for "you could stand here", warm for the next rung up.
 ## Both deliberately low-alpha: these sit on the beast all fight, and a marker
@@ -2031,7 +2118,7 @@ func _process(delta: float) -> void:
 		_beast.scale = Vector3.ONE * _beast_scale * recoil
 		var lunge := 0.0
 		if _enemy_stage != "":
-			lunge = beast_lunge(_enemy_t, _enemy_beats)
+			lunge = beast_lunge(_enemy_t, _enemy_beats) * _beast_lunge_k
 		_beast.position.z = -_beast_punch * 0.35 + lunge * _lunge_gap
 		# Toward the hunter it bites, not straight down the camera's line: seen
 		# from behind a hunter a lunge straight at the lens only grows.
@@ -2712,6 +2799,11 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		baked.queue_free()
 	_rig.add_child(_beast)
 	_beast_anim = _find_anim(_beast)
+	_beast_hit_frac = ENEMY_BITE_FRAC
+	var clips: Dictionary = BEAST_CLIPS.get(path.get_file().get_basename(), {})
+	if _beast_anim != null and not clips.is_empty():
+		_beast_hit_frac = graft_beast_clips(_beast_anim, clips)
+	_beast_lunge_k = beast_lunge_scale(clips)
 	if _beast_anim != null and _beast_anim.has_animation("idle"):
 		_beast_anim.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
 		_beast_anim.play("idle")
@@ -4582,12 +4674,29 @@ func _model_key(beast_id: String, beast_name: String) -> String:
 ## MERGE walks each mesh's global_transform, not the local one _bounds()
 ## (location_3d.gd) uses, since a beast's climb/sigil markers are ordinary
 ## children that can sit rotated or offset under a rig node.
+## Where a mesh's own vertices land in the world, at rest. A skinned mesh is
+## drawn through its skeleton's bind, not its node: the rigged Cinder Jackal's
+## mesh sits under a 0.01-scaled Armature whose bones are in centimetres, so
+## its node transform measured it 1.9 cm tall and the fight fitted it 100x.
+static func mesh_xform(vi: VisualInstance3D) -> Transform3D:
+	var mi := vi as MeshInstance3D
+	if mi != null and mi.skin != null and mi.skin.get_bind_count() > 0:
+		var sk := mi.get_node_or_null(mi.skeleton) as Skeleton3D
+		if sk != null:
+			var bone := mi.skin.get_bind_bone(0)
+			if bone < 0:
+				bone = sk.find_bone(String(mi.skin.get_bind_name(0)))
+			if bone >= 0:
+				return sk.global_transform * sk.get_bone_global_rest(bone) * mi.skin.get_bind_pose(0)
+	return vi.global_transform
+
+
 static func _merged_aabb(root: Node3D) -> AABB:
 	var out := AABB()
 	var first := true
 	for node in _all_meshes(root):
 		var vi := node as VisualInstance3D
-		var box: AABB = vi.global_transform * vi.get_aabb()
+		var box: AABB = mesh_xform(vi) * vi.get_aabb()
 		if first:
 			out = box
 			first = false
@@ -4890,7 +4999,7 @@ func _build_hull() -> void:
 		var mi := node as MeshInstance3D
 		if mi == null or mi.mesh == null:
 			continue
-		var xf := mi.global_transform
+		var xf := mesh_xform(mi)
 		for surf in range(mi.mesh.get_surface_count()):
 			var arrays: Array = mi.mesh.surface_get_arrays(surf)
 			if arrays.is_empty():
@@ -7154,14 +7263,14 @@ static func _find_anim(n: Node) -> AnimationPlayer:
 
 ## When each beat of the beast's turn lands, in seconds after End Turn resolved
 ## it: a 0.4 s hold with the intent badge pulsing, then the attack clip, whose
-## bite is frame 16 of its 40 (0.4 of the clip) — the damage and popups land
-## there — then the new hand half a second later. A beast with no attack clip
+## bite is frame 16 of its 40 (0.4 of the clip, or the `hit` its BEAST_CLIPS
+## entry names) — the damage and popups land there — then the new hand half a second later. A beast with no attack clip
 ## bites 0.3 s after the hold.
 const ENEMY_HOLD := 0.4
 const ENEMY_BITE_FRAC := 16.0 / 40.0
 const ENEMY_HAND_AFTER := 0.5
-static func enemy_turn_beats(clip_len: float) -> Dictionary:
-	var bite := ENEMY_HOLD + (clip_len * ENEMY_BITE_FRAC if clip_len > 0.0 else 0.3)
+static func enemy_turn_beats(clip_len: float, hit_frac := ENEMY_BITE_FRAC) -> Dictionary:
+	var bite := ENEMY_HOLD + (clip_len * hit_frac if clip_len > 0.0 else 0.3)
 	return {"hold": ENEMY_HOLD, "bite": bite, "hand": bite + ENEMY_HAND_AFTER}
 
 
@@ -7221,7 +7330,7 @@ func _begin_enemy_turn() -> void:
 	var clip := 0.0
 	if _beast_anim != null and _beast_anim.has_animation("attack"):
 		clip = _beast_anim.get_animation("attack").length
-	_enemy_beats = enemy_turn_beats(clip)
+	_enemy_beats = enemy_turn_beats(clip, _beast_hit_frac)
 	_enemy_t = 0.0
 	# The lunge is measured against the nearest hunter, so it reads the same
 	# for a beast that stands close and one that fills the far distance.
@@ -7375,7 +7484,9 @@ func _set_hand_shown(on: bool) -> void:
 func _beast_play(anim: String) -> void:
 	if _beast_anim == null or not _beast_anim.has_animation(anim):
 		return
-	_beast_anim.play(anim, 0.08)
+	var blend := _beast_anim.get_blend_time(_beast_anim.current_animation, anim) \
+		if _beast_anim.current_animation != "" else 0.0
+	_beast_anim.play(anim, blend if blend > 0.0 else 0.08)
 	if _beast_anim.has_animation("idle"):
 		_beast_anim.queue("idle")
 

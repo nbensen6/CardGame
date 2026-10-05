@@ -2409,6 +2409,7 @@ func _init() -> void:
 	_test_scene_pass1_picture_a()
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
+	_test_rigged_jackal_idles_and_punches()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
 	# between the hunters' ground and the wall, lens always inside the shimmer.
@@ -26469,6 +26470,48 @@ func _test_router_holds_the_fight_for_the_beasts_death_only() -> void:
 		"a lost fight is not the beast dying")
 	_expect(not Game3D.holds_for_death(String(Game3D.SCENES["map"]), "combat"),
 		"only leaving a fight can hold for a death")
+
+
+## The jackal is rigged (Nick, 2026-10-04: "yes rig the jackal and add the
+## animations"): the fight loads the skinned mesh, takes Idle and Punch_Combo
+## from their own files, loops the idle, plays the punch once and lands the
+## damage on the haymaker rather than at the default 0.4 of the clip.
+func _test_rigged_jackal_idles_and_punches() -> void:
+	var path: String = Combat3D.beast_variant_path("cinder_jackal", "_v2")
+	var root: Node3D = (load(path) as PackedScene).instantiate()
+	_expect(root.find_child("Skeleton3D", true, false) != null, "the fight's jackal is the skinned one")
+	var ap := Combat3D._find_anim(root)
+	_expect(ap != null, "the rigged jackal carries an AnimationPlayer")
+	var table: Dictionary = Combat3D.BEAST_CLIPS.get(path.get_file().get_basename(), {})
+	_expect(table.has("idle") and table.has("attack"), "the wrapper's file name keys its clips")
+	if ap != null and not table.is_empty():
+		var hit: float = Combat3D.graft_beast_clips(ap, table)
+		_expect(ap.has_animation("idle") and ap.has_animation("attack"), "Idle and Punch_Combo grafted on")
+		if ap.has_animation("idle") and ap.has_animation("attack"):
+			var idle := ap.get_animation("idle")
+			var punch := ap.get_animation("attack")
+			_expect(idle.loop_mode == Animation.LOOP_LINEAR, "the idle loops")
+			_expect(punch.loop_mode == Animation.LOOP_NONE, "the punch plays once")
+			_expect(is_equal_approx(punch.length, 2.5), "Punch_Combo is 60 frames at 24 fps -- got %.2f" % punch.length)
+			_expect(idle.length > 4.0, "Idle is 97 frames at 24 fps -- got %.2f" % idle.length)
+			var sk := root.find_child("Skeleton3D", true, false)
+			var bone_path := String(punch.track_get_path(0)).split(":")[0]
+			_expect(ap.get_node(ap.root_node).get_node_or_null(bone_path) == sk,
+				"the punch's tracks drive this skeleton -- %s" % bone_path)
+			_expect(ap.get_blend_time("idle", "attack") > 0.1 and ap.get_blend_time("attack", "idle") > 0.1,
+				"guard and hang poses crossfade rather than snap")
+		_expect(is_equal_approx(hit, 39.0 / 60.0), "the hit is the haymaker, frame 39 of 60")
+		var b: Dictionary = Combat3D.enemy_turn_beats(2.5, hit)
+		_expect(is_equal_approx(float(b["bite"]), Combat3D.ENEMY_HOLD + 2.5 * 39.0 / 60.0),
+			"the damage lands on the haymaker")
+		_expect(float(b["hand"]) > float(b["bite"]), "and the new hand deals after it")
+		_expect(Combat3D.beast_lunge_scale(table) < 0.5,
+			"the punch carries the blow, so the body drives in less and the fists stay in frame")
+	_expect(is_equal_approx(Combat3D.beast_lunge_scale({}), 1.0), "a beast with no clip table keeps its full drive")
+	var bare := AnimationPlayer.new()
+	_expect(Combat3D.find_clip(bare, "Idle") == null, "no clip, no graft")
+	bare.free()
+	root.free()
 
 
 func _test_death_hold_covers_the_slow_hit_the_fall_and_the_rest() -> void:

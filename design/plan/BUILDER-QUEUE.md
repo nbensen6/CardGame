@@ -390,10 +390,13 @@ run failed.
       Ask: Not built: 45% width can't fit head and Frog. Hide its legs below the floor?
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-04-jackal-fills-before.png|420]] ![[agents/frames/builder/2026-10-04-jackal-fills-option-sunk.png|420]] ^the-jackal-fills-the-frame-like-picture-a
-- [ ] **The jackal idles and punches.**
+- [ ] 👀 **The jackal idles and punches.**
       **Nick, 2026-10-04 20:30 ET:** yes rig the jackal and add the animations
       The jackal now has a skeleton (24 bones) and two clips, all in `game/assets/3d/cast/`: `cinder_jackal_v2_rigged.glb` (the skinned model), `cinder_jackal_v2_idle.glb` (clip `Idle`, 97 frames at 24 fps, loop it) and `cinder_jackal_v2_punch.glb` (clip `Punch_Combo`, 60 frames). Each file carries the same mesh; use the rigged one in the fight and take only the animation from the other two. Run `--import` first. Done when: at rest the jackal plays Idle on a loop; when it attacks it plays Punch_Combo once, the damage lands on the hit, and it returns to Idle; the toon material, the glow and the outline still apply to the skinned mesh; the holds and the stone route still sit on the body. Prove it with two `state=3d` frames a second apart that differ in the jackal's pose, and one frame mid-punch.
-      Test: state=3d beast=cinder_jackal ^the-jackal-idles-and-punches
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=test-scenario&_scenario=state%3D3d%20beast%3Dcinder_jackal) · [[BUILDER-QUEUE-NOTES#The jackal idles and punches.|details]]
+      Ask: Idle bows the head, hiding the eyes. Hold the head up too?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-05-jackal-idle-after-grid.png|420]] ^the-jackal-idles-and-punches
 - [ ] **Stones are one staircase of chunky blocks.**
       **Nick, 2026-10-04 20:20 ET:** why does this look so different from the reference?
       Today thin grey discs float in a ring round the jackal. The picture has thick grey blocks, each about as tall as the Frog, in ONE rising line from the Frog's rock to the jackal's chest, biggest nearest the camera. Done when a player can trace the climb with a finger from the Frog to the chest in `state=3d`, and no stone floats beside or behind the beast.
@@ -556,3 +559,7 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
 - [ ] (proposed) **Lava ring shows near the camera at a closer standoff.** Below gap ~1.2 an orange slab fills the bottom-left.
 - [ ] (proposed) **CAMERA_FLOOR caps the rest tilt.** Pitch below about -0.10 no longer tilts the rest camera up.
+- [ ] (proposed) **Stones stay put while the jackal punches.** They float in world space; the body swings out from under them.
+- [ ] (proposed) **Idle bows the jackal's head.** At rest the face and eyes tip down out of view.
+- [ ] (proposed) **Punch leaves the frame top.** Mid-combo the raised fist and head cross the top edge.
+- [ ] (proposed) **enemyat= past the beast's turn runs on wall clock.** Under software render it gets ahead of game time.
