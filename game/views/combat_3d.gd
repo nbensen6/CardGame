@@ -2937,7 +2937,9 @@ const BIOME := {
 		# Overnight pass 9 (picture A): its sky is a calm violet dusk, plum at
 		# the top (~41,20,37) into magenta low down (~127,53,90); navy over a
 		# red horizon rendered a near-black top under orange-lit cloud.
-		"top": Color(0.26, 0.12, 0.28), "horizon": Color(0.66, 0.26, 0.44),
+		# Pass 20: the grade's saturation crushed green to ~11-31, a hot
+		# magenta wedge; A's dusk keeps green ~42-47. Now renders ~(84,44,81).
+		"top": Color(0.29, 0.23, 0.32), "horizon": Color(0.60, 0.40, 0.50),
 		# #19: at this beast's low, close ground camera, ProceduralSkyMaterial's
 		# engine-default curves (sky 0.15 / ground 0.02) put the ENTIRE transition
 		# from this horizon colour to sky_top/ground_bottom inside 1-2 screen rows

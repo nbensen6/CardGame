@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T02:41
+updated: 2026-10-05T02:56
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 02:41 EDT
+2026-10-05 02:56 EDT
 
-- **Did:** Overnight pass 19: gave the climb stones a dark ink outline; reverted, not pushed.
-- **Worked?** No, grader didn't see the thin line at full frame. VERDICT: FAIL (only ember scatter and 2-5 px stone shifts changed).
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p19-before.png]] then ![[frames/builder/2026-10-05-overnight-p19-after.png]]
+- **Did:** Overnight pass 20: turned the hot magenta sky into picture A's muted dusk violet.
+- **Worked?** Yes, sky now matches A's violet; small gain. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p20-before.png]] then ![[frames/builder/2026-10-05-overnight-p20-after.png]]
 - **Ask:** nothing
 
 ## Notes
