@@ -31301,7 +31301,10 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.4).y, 0.4),
 		"rest_pos_for stands the hunter on the rock's top")
 	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
-	_expect(float(fin.get("outline_width", 0.0)) >= 0.01, "the jackal's warm line is thick (picture A)")
+	# Overnight pass 4: 0.010 bloomed into a halo; the line stays bolder than the Frog's ink.
+	_expect(float(fin.get("outline_width", 0.0)) >= 0.007
+		and float(fin.get("outline_width", 0.0)) > float(Combat3D.surface_finish("frog").get("outline_width", 1.0)),
+		"the jackal's warm line is thicker than the Frog's (picture A)")
 	var frog_line: Color = Combat3D.surface_finish("frog").get("outline_color", Color.WHITE)
 	_expect(frog_line.v < 0.2, "the Frog wears a thin dark line, not the beast's warm halo (Nick, 2026-10-04)")
 	for biome in Combat3D.BIOME.keys():

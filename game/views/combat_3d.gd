@@ -134,15 +134,18 @@ const SURFACE_FINISH := {
 	# at 33,0,0: the contrast clamps every dark channel to zero, so a dim brown
 	# lost all its green and blue. A near-grey floor of the same value lands on
 	# A's dark brown plates (about 50,15,0 lit) and the cracks still out-shine it.
-	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.22, 0.20, 0.19), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.27, 0.24, 0.23), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
 		"half_level": 0.72,
 		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
 		# 0.010 since the upright model (2026-10-04): at 0.018 its slimmer limbs
 		# drowned in a pale halo.
-		"outline_color": Color(1.0, 0.62, 0.24), "outline_width": 0.010,
+		# Overnight pass 4 (2026-10-05): at 0.010 and energy 2.2 the line bloomed
+		# yellow-white and the body read as a black cut-out inside it; A's line
+		# is orange and thinner, and a slightly higher floor lets the plates read.
+		"outline_color": Color(1.0, 0.55, 0.18), "outline_width": 0.007,
 		# Clean shapes (Nick, 2026-10-04): the painted grit flattened into
 		# planes; the line pushed past white so the scene's glow blooms it.
-		"tex_soften": 6.0, "facet": 1.0, "facet_shade": 0.8, "outline_energy": 2.2,
+		"tex_soften": 6.0, "facet": 1.0, "facet_shade": 0.8, "outline_energy": 1.4,
 		# The eyes, in the v2 model's own space (found from its hot front-facing
 		# texels below the brow; the inner ears sit higher, y 0.72-0.95).
 		"eye_l": Vector3(-0.055, 0.58, 0.215), "eye_r": Vector3(0.055, 0.58, 0.215),
