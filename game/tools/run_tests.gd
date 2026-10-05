@@ -31288,6 +31288,9 @@ func _test_clean_shapes_welded_hull() -> void:
 	_expect(toon_params.has("eye_gain") and float(fin.get("eye_gain", 0.0)) > 0.0
 		and (fin.get("eye_l", Vector3.ZERO) as Vector3).x < 0.0 and (fin.get("eye_r", Vector3.ZERO) as Vector3).x > 0.0,
 		"the jackal's two eyes glow on their own, one each side of its face")
+	_expect(toon_params.has("glow_color") and (fin.get("glow_color", Color(0, 0, 0, 0)) as Color).a > 0.0
+		and (fin.get("glow_color", Color()) as Color).g > 0.4,
+		"the jackal's cracks glow orange, not the cool tint's red")
 	_expect(float(Combat3D.surface_finish("frog").get("outline_width", 1.0)) < 0.008, "the Frog's line is thin")
 	_expect(int(ProjectSettings.get_setting("rendering/anti_aliasing/quality/msaa_3d", 0)) >= 2,
 		"the 3D view is multisampled, so no outline stair-steps")

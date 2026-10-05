@@ -151,7 +151,11 @@ const SURFACE_FINISH := {
 		# The eyes, in the v2 model's own space (found from its hot front-facing
 		# texels below the brow; the inner ears sit higher, y 0.72-0.95).
 		"eye_l": Vector3(-0.055, 0.58, 0.215), "eye_r": Vector3(0.055, 0.58, 0.215),
-		"eye_radius": 0.06, "eye_gain": 10.0},
+		"eye_radius": 0.06, "eye_gain": 10.0,
+		# Overnight pass 14 (2026-10-05): the cool tint above also cooled the
+		# cracks to a dim red (~255,64,32); A's seams burn orange to yellow.
+		# The cracks now glow this orange, the plates keep the tint.
+		"glow_color": Color(1.0, 0.58, 0.16, 0.85)},
 	# A thin dark line, not the beast's warm halo (Nick, 2026-10-04: "the
 	# outlines are really buggy"); picture A inks the Frog in near-black.
 	"frog": {"outline_color": Color(0.06, 0.05, 0.04), "outline_width": 0.005},

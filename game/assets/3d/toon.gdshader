@@ -82,6 +82,10 @@ uniform float breath_amp = 0.0;        // along the normal, model units
 uniform float breath_rate = 1.3;
 uniform float breath_min_y = 1.2;      // only the barrel breathes, not the legs
 uniform float glow_pulse = 0.0;
+// The colour the hot cracks glow, mixed over the painted one by its alpha
+// (0, the default, is a no-op). The body's cool `tint` also cools the cracks
+// to red; this lets them burn A's orange while the plates stay basalt.
+uniform vec4 glow_color = vec4(1.0, 0.6, 0.15, 0.0);
 
 vec3 idle(vec3 v, vec3 n) {
 	// Negated so edge0 < edge1: smoothstep with them reversed is undefined in GLSL.
@@ -132,18 +136,23 @@ void fragment() {
 	ROUGHNESS = 1.0;
 	SPECULAR = 0.0;
 
-	vec3 hsv = rgb2hsv(base);
+	// With glow_color set, the mask reads the paint a quarter of the way back
+	// from the tint, so a cooled body keeps its cracks inside the orange
+	// window. Half way or more lit the whole jackal (pass 14).
+	vec3 paint = texture(albedo_tex, UV).rgb * COLOR.rgb;
+	vec3 hsv = rgb2hsv(glow_color.a > 0.0 ? mix(base, paint, 0.25) : base);
 	float hue_d = min(abs(hsv.x - glow_hue), 1.0 - abs(hsv.x - glow_hue));
 	float hot = (1.0 - smoothstep(0.03, 0.08, hue_d)) * smoothstep(0.55, 0.8, hsv.y) * smoothstep(0.55, 0.85, hsv.z);
-	EMISSION = base * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
+	vec3 heat = mix(base, glow_color.rgb, glow_color.a);
+	EMISSION = heat * hot * glow_gain * (1.0 + sin(TIME * 1.1) * glow_pulse);
 	if (eye_gain > 0.0) {
 		float d = min(distance(v_model, eye_l), distance(v_model, eye_r));
 		float eye = 1.0 - smoothstep(eye_radius * 0.6, eye_radius, d);
-		EMISSION += base * hot * eye * eye_gain;
+		EMISSION += heat * hot * eye * eye_gain;
 	}
 	// The face shade goes on after the floor, so a floored body still shows
 	// its planes; the hot cracks keep their own colour.
-	ALBEDO = mix(max(body, body_floor) * face, base, hot);
+	ALBEDO = mix(max(body, body_floor) * face, heat, hot);
 }
 
 void light() {

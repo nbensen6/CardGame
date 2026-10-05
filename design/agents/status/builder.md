@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T01:10
+updated: 2026-10-05T01:27
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 01:10 EDT
+2026-10-05 01:27 EDT
 
-- **Did:** Overnight pass 13: cliffs lifted from near-black to lit slate grey with readable facets.
-- **Worked?** Yes, grader saw faceted rock with A's light/dark split. VERDICT: PASS (CLOSER).
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p13-before.png]] then ![[frames/builder/2026-10-05-overnight-p13-after.png]]
+- **Did:** Overnight pass 14: the jackal's cracks now glow orange on dark brown plates, not dim red.
+- **Worked?** Yes, grader saw darker rock with brighter orange-yellow seams. VERDICT: PASS (CLOSER).
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p14-before.png]] then ![[frames/builder/2026-10-05-overnight-p14-after.png]]
 - **Ask:** nothing
 
 ## Notes
@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-10-05 01:27 EDT — builder: overnight pass 14: toon.gdshader glow_color uniform (no-op default); jackal cracks glow (1.0,0.58,0.16,0.85), mask reads paint 1/4 back from the tint + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 01:10 EDT — builder: overnight pass 13: cliff_flat lit/side/shade (0.23,0.235,0.26)/(0.145,0.148,0.165)/(0.075,0.075,0.085) -> (0.31,0.32,0.37)/(0.20,0.205,0.235)/(0.11,0.11,0.125); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 00:55 EDT — builder: overnight pass 12: quarry_ember floor_tone (0.25,0.235,0.24) -> (0.205,0.2,0.22), floor crack_color -> (1.0,0.62,0.2) via floor_params; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-05 00:41 EDT — builder: overnight pass 11: quarry_ember floor_tone (0.25,0.245,0.27) -> (0.25,0.235,0.24), floor slab_var 0.5 -> 0.2; grader PASS (CLOSER, on beast shading not the floor); tests green, pushed.
