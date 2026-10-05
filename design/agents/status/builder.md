@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T21:20
+updated: 2026-10-04T21:01
 working_on: "The jackal fills the frame like picture A."
 ---
 
@@ -13,7 +13,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 21:20 EDT
+2026-10-04 21:01 EDT
 
 - **Did:** Measured the jackal framing; 45% width can't coexist with head, Frog and whole model in frame.
 - **Worked?** No: nothing shipped; best tilt and standoff reached ~21% width, not 45%. Grader not run.
@@ -28,7 +28,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
-- 2026-10-04 21:20 EDT — builder: jackal-fills-frame investigated: 45% shoulder width impossible with head, Frog and whole model in frame (body ~1050 px tall at that width); standoff/tilt sweep peaks ~21%; sunk-legs option frame ~30%; no code change, marked 👀 for Nick's call; pushed notes only.
+- 2026-10-04 21:01 EDT — builder: jackal-fills-frame investigated: 45% shoulder width impossible with head, Frog and whole model in frame (body ~1050 px tall at that width); standoff/tilt sweep peaks ~21%; sunk-legs option frame ~30%; no code change, marked 👀 for Nick's call; pushed notes only.
 - 2026-10-04 20:50 EDT — builder: clean shapes: outline hull along welded normals (TANGENT) + depth push, MSAA 4x, Frog thin dark line, scene glow + hotter cracks and line, toon tex_soften/facet/facet_shade, eye mask + tests; grader FAIL x3 (eyes at 1:1), shipped 👀; tests green, pushed.
 - 2026-10-04 19:46 EDT — builder: Cinder Jackal fights as cinder_jackal_v2 (AI_ART "_v2", .tscn wrapper with climb/ledge markers, beast_variant_path), GROUND_GAP_PER_HEIGHT 1.5 height floor on the standoff, outline 0.010, cool tint + low body floor + test; grader FAIL x2 (beast fills height, not A's width), shipped 👀; tests green, pushed.
 - 2026-10-04 19:30 EDT — builder: scene pass 2 toward picture A: jackal stones -> pale flat slabs (BIOME stone "slab"), raised rest rock under waiting hunters (rest_rock_lift), thick warm outline on jackal (0.018) and Frog + tests; grader FAIL x2 (stones ring the head: route geometry, Nick's call), shipped 👀; tests green, pushed.

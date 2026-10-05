@@ -1607,7 +1607,7 @@ Builder, 2026-10-04 19:30 EDT.
 
 ## The jackal fills the frame like picture A.
 
-2026-10-04 21:20 EDT. Not built: the done-when cannot be met inside the item's own limits, so no code changed.
+2026-10-04 21:01 EDT. Not built: the done-when cannot be met inside the item's own limits, so no code changed.
 
 - **Before** (`2026-10-04-jackal-fills-before.png`, `state=3d beast=cinder_jackal`): the jackal spans x 600-830 of 1280 (~18% with arms), ears at y≈20, feet on the lava line at y≈335, the Frog at y 340-420 just in front of its feet. The sigil ring sits on the brow between the eyes: it is placed at climb_5 (y 1.44 of 1.90, chin) plus 1.7 hunter heights of lift, which lands at ~0.82 of the height, eye level on this model.
 - **Why 45% can't fit:** the v2 body is 1.38 wide by 1.90 tall, shoulders about half its height. Shoulders across 45% of a 16:9 frame (576 px) make the whole body ~1050 px tall in a 720 px frame. With the head inside, the bottom third must leave the frame; and the Frog stands on the ground nearer the camera than the beast, so it always projects BELOW the beast's feet. Head in frame + Frog visible + whole model + 45% width cannot all hold. Scaling the beast changes nothing (angles only depend on size over distance).
