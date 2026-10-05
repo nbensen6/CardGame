@@ -134,7 +134,9 @@ const SURFACE_FINISH := {
 	# at 33,0,0: the contrast clamps every dark channel to zero, so a dim brown
 	# lost all its green and blue. A near-grey floor of the same value lands on
 	# A's dark brown plates (about 50,15,0 lit) and the cracks still out-shine it.
-	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.27, 0.24, 0.23), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
+	# Overnight pass 5: the saturation still stripped the blue (74,29,5, an
+	# orange-tan mass); a cooler tint and floor land near A's basalt (80,38,28).
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.26, 0.24, 0.29), "tint": Color(0.66, 0.78, 0.95), "shadow_color": Color(0.85, 0.74, 0.80),
 		"half_level": 0.72,
 		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
 		# 0.010 since the upright model (2026-10-04): at 0.018 its slimmer limbs

@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T22:42
+updated: 2026-10-04T23:11
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 22:56 EDT
+2026-10-04 23:11 EDT
 
-- **Did:** Overnight pass 4: the jackal's outline is thinner and orange; its body reads as dark rock.
+- **Did:** Overnight pass 5: the jackal's body now reads dark charcoal-brown basalt, so its cracks stand out.
 - **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p4-before.png]] then ![[frames/builder/2026-10-05-overnight-p4-after.png]]
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p5-before.png]] then ![[frames/builder/2026-10-05-overnight-p5-after.png]]
 - **Ask:** nothing
 
 ## Notes
@@ -26,6 +26,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
+- 2026-10-04 23:11 EDT — builder: overnight pass 5: jackal tint (0.7,0.8,0.85) -> (0.66,0.78,0.95), body_floor (0.27,0.24,0.23) -> (0.26,0.24,0.29) so the grade keeps blue in the rock + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:56 EDT — builder: overnight pass 4: jackal outline 0.010/energy 2.2 -> 0.007/1.4, colour (1,.55,.18), body_floor 0.22 -> (0.27,0.24,0.23); test now asks line > Frog's; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:42 EDT — builder: overnight pass 3: BIOME lava_glow 0.45 scales lava pool gain, lava lights, floor rim heat, heat-haze glow band (gain + height) and cliff foot band; floor crack_gain 0.7 -> 0.3 + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:31 EDT — builder: overnight pass 2: jackal body_floor (0.20,0.11,0.07) -> (0.22,0.20,0.19) so the grade keeps it brown + test; grader PASS (CLOSER); tests green, pushed.

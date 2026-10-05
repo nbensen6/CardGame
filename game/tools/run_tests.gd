@@ -31217,6 +31217,11 @@ func _test_scene_pass1_picture_a() -> void:
 	var bf: Vector3 = fin["body_floor"]
 	_expect(minf(bf.y, bf.z) >= bf.x * 0.75,
 		"the jackal's body floor stays near-grey so the grade leaves it brown, not pure red -- got %s" % bf)
+	# Overnight pass 5: the grade's saturation still ate the blue (body ~74,29,5,
+	# orange-tan); A's basalt is ~80,38,28. A cool tint and a blue-leaning floor keep it.
+	var jt: Color = fin.get("tint", Color.WHITE)
+	_expect(bf.z >= bf.x and jt.b > jt.r,
+		"the jackal's floor and tint lean cool so its rock reads charcoal-brown, not orange-tan -- got %s %s" % [bf, jt])
 	_expect(fin.has("outline_color") and (fin["outline_color"] as Color).r > 0.8,
 		"the jackal carries the warm outline")
 	var toon_params: Array = (Combat3D.TOON as Shader).get_shader_uniform_list().map(
