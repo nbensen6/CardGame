@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 02:56 EDT
+2026-10-05 03:07 EDT
 
-- **Did:** Overnight pass 20: turned the hot magenta sky into picture A's muted dusk violet.
-- **Worked?** Yes, sky now matches A's violet; small gain. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p20-before.png]] then ![[frames/builder/2026-10-05-overnight-p20-after.png]]
+- **Did:** Overnight pass 21: evened the floor's slab tones toward picture A; reverted.
+- **Worked?** No, the grader could not see the floor change. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p21-before.png]] then ![[frames/builder/2026-10-05-overnight-p21-after.png]]
 - **Ask:** nothing
 
 ## Notes
