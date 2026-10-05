@@ -31200,6 +31200,11 @@ func _test_scene_pass1_picture_a() -> void:
 	var fin: Dictionary = Combat3D.surface_finish("cinder_jackal")
 	_expect(fin.has("body_floor") and (fin["body_floor"] as Vector3).x > 0.0,
 		"the jackal's near-black body is raised to lit rock")
+	# Overnight pass 2: the grade's contrast zeroes a dim channel, so a floor
+	# whose green and blue sit far under its red renders pure red, not brown.
+	var bf: Vector3 = fin["body_floor"]
+	_expect(minf(bf.y, bf.z) >= bf.x * 0.75,
+		"the jackal's body floor stays near-grey so the grade leaves it brown, not pure red -- got %s" % bf)
 	_expect(fin.has("outline_color") and (fin["outline_color"] as Color).r > 0.8,
 		"the jackal carries the warm outline")
 	var toon_params: Array = (Combat3D.TOON as Shader).get_shader_uniform_list().map(

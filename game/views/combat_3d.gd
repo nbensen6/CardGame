@@ -129,7 +129,12 @@ const SURFACE_FINISH := {
 	# The upright model (2026-10-04) paints reddish-brown rock that the ember
 	# light turned red all over; a cool tint and a low floor keep it dark brown
 	# so the cracks carry the heat, as in A.
-	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.20, 0.11, 0.07), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
+	# Overnight pass 2 (2026-10-05): the old floor (0.20, 0.11, 0.07) came out
+	# of the scene's grade (ACES, contrast 1.10, saturation 1.18) as pure red
+	# at 33,0,0: the contrast clamps every dark channel to zero, so a dim brown
+	# lost all its green and blue. A near-grey floor of the same value lands on
+	# A's dark brown plates (about 50,15,0 lit) and the cracks still out-shine it.
+	"cinder_jackal": {"spec_strength": 0.0, "body_floor": Vector3(0.22, 0.20, 0.19), "tint": Color(0.7, 0.8, 0.85), "shadow_color": Color(0.85, 0.74, 0.80),
 		"half_level": 0.72,
 		# Scene pass 2 (picture A): A's line is thick and glowing, not a hairline.
 		# 0.010 since the upright model (2026-10-04): at 0.018 its slimmer limbs
