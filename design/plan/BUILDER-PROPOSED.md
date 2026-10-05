@@ -220,3 +220,4 @@ appends here, never to the queue.
 - [ ] **Flat stones and rest rocks.** The climb stones and the hunters' rest rocks keep a cobble texture beside the now-flat cliffs and floor.
 - [ ] **Scene grade crushes dark colours.** Contrast 1.10 with saturation 1.18 zeroes dim channels, so every dark brown in the fight renders pure red.
 - [ ] **Slab tops lighter than sides.** From the rest camera the climb slabs' tops render darker than their sides; picture A's tops are the lightest faces.
+- [ ] **Matte floor.** The fight floor shows glossy grey-violet reflection patches; picture A's floor is matte charcoal.

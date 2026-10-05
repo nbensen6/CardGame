@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T23:40
+updated: 2026-10-04T23:58
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 23:40 EDT
+2026-10-04 23:58 EDT
 
-- **Did:** Overnight pass 7: the climb slabs are flat neutral grey like picture A, not tan brick.
+- **Did:** Overnight pass 8: climb slabs now have mid-grey sides under lighter tops, no dark rim notches.
 - **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p7-before.png]] then ![[frames/builder/2026-10-05-overnight-p7-after.png]]
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p8-before.png]] then ![[frames/builder/2026-10-05-overnight-p8-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** The slabs' top faces render darker than their sides from the rest camera; picture A's tops are the lightest faces.
+- **Found:** The floor shows glossy grey-violet patches; picture A's floor is matte charcoal.
 
 ## Log
 
+- 2026-10-04 23:58 EDT — builder: overnight pass 8: slab cap matches the 6-sided block (segments, radius, spin), SLAB_SIDE_TONE (0.46,0.50,0.55) -> (0.36,0.39,0.43); grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:40 EDT — builder: overnight pass 7: slab stones neutral grey+cobble texture -> flat cooled SLAB_SIDE_TONE/SLAB_TOP_TONE + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:24 EDT — builder: overnight pass 6: rest rock albedo 0.36 + ROCK_DETAIL -> flat REST_ROCK_TONE (0.12,0.115,0.135) + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 23:11 EDT — builder: overnight pass 5: jackal tint (0.7,0.8,0.85) -> (0.66,0.78,0.95), body_floor (0.27,0.24,0.23) -> (0.26,0.24,0.29) so the grade keeps blue in the rock + test; grader PASS (CLOSER); tests green, pushed.

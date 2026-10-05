@@ -3143,7 +3143,9 @@ const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 1.5
 ## are flat neutral grey, ~(156,149,141); a neutral 0.62/0.80 grey with the
 ## cobble texture rendered tan brick (~170,130,110) under the warm key and the
 ## grade. Flat, no texture, and cooled so the warm light lands them on grey.
-const SLAB_SIDE_TONE := Color(0.46, 0.50, 0.55)
+## Pass 8: the sides face the warm key and rendered near-white (~218), the
+## brightest thing on screen; A's sides are mid-grey (~157) under a lighter top.
+const SLAB_SIDE_TONE := Color(0.36, 0.39, 0.43)
 const SLAB_TOP_TONE := Color(0.58, 0.62, 0.68)
 
 
@@ -6624,6 +6626,13 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		cap_mat.albedo_color = SLAB_TOP_TONE.lightened(cap_tint)
 		body_mat.albedo_texture = null
 		cap_mat.albedo_texture = null
+		# Overnight pass 8: the 8-sided cap, spun on its own, overhung the
+		# 6-sided block and cut dark notches round every rim. A slab's cap is
+		# the block's own top: same six sides, same radius, same spin.
+		cap_mesh.radial_segments = 6
+		cap_mesh.top_radius = rock_radius
+		cap_mesh.bottom_radius = rock_radius
+		cap.rotation.y = body.rotation.y
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)
