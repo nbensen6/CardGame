@@ -2960,7 +2960,7 @@ const BIOME := {
 		# Cliffs and floor in picture A's flat style (Nick, 2026-10-04): big
 		# slabs in flat steps of tone with seams that glow, not hairlines on
 		# one sheet. Obsidian shader uniforms, see _dress_floor().
-		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.7, "slab_var": 0.5},
+		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.3, "slab_var": 0.5},
 		# ...and dark slate cliffs in three flat tones instead of the painted,
 		# lava-lit rock. See wall_style() / _dress_wall().
 		"wall": "flat",
@@ -2983,6 +2983,11 @@ const BIOME := {
 		# trench between the floor's edge and the wall, [inner, outer] in arena
 		# radii. See lava_ring() / _add_lava().
 		"lava": [1.0, 2.5],
+		# Overnight pass 3 (picture A): the lava is a thin hot line on the
+		# horizon, not a 50 px yellow band that turns the floor orange. Scales
+		# the pool, its lights, the floor's rim heat, the heat haze's glow band
+		# and the warm band at the cliffs' foot; see lava_glow() / _add_lava() / _dress_wall().
+		"lava_glow": 0.45,
 		# Embers in the air (session, 2026-09-29): sparks rising over the whole
 		# arena, sparks falling from lava seams in the wall, and orange light in
 		# those seams on the rock. See ember_field() / _add_embers().
@@ -3177,7 +3182,9 @@ func _dress_wall(beast_id: String) -> void:
 		return
 	var mat := ShaderMaterial.new()
 	mat.shader = CLIFF_FLAT
-	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * _arena_r)
+	var glow := lava_glow(String(BEAST_BIOME.get(beast_id, "crag")))
+	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * _arena_r * glow)
+	mat.set_shader_parameter("heat_gain", 0.55 * glow)
 	for node in _all_meshes(wall):
 		(node as GeometryInstance3D).material_override = mat
 
@@ -3200,6 +3207,13 @@ static func lava_ring(biome: String) -> Vector2:
 	var r: Array = b["lava"]
 	var inner := maxf(float(r[0]), LAVA_MIN_R)
 	return Vector2(inner, clampf(float(r[1]), inner, LAVA_MAX_R))
+
+
+## How hot a biome's lava burns, 0..1 of full: scales the pool, its lights
+## and the floor's rim heat together. Static so run_tests.gd can pin it.
+static func lava_glow(biome: String) -> float:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	return clampf(float(b.get("lava_glow", 1.0)), 0.0, 1.0)
 
 
 ## The shimmer band stands here, in arena radii: past CAMERA_MAX_R, so the lens
@@ -3225,7 +3239,9 @@ func _add_lava(beast_id: String) -> void:
 	if _lava != null:
 		_lava.queue_free()
 		_lava = null
-	var ring := lava_ring(String(BEAST_BIOME.get(beast_id, "crag")))
+	var biome := String(BEAST_BIOME.get(beast_id, "crag"))
+	var ring := lava_ring(biome)
+	var glow := lava_glow(biome)
 	if ring == Vector2.ZERO or _env == null:
 		return
 	var r := _arena_r
@@ -3240,6 +3256,7 @@ func _add_lava(beast_id: String) -> void:
 				fm.set_shader_parameter("rim_center", Vector2(_rig.global_position.x, _rig.global_position.z))
 				fm.set_shader_parameter("rim_radius", ring.x * r)
 				fm.set_shader_parameter("rim_width", LAVA_RIM_HEAT * r)
+				fm.set_shader_parameter("rim_gain", 2.0 * glow)
 	_lava = Node3D.new()
 	_lava.name = "Lava"
 	_rig.add_child(_lava)
@@ -3247,6 +3264,7 @@ func _add_lava(beast_id: String) -> void:
 	pool.mesh = lava_ring_mesh(ring.x * r, ring.y * r, 96)
 	var mat := ShaderMaterial.new()
 	mat.shader = LAVA
+	mat.set_shader_parameter("gain", 1.25 * glow)
 	pool.material_override = mat
 	pool.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pool.position.y = -0.003 * r
@@ -3256,7 +3274,7 @@ func _add_lava(beast_id: String) -> void:
 		var a := TAU * (float(i) + 0.5) / float(LAVA_LIGHTS)
 		var l := OmniLight3D.new()
 		l.light_color = Color(1.0, 0.42, 0.12)
-		l.light_energy = 6.0
+		l.light_energy = 6.0 * glow
 		l.omni_range = 0.6 * r
 		l.omni_attenuation = 1.4
 		l.shadow_enabled = false
@@ -3267,7 +3285,7 @@ func _add_lava(beast_id: String) -> void:
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = SHIMMER_R * r
 	cyl.bottom_radius = SHIMMER_R * r
-	cyl.height = 0.3 * r
+	cyl.height = 0.3 * r * maxf(glow, 0.1)
 	cyl.cap_top = false
 	cyl.cap_bottom = false
 	cyl.radial_segments = 64
@@ -3276,6 +3294,7 @@ func _add_lava(beast_id: String) -> void:
 	var heat := ShaderMaterial.new()
 	heat.shader = HEAT_SHIMMER
 	heat.set_shader_parameter("band_height", cyl.height)
+	heat.set_shader_parameter("glow_gain", 0.9 * glow)
 	band.material_override = heat
 	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	band.position.y = pool.position.y + cyl.height * 0.5

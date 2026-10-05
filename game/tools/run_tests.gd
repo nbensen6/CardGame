@@ -2407,6 +2407,7 @@ func _init() -> void:
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
 	_test_scene_pass1_picture_a()
+	_test_overnight_p3_lava_glow()
 	_test_cliffs_and_floor_flat_style()
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
@@ -31187,6 +31188,17 @@ func _test_cliffs_and_floor_flat_style() -> void:
 		_expect(floor_params.has(k), "the obsidian floor takes %s" % k)
 	_expect(float(fp.get("slab_var", 0.0)) > 0.0, "the jackal's floor is slabs in steps of tone")
 	_expect(float(fp.get("crack_px", 0.0)) > 1.2, "the jackal's seams are wider than hairlines")
+
+
+## Overnight pass 3 (picture A): the jackal's lava is a thin hot line on the
+## horizon, not a wide yellow band, and its floor's seams barely glow; every
+## other lava biome keeps full heat.
+func _test_overnight_p3_lava_glow() -> void:
+	var g := Combat3D.lava_glow("quarry_ember")
+	_expect(g > 0.0 and g < 0.6, "the jackal's lava burns dim enough to be a line, not a band -- got %.2f" % g)
+	_expect(Combat3D.lava_glow("crag") == 1.0, "a biome that names no lava_glow keeps full heat")
+	var fp: Dictionary = Combat3D.BIOME["quarry_ember"].get("floor_params", {})
+	_expect(float(fp.get("crack_gain", 1.0)) <= 0.4, "the jackal's floor seams barely glow, like picture A's")
 
 
 ## Scene pass 1 toward picture A (Nick, 2026-10-04): the jackal fills the
