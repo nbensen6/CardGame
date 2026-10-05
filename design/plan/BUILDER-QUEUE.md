@@ -576,3 +576,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Stones and rest rocks still cobble-textured.** Beside the flat cliffs they are the last detailed-realistic surfaces in frame.
 - [ ] (proposed) **Skinned TANGENT is mangled.** Any rigged model's outline must carry welded normals in NORMAL, not TANGENT.
 - [ ] (proposed) **Jackal body a shade orange with the outline.** Cracks stand out less than in picture A.
+- [ ] (proposed) **Horizon band was the heat haze.** The shimmer cylinder adds glow; dimming the lava pool alone does nothing.

@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-04T22:13
+updated: 2026-10-04T22:42
 working_on: "Overnight: keep closing the gap to picture A until 8 AM."
 ---
 
@@ -13,19 +13,20 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-04 22:31 EDT
+2026-10-04 22:42 EDT
 
-- **Did:** Overnight pass 2: the jackal's body reads dark brown with glowing cracks, not solid red.
+- **Did:** Overnight pass 3: the lava is a thin hot line on the horizon; floor dark, seams dim.
 - **Worked?** Yes, grader said CLOSER: VERDICT: PASS.
-- **Look at:** ![[frames/builder/2026-10-05-overnight-p2-before.png]] then ![[frames/builder/2026-10-05-overnight-p2-after.png]]
+- **Look at:** ![[frames/builder/2026-10-05-overnight-p3-before.png]] then ![[frames/builder/2026-10-05-overnight-p3-after.png]]
 - **Ask:** nothing
 
 ## Notes
 
-- **Found:** The scene grade's contrast 1.10 zeroes any dark channel; dim browns anywhere render pure red.
+- **Found:** The wide horizon band was the heat-haze cylinder's added glow, not the lava pool itself.
 
 ## Log
 
+- 2026-10-04 22:42 EDT — builder: overnight pass 3: BIOME lava_glow 0.45 scales lava pool gain, lava lights, floor rim heat, heat-haze glow band (gain + height) and cliff foot band; floor crack_gain 0.7 -> 0.3 + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:31 EDT — builder: overnight pass 2: jackal body_floor (0.20,0.11,0.07) -> (0.22,0.20,0.19) so the grade keeps it brown + test; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 22:13 EDT — builder: overnight pass 1: outline hull welded normals in NORMAL for facet-lit (skinned) bodies, depth push along the view ray + tests; grader PASS (CLOSER); tests green, pushed.
 - 2026-10-04 21:56 EDT — builder: cliffs and floor flat: cliff_flat.gdshader (3 flat slate tones by face normal, warm foot band) on the jackal wall via wall_style "flat"; obsidian slab_var + wider/hotter seams via floor_params, floor_tone 0.25 + test; grader PASS; tests green, pushed.
