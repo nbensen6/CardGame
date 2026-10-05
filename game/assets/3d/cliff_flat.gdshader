@@ -19,9 +19,12 @@ render_mode cull_back, unshaded;
 // Overnight pass 10 (picture A): its walls are near-black charcoal with
 // cool grey lit faces (~18,24,36 up to ~49,49,63); the old blue-slate tones
 // came out of the grade as navy (~32,35,61) over most of the upper frame.
-uniform vec4 lit_color : source_color = vec4(0.23, 0.235, 0.26, 1.0);
-uniform vec4 side_color : source_color = vec4(0.145, 0.148, 0.165, 1.0);
-uniform vec4 shade_color : source_color = vec4(0.075, 0.075, 0.085, 1.0);
+// Overnight pass 13: those rendered near-black (~26,27,40) with facets that
+// barely separated; A's walls are mid slate with clearly lit planes (~74,79,96
+// lit, ~42,44,56 shadow). Lifted, cool, three tones apart.
+uniform vec4 lit_color : source_color = vec4(0.31, 0.32, 0.37, 1.0);
+uniform vec4 side_color : source_color = vec4(0.20, 0.205, 0.235, 1.0);
+uniform vec4 shade_color : source_color = vec4(0.11, 0.11, 0.125, 1.0);
 // The direction the cliffs' light comes from, in world space (towards the
 // light). Upper-left from the rest camera, like the picture.
 uniform vec3 key_dir = vec3(-0.45, 0.75, 0.35);
