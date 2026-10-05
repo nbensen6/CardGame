@@ -16,9 +16,12 @@ render_mode cull_back, unshaded;
 // what the picture shows where the cliffs meet the molten line. Fog still
 // applies.
 
-uniform vec4 lit_color : source_color = vec4(0.24, 0.25, 0.31, 1.0);
-uniform vec4 side_color : source_color = vec4(0.15, 0.155, 0.20, 1.0);
-uniform vec4 shade_color : source_color = vec4(0.075, 0.075, 0.10, 1.0);
+// Overnight pass 10 (picture A): its walls are near-black charcoal with
+// cool grey lit faces (~18,24,36 up to ~49,49,63); the old blue-slate tones
+// came out of the grade as navy (~32,35,61) over most of the upper frame.
+uniform vec4 lit_color : source_color = vec4(0.23, 0.235, 0.26, 1.0);
+uniform vec4 side_color : source_color = vec4(0.145, 0.148, 0.165, 1.0);
+uniform vec4 shade_color : source_color = vec4(0.075, 0.075, 0.085, 1.0);
 // The direction the cliffs' light comes from, in world space (towards the
 // light). Upper-left from the rest camera, like the picture.
 uniform vec3 key_dir = vec3(-0.45, 0.75, 0.35);
