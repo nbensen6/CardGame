@@ -28,7 +28,9 @@ run failed.
 
 - [ ] **Research: card frames, against real TCGs.**
       **Nick, 2026-10-05:** "the card template for the outer layer of the cards looks low quality. reference real tcgs like pokemon and mtg and prepare a redesign."
-      Research only — build nothing this run. Study how real trading cards are constructed: Pokémon, Magic, Hearthstone, Legends of Runeterra, Marvel Snap. Look at the frame itself, not the art: border weight and colour, the inner bevel, how the art window is cut, where the cost sits and how it is set into the frame, the name plate, the type bar, the text box's fill and separator, the rarity cue, how a foil or premium treatment is layered on.
+      **The research is already done — read [[art/card-frame-research]] and mock, do not re-research.**
+      It has our own card pulled apart at 3x (floating cost orb, uncontained art, overhanging ribbon, no bevel, aliased edges), how real frames are built, the six things that make one read as expensive, and three directions spec'd: A carved obsidian, B printed card, C sculpted relic. Build those three.
+      Reference, for the shape of the task only: Pokémon, Magic, Hearthstone, Legends of Runeterra, Marvel Snap. Look at the frame itself, not the art: border weight and colour, the inner bevel, how the art window is cut, where the cost sits and how it is set into the frame, the name plate, the type bar, the text box's fill and separator, the rarity cue, how a foil or premium treatment is layered on.
       Say what makes each read as expensive, and what our current frame does instead — ours is a thin outlined rectangle with a flat strip, and it looks cheap at hand size.
       **Deliver:** three mocked-up frame directions rendered on OUR cards (Tongue Snap, Leap, Scramble) at true hand size, each with the reference it comes from named and what was taken. Describe the references in words; do not put other games' images in this repo. Say which one you would pick and why. File it `to: nick` for the pick.
       **Done when** Nick has three frames to choose between, shown at the size he will actually see them.
