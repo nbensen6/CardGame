@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-05T16:18
-working_on: "A HUD that matches the chosen card frame."
+updated: 2026-10-06T17:08
+working_on: "Redraw the jackal to TARGET.png's pose, and light its fist."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-05 16:18 EDT
+2026-10-06 17:08 EDT
 
-- **Did:** Re-skinned every HUD panel in the A1 card stone, its glow lit by the held hunter's seat colour.
-- **Worked?** Partly: one material with the cards, but the grader wants TARGET-UI's grey/gold stone. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-05-a1-hud-before.png]] then ![[frames/builder/2026-10-05-a1-hud-after.png]]
-- **Ask:** Seat-colour glow, or TARGET-UI's grey stone and gold: which wins?
+- **Did:** Raised the jackal's fist with a looping flame, bolder outline and glow, framed so ears touch the top.
+- **Worked?** Partly: pose and fire landed, size, stones and climb camera did not. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-06-jackal-pose-3d-before.png]] then ![[frames/builder/2026-10-06-jackal-pose-3d-after.png]]
+- **Ask:** May the climb camera tilt down so the stone route stays in frame?
 
 ## Notes
 
-- **Found:** Short panels (beast plate, intent, Switch, health plates) clamp the A1 band thin; it reads as an outline.
-- **Found:** Draw, discard and burn badges are still brass card stacks, outside A1.
+- **Found:** Drawn-gap lever is clamped: below 0.8 the jackal barely grows on screen.
+- **Found:** Grey arc behind End Turn in the 3dclimb shot.
+- **Found:** Face still reads as a flat plate at play size; the concept has no real snout or brow to keep.
 
 ## Log
 
+- 2026-10-06 17:08 EDT — builder: jackal re-posed (beast_sprite.py repose: arm raised), looping fist flame (Fire Sprite3D + idle AnimationPlayer), bolder outline/glow, DRAWN_GAP 1.0 + tests; grader FAIL x2 (size, stones, climb camera); marked 👀 for Nick; tests green, pushed.
 - 2026-10-05 16:18 EDT — builder: A1 HUD (hudpanel_a1.py pair, Combat3D.add_a1_panel on beast plate, intent, energy, gauge, End Turn, Switch, health plates; seat re-tint) + tests; grader FAIL x3 on TARGET-UI material; marked 👀 for Nick; tests green, pushed.
 - 2026-10-05 16:05 EDT — builder: A1 card frame shipped (CardView.SHIP_A1, stone + glow nine-patches, SEAT_TINT feeding SLOT_TINT, boxes from cardframe_a1.py, cost sized to socket) + tests; grader FAIL twice on the hand's bottom tuck; marked 👀 for Nick; tests green, pushed.
 

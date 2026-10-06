@@ -1724,6 +1724,19 @@ Brief: the standing item; one pass per run. First before frame: `frames/builder/
   - Close-out: the first before frame is p1-before; the last after frame that shipped is p20-after (passes 21-23 were reverted, so the game today looks like p20-after).
   - Found: the cracks' yellow comes from the global bloom, not the jackal's material; toning it touches the lava and every glow, so it is a scene-wide pass, not a crack fix.
 
+## Redraw the jackal to TARGET.png's pose, and light its fist.
+
+2026-10-06 builder run (cloud).
+
+- **Pose.** `tools/beast_sprite.py` now re-poses the concept before inking it (`repose`, spec `"repose"`): the viewer's-left arm is cut into upper arm and forearm+fist; the upper arm swings 70 degrees out about the shoulder and the forearm 150 degrees up about the elbow (nudged 30 px onto the upper arm so the elbow stays joined). The fist is raised beside the head, as in TARGET. No new illustration was needed. Lean, weight shift and head turn are NOT done.
+- **Fist fire.** `flame_frames` draws 8 looping frames of a flat banded flame (deep orange, orange, yellow, cream core) into `cinder_jackal_2d_flame.png`. The scene gets a `Fire` Sprite3D (hframes 8) just behind the fist, plus an `AnimationPlayer` whose `idle` steps `Fire:frame`. The fight already plays a beast's `idle` on load, so no fight code changed. The body texture is widened to cover the flame's rect, so `_fit_height` (which reads the merged box) sizes the beast the same.
+- **Outline/glow.** CREAM_W 28 to 52, INK_W 12 to 20, HALO_W 28 to 40. Crack glow is wider (sigma 5 to 16) and stronger (0.55 to 0.75).
+- **Framing.** DRAWN_GAP_PER_HEIGHT 1.1 to 1.0: the ear tips now meet the top edge. At 0.75 the head left the frame entirely, because the locked camera does not tilt. A trial that sank the drawing 0.28 heights into the floor ("in the lava") moved the sigil to the chest and the stones over the fist, and gaps below 0.8 barely grew the beast. Both were reverted.
+- **Not done: stones and climb camera.** The stone route (TARGET: in front of the torso, ending at the chest) and the stones missing from `3dclimb` both come from the camera and route rules. The climb shot is locked at GROUND_VIEW_PITCH with FOLLOW_DIST, per Nick 2026-09-28 ("the camera should be consistent"). At the top hold, every stone sits below the frame. Fixing that means tilting or lifting the climb camera, which goes against that rule, so it is asked, not done.
+- Tests: `_test_jackal_is_a_drawing` adds checks for the flame strip, the flame up beside the head on the viewer's left, the flame staying inside the body's box, and a looping `idle` stepping `Fire:frame`. ALL TESTS PASSED.
+- Grader: round 1 FAIL (CLOSER: the burning fist matches; outline thin, size, stones, climb). Round 2 FAIL (CLOSER: outline MET, fist MET; pose lean, framing size, snout/brow, stone shadows, 3dclimb stones NOT MET). Stopped after two rounds because the rest needs Nick's camera call. Final `VERDICT: FAIL`.
+- Climb frame: ![[agents/frames/builder/2026-10-06-jackal-pose-3dclimb-after.png|420]]
+
 ## The jackal becomes a 2.5D sprite, like the reference.
 
 2026-10-05 builder run.

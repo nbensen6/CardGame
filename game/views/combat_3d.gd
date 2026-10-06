@@ -566,7 +566,9 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## depth to keep clear and TARGET.png's jackal towers over the stones, so the
 ## hunters stand closer: the jackal's body fills about half the rest frame, ears in
 ## instead of ~40 % (Nick, 2026-10-05, "do the 2.5D like in the reference").
-const DRAWN_GAP_PER_HEIGHT := 1.1
+## 1.0 (2026-10-06): TARGET.png crops the beast at the top edge, so the ear
+## tips now meet it. At 0.75 the whole head left the locked frame.
+const DRAWN_GAP_PER_HEIGHT := 1.0
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
