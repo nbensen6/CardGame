@@ -57,8 +57,19 @@ stones climbing the gap between them, dark ground, cool sky.
 
        tools\shot.cmd out=design\agents\frames\builder\<date>-<slug>-before.png state=3d beast=cinder_jackal
 
-   Look at it 1:1. Look at Nick's drawing. Say in one sentence what is
-   different between them that this item should change.
+   Then put the two side by side at the same scale and look at THAT:
+
+       python tools\vs_target.py <that frame> <date>-<slug>-pair.png --beast
+
+   (`--hand` for cards and HUD, no flag for the whole screen.) Say in one
+   sentence what is different between them that this item should change.
+
+   **The picture outranks the words.** An item's prose is a pointer to
+   `TARGET.png`, never a substitute for it. Where a word in an item and the
+   drawing disagree, the drawing wins and you say so in `## This run` — on
+   2026-10-06 an item said "bold outlines", the drawing has a thin warm line,
+   and the outline was built thicker because the sentence was followed instead
+   of the picture. Do the same on the AFTER frame before grading.
 
 4. **Do the item.** The smallest change that makes the named frame move.
    Root cause, not symptom: grep every caller before you edit a shared
