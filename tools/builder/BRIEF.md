@@ -159,8 +159,14 @@ stones climbing the gap between them, dark ground, cool sky.
 - **Never pick your own work.** A proposal goes to the bottom of the queue.
   Nick moves it up or deletes it.
 - **Never close anything.** `[?]` is the most you can say.
-- **Never touch balance**, never regenerate Meshy assets, never open a window
-  on the main screen (`shot.cmd` already stays off it), never force-push.
+- **Never touch balance**, never open a window on the main screen (`shot.cmd`
+  already stays off it), never force-push.
+- **Meshy is open to you for art quality.** Nick, 2026-10-06: "If the builder
+  needs to use meshy credits to achieve the quality from the concept art it can
+  with my approval." Spend it only to reach the quality an item names, up to
+  **60 credits in one run** (balance was 2777 on 2026-10-06; an image pass is
+  3-12). Say in `## This run` what you spent and on what. More than 60 in a run,
+  or any 3D generation, still needs Nick — put it in the item's `Ask:`.
 - **Never end the run with a background command running.** Foreground, with
   a timeout. A run that dies mid-flight loses everything unpushed.
 - `CLAUDE.md` still applies: `/core` must not depend on `/views`, `/input`

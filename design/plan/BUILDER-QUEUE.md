@@ -27,6 +27,11 @@ run failed.
       line, not a thick cream halo. The facet planes and their tone steps
       survive. The eyes and the muzzle survive. The body stays dark with the
       cracks glowing, instead of the whole figure glowing.
+      **Meshy is allowed here.** Nick, 2026-10-06: "If the builder needs to use
+      meshy credits to achieve the quality from the concept art it can with my
+      approval." If fixing the inking cannot reach the concept's quality, use an
+      image pass (`meshy_image_to_image` off the concept, 3-12 credits) to get a
+      clean sprite, within the 60-credit run cap in the brief. Say what you spent.
       **Done when** `python tools/vs_target.py <after>.png <pair>.png --beast`
       shows the jackal holding the detail the concept has, and a head crop of the
       sprite is not visibly worse than the same crop of the concept.
