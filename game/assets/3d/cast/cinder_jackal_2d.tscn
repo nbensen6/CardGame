@@ -1,36 +1,11 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Texture2D" path="res://assets/3d/cast/cinder_jackal_2d.png" id="1"]
-
-[ext_resource type="Texture2D" path="res://assets/3d/cast/cinder_jackal_2d_flame.png" id="2"]
-
-[sub_resource type="Animation" id="Animation_idle"]
-resource_name = "idle"
-length = 0.8
-loop_mode = 1
-step = 0.1
-tracks/0/type = "value"
-tracks/0/imported = false
-tracks/0/enabled = true
-tracks/0/path = NodePath("Fire:frame")
-tracks/0/interp = 0
-tracks/0/loop_wrap = true
-tracks/0/keys = {
-"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1),
-"update": 1,
-"values": [0, 1, 2, 3, 4, 5, 6, 7]
-}
-
-[sub_resource type="AnimationLibrary" id="AnimationLibrary_1"]
-_data = {
-&"idle": SubResource("Animation_idle")
-}
 
 [node name="cinder_jackal_2d" type="Node3D"]
 
 [node name="Body" type="Sprite3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0839, 0.9515, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0000, 0.9515, 0)
 pixel_size = 0.001017
 billboard = 2
 shaded = false
@@ -39,49 +14,32 @@ alpha_cut = 2
 texture_filter = 3
 texture = ExtResource("1")
 
-[node name="Fire" type="Sprite3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6277, 1.6957, -0.01)
-pixel_size = 0.001017
-billboard = 2
-shaded = false
-double_sided = false
-alpha_cut = 1
-texture_filter = 3
-texture = ExtResource("2")
-hframes = 8
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
-libraries = {
-&"": SubResource("AnimationLibrary_1")
-}
-autoplay = &"idle"
-
 [node name="climb_0" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.175, 0.045, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.179, 0.045, 0.25)
 
 [node name="climb_1" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.200, 0.451, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.204, 0.451, 0.25)
 
 [node name="climb_2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.155, 0.777, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.159, 0.777, 0.25)
 
 [node name="climb_3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.094, 1.122, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098, 1.122, 0.25)
 
 [node name="climb_4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.043, 1.326, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, 1.326, 0.25)
 
 [node name="climb_5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.004, 1.539, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.001, 1.539, 0.25)
 
 [node name="ledge_0" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.175, 0.045, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.179, 0.045, 0.25)
 
 [node name="ledge_2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.155, 0.777, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.159, 0.777, 0.25)
 
 [node name="ledge_3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.094, 1.122, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.098, 1.122, 0.25)
 
 [node name="ledge_4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.043, 1.326, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.047, 1.326, 0.25)

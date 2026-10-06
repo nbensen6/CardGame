@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-06T17:08
-working_on: "Redraw the jackal to TARGET.png's pose, and light its fist."
+updated: 2026-10-06T19:27
+working_on: "Stop the inking from destroying the jackal."
 ---
 
 # builder
@@ -13,21 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-06 17:08 EDT
+2026-10-06 19:27 EDT
 
-- **Did:** Raised the jackal's fist with a looping flame, bolder outline and glow, framed so ears touch the top.
-- **Worked?** Partly: pose and fire landed, size, stones and climb camera did not. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-06-jackal-pose-3d-before.png]] then ![[frames/builder/2026-10-06-jackal-pose-3d-after.png]]
-- **Ask:** May the climb camera tilt down so the stone route stays in frame?
+- **Did:** Jackal sprite now keeps the concept's own pixels with a thin warm line; arm repose and flame dropped.
+- **Worked?** Yes: facets, snout, eyes and dark body survive; thin line replaces the halo. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-06-inking-before.png]] then ![[frames/builder/2026-10-06-inking-after.png]]
+- **Ask:** Is the thin warm line thick enough, or thicken it toward TARGET's?
+- Meshy: 0 credits spent; fixing the inking was enough.
 
 ## Notes
 
-- **Found:** Drawn-gap lever is clamped: below 0.8 the jackal barely grows on screen.
-- **Found:** Grey arc behind End Turn in the 3dclimb shot.
-- **Found:** Face still reads as a flat plate at play size; the concept has no real snout or brow to keep.
+- **Found:** Beast stands smaller on screen than in TARGET.png; it fills half the frame there.
+- **Found:** Two ring markers (grey chest, yellow pelvis) sit on the jackal at rest.
 
 ## Log
 
+- 2026-10-06 19:27 EDT — builder: jackal inking: beast_sprite.py keeps the concept pixels (no posterise, no ink ring), thin warm line + faint halo, repose/flame dropped, padding keeps framing; quality test replaces flame test; grader PASS; marked 👀; tests green, pushed.
 - 2026-10-06 17:08 EDT — builder: jackal re-posed (beast_sprite.py repose: arm raised), looping fist flame (Fire Sprite3D + idle AnimationPlayer), bolder outline/glow, DRAWN_GAP 1.0 + tests; grader FAIL x2 (size, stones, climb camera); marked 👀 for Nick; tests green, pushed.
 - 2026-10-05 16:18 EDT — builder: A1 HUD (hudpanel_a1.py pair, Combat3D.add_a1_panel on beast plate, intent, energy, gauge, End Turn, Switch, health plates; seat re-tint) + tests; grader FAIL x3 on TARGET-UI material; marked 👀 for Nick; tests green, pushed.
 - 2026-10-05 16:05 EDT — builder: A1 card frame shipped (CardView.SHIP_A1, stone + glow nine-patches, SEAT_TINT feeding SLOT_TINT, boxes from cardframe_a1.py, cost sized to socket) + tests; grader FAIL twice on the hand's bottom tuck; marked 👀 for Nick; tests green, pushed.

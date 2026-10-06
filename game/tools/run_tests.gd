@@ -31786,25 +31786,31 @@ func _test_jackal_is_a_drawing() -> void:
 				"hold %d is on the drawing -- got (%.2f, %.2f)" % [h, p.x, p.y])
 	if tops.has(5):
 		_expect((tops[5] as Vector3).y > 1.35, "the climb ends at the face -- got y=%.2f" % (tops[5] as Vector3).y)
-	# TARGET.png's pose (Nick, 2026-10-06): one fist raised beside the head,
-	# burning at rest on the beast's own looping idle.
-	var fire := root.get_node_or_null("Fire") as Sprite3D
-	_expect(fire != null and fire.texture != null and fire.hframes > 1, "the raised fist has a flame strip")
-	if fire != null and spr != null and spr.texture != null:
-		_expect(fire.position.y > 1.4 and fire.position.x < spr.position.x,
-			"the flame is up beside the head, on the viewer's left -- got (%.2f, %.2f)" % [fire.position.x, fire.position.y])
-		var body_rect := Rect2(Vector2(spr.position.x, spr.position.y) - Vector2(spr.texture.get_size()) * spr.pixel_size * 0.5,
-			Vector2(spr.texture.get_size()) * spr.pixel_size)
-		var fire_size := Vector2(fire.texture.get_width() / fire.hframes, fire.texture.get_height()) * fire.pixel_size
-		var fire_rect := Rect2(Vector2(fire.position.x, fire.position.y) - fire_size * 0.5, fire_size)
-		_expect(body_rect.grow(0.001).encloses(fire_rect),
-			"the flame stays inside the drawing's box, so _fit_height sizes the beast the same")
-	var anim := Combat3D._find_anim(root)
-	_expect(anim != null and anim.has_animation("idle"), "the burning fist is the beast's idle")
-	if anim != null and anim.has_animation("idle"):
-		var idle := anim.get_animation("idle")
-		_expect(idle.loop_mode == Animation.LOOP_LINEAR, "the flame loops")
-		_expect(idle.track_get_path(0) == NodePath("Fire:frame"), "the idle steps the flame's frames")
+	# The sprite keeps its source's quality (Nick, 2026-10-06: "Its the
+	# quality that im looking for"): a thin warm line around a dark body whose
+	# cracks burn, not a thick cream halo around a figure that glows all over.
+	_expect(root.get_node_or_null("Fire") == null, "no fist flame: the pose is not the job any more")
+	if spr != null and spr.texture != null:
+		var img := spr.texture.get_image()
+		if img.is_compressed():
+			img.decompress()
+		var solid := 0
+		var cream := 0
+		var lums := PackedFloat32Array()
+		for y in range(0, img.get_height(), 4):
+			for x in range(0, img.get_width(), 4):
+				var px := img.get_pixel(x, y)
+				if px.a < 0.99:
+					continue
+				solid += 1
+				if px.r > 0.9 and px.g > 0.745 and px.b > 0.43:
+					cream += 1
+				lums.append(0.3 * px.r + 0.59 * px.g + 0.11 * px.b)
+		lums.sort()
+		var share := float(cream) / maxf(solid, 1)
+		_expect(share < 0.15, "the outline is a thin line, not a halo -- %.0f%% of the figure is cream" % (share * 100.0))
+		var mid: float = lums[lums.size() / 2] if lums.size() > 0 else 1.0
+		_expect(mid < 0.28, "the body stays dark, only the cracks glow -- median lum %.2f" % mid)
 	root.free()
 	# A drawing has no depth to clear: hunters stand closer, so it towers.
 	var drawn: float = Combat3D.ground_standoff_for(0.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT)

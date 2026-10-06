@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Stop the inking from destroying the jackal. Quality, not pose.**
+- [ ] 👀 **Stop the inking from destroying the jackal. Quality, not pose.**
       **Nick, 2026-10-06:** "The jackal should be able to move. So the direction doesnt matter. Its the quality that im looking for."
       **The pose is no longer the job.** Drop pose-matching, and drop the
       `repose` cut-and-rotate in `tools/beast_sprite.py` if it costs quality.
@@ -35,7 +35,10 @@ run failed.
       **Done when** `python tools/vs_target.py <after>.png <pair>.png --beast`
       shows the jackal holding the detail the concept has, and a head crop of the
       sprite is not visibly worse than the same crop of the concept.
-      Test: state=3d beast=cinder_jackal ^stop-the-inking-destroying-the-jackal
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stop the inking from destroying the jackal. Quality, not pose.|details]]
+      Ask: Is the thin warm line thick enough, or thicken it toward TARGET's?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-06-inking-after.png|420]] ^stop-the-inking-destroying-the-jackal
 
 - [ ] 👀 **The jackal becomes a 2.5D sprite, like the reference.**
       **Nick, 2026-10-05:** "the new model still doesn't match the style of the reference. could going to a vector 2d style boss help? have the builder do the 2.5D like in the reference."
@@ -693,3 +696,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Pile badges still brass.** Draw, discard and burn are the old brown card stacks, the one HUD piece not in A1.
 - [ ] (proposed) **Drawn-gap lever is clamped.** DRAWN_GAP_PER_HEIGHT below 0.8 no longer grows the jackal on screen; something else caps it.
 - [ ] (proposed) **Grey arc behind End Turn in 3dclimb.** A pale arc shows at x 1000-1150, y 630-720 in the climb shot.
+- [ ] (proposed) **Jackal smaller than TARGET.** At rest the beast fills far less of the frame than in TARGET.png.
+- [ ] (proposed) **Ring markers on the jackal at rest.** A grey chest ring and a yellow pelvis ring sit on the drawing.

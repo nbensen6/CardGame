@@ -1885,3 +1885,16 @@ and read as pale outlines. Final VERDICT: FAIL.
 
 Test: `state=3d beast=cinder_jackal`.
 
+## Stop the inking from destroying the jackal. Quality, not pose.
+
+2026-10-06 19:27 EDT — builder.
+
+- Before: thick cream stroke (52 px at 2x) + 20 px ink ring + halo, body posterised to four tones and median-filtered (size 25), cracks redrawn and glowed onto the rock. That is what melted the ears, flattened the muzzle and erased the facets. Measured on the old sprite: 33% of opaque pixels cream, median luminance 0.45.
+- Now `tools/beast_sprite.py` only cuts the concept off its card and lines the edge: the body is the concept's own pixels (2x Lanczos), a 10 px (2x) warm line (255,214,140) and a 28 px orange glow at 45%. New sprite: 9% cream (line + hottest cracks), median luminance 0.19.
+- `repose` and `flame` removed from the jackal's spec (the functions stay); `cinder_jackal_2d_flame.png` deleted. The torn arm was the worst artefact after the halo.
+- The fight sizes the beast by its texture box, so the thinner edge made the beast grow and cut the ears off the top. MARGIN now keeps the old stroke's clear room, so framing is as before.
+- Test: `_test_jackal_is_a_drawing` now checks no Fire node, cream share < 15%, median lum < 0.28 (fails on the old sprite, passes on the new).
+- Head crop: ![[art/shots/2026-10-06-head-pair-after.png|520]]
+- Grader: PASS. Meshy: 0 credits.
+- The drawing vs the words: agree here; TARGET's line is thin and warm.
+

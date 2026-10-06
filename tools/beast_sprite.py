@@ -39,40 +39,27 @@ BEASTS = {
             3: (560, 430), 4: (535, 330), 5: (512, 225),
         },
         "ledges": [0, 2, 3, 4],
-        # TARGET.png's pose out of the concept's arms-down turnaround (Nick,
-        # 2026-10-06: "use the reference again ... design"): the arm on the
-        # viewer's left is cut into upper arm and forearm+fist, the upper arm
-        # swung out to the side about the shoulder and the forearm swung up
-        # about the elbow, so the fist is raised beside the head. Concept
-        # pixels; degrees clockwise on screen. `nudge` slides the forearm onto
-        # the upper arm so the elbow stays one piece.
-        "repose": [
-            {"poly": [(300, 335), (400, 335), (405, 430), (360, 470), (285, 470)],
-             "pivot": (365, 345), "deg": 70},
-            {"poly": [(170, 370), (250, 360), (345, 440), (340, 520), (300, 560),
-                      (320, 670), (160, 680), (150, 520)],
-             "pivot": (300, 460), "deg": 150, "nudge": (30, 0)},
-        ],
-        # The raised fist burns at rest (TARGET.png): flame centre and size
-        # on the REPOSED concept, in concept pixels.
-        "flame": {"at": (205, 148), "size": (300, 230)},
+        # No "repose" and no "flame" (Nick, 2026-10-06: "The jackal should
+        # be able to move. So the direction doesnt matter. Its the quality
+        # that im looking for."): the cut-and-rotate arm tore the figure, and
+        # the fire belonged to that raised fist. Both stay available above.
     },
 }
 
 # TARGET.png, sampled.
-CREAM = np.array([255, 226, 160], float)
-INK = np.array([28, 16, 16], float)
-HALO = np.array([255, 168, 60], float)
-TONES = [np.array(c, float) for c in
-         ([66, 42, 37], [84, 55, 46], [96, 63, 51], [110, 73, 58])]
-CRACK = np.array([242, 82, 24], float)
-CRACK_HOT = np.array([255, 196, 72], float)
+LINE = np.array([255, 214, 140], float)
+HALO = np.array([255, 150, 50], float)
 
 SCALE = 2          # draw at 2x the concept so the strokes stay crisp
-CREAM_W = 52       # px at 2x: bold enough to read at play size (grader, 2026-10-06)
-INK_W = 20
-HALO_W = 40
-MARGIN = 2
+# px at 2x. TARGET's line is thin: about 4 px on a 600 px figure, so ~6 px
+# on the concept's 930 px one. The old 52 px cream stroke and 20 px ink ring
+# ate the ears, the muzzle and the eyes (Nick, 2026-10-06).
+LINE_W = 10
+HALO_W = 28
+# The fight sizes the beast by its texture's box, and its camera was framed
+# on the old 52 px stroke + 40 px halo. Keep that much clear room round the
+# thin line so the ears stay on screen at the same size as before.
+MARGIN = 2 + (52 + 40) - (LINE_W + HALO_W)
 
 
 def disk(r):
@@ -193,48 +180,24 @@ def build(beast_id):
     # Smooth the edge so the stroke is a clean line, not the concept's AA.
     body = ndi.gaussian_filter(body.astype(float), 1.5) > 0.5
 
-    # Cracks: the saturated orange. Hard edged, no gradient.
-    crack = body & (r > 150) & (r - b > 95) & (r - g > 35)
-    # Only the seams thick enough to read at play size survive, drawn
-    # thicker, with a yellow core like TARGET's: a few bold cracks, not a mesh.
-    crack = ndi.binary_opening(crack, disk(4))
-    crack = ndi.binary_dilation(crack, disk(3)) & body
-    hot = ndi.binary_erosion(crack, disk(6)) | (crack & (g > 150) & (r > 225))
-
-    # Flat fills: the concept's per-facet shading, smoothed and cut to four
-    # tones, so a facet reads as one colour like the drawing.
-    lum = 0.3 * r + 0.59 * g + 0.11 * b
-    lum = lum.copy()
-    lum[crack] = np.median(lum[body & ~crack])
-    lum = ndi.median_filter(lum, size=9)
-    cuts = np.percentile(lum[body & ~crack], [30, 60, 85])
-    tone = np.digitize(lum, cuts)
-    # A facet is one colour: vote out the speckle the concept's texture leaves.
-    tone = ndi.median_filter(tone, size=25)
+    # The figure is the concept's own pixels (Nick, 2026-10-06: "Its the
+    # quality that im looking for"): its facet planes, snout, eyes and cracks
+    # already are the drawing. Posterising them melted all four, so nothing
+    # here repaints the body; it only cuts it off the card and inks the edge.
+    # Pull the edge in a pixel so no grey card fringe survives under the line.
+    inside = ndi.binary_erosion(body, disk(1))
     out = np.zeros(a.shape[:2] + (4,), float)
-    for i, c in enumerate(TONES):
-        m = body & (tone == i)
-        out[m, :3] = c
-    out[crack, :3] = CRACK
-    out[hot, :3] = CRACK_HOT
-    out[body, 3] = 255
+    out[..., :3] = a
+    out[inside, 3] = 255
 
-    # The cracks glow onto the rock beside them.
-    # TARGET's cracks are hot enough to light the rock a hand's width out.
-    glow = ndi.gaussian_filter(crack.astype(float), 16) * 3.0
-    glow = np.clip(glow, 0, 1)[..., None] * (body & ~crack)[..., None]
-    out[..., :3] = out[..., :3] * (1 - 0.75 * glow) + HALO * 0.75 * glow
-
-    # Ink just inside the edge, the cream stroke outside it, then the halo.
-    inner = body & ~ndi.binary_erosion(body, disk(INK_W))
-    out[inner, :3] = INK
-    ring = ndi.binary_dilation(body, disk(CREAM_W)) & ~body
-    out[ring, :3] = CREAM
+    # TARGET.png's edge: a thin warm line hugging the figure, and outside it
+    # a faint orange glow. The body stays dark; only the cracks burn.
+    ring = ndi.binary_dilation(inside, disk(LINE_W)) & ~inside
+    out[ring, :3] = LINE
     out[ring, 3] = 255
-    stroke = body | ring
-    dist = ndi.distance_transform_edt(~stroke)
-    halo = (~stroke) & (dist < HALO_W)
-    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 2.0 * 0.55
+    dist = ndi.distance_transform_edt(~(inside | ring))
+    halo = ~(inside | ring) & (dist < HALO_W)
+    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 2.0 * 0.45
     out[halo, :3] = HALO
     out[halo, 3] = 255 * fall[halo]
 
