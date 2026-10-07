@@ -6811,7 +6811,11 @@ const STAIRCASE := {
 ## beast's centre through the hunter, then trucked right over the shoulder
 ## by shoulder_frame).
 ## 1.29 up the orbit, less the 0.36 v_offset Godot moves the lens down by.
-const STAIR_EYE_UP := 0.93
+## Derived from the rest camera's own constants (checker r2 iter 08): the
+## hand-measured 0.93 went stale the moment iter 01-03 moved the pitch and
+## lift, and every slab then hung on a sight line from the wrong eye.
+const STAIR_EYE_UP := HUNTER_HEIGHT * GROUND_VIEW_EYE + FOLLOW_DIST * GROUND_VIEW_PITCH \
+		- FOLLOW_DIST * GROUND_LIFT
 static func stair_eye_for(rest: Vector3, beast_centre: Vector3) -> Vector3:
 	var yaw := follow_yaw_for(rest, beast_centre, 0.0)
 	var truck: Vector3 = shoulder_frame(rest, yaw, FOLLOW_DIST, 1.0)["truck"]
@@ -6860,11 +6864,14 @@ func _stair_frog_gap(side: float) -> Vector3:
 	return Vector3(seen.x - want.x, 0.0, 0.0)
 
 
-## A staircase slab's thickness for half-width `r`: TARGET's sides run about
-## a seventh to a quarter of the slab's width, never thinner than a plain slab.
-const STAIR_THICK := 0.3
+## A staircase slab's thickness for half-width `r`: a tenth of its width.
+## 0.3 of r with a plain slab's floor (checker r2 iter 08): both critics
+## called the slabs "thick blocks with dark sides" -- the floor made the small
+## upper slabs nearly as thick as wide. TARGET's read as thin pale plates.
+const STAIR_THICK := 0.2
+const STAIR_MIN_THICK := HUNTER_HEIGHT * 0.1
 static func stair_thickness(r: float) -> float:
-	return maxf(SLAB_BLOCK_HEIGHT, r * STAIR_THICK)
+	return maxf(STAIR_MIN_THICK, r * STAIR_THICK)
 
 
 ## Mirror of `anchor` across x = `about` (the Goblin's line is the Frog's,

@@ -31775,8 +31775,9 @@ func _test_staircase_slabs_sit_on_the_eyes_sight_line() -> void:
 	var gap := Vector3(2.0, 0.0, 0.0)
 	_expect(Combat3D.stair_shift(gap, 0, 6) == gap and Combat3D.stair_shift(gap, 5, 6) == Vector3.ZERO,
 		"the Frog's shift is whole at the first slab and gone at the top")
-	_expect(Combat3D.stair_thickness(2.0) > Combat3D.SLAB_BLOCK_HEIGHT,
-		"a staircase slab shows a side a good fraction of its width")
+	_expect(Combat3D.stair_thickness(2.0) > Combat3D.SLAB_BLOCK_HEIGHT
+		and Combat3D.stair_thickness(2.0) <= 0.25 * 4.0,
+		"a staircase slab shows a side, thin against its width (TARGET's plates)")
 	var m := Combat3D.stair_mirror(Vector3(-1.0, 2.0, 3.0), 1.0)
 	_expect(m == Vector3(3.0, 2.0, 3.0), "the Goblin's line is the Frog's, mirrored about the top slab")
 	# The eye is behind the hunter, on the line from the beast through them.

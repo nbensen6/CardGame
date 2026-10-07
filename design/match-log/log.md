@@ -69,3 +69,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: HUD styling (both #1). New `tools/hudpanel_flat.py` → `hud_panel_flat_{base,glow}.png`, same nine-patch geometry as A1, swapped in for the A1 carved stone: a flat dark plate with a grey hairline, and the tinted layer is now a thin hairline, not a glow. Energy box: brown face + gold hairline + amber numeral (`ENERGY_FACE`, `ENERGY_GOLD`), no longer seat-coloured. End Turn: amber pill; Switch: navy pill (`PILL_RADIUS`, `SWITCH_FACE`), plates behind both hidden. The climb gauge's own green frame and the cards' glow are untouched.
 - Tests: ALL TESTS PASSED (the A1 button test now pins TARGET's two pills). No gameplay position changed.
 - Meshy: 0 credits.
+
+### iter 08
+- Critic A top 3: [MAJOR] left background a black void under the horizon, no slate cliff; [MAJOR] stones bunched/overlapping over the belly, two lowest thick and blocky; [MAJOR] hand ~1.6x too big, flat fan, green glow.
+- Critic B top 3: [MAJOR] stones — bottom two thick blocks with dark sides, upper four dark and bunched into a pile; [MAJOR] sternum seam short and dim; [MODERATE] fist fire a disc.
+- Changed: the stones (A #2, B #1 — highest combined rank). `STAIR_EYE_UP` is now derived from the rest camera's constants (the hand-measured 0.93 went stale when iters 01–03 moved pitch and lift, so every slab hung on a sight line from the wrong eye). Slab thickness `STAIR_THICK` 0.3→0.2 of the half-width, with its own floor `STAIR_MIN_THICK` (0.1 HH) instead of a plain slab's 0.28 HH, which had made the small upper slabs nearly as thick as wide. Still open: tops not lighter than sides; one of the Goblin's mirrored slabs shows by the top of the Frog's line.
+- Tests: ALL TESTS PASSED (the thickness test now also pins "thin"). Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
