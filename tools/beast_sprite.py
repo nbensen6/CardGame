@@ -34,8 +34,16 @@ BEASTS = {
         # Height -> pixel (x, y) on the CONCEPT image (1024 square). The
         # route climbs the right leg, the right flank, the chest, the neck,
         # and ends on the face, which stays clear at rest.
+        # TARGET.png shows the jackal from the hips up, rising out of the
+        # ground at the lava line, twice the size a whole figure could be in
+        # the same frame (checker iter 01, 2026-10-07: framing/scale MAJOR).
+        # The drawing is cut at concept row `cut`; `sink` px of it sit below
+        # the floor so the cut edge is hidden. The route now starts at the
+        # hips and climbs the flank, chest and neck to the face.
+        "cut": 640,
+        "sink": 18,
         "holds": {
-            0: (600, 960), 1: (612, 760), 2: (590, 600),
+            0: (600, 615), 1: (606, 560), 2: (590, 500),
             3: (560, 430), 4: (535, 330), 5: (512, 225),
         },
         "ledges": [0, 2, 3, 4],
@@ -196,6 +204,7 @@ def build(beast_id):
         body = keep == (int(np.argmax(sizes)) + 1)
     # Smooth the edge so the stroke is a clean line, not the concept's AA.
     body = ndi.gaussian_filter(body.astype(float), 0.75 * SCALE) > 0.5
+    cut = spec.get("cut")
 
     # The figure is the concept's own pixels (Nick, 2026-10-06: "Its the
     # quality that im looking for"): its facet planes, snout, eyes and cracks
@@ -220,6 +229,14 @@ def build(beast_id):
     out[halo, :3] = HALO
     out[halo, 3] = 255 * fall[halo]
 
+    if cut:
+        # Below the cut nothing is drawn: no body, no line, no halo. The line
+        # is NOT closed along the cut -- that edge is under the floor.
+        out[cut * SCALE:, 3] = 0
+        inside[cut * SCALE:] = False
+        ring[cut * SCALE:] = False
+        body = body.copy()
+        body[cut * SCALE:] = False
     # Crop to the drawing plus margin; keep the concept's feet as the origin.
     ys, xs = np.nonzero(inside | ring)
     x0, x1 = max(xs.min() - MARGIN, 0), min(xs.max() + MARGIN, out.shape[1])
@@ -238,6 +255,8 @@ def build(beast_id):
     by = np.nonzero(body.any(1))[0]
     bx = np.nonzero(body.any(0))[0]
     feet_px = by.max()                      # bottom of the body, 2x space
+    if cut:
+        feet_px -= spec.get("sink", 0) * SCALE   # the floor line, inside the cut
     head_px = by.min()
     mid_px = (bx.min() + bx.max()) / 2.0
     img = Image.fromarray(np.clip(out[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA")

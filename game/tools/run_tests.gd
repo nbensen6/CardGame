@@ -31785,7 +31785,9 @@ func _test_jackal_is_a_drawing() -> void:
 			_expect(absf(p.x - c.x) < half.x and absf(p.y - c.y) < half.y,
 				"hold %d is on the drawing -- got (%.2f, %.2f)" % [h, p.x, p.y])
 	if tops.has(5):
-		_expect((tops[5] as Vector3).y > 1.35, "the climb ends at the face -- got y=%.2f" % (tops[5] as Vector3).y)
+		# The drawing is 1.90 tall from the hips up (TARGET.png crops it at the
+		# lava line): the face is the top third of that, below the ears.
+		_expect((tops[5] as Vector3).y > 1.90 * 0.65, "the climb ends at the face -- got y=%.2f" % (tops[5] as Vector3).y)
 	# The sprite keeps its source's quality (Nick, 2026-10-06: "Its the
 	# quality that im looking for"): a thin warm line around a dark body whose
 	# cracks burn, not a thick cream halo around a figure that glows all over.
