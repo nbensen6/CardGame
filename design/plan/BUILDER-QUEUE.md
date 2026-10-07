@@ -10,6 +10,216 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+**Reset, Nick 2026-10-07: "reset all rules", "the goal is get to the concept as close as possible, any means necessary", "I want the builder to focus on aesthetic changes."**
+Every item from before this line is in `## Archive` at the bottom, and none of its instructions bind you, including the seat-colour glow, the old stone route and the old HUD material. The only references are `design/art/targets/TARGET.png` (the whole frame) and `TARGET-UI.png` (close-up of the cards and HUD). **Aesthetic work only:** change how things look, never rules, card numbers or balance. Shoot the rest frame with `state=3d beast=cinder_jackal` and pair it with `python3 tools/vs_target.py <shot>.png <pair>.png --full` (and `--hand` for cards). Meshy is open with no run cap; log what you spend.
+
+- [ ] **HUD and cards: TARGET's look, no glow.**
+      Remove the seat-colour glow from every card and every HUD panel. Match TARGET.png / TARGET-UI.png piece by piece: the boss plate (thin dark panel, segmented red bar, no glowing frame), the intent chip (small, dark, thin red edge), Log and Menu (plain text), the climb gauge (dark rounded panel, thin border), the energy box (dark fill, warm gold border, big number), draw/discard/burn, the cards (dark frame, green cost circle top left, no glow, TARGET's fan and size), End Turn (orange pill) and Switch (navy pill).
+      **Done when** `--full` and `--hand` pairs show no glow anywhere and each element reads as TARGET's.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
+      Today they are thick grey hexagonal pucks bunched at the belly. TARGET's are thin, flat, irregular slabs with soft bevelled edges, light tops and a slightly darker side, no outline, climbing in a clear staircase from left of the frog up and right to just under the sternum. Re-fit the positions to the camera as it is now (the checker has moved it since the stones shipped).
+      **Done when** the `--full` pair shows the same six slab shapes in the same places as TARGET.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Left background: cliff and purple sky, not black.**
+      The left third of the frame behind the jackal is a black void. TARGET has a dark slate cliff with cool edge highlights on the left and purple sky above it, mirroring the right side.
+      **Done when** the `--full` pair shows cliff and sky on both sides, matching TARGET's tones.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Fist fire: flame tongues, not a sun disc.**
+      The fire on the raised fist reads as a round glowing disc. TARGET's is licking flame tongues rising off the fist, orange edges and a yellow-white core. Keep it animated (flicker) in idle.
+      **Done when** the `--beast` pair shows TARGET's flame shape.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Frog's rock and the floor: TARGET's pedestal and hex tiles.**
+      TARGET's frog sits on a large dark faceted pedestal with its HP bar on the front; the floor is dark hex tiles with faint warm seams running to the lava band. Match both.
+      **Done when** the `--full` pair shows TARGET's pedestal size and shape and its floor.
+      Test: state=3d beast=cinder_jackal
+
+
+## Waiting on Nick
+
+The builder skips this section. Answer here or in Home; the item then moves
+into Now.
+
+
+## Open decisions
+
+None. The 2026-10-07 reset voided the old defaults (they are at the end of `## Archive`); TARGET.png decides.
+
+
+## Later — beast rollout (AI pipeline, see `tools/builder/BRIEF-art-rollout.md`)
+
+Do not start until the jackal fight is ticked. One beast per run through
+`design/guide/ai-beast-recipe.md` and `tools/blender/ai_beast.py`.
+
+- [x] `cinder_jackal` — the template
+- [ ] `crag_pup`
+- [ ] `bramble_hog`
+- [ ] `boulder_ram`
+- [ ] `yoke_ox`
+- [ ] `grove_bear` (elite)
+- [ ] `flicker_stag` (elite)
+- [ ] `glyph_tortoise` — check the sigil raycast lands on the head, not the shell
+
+Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
+- [ ] (proposed) **Harness frames run slow.** A software-rendered shot frame is ~0.2 s, so timed HUD notes fade within a few frames of a `press=`.
+- [ ] (proposed) **Top stones at the sigil's height, not the face.** The last stones sit at jaw/neck height beside the head; raising them moves the climb's end.
+- [ ] (proposed) **Stone pair centred on the sigil, not the beast.** The Goblin's line sits further right than the Frog's sits left.
+- [ ] (proposed) **Climbs skip the stone of an unsafe Height.** Routes stop only at safe ledges, so a climb from the ground to Height 2 jumps over Height 1's stone in one long hop.
+- [ ] (proposed) **Stone-to-stone hops are past the arc's ceiling.** On the jackal each hop is 16-25m against hop_arc's 9.15m; the arc stops growing and playtest's hop-distance-band now reports it.
+- [ ] (proposed) **Intent badge over the climbing hunter's head.** At some landings the beast's "Attack 7" chip sits on the Goblin's tank and ears.
+- [ ] (proposed) **Loose stones sit above their shadows.** Grader saw air between the big side stones and their ground shadows mid-climb.
+- [ ] (proposed) **Hunters too close for two stone lines.** From the Frog's view the Goblin's big stone sits under the climb gauge; narrowing the V covers the jackal's legs.
+- [ ] (proposed) **Stones cover the jackal's chest at rest.** From behind the Frog the floating stones hide part of the jackal's chest.
+- [ ] (proposed) **Hunter reads bigger at the sigil than at rest.** Camera-to-hunter distance is equal (2.49 vs 2.43 measured) yet the Frog is ~1.8x taller on screen at the top.
+- [ ] (proposed) **Intent badge covers the jackal's head at rest.** With the lower ground camera the "Attack 7" chip sits on the head.
+- [ ] (proposed) Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
+- [ ] (proposed) Up the side the Frog still reads about 1.5x its rest size at the same camera distance.
+- [ ] (proposed) **Hunters hidden behind the cards in the wide shot.** In the establishing view neither hunter shows above the card fan; only the ground ring does.
+- [ ] (proposed) **Grader reads the previous run's Ask.** It graded this run against "camera further back", the last run's question, not Nick's newest line.
+- [ ] (proposed) **Follow distance is further back than RoR2.** RoR2 puts the survivor ~16% of frame height; FOLLOW_DIST 5.2 gives ~11%.
+- [ ] (proposed) **Other hunter off-screen at rest.** With hunters on their own stone lines (~8 apart), the follow camera shows only the selected one.
+- [ ] (proposed) Nick's knockback screenshot shows the Frog side-on; the harness knockdown shows it facing the beast. Facing after a real enemy-turn knockback is unverified.
+- [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).
+- [ ] (proposed) **Playtest's hop-leftover-squash check is stale.** It still wants body scale 1 after a hop; hunters now rest at their fit scale (0.61/0.38), so it fails every hop.
+- [ ] (proposed) The fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.
+- [ ] (proposed) **beast-behind-stone is flaky.** The same code gives 10 or 12 fails; stones 5-7 sit at 15-24%, straddling the 15% line.
+- [ ] (proposed) **route-reversal red on main.** 64 fails: the Goblin's climb rungs 3 and 5 step backward along the sweep (on-body anchors, z 6.2 -> -0.99 -> 3.2).
+- [ ] (proposed) **damage-popup-offscreen red on main.** 2-3 fails in the 40-step playtest.
+- [ ] (proposed) Settings buttons run right up to the scrollbar with no gap.
+- [ ] (proposed) **shot.sh ignores + in console=.** Only play mode decodes "+"; console=climb+5 silently runs no command in a shot.
+- [ ] (proposed) beast-behind-stone rose 2 -> 6 fails (worst 17.6%) with the stones set back.
+- [ ] (proposed) **3dosu without hold= misses the circle.** Under the cloud's software renderer 26 frames close the window before the shot.
+- [ ] (proposed) **Sweep-bar face has no drag.** The Settings bar face gets the cost-based tap count but not the drag.
+- [ ] (proposed) **HOLD ON banner covers the log.** With the log open, the grip banner hides the first letters of each log line.
+- [ ] (proposed) **Jackal damage rework not started.** Nick asked to rethink how the jackal deals damage; only HP changed.
+- [ ] (proposed) After a claw-sweep throw the Frog's party card reads ↑2/5 but the height gauge reads "3 up".
+- [ ] (proposed) A hunter's damage number covers that hunter's body at the rest camera (the 7 sits on the Frog).
+- [ ] (proposed) The sweep's staged turn (shake, both hunters hop down on the bite) has no frame yet.
+- [ ] (proposed) Playtest beast-behind-stone swings 3 to 8 fails run to run; stone drift sits on the 15% line.
+- [ ] (proposed) The jackal's attack clip barely reads front-on at rest distance; the bite needs a lunge or a side view.
+- [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.
+- [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
+- [ ] (proposed) The Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
+- [ ] (proposed) Cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
+- [ ] (proposed) A kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
+- [ ] (proposed) The reward screen lays the jackal on its back; the death clip leaves it on its side.
+- [ ] (proposed) Beasts with no rig get the slow last hit and the pause, but no fall.
+- [ ] (proposed) The playtest's grip-while-away check only caught one hanging step in 40; a scripted hang would pin it.
+- [ ] (proposed) Timing notes can still open over the hunter's own body or legs (drag head over the Goblin).
+- [ ] (proposed) Timing notes may dip into the card band; clamp the walk's floor to the hand's top edge.
+- [ ] (proposed) Stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin's side covers it (30-47% vs <= 11%).
+- [ ] (proposed) The grip clock item is moot while grip is off; close or park it?
+- [ ] (proposed) enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
+- [ ] (proposed) The jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
+- [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.
+- [ ] (proposed) Mid-climb, timing note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
+- [ ] (proposed) On the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
+- [ ] (proposed) The jackal's ear tips keep a thin tan rim-light edge; drop toon rim for it too if Nick wants flatter.
+- [ ] (proposed) Every other biome still uses exponential fog that hazes its own arena wall the same way.
+- [ ] (proposed) A card tapped while its hunter is mid-hop lays its notes round where the hunter was.
+- [ ] (proposed) The Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
+- [ ] (proposed) **Grader penalises dev-camera frames by rest-shot rules.** It docked the dev zoom for a hidden Frog and cut-off ears, which Dev is meant to allow.
+- [ ] (proposed) The beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
+- [ ] (proposed) The zigzag's second stones sit over the jackal's chest from the rest camera, partly hiding it.
+- [ ] (proposed) The named 3dclimb shot starts at the sigil, so it cannot show the stones below the Frog.
+- [ ] (proposed) Mid-hop in 3dclimb with `climb 3`, the Frog leaves the top of the frame (screen y -26 to -206).
+- [ ] (proposed) shot.sh keeps `+` in console= (only play mode turns it into a space), so queue Test lines fail under shot.sh.
+- [ ] (proposed) 3dclimb already sits at Height 5, so its `climb 3` Test hops the Frog down, not up.
+- [ ] (proposed) The damage number on a blow to the jackal is ~8 px tall from the strike camera (85 m away), easy to miss.
+- [ ] (proposed) A hit-stop's slow motion is skipped if one frame outlasts 0.15 s (timers tick once a frame).
+- [ ] (proposed) Playtest `beast-behind-stone` already fails on main (6 times in a 30-step run).
+- [ ] (proposed) Floating stones cover the jackal's head and chest from the rest camera, so any head or face change is hidden.
+- [ ] (proposed) The jackal's leg flame markings sit outside the toon glow mask; only the ears responded to glow_gain.
+- [ ] (proposed) Shots take `console=hp 10` with a real space; `+` only decodes in play mode, so a Test line pasted into shot.sh silently fails.
+- [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.
+- [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.
+- [ ] (proposed) **Gauge covers the Goblin's stone.** The climb gauge panel on the right edge overlaps the Goblin's stone in the climb frame.
+- [ ] (proposed) The sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
+- [ ] (proposed) **Goblin off-frame in jackal shots.** The Goblin and its stones sit past the right edge in both the rest and climb frames.
+- [ ] (proposed) **Frog stone lost against the jackal.** The dark lava stone has little contrast against the black jackal body behind it.
+- [ ] (proposed) **Rest camera flattens the far rim.** At rest the whole trench beyond the floor is a few rows at the horizon.
+- [ ] (proposed) **Lava streaks at grazing angles.** From the low camera the lava's noise aliases into horizontal stripes.
+- [ ] (proposed) **Seam lights are evenly spaced.** They ring the wall on a fixed pattern, not on the lava seams painted in its texture.
+- [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
+- [ ] (proposed) **The rest camera sees almost no sky.** Cliffs, the boss bar and the intent badge leave a ~250x100 px notch, so sky work barely shows.
+- [ ] (proposed) **Stone beside the Frog sits nearer the lens.** Just after the climb 3 landing, the right-hand stone looks as near the camera as the Frog's own.
+- [ ] (proposed) **No max energy in the snapshot.** The orb can only say "3", not Slay the Spire's "3/3".
+- [ ] (proposed) **Climb gauge still wears the old panel look.** The right-hand rail is the one HUD piece not redesigned.
+- [ ] (proposed) **Energy orb with no card costs.** The orb still says 3 while no card shows what it spends.
+- [ ] (proposed) **Card name ribbons still inset for the gem.** The banner and borderless name keep their left gap for a gem that is gone.
+- [ ] (proposed) A small "<" chevron shows at the far left edge mid-screen in the hover frame; no owner found.
+- [ ] (proposed) The jackal's name and HP plate touches the active hunter's feet at the climb camera.
+- [ ] (proposed) The old crown-tracking intent_tag_pos and its ten tests are now unused; delete once the HUD slot sticks.
+- [ ] (proposed) The deck list still draws cards in the old baked green frame, not the new border.
+- [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.
+- [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.
+- [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.
+- [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
+- [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.
+- [ ] (proposed) **Test this now links still carry idleat=.** The shot-only grid argument is harmless now but does nothing in play.
+- [ ] (proposed) The ash sky glow pulse (once per 9 s) has no frame proving it shows.
+- [ ] (proposed) **A climb stone sits in front of the jackal's face.** At the closer rest camera the third stone covers the head.
+- [ ] (proposed) **Standoff is shared by every beast.** GROUND_STANDOFF 4.2 -> 1.75 brings every fight's beast closer, not only the jackal.
+- [ ] (proposed) **The jackal is narrow head-on.** A front-facing quadruped is ~17% of frame width; A's beast spans most of it.
+- [ ] (proposed) Card faces are still mixed: Tongue Snap, Tongue Flick are pictograms and Scramble a 3D render; needs a painted-art pipeline.
+- [ ] (proposed) The beast plate keeps the name inline; picture B sets the name on its own tab above a wide bar.
+- [ ] (proposed) Gold HUD frames are bevelled rings, not the scrolled end-caps and crown of picture B.
+- [ ] (proposed) **The Frog has no contact shadow on its rock.** The rest rock is lit, but no darker shadow shows under the feet.
+- [ ] (proposed) **The jackal's thick outline is ragged.** At width 0.018 the inverted hull frays along the low-poly flanks.
+- [ ] (proposed) **The v2 jackal has no rig.** No idle, attack, hit or death clips; the old `_ai` one had all four.
+- [ ] (proposed) **The sigil ring sits on the v2 jackal's forehead.** climb_5 at y 1.44 puts the ring over the eyes.
+- [ ] (proposed) **Stones still ring the beast.** Two lines flank the body instead of climbing the chest as in A.
+- [ ] (proposed) **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
+- [ ] (proposed) **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
+- [ ] (proposed) **Lava ring shows near the camera at a closer standoff.** Below gap ~1.2 an orange slab fills the bottom-left.
+- [ ] (proposed) **CAMERA_FLOOR caps the rest tilt.** Pitch below about -0.10 no longer tilts the rest camera up.
+- [ ] (proposed) **Stones stay put while the jackal punches.** They float in world space; the body swings out from under them.
+- [ ] (proposed) **Idle bows the jackal's head.** At rest the face and eyes tip down out of view.
+- [ ] (proposed) **Punch leaves the frame top.** Mid-combo the raised fist and head cross the top edge.
+- [ ] (proposed) **enemyat= past the beast's turn runs on wall clock.** Under software render it gets ahead of game time.
+- [ ] (proposed) **Sigil above the climb's end.** The jackal's top stone is now at the chest, ~7 units below the head's sigil.
+- [ ] (proposed) **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest under the staircase's top.
+- [ ] (proposed) **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`.
+- [ ] (proposed) **Floor tone was near black.** `floor_tone` is an sRGB `source_color`, so 0.17 rendered almost black; raised to 0.25.
+- [ ] (proposed) **Stones and rest rocks still cobble-textured.** Beside the flat cliffs they are the last detailed-realistic surfaces in frame.
+- [ ] (proposed) **Skinned TANGENT is mangled.** Any rigged model's outline must carry welded normals in NORMAL, not TANGENT.
+- [ ] (proposed) **Jackal body a shade orange with the outline.** Cracks stand out less than in picture A.
+- [ ] (proposed) **Horizon band was the heat haze.** The shimmer cylinder adds glow; dimming the lava pool alone does nothing.
+- [ ] (proposed) A brighter jackal body floor (0.36) flattens the body into one orange tone and hides its cracks.
+- [ ] (proposed) **Idle pose varies between shots.** The jackal's idle differs frame to frame, so graders credit changes nobody made.
+- [ ] (proposed) **Ring markers on the jackal's chest.** Two pale rings sit on its chest at rest; picture A has none.
+- [ ] (proposed) A thin magenta streak sits at the far-left horizon in state=3d; picture A has none.
+- [ ] (proposed) **Frog's outline is invisible.** Its dark line exists but vanishes against the dark plinth and floor.
+- [ ] (proposed) **Embers are random between shots.** Small tone changes drown in ember scatter, so the grader calls them unchanged; seed them in shots.
+- [ ] (proposed) **Stones sit beside the drawn jackal.** The climb staircase runs up its left flank, not across its front as in TARGET.
+- [ ] (proposed) **Hull code is now dead for the jackal only.** Other beasts still use foothold_anchor's hull, _front_of_beast and stand_z_for, so they stay.
+- [ ] (proposed) **Drawn jackal has no idle or attack motion.** The sprite is a still; a bob or squash on its turn would sell it.
+- [ ] (proposed) **Slab drop shadows don't show.** A black blur under each slab vanishes against the near-black floor and beast.
+- [ ] (proposed) **Near stone smaller than the Frog's plinth.** The rest rock is wider than the first slab; TARGET's first slab is the biggest thing on the floor.
+- [ ] (proposed) **Hand fan hides the card footer.** At rest every card is cut at the screen's bottom edge, so a footer or rarity token never shows.
+- [ ] (proposed) **Raised card's title clipped in shots.** hover= lifts the card past the top of the fan, cutting off its name plate.
+- [ ] (proposed) **Second seat's blue hand unshot.** The rest frame only shows the Frog's green cards; a switch= shot would prove blue.
+- [ ] (proposed) **Thin HUD panels lose their stone.** The beast plate, intent, plates and Switch are so short the A1 band reads as an outline.
+- [ ] (proposed) **Pile badges still brass.** Draw, discard and burn are the old brown card stacks, the one HUD piece not in A1.
+- [ ] (proposed) **Drawn-gap lever is clamped.** DRAWN_GAP_PER_HEIGHT below 0.8 no longer grows the jackal on screen; something else caps it.
+- [ ] (proposed) **Grey arc behind End Turn in 3dclimb.** A pale arc shows at x 1000-1150, y 630-720 in the climb shot.
+- [ ] (proposed) **Jackal smaller than TARGET.** At rest the beast fills far less of the frame than in TARGET.png.
+- [ ] (proposed) **Ring markers on the jackal at rest.** A grey chest ring and a yellow pelvis ring sit on the drawing.
+- [ ] (proposed) **Grader can't see sprite_match.** It fails items for numbers it can't read off a frame; hand it the printout?
+- [ ] (proposed) **Post chain crushes dark art.** The fight blacks out everything under ~0.14 linear; other dark art may suffer.
+- [ ] (proposed) **Lava horizon reads brighter behind the jackal's feet.** Grader saw it brighten this run; the halo may spill on the lava line.
+- [ ] (proposed) **Fight reads the climb holds once.** The rig moves its climb_ markers, but stones and hunters stay where they were placed at load.
+- [ ] (proposed) **sprite_match aims at the concept, not TARGET.** TARGET's own jackal scores outline 0.0146 / crack 0.182 against its 0.005 / 0.125 targets; the fire layer counts as cracks.
+- [ ] (proposed) **Shoulder notch at the attack's impact.** A small dark wedge shows where the swung upper arm leaves the torso.
+- [ ] (proposed) **Frog can't stand under the sternum.** The shoulder truck draws a waiting hunter ~100 px left of it; TARGET centres the Frog there.
+- [ ] (proposed) **Bevelled slab tops.** TARGET's slab tops show crisp facet planes; ours are smooth.
+
+## Archive — everything in Now before the 2026-10-07 reset (history only; binds nothing)
+
 - [ ] 👀 **Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.|details]]
       Ask: Grader failed this: climb stones don't ride the body. Make the fight re-read holds?
@@ -577,13 +787,7 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-05-overnight-p1-before.png|420]] ![[agents/frames/builder/2026-10-05-overnight-p20-after.png|420]] ^overnight-keep-closing-the-gap-to-picture-a
 
-## Waiting on Nick
-
-The builder skips this section. Answer here or in Home; the item then moves
-into Now.
-
-
-## Open decisions, with the default the builder takes if Nick says nothing
+### Old open-decision defaults (void since 2026-10-07)
 
 - #14 stones: five per hunter, as built.
 - #19 gap vs lens: keep the gap, narrow the lens until the beast fills the
@@ -593,171 +797,3 @@ into Now.
 - Zigzag width: about one hunter height each side of the old line.
 - Lava: a ring at the arena's edge, not rivers across the floor.
 - HUD palette: black glass, ember-orange rim, gold for energy and the sigil.
-
-## Later — beast rollout (AI pipeline, see `tools/builder/BRIEF-art-rollout.md`)
-
-Do not start until the jackal fight is ticked. One beast per run through
-`design/guide/ai-beast-recipe.md` and `tools/blender/ai_beast.py`.
-
-- [x] `cinder_jackal` — the template
-- [ ] `crag_pup`
-- [ ] `bramble_hog`
-- [ ] `boulder_ram`
-- [ ] `yoke_ox`
-- [ ] `grove_bear` (elite)
-- [ ] `flicker_stag` (elite)
-- [ ] `glyph_tortoise` — check the sigil raycast lands on the head, not the shell
-
-Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
-- [ ] (proposed) **Harness frames run slow.** A software-rendered shot frame is ~0.2 s, so timed HUD notes fade within a few frames of a `press=`.
-- [ ] (proposed) **Top stones at the sigil's height, not the face.** The last stones sit at jaw/neck height beside the head; raising them moves the climb's end.
-- [ ] (proposed) **Stone pair centred on the sigil, not the beast.** The Goblin's line sits further right than the Frog's sits left.
-- [ ] (proposed) **Climbs skip the stone of an unsafe Height.** Routes stop only at safe ledges, so a climb from the ground to Height 2 jumps over Height 1's stone in one long hop.
-- [ ] (proposed) **Stone-to-stone hops are past the arc's ceiling.** On the jackal each hop is 16-25m against hop_arc's 9.15m; the arc stops growing and playtest's hop-distance-band now reports it.
-- [ ] (proposed) **Intent badge over the climbing hunter's head.** At some landings the beast's "Attack 7" chip sits on the Goblin's tank and ears.
-- [ ] (proposed) **Loose stones sit above their shadows.** Grader saw air between the big side stones and their ground shadows mid-climb.
-- [ ] (proposed) **Hunters too close for two stone lines.** From the Frog's view the Goblin's big stone sits under the climb gauge; narrowing the V covers the jackal's legs.
-- [ ] (proposed) **Stones cover the jackal's chest at rest.** From behind the Frog the floating stones hide part of the jackal's chest.
-- [ ] (proposed) **Hunter reads bigger at the sigil than at rest.** Camera-to-hunter distance is equal (2.49 vs 2.43 measured) yet the Frog is ~1.8x taller on screen at the top.
-- [ ] (proposed) **Intent badge covers the jackal's head at rest.** With the lower ground camera the "Attack 7" chip sits on the head.
-- [ ] (proposed) Mid-hop the attack badge still touches the Frog's head despite the hunter-rect clamp.
-- [ ] (proposed) Up the side the Frog still reads about 1.5x its rest size at the same camera distance.
-- [ ] (proposed) **Hunters hidden behind the cards in the wide shot.** In the establishing view neither hunter shows above the card fan; only the ground ring does.
-- [ ] (proposed) **Grader reads the previous run's Ask.** It graded this run against "camera further back", the last run's question, not Nick's newest line.
-- [ ] (proposed) **Follow distance is further back than RoR2.** RoR2 puts the survivor ~16% of frame height; FOLLOW_DIST 5.2 gives ~11%.
-- [ ] (proposed) **Other hunter off-screen at rest.** With hunters on their own stone lines (~8 apart), the follow camera shows only the selected one.
-- [ ] (proposed) Nick's knockback screenshot shows the Frog side-on; the harness knockdown shows it facing the beast. Facing after a real enemy-turn knockback is unverified.
-- [ ] (proposed) A cancelled hop resets the body's scale but not its forward lean (rotation.x).
-- [ ] (proposed) **Playtest's hop-leftover-squash check is stale.** It still wants body scale 1 after a hop; hunters now rest at their fit scale (0.61/0.38), so it fails every hop.
-- [ ] (proposed) The fading "Camera: Dev" note overlaps the beast's "Attack 7" intent chip.
-- [ ] (proposed) **beast-behind-stone is flaky.** The same code gives 10 or 12 fails; stones 5-7 sit at 15-24%, straddling the 15% line.
-- [ ] (proposed) **route-reversal red on main.** 64 fails: the Goblin's climb rungs 3 and 5 step backward along the sweep (on-body anchors, z 6.2 -> -0.99 -> 3.2).
-- [ ] (proposed) **damage-popup-offscreen red on main.** 2-3 fails in the 40-step playtest.
-- [ ] (proposed) Settings buttons run right up to the scrollbar with no gap.
-- [ ] (proposed) **shot.sh ignores + in console=.** Only play mode decodes "+"; console=climb+5 silently runs no command in a shot.
-- [ ] (proposed) beast-behind-stone rose 2 -> 6 fails (worst 17.6%) with the stones set back.
-- [ ] (proposed) **3dosu without hold= misses the circle.** Under the cloud's software renderer 26 frames close the window before the shot.
-- [ ] (proposed) **Sweep-bar face has no drag.** The Settings bar face gets the cost-based tap count but not the drag.
-- [ ] (proposed) **HOLD ON banner covers the log.** With the log open, the grip banner hides the first letters of each log line.
-- [ ] (proposed) **Jackal damage rework not started.** Nick asked to rethink how the jackal deals damage; only HP changed.
-- [ ] (proposed) After a claw-sweep throw the Frog's party card reads ↑2/5 but the height gauge reads "3 up".
-- [ ] (proposed) A hunter's damage number covers that hunter's body at the rest camera (the 7 sits on the Frog).
-- [ ] (proposed) The sweep's staged turn (shake, both hunters hop down on the bite) has no frame yet.
-- [ ] (proposed) Playtest beast-behind-stone swings 3 to 8 fails run to run; stone drift sits on the 15% line.
-- [ ] (proposed) The jackal's attack clip barely reads front-on at rest distance; the bite needs a lunge or a side view.
-- [ ] (proposed) The grip bar shows no seconds, so the 5 s grip is only provable in code.
-- [ ] (proposed) Timing notes 3-4 and the drag path cover the jackal's intent badge mid-climb.
-- [ ] (proposed) The Frog model faces sideways, not the beast, so a pitch lean reads as a roll.
-- [ ] (proposed) Cards played through a pick (exhaust/cheapen/meld) still resolve instantly, without the flight.
-- [ ] (proposed) A kill from the ground keeps the far rest shot, so the fall reads small behind the first stone.
-- [ ] (proposed) The reward screen lays the jackal on its back; the death clip leaves it on its side.
-- [ ] (proposed) Beasts with no rig get the slow last hit and the pause, but no fall.
-- [ ] (proposed) The playtest's grip-while-away check only caught one hanging step in 40; a scripted hang would pin it.
-- [ ] (proposed) Timing notes can still open over the hunter's own body or legs (drag head over the Goblin).
-- [ ] (proposed) Timing notes may dip into the card band; clamp the walk's floor to the hand's top edge.
-- [ ] (proposed) Stone lines are mirror-symmetric about the jackal's box centre, yet only the Goblin's side covers it (30-47% vs <= 11%).
-- [ ] (proposed) The grip clock item is moot while grip is off; close or park it?
-- [ ] (proposed) enemyat= in a `play` Test link would still freeze the view and quit the window, same trap as fly=.
-- [ ] (proposed) The jackal's wind-up has no pose of its own; the attack clip's first 16 frames barely move front-on.
-- [ ] (proposed) The intent badge switches to next round's intent on the bite frame, before the new hand.
-- [ ] (proposed) Mid-climb, timing note 1 can sit over the jackal's leg; nothing keeps notes off the beast.
-- [ ] (proposed) On the ground the Frog's attack cards read "Deal 1 damage"; at the sigil they read 7.
-- [ ] (proposed) The jackal's ear tips keep a thin tan rim-light edge; drop toon rim for it too if Nick wants flatter.
-- [ ] (proposed) Every other biome still uses exponential fog that hazes its own arena wall the same way.
-- [ ] (proposed) A card tapped while its hunter is mid-hop lays its notes round where the hunter was.
-- [ ] (proposed) The Frog's tongue aims at the jackal's middle, not the weak point, even mid-climb.
-- [ ] (proposed) **Grader penalises dev-camera frames by rest-shot rules.** It docked the dev zoom for a hidden Frog and cut-off ears, which Dev is meant to allow.
-- [ ] (proposed) The beatat= crop strip leaves the Goblin out of frame, so it cannot prove the other hunter stays still.
-- [ ] (proposed) The zigzag's second stones sit over the jackal's chest from the rest camera, partly hiding it.
-- [ ] (proposed) The named 3dclimb shot starts at the sigil, so it cannot show the stones below the Frog.
-- [ ] (proposed) Mid-hop in 3dclimb with `climb 3`, the Frog leaves the top of the frame (screen y -26 to -206).
-- [ ] (proposed) shot.sh keeps `+` in console= (only play mode turns it into a space), so queue Test lines fail under shot.sh.
-- [ ] (proposed) 3dclimb already sits at Height 5, so its `climb 3` Test hops the Frog down, not up.
-- [ ] (proposed) The damage number on a blow to the jackal is ~8 px tall from the strike camera (85 m away), easy to miss.
-- [ ] (proposed) A hit-stop's slow motion is skipped if one frame outlasts 0.15 s (timers tick once a frame).
-- [ ] (proposed) Playtest `beast-behind-stone` already fails on main (6 times in a 30-step run).
-- [ ] (proposed) Floating stones cover the jackal's head and chest from the rest camera, so any head or face change is hidden.
-- [ ] (proposed) The jackal's leg flame markings sit outside the toon glow mask; only the ears responded to glow_gain.
-- [ ] (proposed) Shots take `console=hp 10` with a real space; `+` only decodes in play mode, so a Test line pasted into shot.sh silently fails.
-- [ ] (proposed) **Hurt-pattern notch is faint.** The ember line where the jackal turns to its hurt moves is 1 px and hard to pick out at 1280x720.
-- [ ] (proposed) Every intent badge now wears the red rim; Defend reads calm only by its gold icon and text.
-- [ ] (proposed) **Gauge covers the Goblin's stone.** The climb gauge panel on the right edge overlaps the Goblin's stone in the climb frame.
-- [ ] (proposed) The sheen band is view-anchored, so it sits under the hunter's feet and can read as a halo around them.
-- [ ] (proposed) **Goblin off-frame in jackal shots.** The Goblin and its stones sit past the right edge in both the rest and climb frames.
-- [ ] (proposed) **Frog stone lost against the jackal.** The dark lava stone has little contrast against the black jackal body behind it.
-- [ ] (proposed) **Rest camera flattens the far rim.** At rest the whole trench beyond the floor is a few rows at the horizon.
-- [ ] (proposed) **Lava streaks at grazing angles.** From the low camera the lava's noise aliases into horizontal stripes.
-- [ ] (proposed) **Seam lights are evenly spaced.** They ring the wall on a fixed pattern, not on the lava seams painted in its texture.
-- [ ] (proposed) **8-light cap per mesh.** The Compatibility renderer lights a mesh with 8 omni lights at most; the floor's 8 lava lights use its whole budget.
-- [ ] (proposed) **The rest camera sees almost no sky.** Cliffs, the boss bar and the intent badge leave a ~250x100 px notch, so sky work barely shows.
-- [ ] (proposed) **Stone beside the Frog sits nearer the lens.** Just after the climb 3 landing, the right-hand stone looks as near the camera as the Frog's own.
-- [ ] (proposed) **No max energy in the snapshot.** The orb can only say "3", not Slay the Spire's "3/3".
-- [ ] (proposed) **Climb gauge still wears the old panel look.** The right-hand rail is the one HUD piece not redesigned.
-- [ ] (proposed) **Energy orb with no card costs.** The orb still says 3 while no card shows what it spends.
-- [ ] (proposed) **Card name ribbons still inset for the gem.** The banner and borderless name keep their left gap for a gem that is gone.
-- [ ] (proposed) A small "<" chevron shows at the far left edge mid-screen in the hover frame; no owner found.
-- [ ] (proposed) The jackal's name and HP plate touches the active hunter's feet at the climb camera.
-- [ ] (proposed) The old crown-tracking intent_tag_pos and its ten tests are now unused; delete once the HUD slot sticks.
-- [ ] (proposed) The deck list still draws cards in the old baked green frame, not the new border.
-- [ ] (proposed) The rail (compact) card form still wears the old baked frame stylebox.
-- [ ] (proposed) **Aimed-at and climb info lost with the party panel.** The red "being targeted" edge and the ↑Height/5 line lived only on the party cards.
-- [ ] (proposed) **Floor disc edge shows right of the Frog.** With the band gone a diagonal orange edge reads at the far right of the rest frame.
-- [ ] (proposed) **No shot shows the hunters' rock and the lava ring together.** A still cannot prove where particles start; the grader failed embers on that alone.
-- [ ] (proposed) **The idleat grid is too small for the sky.** Half-size frames hide cloud motion in the notch; a sky crop option would help.
-- [ ] (proposed) **Test this now links still carry idleat=.** The shot-only grid argument is harmless now but does nothing in play.
-- [ ] (proposed) The ash sky glow pulse (once per 9 s) has no frame proving it shows.
-- [ ] (proposed) **A climb stone sits in front of the jackal's face.** At the closer rest camera the third stone covers the head.
-- [ ] (proposed) **Standoff is shared by every beast.** GROUND_STANDOFF 4.2 -> 1.75 brings every fight's beast closer, not only the jackal.
-- [ ] (proposed) **The jackal is narrow head-on.** A front-facing quadruped is ~17% of frame width; A's beast spans most of it.
-- [ ] (proposed) Card faces are still mixed: Tongue Snap, Tongue Flick are pictograms and Scramble a 3D render; needs a painted-art pipeline.
-- [ ] (proposed) The beast plate keeps the name inline; picture B sets the name on its own tab above a wide bar.
-- [ ] (proposed) Gold HUD frames are bevelled rings, not the scrolled end-caps and crown of picture B.
-- [ ] (proposed) **The Frog has no contact shadow on its rock.** The rest rock is lit, but no darker shadow shows under the feet.
-- [ ] (proposed) **The jackal's thick outline is ragged.** At width 0.018 the inverted hull frays along the low-poly flanks.
-- [ ] (proposed) **The v2 jackal has no rig.** No idle, attack, hit or death clips; the old `_ai` one had all four.
-- [ ] (proposed) **The sigil ring sits on the v2 jackal's forehead.** climb_5 at y 1.44 puts the ring over the eyes.
-- [ ] (proposed) **Stones still ring the beast.** Two lines flank the body instead of climbing the chest as in A.
-- [ ] (proposed) **Jackal eyes too small at rest.** At 1:1 the eyes are 2-3 px; the glowing inner ears outshine them.
-- [ ] (proposed) **Jackal rock is red, not A's brown.** The softened texture plus the ember key still reads maroon.
-- [ ] (proposed) **Lava ring shows near the camera at a closer standoff.** Below gap ~1.2 an orange slab fills the bottom-left.
-- [ ] (proposed) **CAMERA_FLOOR caps the rest tilt.** Pitch below about -0.10 no longer tilts the rest camera up.
-- [ ] (proposed) **Stones stay put while the jackal punches.** They float in world space; the body swings out from under them.
-- [ ] (proposed) **Idle bows the jackal's head.** At rest the face and eyes tip down out of view.
-- [ ] (proposed) **Punch leaves the frame top.** Mid-combo the raised fist and head cross the top edge.
-- [ ] (proposed) **enemyat= past the beast's turn runs on wall clock.** Under software render it gets ahead of game time.
-- [ ] (proposed) **Sigil above the climb's end.** The jackal's top stone is now at the chest, ~7 units below the head's sigil.
-- [ ] (proposed) **Two sigil rings on the jackal's chest.** At rest two gold rings sit over the chest under the staircase's top.
-- [ ] (proposed) **Float stone homes never cleared.** `_build_float_stones` clears the stones but not `_float_home`.
-- [ ] (proposed) **Floor tone was near black.** `floor_tone` is an sRGB `source_color`, so 0.17 rendered almost black; raised to 0.25.
-- [ ] (proposed) **Stones and rest rocks still cobble-textured.** Beside the flat cliffs they are the last detailed-realistic surfaces in frame.
-- [ ] (proposed) **Skinned TANGENT is mangled.** Any rigged model's outline must carry welded normals in NORMAL, not TANGENT.
-- [ ] (proposed) **Jackal body a shade orange with the outline.** Cracks stand out less than in picture A.
-- [ ] (proposed) **Horizon band was the heat haze.** The shimmer cylinder adds glow; dimming the lava pool alone does nothing.
-- [ ] (proposed) A brighter jackal body floor (0.36) flattens the body into one orange tone and hides its cracks.
-- [ ] (proposed) **Idle pose varies between shots.** The jackal's idle differs frame to frame, so graders credit changes nobody made.
-- [ ] (proposed) **Ring markers on the jackal's chest.** Two pale rings sit on its chest at rest; picture A has none.
-- [ ] (proposed) A thin magenta streak sits at the far-left horizon in state=3d; picture A has none.
-- [ ] (proposed) **Frog's outline is invisible.** Its dark line exists but vanishes against the dark plinth and floor.
-- [ ] (proposed) **Embers are random between shots.** Small tone changes drown in ember scatter, so the grader calls them unchanged; seed them in shots.
-- [ ] (proposed) **Stones sit beside the drawn jackal.** The climb staircase runs up its left flank, not across its front as in TARGET.
-- [ ] (proposed) **Hull code is now dead for the jackal only.** Other beasts still use foothold_anchor's hull, _front_of_beast and stand_z_for, so they stay.
-- [ ] (proposed) **Drawn jackal has no idle or attack motion.** The sprite is a still; a bob or squash on its turn would sell it.
-- [ ] (proposed) **Slab drop shadows don't show.** A black blur under each slab vanishes against the near-black floor and beast.
-- [ ] (proposed) **Near stone smaller than the Frog's plinth.** The rest rock is wider than the first slab; TARGET's first slab is the biggest thing on the floor.
-- [ ] (proposed) **Hand fan hides the card footer.** At rest every card is cut at the screen's bottom edge, so a footer or rarity token never shows.
-- [ ] (proposed) **Raised card's title clipped in shots.** hover= lifts the card past the top of the fan, cutting off its name plate.
-- [ ] (proposed) **Second seat's blue hand unshot.** The rest frame only shows the Frog's green cards; a switch= shot would prove blue.
-- [ ] (proposed) **Thin HUD panels lose their stone.** The beast plate, intent, plates and Switch are so short the A1 band reads as an outline.
-- [ ] (proposed) **Pile badges still brass.** Draw, discard and burn are the old brown card stacks, the one HUD piece not in A1.
-- [ ] (proposed) **Drawn-gap lever is clamped.** DRAWN_GAP_PER_HEIGHT below 0.8 no longer grows the jackal on screen; something else caps it.
-- [ ] (proposed) **Grey arc behind End Turn in 3dclimb.** A pale arc shows at x 1000-1150, y 630-720 in the climb shot.
-- [ ] (proposed) **Jackal smaller than TARGET.** At rest the beast fills far less of the frame than in TARGET.png.
-- [ ] (proposed) **Ring markers on the jackal at rest.** A grey chest ring and a yellow pelvis ring sit on the drawing.
-- [ ] (proposed) **Grader can't see sprite_match.** It fails items for numbers it can't read off a frame; hand it the printout?
-- [ ] (proposed) **Post chain crushes dark art.** The fight blacks out everything under ~0.14 linear; other dark art may suffer.
-- [ ] (proposed) **Lava horizon reads brighter behind the jackal's feet.** Grader saw it brighten this run; the halo may spill on the lava line.
-- [ ] (proposed) **Fight reads the climb holds once.** The rig moves its climb_ markers, but stones and hunters stay where they were placed at load.
-- [ ] (proposed) **sprite_match aims at the concept, not TARGET.** TARGET's own jackal scores outline 0.0146 / crack 0.182 against its 0.005 / 0.125 targets; the fire layer counts as cracks.
-- [ ] (proposed) **Shoulder notch at the attack's impact.** A small dark wedge shows where the swung upper arm leaves the torso.
-- [ ] (proposed) **Frog can't stand under the sternum.** The shoulder truck draws a waiting hunter ~100 px left of it; TARGET centres the Frog there.
-- [ ] (proposed) **Bevelled slab tops.** TARGET's slab tops show crisp facet planes; ours are smooth.

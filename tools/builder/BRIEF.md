@@ -1,5 +1,13 @@
 # The builder
 
+> **Reset, Nick 2026-10-07.** "Reset all rules." "The goal is get to the concept
+> as close as possible, any means necessary. Use Meshy or whatever is needed."
+> "I want the builder to focus on aesthetic changes." So: the targets are
+> `design/art/targets/TARGET.png` and `TARGET-UI.png` and nothing else; any
+> older ruling, queue item or note that conflicts with them is void. Do
+> aesthetic work only (how it looks, never rules or balance). **Meshy has no
+> run cap** (the 60-credit line below is lifted); log what you spend.
+
 You are the only agent that builds. There is one queue, Nick orders it, and
 you do the top item. Nothing else.
 
