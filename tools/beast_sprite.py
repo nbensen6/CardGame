@@ -82,6 +82,11 @@ ROCK_WARM = 0.7
 
 # The cracks, widened and heated (see build).
 CRACK_GROW = 1
+# Checker iter 22: with the hairlines gone the seams read thin and even,
+# with little red falloff; TARGET's grade from a dark-red edge to the core.
+# A second band, CRACK_DEEP px further out, steps down to CRACK_DEEP_RGB.
+CRACK_DEEP = 1
+CRACK_DEEP_RGB = np.array([150, 34, 18], float)
 CRACK_EDGE = np.array([222, 72, 24], float)
 CRACK_CORE = np.array([255, 214, 96], float)
 CRACK_CORE_MIX = 0.4
@@ -308,6 +313,9 @@ def build(beast_id):
     out[rock, :3] += (lum * ROCK_HUE - out[rock, :3]) * ROCK_WARM
     grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
     out[grown, :3] = CRACK_EDGE
+    deep = ndi.binary_dilation(crack | grown, disk(CRACK_DEEP * SCALE)) & inside & ~crack & ~grown
+    out[deep, :3] = CRACK_DEEP_RGB
+    grown |= deep
     d = ndi.distance_transform_edt(~(crack | grown))
     bleed = inside & ~crack & ~grown & (d < CRACK_GLOW * SCALE)
     t = (np.clip(1 - d / (CRACK_GLOW * SCALE), 0, 1) ** 1.5 * CRACK_GLOW_A)[bleed, None]

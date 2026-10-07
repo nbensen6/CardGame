@@ -108,3 +108,7 @@ Run paused after iter 20 (20 of 25 spent). Iters 19–20 fixed the next two item
 Nick has still not ruled on the pose; the loop carries on under it.
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MODERATE cracks — a dense, fine vein network over the whole body, where TARGET's seams are fewer and wider and mark out big plates, (6) MODERATE stone route, (7) MODERATE framing, (8) MODERATE outline.
 Skipped 1–4 under the rulings above. Fixed 5 in `tools/beast_sprite.py`: crack pixels whose local half-width is under 2.5 px (22% of the concept's crack area, the hairline branches) are painted over with the nearest rock. The sternum's hot region is exempt. This agrees with iter 18's measurement that our chest coverage ran above TARGET's (29% vs 20%).
+
+## iter 22 — 2026-10-07 (pair iter-26.png; after: iter-27.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR stone route. Then (4) MAJOR extra UI, (5) MAJOR proportions, (6) MODERATE framing, (7) MODERATE cracks — thinner and more even, more yellow-orange with little red falloff, where TARGET's grade from dark-red edges to a hot core.
+Skipped 1–6 under the rulings above. Fixed 7 in `tools/beast_sprite.py`: every seam takes a second 1 px band outside its red edge, in deep red (150,34,18), before the orange bleed. The seams are wider and grade red → orange → yellow.
