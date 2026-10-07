@@ -10,6 +10,22 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.**
+      **Nick, 2026-10-07:** the rest pose and design must match his drawing, `design/art/targets/TARGET.png`, and the jackal must be animated. The camera is essentially front-on, so a flat drawn jackal is fine; it just has to move. This replaces the single static sprite from `tools/beast_sprite.py` and settles the pose question the checker was stuck on: **TARGET's pose IS the rest pose** (hunched, three-quarter turn, left fist raised and on fire).
+      **1. Art: layers cut from TARGET itself, not a new drawing.** Source is the jackal in TARGET.png, so the rest frame matches 1:1. Split it into layers: head, neck/torso, each upper arm, forearm and fist, and the fist's fire on its own layer. Repaint only what TARGET hides: the lower torso behind the stones, the chest behind the raised arm, and the overlap at every joint so nothing tears when a part rotates (the tearing is what killed the 2026-10-06 cut-and-rotate). Use Meshy image-to-image (approved, 60-credit run cap) or hand paint; say what you spent. Keep TARGET's outline, cracks, colours and facets as drawn. The inking settings the checker tuned in `beast_sprite.py` are reference values, not a filter to run over TARGET.
+      **2. Rig:** Godot Skeleton2D/Polygon2D (or Bone2D-parented Sprite2Ds) in a SubViewport drawn onto the existing billboard, so the arena and camera code stay as they are. Climb holds attach to the bones they sit near so they ride the animation.
+      **3. Clips:** `idle` (breathing, the fist's fire flickering; loops, never drifts far from the rest pose), `attack` (wind-up, then the raised fist swings down; damage lands on the impact frame, as the punch clip's `hit` did), `hit` (flinch), `death`. Wire them where `_beast_anim` drives Idle/Punch_Combo today.
+      **Done when** a rest frame paired with TARGET (`python3 tools/vs_target.py <rest>.png <pair>.png --beast`) shows the same pose and silhouette, and a strip of four frames (idle, wind-up, impact, back to idle) shows the jackal moving without tearing at any joint. Tests green.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Stones: TARGET's staircase, in TARGET's place.**
+      **Nick, 2026-10-07:** "make sure you are checking all the boxes to get to the concept. Ie stone design and placement." **This replaces the 2026-09-25 / 09-28 route** (first stone by the hunter, last in front of the head). TARGET.png is the route now.
+      **Design:** six pale grey slabs, thin and flat with soft bevelled edges, light tops (~160–190) over mid-grey sides, no black outline, each a little smaller and higher than the one below.
+      **Placement:** one staircase from the foreground, left of and just above the frog's rock, rising up and to the right across the front of the jackal's body, ending just under the sternum, where the cracks meet in the hot yellow seam. The face stays clear. Measure the slab positions off TARGET.png and match them in the rest shot.
+      **The climb ends at the sternum, not the face**, so move the top hold, the sigil/weak point and the climb gauge's top to match, and update the tests that assumed the face ("climb ends at the face"). The Goblin's line gets the same look, mirrored, outside the rest frame.
+      **Done when** a `--full` pair of the rest shot against TARGET (`python3 tools/vs_target.py <rest>.png <pair>.png --full`) shows the same slabs in the same places, and a climb from the ground to the top lands on each slab in turn. Tests green. Then append `## Round 2 — rigged jackal, TARGET stones (<date>)` to `design/match-log/log.md`: that heading restarts the checker on the whole frame.
+      Test: state=3d beast=cinder_jackal
+
 - [ ] 👀 **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
       Checker, 2026-10-07, on 02b55a8: all five measures land.
