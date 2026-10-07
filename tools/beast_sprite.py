@@ -88,7 +88,11 @@ EYE_GLOW_A = 0.55
 
 # The sternum: cracks near it heat toward white-yellow, and the rock right
 # round the junction takes a warm orange wash.
-HOT_CORE = np.array([255, 240, 170], float)
+# Checker iter 14: the pale core and round heat read as a blown-out
+# starburst spreading across the chest; TARGET's is a vertical yellow seam.
+# The heat now reaches HOT_SQUASH as far sideways as it does up and down.
+HOT_CORE = np.array([255, 222, 100], float)
+HOT_SQUASH = 0.45
 HOT_WASH = np.array([255, 120, 30], float)
 HOT_WASH_A = 0.35
 
@@ -264,7 +268,7 @@ def build(beast_id):
     if spec.get("hot"):
         (hx, hy), hr = spec["hot"]
         yy, xx = np.ogrid[:out.shape[0], :out.shape[1]]
-        heat = np.clip(1 - np.hypot(xx - hx * SCALE, yy - hy * SCALE) / (hr * SCALE), 0, 1)
+        heat = np.clip(1 - np.hypot((xx - hx * SCALE) / HOT_SQUASH, yy - hy * SCALE) / (hr * SCALE), 0, 1)
         # Near the junction the seams themselves swell into a molten pool.
         swell = ndi.binary_dilation(crack, disk(3 * SCALE)) & inside & (heat > 0.35)
         hc = (crack | grown | swell) & (heat > 0)

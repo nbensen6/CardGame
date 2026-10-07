@@ -70,3 +70,7 @@ Nick has still not ruled on the pose, so the loop carries on under it.
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR outline 1.5–2x too thick with a wide hazy halo, a sticker border rather than an inked line. Then (4) MAJOR framing, (5) MODERATE proportions, (6) MODERATE extra UI.
 Skipped 1–2 (Nick, 2026-10-06). Fixed 3 in `tools/beast_sprite.py`: measured on the pair at matched height the line was 9 px to TARGET's 6. LINE_W 9 → 7 (now 6 on screen) and HALO_W 14 → 10.
 Note for later runs: after rebuilding the sprite, run `godot --headless --path game --import` before `shot.sh`, or the shot shows the old texture.
+
+## iter 14 — 2026-10-07 (pair iter-16.png; after: iter-17.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR stones (route up the left arm, flatter). Then (4) MAJOR extra UI, (5) MAJOR proportions/framing, (6) MODERATE cracks — the chest hot spot a pale, blown-out blob spreading across the chest where TARGET's is a vertical yellow seam, (7) MODERATE outline now "a little thinner" than TARGET's.
+Skipped 1–5 under the rulings above. Left 7 alone: iter 13 measured our line at TARGET's 6 px, and the critics now split on it. Fixed 6 in `tools/beast_sprite.py`: the sternum heat is an upright ellipse (HOT_SQUASH 0.45 sideways) and its core is TARGET's yellow (255,222,100), not pale (255,240,170).
