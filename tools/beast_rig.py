@@ -46,6 +46,15 @@ BOX = (50, 40, 830, CUT + SINK)
 FIGURE_X = (140, 830)
 # Where TARGET's stones cross the body.
 STONE_BOX = [(330, 355), (648, 355), (648, 530), (330, 530)]
+INPAINT_STONES = True
+ROCK_DARK = (52, 26, 22)
+# Each of TARGET's slabs over the body, (x0, y0, x1, y1), read off a 3x crop
+# of TARGET.png. The grey test alone missed their orange-lit undersides and
+# left a slab's ghost on the belly, with a hard edge where the patch met it
+# (checker r2 iter 11: both critics' top MAJOR). Every pixel in these, a few
+# px grown, is stone whatever its colour.
+STONES = [(495, 364, 560, 388), (552, 382, 636, 415), (520, 414, 593, 443),
+          (440, 437, 538, 473), (335, 464, 485, 513)]
 SCALE = 2          # layers are drawn at 2x for a clean line in the fight
 HEIGHT = 1.90      # world height floor-to-ear-tip before _fit_height
 
@@ -148,7 +157,10 @@ def paint_hidden(T, m, line, walls):
     # by the cliff behind it, and patching it wrecked the far arm.
     stone = m & (mx - mn < 45) & (mx > 60) & poly_mask(STONE_BOX, m.shape)
     stone = ndi.binary_opening(stone, iterations=1)
-    stone = ndi.binary_dilation(stone, iterations=6) & m
+    rects = np.zeros_like(m)
+    for x0, y0, x1, y1 in STONES:
+        rects[y0:y1, x0:x1] = True
+    stone = (ndi.binary_dilation(stone, iterations=6) | ndi.binary_dilation(rects, iterations=3)) & m
     edge = m & ~ndi.binary_erosion(m, iterations=6)
     clean = m & ~stone & ~edge
     clean[CUT - 20:] = False
@@ -184,6 +196,19 @@ def paint_hidden(T, m, line, walls):
     patch = np.clip(out, 0, 255).astype(np.uint8)
     seam = ndi.binary_dilation(stone, iterations=2) & ~ndi.binary_erosion(stone, iterations=2) & m
     patch = cv2.inpaint(patch, seam.astype(np.uint8) * 255, 3, cv2.INPAINT_TELEA)
+    # The hand-picked slabs (STONES) are filled from the rock round them, not
+    # borrowed: a borrowed block brought its own seams and cracks and read as
+    # a pasted rectangle with a second sternum seam (r2 iter 11).
+    if INPAINT_STONES:
+        # The silhouette's gold line is kept out of the fill: masked to the
+        # rock's own dark tone while inpainting, so it cannot smear inward,
+        # then put back.
+        rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
+        hard = ndi.binary_dilation(rects, iterations=5) & m & ~rim
+        src = patch.copy()
+        src[rim | ~m] = ROCK_DARK
+        filled = cv2.inpaint(src, hard.astype(np.uint8) * 255, 9, cv2.INPAINT_TELEA)
+        patch[hard] = filled[hard]
     out = patch.astype(float)
     # The silhouette's own line, wherever the cut-out has none (behind the
     # stones, where the walls run): a band as wide as TARGET's rim.

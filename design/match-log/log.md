@@ -90,3 +90,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (A #2, B #1; tied with the hand on rank, picked as the one named MAJOR every iteration since 03). Measured each slab against TARGET in jackal heights (ears→lava, x from the head): they drew 0.04–0.11 too low and s3/s4 0.05–0.07 too far right, s0 0.25 too far left and 0.08 too wide. New `STAIRCASE.adjust` moves each climb point by its measured gap before the sight-line projection; widths of the two low slabs 0.305/0.28 → 0.25/0.23. After: every slab within ~0.04 of TARGET's spot, top slab at the sternum.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs (route-reversal is TARGET's own zig at the top rung), nothing new.
 - Meshy: 0 credits.
+
+### iter 11
+- Critic A top 3: [MAJOR] a hard horizontal cut across the jackal's torso right of the stones; [MAJOR] white speckle fringe on the right forearm and round the fist; [MAJOR] stones a near-vertical stack, bottom two too small.
+- Critic B top 3: [MAJOR] sprite alpha: hard horizontal seam across the lower torso + white fringe on the forearm/fist; [MAJOR] HUD ~1.5–2x too big; [MAJOR] stones a short steep cluster.
+- Changed: the torso seam (both #1). It was the ghost of TARGET's own slab left on the belly by `tools/beast_rig.py` — its grey test missed the slabs' orange-lit undersides — with the borrowed patch beside it ending in a hard edge. New `STONES` in beast_rig.py: TARGET's five body slabs as hand-read rects, always counted as stone, and filled by inpainting from the rock round them with the gold rim masked out (borrowed blocks there read as pasted rectangles with a second sternum seam). Regenerated `cinder_jackal_2d.png` / `_torso.png`; the slab ghost and the seam are gone. The dotted speckle columns look like ember particles, not the sprite; left for now.
+- Tests: ALL TESTS PASSED. Art only.
+- Meshy: 0 credits.
