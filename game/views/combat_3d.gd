@@ -532,7 +532,9 @@ const SCENE_SHIFT := 0.0
 ## bottom edge. See _apply_orbit for why this can't be done by moving the pivot.
 ## 0.03 (checker r2 iter 01, 2026-10-07; was 0.07): less lift drops the Frog
 ## toward TARGET's lower third without moving the far jackal much.
-const GROUND_LIFT := 0.03
+## -0.015 (r2 iter 03): the lens rises a touch to keep the Frog low under
+## the larger jackal.
+const GROUND_LIFT := -0.015
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
 const CAMERA_FLOOR := 0.5
@@ -592,7 +594,10 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## framing -- ears clipped by the top edge, frog mid-frame. With the lower
 ## pitch and lift, 1.35 puts the ears ~6% under the top, the lava at ~48%
 ## and the frog at ~57%: TARGET's layout in the space above the hand.
-const DRAWN_GAP_PER_HEIGHT := 1.35
+## 1.05 (r2 iter 03): both critics then called the jackal too small (~32% of
+## the width against TARGET's ~64%). With pitch -0.02 and lift -0.015 it
+## grows ~18%: ears ~3% under the top, lava ~52%, frog ~60%.
+const DRAWN_GAP_PER_HEIGHT := 1.05
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -674,7 +679,7 @@ const ROR2_PIVOT_OFFSET := 1.37
 const ROR2_CAMERA_DEPTH := 10.0
 ## The aim, in hunter heights above the feet, at rest AND climbing: RoR2's pivot.
 const GROUND_VIEW_EYE := (ROR2_CAPSULE_HEIGHT * 0.5 + ROR2_PIVOT_OFFSET) / ROR2_CAPSULE_HEIGHT   # 1.25
-const GROUND_VIEW_PITCH := 0.03   # 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
+const GROUND_VIEW_PITCH := -0.02   # 0.03 in r2 iter 01-02, 0.08 before; level-to-slightly-up drops the lava band to TARGET's waist. 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
 ## Stand-off at the top hold. The hunter stands in front of the face there
 ## (top_hold_z_for), so the shot is of the face: further back than the
 ## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.

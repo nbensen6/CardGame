@@ -33,3 +33,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the Goblin (both critics' MAJOR; the framing one is the 16:9-vs-square aspect, which no camera number fixes without clipping the ears — iter 01 set the height). `_stair_rest_x` puts the waiting Goblin 3 asides right (was 1.6), just off the right edge of the Frog's rest shot, as TARGET shows only the Frog (partner = Switch button + gauge pip). Switching to the Goblin still frames it (checked `state=goblin`).
 - Tests: ALL TESTS PASSED. Playtest: the same 21 pre-existing FAILs (hunter-off-marker, route-reversal rung 5), unchanged.
 - Meshy: 0 credits.
+
+### iter 03
+- Critic A top 3: [MAJOR] jackal too small for the frame (~33% of the width vs ~64%), scale up and centre; [MAJOR] stone staircase collapsed into a belly cluster, top slab far below the sternum; [MAJOR] upper-left background a black void, no left cliff or purple sky.
+- Critic B top 3: [MAJOR] jackal too small, scale up 20–25% with ears just under the HUD line; [MAJOR] left background black void; [MAJOR] stones thick hex pucks, not thin pale slabs.
+- Changed: jackal scale (both #1). `DRAWN_GAP_PER_HEIGHT` 1.35→1.05, `GROUND_VIEW_PITCH` 0.03→-0.02, `GROUND_LIFT` 0.03→-0.015. The jackal draws ~18% bigger (ears→lava 41.5%→49% of the frame): ears 3% under the top, lava 52%, frog 60%. Iter 01 shrank it to free the ears; this keeps them free by dropping the lava line instead.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing hunter-off-marker/route-reversal FAILs per step, nothing new.
+- Meshy: 0 credits.
