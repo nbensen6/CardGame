@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-06T21:10
-working_on: "Drive the jackal sprite to 1:1 with the concept."
+updated: 2026-10-07T15:43
+working_on: "Rig the jackal as a 2D cut-out in TARGET's pose."
 ---
 
 # builder
@@ -13,21 +13,28 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-06 21:10 EDT
+2026-10-07 15:43 EDT
 
-- **Did:** Warmed the jackal's rim to TARGET's gold, added an orange inner edge and a visible warm glow.
-- **Worked?** Partly: colour and glow now match, but the grader says the line reads half TARGET's weight. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-07-rim-gold-before.png]] then ![[frames/builder/2026-10-07-rim-gold-after.png]]
-- **Ask:** Grader failed this: line half TARGET's weight. Thicken past the measured width?
-- sprite_match last line: `0 of 5 off`. Meshy: 0 credits spent. The drawing outranked "keep the width": the line went 5 -> 7 px to TARGET's proportion, still inside the outline tolerance.
+- **Did:** Cut the jackal from TARGET into seven layers on a 2D rig; idle, attack, hit, death clips.
+- **Worked?** Partly: rest pose matches TARGET and it moves cleanly, but stones don't ride it. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-07-rig-before.png]] then ![[frames/builder/2026-10-07-rig-after.png]] and ![[frames/builder/2026-10-07-rig-strip.png]]
+- **Ask:** Grader failed this: climb stones don't ride the body. Make the fight re-read holds?
+- sprite_match last line: `3 of 5 off` (TARGET's own jackal also reads outline OFF under it; see notes). Meshy: 0 credits. The drawing outranked the concept-based sprite_match targets, per Nick's override.
 
 ## Notes
+
+- **Found:** The fight reads climb holds once; the rig's moving markers don't move stones or hunters.
+- **Found:** sprite_match targets the concept; TARGET's own jackal fails its outline measure.
+- **Found:** Small dark notch at the shoulder on the attack's impact frame.
+- **Found:** Ear tips touch the top of the rest frame (camera; also in the before frame).
 
 - **Found:** Lava horizon reads brighter behind the jackal's feet in the after frame; the halo may spill onto it.
 - **Found:** Grader cannot read sprite_match numbers off a frame, so it fails items for them.
 - **Found:** The fight's post chain blacks out everything under ~0.14 linear; other dark art may be crushed too.
 
 ## Log
+
+- 2026-10-07 15:43 EDT — builder: jackal rigged from TARGET (tools/beast_rig.py, views/drawn_rig.gd, SubViewport onto the billboard, idle/attack/hit/death, fire layer, trim_box keeps framing) + tests; grader FAIL x3 (holds), CLOSER; marked 👀; tests green, pushed.
 
 - 2026-10-06 21:10 EDT — builder: jackal rim gold: LINE amber 255,206,112 + orange inner px, halo 0.50/28 px gold, LINE_W 7; sprite_match figure alpha>128; 0 of 5 off; grader FAIL x3 (line weight), CLOSER; marked 👀; tests green, pushed.
 - 2026-10-06 20:21 EDT — builder: jackal 1:1: beast_sprite.py at 1x + halo 0.15; sprite_match strips the rim before body measures; drawn_sprite.gdshader + measured LUT (drawn_lut.py) undo the fight's tonemap for the drawing + test; sprite_match 0 of 5 off; grader FAIL x3 (rim); marked 👀; tests green, pushed.

@@ -1923,3 +1923,17 @@ Test: `state=3d beast=cinder_jackal`.
 - Meshy: 0 credits.
 - Pair: ![[agents/frames/builder/2026-10-07-sprite-1to1-pair.png|520]]
 
+## Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.
+
+2026-10-07 15:43 EDT, builder.
+
+- **How:** `tools/beast_rig.py` cuts the jackal out of TARGET.png itself: the gold rim is thresholded, the body flood-filled from the chest, and five short walls close the line where stones or lava hide it. Parts: torso, head, arm_l/fore_l (raised), arm_r/fore_r, and the fist's fire on its own layer (pulled out of TARGET by brightness and hue, then grown in behind the arm so a swing never opens a hole in it).
+- **Repaint:** stone holes in the body are filled with TARGET's own rock borrowed from a nearby offset (picked for clean source, little heat, matching border), not blurred; the line they hid is redrawn. Every parent keeps a 26 px band of its child's pixels under the cut, stopping 8 px short of the silhouette so the outline never doubles, and the band's edge is inked so a swung joint shows an outlined shoulder.
+- **Rig:** Node2D bones + Sprite2D parts in a `Rig` SubViewport (`views/drawn_rig.gd`) whose texture the existing `Body` billboard draws, premultiplied (`drawn_sprite.gdshader` gained `premul` and a `halo` grown from the moving alpha). The canvas is 90 TARGET px wider on the left for the swing; `trim_box` hands the fight the old figure box, so the camera and arena are unchanged (box pos/size identical to before).
+- **Clips:** idle 2.4 s loop (breathing, small sway, fire flicker), attack 1.2 s (wind-up 0.3, fist lowest at 0.48 = ENEMY_BITE_FRAC, so damage lands on impact), hit 0.45 s, death 1.6 s (sinks into the lava, fire goes out). `_beast_anim` finds the AnimationPlayer as before; no new wiring needed.
+- **Holds:** climb_/ledge_ markers ride a Marker2D on the torso/head every frame; the fight reads them once at load, so its stones and hunters do not follow (grader's main FAIL).
+- **sprite_match:** `3 of 5 off` (crack 0.272, detail 0.022, outline 0.0142). TARGET's own raw jackal scores crack 0.182 / outline 0.0146 / detail 0.086 at 1x, so outline matches TARGET; crack is raised by the fire layer and the lava-lit rows; detail is a 2x-resolution effect. Per Nick's override TARGET wins over the concept targets.
+- **Grader:** FAIL x3, CLOSER every round. Fixed between rounds: doubled outline on the far arm (underlay stopped at the rim), the pasted-rectangle patch (border-matched borrowing), stones wrongly detected on the far arm, pale hairlines at every joint (float premultiplied upscale). Left: stones/hunters don't ride the animation; small impact-frame shoulder notch; ears touch the frame top (camera, existed before).
+- **Meshy:** 0 credits; TARGET's own pixels were closer than any regeneration.
+- **Frames:** `2026-10-07-rig-before.png`, `-after.png`, `-pair-after.png`, `-strip.png` (idle, wind-up, impact, back to idle), `-hit-death.png`.
+

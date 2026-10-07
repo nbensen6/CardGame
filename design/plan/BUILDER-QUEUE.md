@@ -10,14 +10,17 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.**
+- [ ] 👀 **Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Rig the jackal as a 2D cut-out in TARGET's pose: drawn at rest, animated in the fight.|details]]
+      Ask: Grader failed this: climb stones don't ride the body. Make the fight re-read holds?
       **Nick, 2026-10-07, overriding everything earlier:** "Override and start with a clean fresh slate. The goal is get to the concept as close as possible, any means necessary. Use Meshy or whatever is needed." Any earlier ruling that conflicts with TARGET.png is void. **Meshy: no run cap for these two items**; log every task and its credits in the notes.
       **Nick, 2026-10-07:** the rest pose and design must match his drawing, `design/art/targets/TARGET.png`, and the jackal must be animated. The camera is essentially front-on, so a flat drawn jackal is fine; it just has to move. This replaces the single static sprite from `tools/beast_sprite.py` and settles the pose question the checker was stuck on: **TARGET's pose IS the rest pose** (hunched, three-quarter turn, left fist raised and on fire).
       **1. Art: layers cut from TARGET itself, not a new drawing.** Source is the jackal in TARGET.png, so the rest frame matches 1:1. Split it into layers: head, neck/torso, each upper arm, forearm and fist, and the fist's fire on its own layer. Repaint only what TARGET hides: the lower torso behind the stones, the chest behind the raised arm, and the overlap at every joint so nothing tears when a part rotates (the tearing is what killed the 2026-10-06 cut-and-rotate). Use Meshy (image-to-image, or anything else that gets closer) or hand paint; say what you spent. Keep TARGET's outline, cracks, colours and facets as drawn. The inking settings the checker tuned in `beast_sprite.py` are reference values, not a filter to run over TARGET.
       **2. Rig:** Godot Skeleton2D/Polygon2D (or Bone2D-parented Sprite2Ds) in a SubViewport drawn onto the existing billboard, so the arena and camera code stay as they are. Climb holds attach to the bones they sit near so they ride the animation.
       **3. Clips:** `idle` (breathing, the fist's fire flickering; loops, never drifts far from the rest pose), `attack` (wind-up, then the raised fist swings down; damage lands on the impact frame, as the punch clip's `hit` did), `hit` (flinch), `death`. Wire them where `_beast_anim` drives Idle/Punch_Combo today.
       **Done when** a rest frame paired with TARGET (`python3 tools/vs_target.py <rest>.png <pair>.png --beast`) shows the same pose and silhouette, and a strip of four frames (idle, wind-up, impact, back to idle) shows the jackal moving without tearing at any joint. Tests green.
-      Test: state=3d beast=cinder_jackal ^rig-the-jackal-as-a-2d-cut-out-in-target
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-07-rig-after.png|420]] ![[agents/frames/builder/2026-10-07-rig-strip.png|420]] ^rig-the-jackal-as-a-2d-cut-out-in-target
 
 - [ ] **Stones: TARGET's staircase, in TARGET's place.**
       **Nick, 2026-10-07:** "make sure you are checking all the boxes to get to the concept. Ie stone design and placement." **This replaces the 2026-09-25 / 09-28 route** (first stone by the hunter, last in front of the head). TARGET.png is the route now.
@@ -750,3 +753,6 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Grader can't see sprite_match.** It fails items for numbers it can't read off a frame; hand it the printout?
 - [ ] (proposed) **Post chain crushes dark art.** The fight blacks out everything under ~0.14 linear; other dark art may suffer.
 - [ ] (proposed) **Lava horizon reads brighter behind the jackal's feet.** Grader saw it brighten this run; the halo may spill on the lava line.
+- [ ] (proposed) **Fight reads the climb holds once.** The rig moves its climb_ markers, but stones and hunters stay where they were placed at load.
+- [ ] (proposed) **sprite_match aims at the concept, not TARGET.** TARGET's own jackal scores outline 0.0146 / crack 0.182 against its 0.005 / 0.125 targets; the fire layer counts as cracks.
+- [ ] (proposed) **Shoulder notch at the attack's impact.** A small dark wedge shows where the swung upper arm leaves the torso.

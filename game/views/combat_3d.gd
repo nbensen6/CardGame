@@ -3001,6 +3001,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_rig_glow()
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
+	if _beast.has_method("trim_box"):   # a rigged drawing (views/drawn_rig.gd)
+		_beast_box = _beast.call("trim_box", _beast_box)
 	if _beast.get_node_or_null("Body") is Sprite3D:
 		_beast_box = drawn_box(_beast_box, _beast_scale)
 	_read_climb_points()

@@ -31792,7 +31792,59 @@ func _test_jackal_is_a_drawing() -> void:
 	# The sprite keeps its source's quality (Nick, 2026-10-06: "Its the
 	# quality that im looking for"): a thin warm line around a dark body whose
 	# cracks burn, not a thick cream halo around a figure that glows all over.
-	_expect(root.get_node_or_null("Fire") == null, "no fist flame: the pose is not the job any more")
+	# Nick, 2026-10-07: TARGET's pose IS the rest pose, and the jackal moves.
+	# tools/beast_rig.py cuts TARGET into parts on a 2D skeleton; the fist
+	# burns on its own layer and the four clips the fight plays are there.
+	var rig := root.get_node_or_null("Rig") as SubViewport
+	_expect(rig != null, "the jackal is rigged: parts in a SubViewport the billboard draws")
+	if rig != null:
+		for part in ["torso", "head", "arm_l", "fore_l", "arm_r", "fore_r", "fire"]:
+			_expect(rig.find_child(part, true, false) != null, "the rig has its %s" % part)
+		var fire := rig.find_child("fire", true, false)
+		_expect(fire != null and String(fire.get_parent().name) == "fore_l", "the fire rides the raised fist")
+		# Every climb marker sits where its hold on the rig maps to at rest.
+		for c in root.get_children():
+			var n := String(c.name)
+			if not n.begins_with("climb_"):
+				continue
+			var m := rig.find_child("hold_" + n.substr(6), true, false) as Node2D
+			_expect(m != null, "%s rides a part of the rig" % n)
+			if m == null:
+				continue
+			var at := Vector2.ZERO
+			var walk: Node = m
+			while walk is Node2D:
+				at += (walk as Node2D).position
+				walk = walk.get_parent()
+			var want: Vector3 = DrawnRig.canvas_to_local(at, root.get("pixel_size"), root.get("floor_px"), root.get("mid_px"))
+			_expect((c as Node3D).position.distance_to(want) < 0.01,
+				"%s matches its hold on the rig -- %s vs %s" % [n, (c as Node3D).position, want])
+	var ap := Combat3D._find_anim(root)
+	_expect(ap != null, "the rig has an AnimationPlayer the fight finds")
+	if ap != null:
+		for clip in ["idle", "attack", "hit", "death"]:
+			_expect(ap.has_animation(clip), "the jackal has a %s clip" % clip)
+		if ap.has_animation("idle"):
+			_expect(ap.get_animation("idle").loop_mode != Animation.LOOP_NONE, "idle loops")
+		if ap.has_animation("attack"):
+			# The fist lands where the fight puts the damage (ENEMY_BITE_FRAC):
+			# the raised arm is furthest down at that key.
+			var a := ap.get_animation("attack")
+			var t := a.find_track(NodePath("Rig/Root/torso/arm_l:rotation"), Animation.TYPE_VALUE)
+			_expect(t >= 0, "the attack swings the raised arm")
+			if t >= 0:
+				var low := 0.0
+				var low_at := 0.0
+				for k in a.track_get_key_count(t):
+					var v := float(a.track_get_key_value(t, k))
+					if v < low:
+						low = v
+						low_at = a.track_get_key_time(t, k)
+				_expect(absf(low_at / a.length - Combat3D.ENEMY_BITE_FRAC) < 0.02,
+					"the blow lands on the damage beat -- at %.2f of the clip" % (low_at / a.length))
+	# The fight frames the figure, not the room its fist swings through.
+	var trim := root.get("figure_x1") as float > root.get("figure_x0") as float
+	_expect(trim, "the rig names the columns the figure spans")
 	if spr != null and spr.texture != null:
 		var img := spr.texture.get_image()
 		if img.is_compressed():
