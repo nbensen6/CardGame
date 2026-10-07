@@ -3498,6 +3498,8 @@ func _dress_wall(beast_id: String) -> void:
 	var glow := lava_glow(String(BEAST_BIOME.get(beast_id, "crag")))
 	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * _arena_r * glow)
 	mat.set_shader_parameter("heat_gain", 0.55 * glow)
+	mat.set_shader_parameter("arena_centre", _rig.global_position)
+	mat.set_shader_parameter("arena_r", _arena_r)
 	for node in _all_meshes(wall):
 		(node as GeometryInstance3D).material_override = mat
 

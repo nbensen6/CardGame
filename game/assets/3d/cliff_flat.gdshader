@@ -51,6 +51,22 @@ uniform float heat_gain : hint_range(0.0, 2.0) = 0.55;
 uniform float shade_floor : hint_range(0.0, 1.0) = 0.6;
 uniform float shade_span = 9.0;
 
+// Checker iter 24: behind the jackal, the far side of the wall ring stood
+// as a row of jagged dark teeth across the whole mid-ground; TARGET shows
+// open sky there between two big formations. Wall that lies further than
+// far_from arena radii past the arena centre, along the camera's view, fades
+// toward the sky's own tone by far_mix at far_to. Only near the camera's
+// centre line: wall more than lat_from radii to either side keeps its dark
+// tones, so the two big formations at the frame edges stay as TARGET's.
+uniform vec3 arena_centre = vec3(0.0);
+uniform float arena_r = 12.0;
+uniform float far_from = 0.2;
+uniform float far_to = 0.9;
+uniform vec4 far_color : source_color = vec4(0.341, 0.18, 0.325, 1.0);
+uniform float far_mix : hint_range(0.0, 1.0) = 0.7;
+uniform float lat_from = 0.6;
+uniform float lat_to = 0.95;
+
 varying vec3 world_pos;
 
 void vertex() {
@@ -73,5 +89,11 @@ void fragment() {
 	}
 	float heat = 1.0 - smoothstep(0.0, max(heat_height, 1e-3), world_pos.y);
 	c *= mix(shade_floor, 1.0, smoothstep(0.0, max(shade_span, 1e-3), world_pos.y));
-	ALBEDO = c + heat_color.rgb * heat_gain * heat * heat;
+	vec3 col = c + heat_color.rgb * heat_gain * heat * heat;
+	vec3 fwd = -INV_VIEW_MATRIX[2].xyz;
+	fwd = normalize(vec3(fwd.x, 0.0, fwd.z));
+	float along = dot(world_pos - arena_centre, fwd) / max(arena_r, 1e-3);
+	float lat = abs(dot(world_pos - arena_centre, vec3(-fwd.z, 0.0, fwd.x))) / max(arena_r, 1e-3);
+	float far = smoothstep(far_from, far_to, along) * (1.0 - smoothstep(lat_from, lat_to, lat)) * far_mix;
+	ALBEDO = mix(col, far_color.rgb, far);
 }
