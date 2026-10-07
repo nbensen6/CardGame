@@ -78,6 +78,11 @@ CRACK_GROW = 1
 CRACK_EDGE = np.array([222, 72, 24], float)
 CRACK_CORE = np.array([255, 214, 96], float)
 CRACK_CORE_MIX = 0.4
+# Checker iter 15: TARGET's seams bleed a soft orange glow onto the rock
+# beside them; ours stopped dead at the red edge and read as thin veins.
+CRACK_GLOW = 5
+CRACK_GLOW_A = 0.45
+CRACK_GLOW_RGB = np.array([200, 70, 25], float)
 
 # The eyes: a near-white core, a hot orange ring and a short glow over the
 # rock, so they survive the mipmap as TARGET's two bright points.
@@ -263,6 +268,10 @@ def build(beast_id):
     crack = inside & (r > 150) & (r - b > 90)
     grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
     out[grown, :3] = CRACK_EDGE
+    d = ndi.distance_transform_edt(~(crack | grown))
+    bleed = inside & ~crack & ~grown & (d < CRACK_GLOW * SCALE)
+    t = (np.clip(1 - d / (CRACK_GLOW * SCALE), 0, 1) ** 1.5 * CRACK_GLOW_A)[bleed, None]
+    out[bleed, :3] += (CRACK_GLOW_RGB - out[bleed, :3]) * t
     core = ndi.binary_erosion(crack, disk(1))
     out[core, :3] += (CRACK_CORE - out[core, :3]) * CRACK_CORE_MIX
     if spec.get("hot"):

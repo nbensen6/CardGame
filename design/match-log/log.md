@@ -74,3 +74,7 @@ Note for later runs: after rebuilding the sprite, run `godot --headless --path g
 ## iter 14 — 2026-10-07 (pair iter-16.png; after: iter-17.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR stones (route up the left arm, flatter). Then (4) MAJOR extra UI, (5) MAJOR proportions/framing, (6) MODERATE cracks — the chest hot spot a pale, blown-out blob spreading across the chest where TARGET's is a vertical yellow seam, (7) MODERATE outline now "a little thinner" than TARGET's.
 Skipped 1–5 under the rulings above. Left 7 alone: iter 13 measured our line at TARGET's 6 px, and the critics now split on it. Fixed 6 in `tools/beast_sprite.py`: the sternum heat is an upright ellipse (HOT_SQUASH 0.45 sideways) and its core is TARGET's yellow (255,222,100), not pale (255,240,170).
+
+## iter 15 — 2026-10-07 (pair iter-17.png; after: iter-18.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MAJOR stone route, (6) MODERATE cracks — thin, uniform veins with no glow bleed, where TARGET's seams bleed orange onto the rock (it called the new sternum seam close to TARGET), (7) MODERATE outline thinner than TARGET's.
+Skipped 1–5 under the rulings above. Left 7: the line measures TARGET's 6 px (iter 13), and iter 13's critic called the 9 px line too thick. Fixed 6 in `tools/beast_sprite.py`: rock within 5 px of a crack takes a fading orange (200,70,25) wash, up to 45%.
