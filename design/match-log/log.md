@@ -18,3 +18,7 @@ Changed: `tools/beast_sprite.py` now cuts the jackal drawing at the hips (concep
 ## iter 02 — 2026-10-07
 Critic top 3: (1) MAJOR pose — no raised flaming fist; (2) MAJOR fire on the fist missing; (3) MAJOR stones — huge, set beside the jackal, near-white tops over hard black undersides.
 Skipped 1–2: Nick ruled them out on 2026-10-06 ("The jackal should be able to move. So the direction doesnt matter. Its the quality that im looking for.") after the cut-and-rotate arm tore the figure. Fixed 3 (shading): the slab side walls were wound and lit inward, so the ink hull's near walls painted every side black. Flipped both and drew the slabs unshaded, with TARGET's tones measured on screen: top (155,147,141) against TARGET's (155,147,138), side (101,96,88) against (105,100,90). Size and placement are untouched.
+
+## iter 03 — 2026-10-07
+Critic top 3: (1) MAJOR pose (no raised fist); (2) MAJOR fist fire missing; (3) MAJOR scale/framing — the jackal is small and set back, ears ~20% down the frame, where TARGET's fills it.
+Skipped 1–2 (Nick, 2026-10-06, see iter 02). Fixed 3: a billboard Sprite3D reports a CUBE as its AABB, so the flat drawing read as 27 units deep. Its "front edge" stood 13 units out, and that set the hunters' standoff, the camera and the arena, so DRAWN_GAP_PER_HEIGHT never bound. New `drawn_box` flattens it to the drawing's plane, and DRAWN_GAP_PER_HEIGHT 1.0 → 1.2 puts the ear tips just under the top of the frame. The jackal is ~1.3x larger on screen. New test for drawn_box.

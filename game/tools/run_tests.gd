@@ -31842,6 +31842,12 @@ func _test_jackal_is_a_drawing() -> void:
 	_expect(drawn < Combat3D.ground_standoff_for(0.0, 20.0), "a drawn beast stands the hunters closer")
 	_expect(is_equal_approx(Combat3D.ground_standoff_for(25.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT),
 		Combat3D.ground_standoff_for(25.0, 20.0)), "a deep beast's standoff is still set by its depth")
+	# A billboard reports a cube; the fight reads the drawing as the flat plane it is.
+	var cube := AABB(Vector3(-13.5, -2.0, -13.5), Vector3(27.0, 24.0, 27.0))
+	var flat: AABB = Combat3D.drawn_box(cube, 12.0)
+	_expect(is_zero_approx(flat.position.z) and is_equal_approx(flat.end.z, Combat3D.DRAWN_HOLD_Z * 12.0)
+		and flat.size.y == cube.size.y and flat.size.x == cube.size.x,
+		"a drawn beast's box is its plane plus the holds in front, not the billboard's cube -- got %s" % flat)
 
 
 ## The upright rock jackal from picture A (Nick, 2026-10-04: "generate a new

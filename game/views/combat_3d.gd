@@ -59,6 +59,18 @@ const FOOTHOLD_ROCK := preload("res://assets/3d/env/foothold_rock.glb")
 const AI_ART := {"cinder_jackal": "_2d"}
 
 
+## A drawn beast's box as the fight should read it. A billboard Sprite3D
+## reports a CUBE as its AABB (it may face any way), so the flat jackal was
+## 27 units deep: its "front edge" stood 13 units out from the drawing, which
+## pushed the hunters, the camera and the stones back and left it small in
+## frame whatever DRAWN_GAP_PER_HEIGHT said (checker iter 03, 2026-10-07). The
+## drawing is the plane z=0; its holds stand DRAWN_HOLD_Z in front of it.
+const DRAWN_HOLD_Z := 0.25
+static func drawn_box(box: AABB, scale: float) -> AABB:
+	return AABB(Vector3(box.position.x, box.position.y, 0.0),
+		Vector3(box.size.x, box.size.y, DRAWN_HOLD_Z * scale))
+
+
 ## The file a beast variant loads from: <id><variant>.tscn first (a generated
 ## mesh wrapped with its climb_/ledge_ markers, for a model no Blender pass
 ## gave markers), then <id><variant>.glb; "" when neither exists.
@@ -568,7 +580,10 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## instead of ~40 % (Nick, 2026-10-05, "do the 2.5D like in the reference").
 ## 1.0 (2026-10-06): TARGET.png crops the beast at the top edge, so the ear
 ## tips now meet it. At 0.75 the whole head left the locked frame.
-const DRAWN_GAP_PER_HEIGHT := 1.0
+## 1.2 (checker iter 03, 2026-10-07): with drawn_box the gap finally binds
+## (the billboard's cube box had overridden it). TARGET's ear tips sit just
+## under the top of the frame; at 1.0 they ran off it.
+const DRAWN_GAP_PER_HEIGHT := 1.2
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -2983,6 +2998,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_rig_glow()
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
+	if _beast.get_node_or_null("Body") is Sprite3D:
+		_beast_box = drawn_box(_beast_box, _beast_scale)
 	_read_climb_points()
 	# The hull BEFORE the stones: _build_float_stones' _top_hold() call reads
 	# _front_of_beast(), which falls back to the box's raw far edge whenever
