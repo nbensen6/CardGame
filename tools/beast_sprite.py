@@ -100,8 +100,10 @@ LINE_W = 9
 # game mipmaps the sprite to ~330 px, so it is drawn wider and stronger here
 # to survive (grader, 2026-10-07: 0.30 over 22 px read as no glow). At 0.45 and a steep falloff ours read as a second, orange outline;
 # at 0.15 it vanished at play size (checker, 2026-10-07).
-HALO_W = 20
-HALO_A = 0.50
+# Checker iter 10: still a glow bleeding off the line rather than TARGET's
+# crisp cel stroke with a slight warmth outside it; 14 px at 0.32.
+HALO_W = 14
+HALO_A = 0.32
 # The fight sizes the beast by its texture's box, and its camera was framed
 # on the old box: 39 px of clear room round the line. Keep it, so the ears
 # stay on screen at the same size as before.

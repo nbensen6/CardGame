@@ -49,3 +49,7 @@ Skipped 1–3 under the rulings above. Fixed 4 in `tools/beast_sprite.py`: the c
 ## iter 09 — 2026-10-07 (pair iter-10.png; after: iter-11.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI (rings on the face and chest, the "…ck 7" chip, the frog). Its 4th: MAJOR scale/framing — the jackal is smaller and centred, with more sky round it.
 Skipped 1–3 under the rulings above. Fixed 4 in `game/views/combat_3d.gd`: DRAWN_GAP_PER_HEIGHT 1.2 → 1.1. The ear tips sit just under the top of the frame again, the fists reach both edges, and both hunters are still on screen.
+
+## iter 10 — 2026-10-07 (pair iter-11.png; after: iter-12.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR proportions, (5) MAJOR stones (route up the left edge, bigger, flatter), (6) MODERATE outline soft and glowy, bleeding into a halo, where TARGET's is a crisp cel line.
+Skipped 1–5 under the rulings above. Stone size was raised in iter 04 and the slabs shrunk then; what reads as "much bigger" now is mostly the near slab's perspective on the route Nick set. Fixed 6 in `tools/beast_sprite.py`: HALO_W 20 → 14 and HALO_A 0.50 → 0.32.
