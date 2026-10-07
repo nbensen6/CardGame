@@ -14,7 +14,7 @@ run failed.
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
       The last run fixed body tone and hue — both now land on the concept
       exactly. Three measures are still off. `python tools/sprite_match.py`
-      prints them; today it says:
+      prints them; today it says: ^drive-the-jackal-sprite-to-1-1-with-the-
 
           crack cover   concept 0.123   game 0.273   OFF
           detail        concept 0.077   game 0.032   OFF
