@@ -583,7 +583,10 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## 1.2 (checker iter 03, 2026-10-07): with drawn_box the gap finally binds
 ## (the billboard's cube box had overridden it). TARGET's ear tips sit just
 ## under the top of the frame; at 1.0 they ran off it.
-const DRAWN_GAP_PER_HEIGHT := 1.2
+## 1.1 (checker iter 09, 2026-10-07): once the drawing was cut at the waist
+## (iter 08) it read small and set back; at 1.1 the ears sit under the top
+## again and the fists reach the frame's edges, as in TARGET.
+const DRAWN_GAP_PER_HEIGHT := 1.1
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone

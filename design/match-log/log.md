@@ -45,3 +45,7 @@ Skipped 1–5 under the rulings above (Nick's pose call, the HUD, the route Nick
 ## iter 08 — 2026-10-07 (pair iter-09.png; after: iter-10.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions (hunched, asymmetric brute). Its 4th: MAJOR scale/framing — hips, crotch and thighs show above the lava, where TARGET is cut at the waist.
 Skipped 1–3 under the rulings above. Fixed 4 in `tools/beast_sprite.py`: the cut moved from concept row 640 to 590, just under the belt. Holds 0–1 moved up to (598,568) and (600,535) so they stay above the cut. The body is refit to the same 1.90, so the jackal is also a little larger on screen.
+
+## iter 09 — 2026-10-07 (pair iter-10.png; after: iter-11.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI (rings on the face and chest, the "…ck 7" chip, the frog). Its 4th: MAJOR scale/framing — the jackal is smaller and centred, with more sky round it.
+Skipped 1–3 under the rulings above. Fixed 4 in `game/views/combat_3d.gd`: DRAWN_GAP_PER_HEIGHT 1.2 → 1.1. The ear tips sit just under the top of the frame again, the fists reach both edges, and both hunters are still on screen.
