@@ -101,3 +101,5 @@ Skipped 1–5 and 8 under the rulings above; 6–7 were measured at TARGET's val
 ## iter 20 — 2026-10-07 (pair iter-23.png; after: iter-24.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MODERATE extra UI. Then (4) MODERATE proportions, (5) MODERATE cracks, (6) MODERATE facets, (7) MODERATE stone route, (8) MODERATE background rocks flat, lighter slate-blue cut-outs with almost no shading inside, where TARGET's are near-black masses with cool edge highlights.
 Skipped 1–7 under the rulings and measurements above. Fixed 8 in `game/assets/3d/cliff_flat.gdshader`: lit_at 0.42 → 0.6, so only the most key-facing planes take the lit tone, and every facet now darkens toward the ground (to 0.6x over 9 units) instead of holding one flat tone. Colours are unchanged from iter 18.
+
+Run paused after iter 20 (20 of 25 spent). Iters 19–20 fixed the next two items the critics rank below the ruled-out pose (lava up-light, flat cliffs). The last 5 iterations are kept for after Nick rules on the raised flaming fist, which every critic still ranks MAJOR #1–2 and which blocks the "no MAJOR" stop condition.
