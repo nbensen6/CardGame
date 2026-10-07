@@ -30,3 +30,9 @@ Skipped 1–2 (Nick, 2026-10-06). Skipped 3: the label, rings and frog are the f
 ## iter 05 — 2026-10-07
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR scale/framing. Its 4th: MAJOR stones run up the left arm to the shoulder instead of a stair ending under the sternum. Its 7th: MODERATE cracks thinner and redder than TARGET's, with a dim sternum.
 Skipped 1–2 (Nick, 2026-10-06). Skipped 3: the scale now nearly matches (ears at the top, the body filling the crop), and what's left is the raised fist running off the left edge, which is the pose. Skipped 4: the route is gameplay Nick set explicitly (last stone in front of the head, 2026-09-25 and 09-28), so it goes to him, not to the checker. Fixed 7 in `tools/beast_sprite.py`: each crack grows 1 px into the rock in red-orange (222,72,24), and its interior is pulled 40% toward yellow (255,214,96). On screen the chest crack coverage is 25.3% against TARGET's 25%, and the core p90 G channel went from 180 to 189 (TARGET 205).
+
+## iter 06 — 2026-10-07
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR framing, which it called "further back, smaller", the opposite of the iter-05 critic's reading of the same scale; (5) MAJOR proportions, which come from the concept drawing; (6) MODERATE cracks; (7) MODERATE outline too thin, halo too wide and diffuse.
+Skipped 1–3 as before; 4–5 too, as noted. Fixed 7 in `tools/beast_sprite.py`: LINE_W 7 → 9 and HALO_W 28 → 20.
+
+Stalled on the pose: every critic since iter 01 ranks the raised flaming fist first, and TARGET.png shows it, but Nick ruled it out on 2026-10-06. The loop can't reach its stop condition (no MAJOR) until Nick picks one. Paused here for his call.

@@ -79,13 +79,15 @@ SCALE = 1
 # Grader, 2026-10-07: at 5 px the line was a wire inside a halo. TARGET's
 # 4-5 px on a 600 px figure is ~7 px on this 930 px one, and sprite_match's
 # outline still lands inside its tolerance.
-LINE_W = 7
+# Checker iter 06 (2026-10-07): beside TARGET the line still read thin and
+# the halo wide and diffuse; 9 px line, 20 px halo.
+LINE_W = 9
 # TARGET's glow outside the line: the sky beside it is warmed about a
 # quarter of the way to orange, fading over ~12 px of a 600 px figure; the
 # game mipmaps the sprite to ~330 px, so it is drawn wider and stronger here
 # to survive (grader, 2026-10-07: 0.30 over 22 px read as no glow). At 0.45 and a steep falloff ours read as a second, orange outline;
 # at 0.15 it vanished at play size (checker, 2026-10-07).
-HALO_W = 28
+HALO_W = 20
 HALO_A = 0.50
 # The fight sizes the beast by its texture's box, and its camera was framed
 # on the old box: 39 px of clear room round the line. Keep it, so the ears
