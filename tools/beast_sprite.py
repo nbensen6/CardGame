@@ -40,10 +40,13 @@ BEASTS = {
         # The drawing is cut at concept row `cut`; `sink` px of it sit below
         # the floor so the cut edge is hidden. The route now starts at the
         # hips and climbs the flank, chest and neck to the face.
-        "cut": 640,
+        # Checker iter 08 (2026-10-07): at 640 the hips, crotch and thighs
+        # stood above the lava, where TARGET cuts the jackal at the waist;
+        # now just under the belt.
+        "cut": 590,
         "sink": 18,
         "holds": {
-            0: (600, 615), 1: (606, 560), 2: (590, 500),
+            0: (598, 568), 1: (600, 535), 2: (590, 500),
             3: (560, 430), 4: (535, 330), 5: (512, 225),
         },
         "ledges": [0, 2, 3, 4],

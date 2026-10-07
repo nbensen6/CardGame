@@ -41,3 +41,7 @@ Stalled on the pose: every critic since iter 01 ranks the raised flaming fist fi
 Nick has not answered the pose question, so the loop carries on below it: the ruled-out items are skipped and the top remaining difference is fixed.
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR stone route, (5) MODERATE proportions, (6) MODERATE eyes a dim orange slit where TARGET's are the hottest point on the head.
 Skipped 1–5 under the rulings above (Nick's pose call, the HUD, the route Nick set, the concept's proportions). Fixed 6 in `tools/beast_sprite.py`: new per-beast `eyes` boxes; each eye gets a near-white core (255,244,190), a hot orange ring (255,150,40) and a 7 px orange glow over the rock.
+
+## iter 08 — 2026-10-07 (pair iter-09.png; after: iter-10.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions (hunched, asymmetric brute). Its 4th: MAJOR scale/framing — hips, crotch and thighs show above the lava, where TARGET is cut at the waist.
+Skipped 1–3 under the rulings above. Fixed 4 in `tools/beast_sprite.py`: the cut moved from concept row 640 to 590, just under the belt. Holds 0–1 moved up to (598,568) and (600,535) so they stay above the cut. The body is refit to the same 1.90, so the jackal is also a little larger on screen.
