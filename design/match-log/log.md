@@ -103,3 +103,8 @@ Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MODERATE extra UI. Then (
 Skipped 1–7 under the rulings and measurements above. Fixed 8 in `game/assets/3d/cliff_flat.gdshader`: lit_at 0.42 → 0.6, so only the most key-facing planes take the lit tone, and every facet now darkens toward the ground (to 0.6x over 9 units) instead of holding one flat tone. Colours are unchanged from iter 18.
 
 Run paused after iter 20 (20 of 25 spent). Iters 19–20 fixed the next two items the critics rank below the ruled-out pose (lava up-light, flat cliffs). The last 5 iterations are kept for after Nick rules on the raised flaming fist, which every critic still ranks MAJOR #1–2 and which blocks the "no MAJOR" stop condition.
+
+## iter 21 — 2026-10-07 (pair iter-25.png; after: iter-26.png)
+Nick has still not ruled on the pose; the loop carries on under it.
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MODERATE cracks — a dense, fine vein network over the whole body, where TARGET's seams are fewer and wider and mark out big plates, (6) MODERATE stone route, (7) MODERATE framing, (8) MODERATE outline.
+Skipped 1–4 under the rulings above. Fixed 5 in `tools/beast_sprite.py`: crack pixels whose local half-width is under 2.5 px (22% of the concept's crack area, the hairline branches) are painted over with the nearest rock. The sternum's hot region is exempt. This agrees with iter 18's measurement that our chest coverage ran above TARGET's (29% vs 20%).

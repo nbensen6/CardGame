@@ -90,6 +90,12 @@ CRACK_CORE_MIX = 0.4
 CRACK_GLOW = 5
 CRACK_GLOW_A = 0.45
 CRACK_GLOW_RGB = np.array([200, 70, 25], float)
+# Checker iter 21: TARGET's seams are fewer and wider and mark out plates;
+# ours ran as a dense vein network, its hairline branches crossing the
+# plates (measured iter 18: 29 % chest coverage against TARGET's 20 %).
+# Crack pixels whose local half-width is under TWIG_W are painted over with
+# the rock beside them, so only the plate-bounding seams burn.
+TWIG_W = 2.5
 
 # The eyes: a near-white core, a hot orange ring and a short glow over the
 # rock, so they survive the mipmap as TARGET's two bright points.
@@ -288,6 +294,16 @@ def build(beast_id):
     # pull the crack's interior toward TARGET's yellow core.
     crack = inside & (r > 150) & (r - b > 90)
     rock = inside & (r < 150) & (r - b < 70)
+    width = ndi.maximum_filter(ndi.distance_transform_edt(crack), size=7)
+    twig = crack & (width < TWIG_W * SCALE)
+    if spec.get("hot"):
+        (hx, hy), hr = spec["hot"]
+        yy, xx = np.ogrid[:out.shape[0], :out.shape[1]]
+        twig &= np.hypot(xx - hx * SCALE, yy - hy * SCALE) > hr * SCALE
+    _, (iy, ix) = ndi.distance_transform_edt(~rock, return_indices=True)
+    out[twig, :3] = a[iy[twig], ix[twig]]
+    crack &= ~twig
+    rock |= twig
     lum = out[rock, :3].mean(1, keepdims=True)
     out[rock, :3] += (lum * ROCK_HUE - out[rock, :3]) * ROCK_WARM
     grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
