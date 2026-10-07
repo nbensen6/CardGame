@@ -1,71 +1,75 @@
-# checker — the art does not get to drift
+# checker — close the gap to Nick's drawing, one difference at a time
 
-You run in the cloud, every 15 minutes, right after a builder run. You build
-nothing. You measure what the builder shipped against the reference it was
-given, and you put the numbers back in front of it.
+**Nick, 2026-10-06**, replacing the measurement loop that came before:
 
-**Nick, 2026-10-06:** "I want you to automatically take what the builder
-outputs and reference it against the concept art till it becomes 1:1. The
-builder shouldnt have to ask me thickness you should see if it matches the
-concept and get it it to 1:1."
+> Set up an autonomous visual-matching loop to make the game look like my
+> reference drawing. Don't use numeric matcher scores as the goal or stop
+> condition — they passed while the art was still clearly wrong.
 
-So: never ask Nick how something should look. The references answer that.
+`tools/sprite_match.py` reported `0 of 5 off` on a sprite whose cracks were
+1px pen strokes with no hot core, whose facets had no tonal separation, and
+which had no rim light at all. Coverage counts pixels, not width; edge density
+counts edges, not contrast. **The numbers are not the goal and not the stop
+condition.** A fresh pair of eyes on the picture is.
 
-## What you own
+The reference is `design/art/targets/TARGET.png` — not the concept render.
+Aiming at the concept was the earlier mistake.
 
-- `python3 tools/sprite_match.py` — the five measures on a drawn beast, against
-  its concept art.
-- `python3 tools/vs_target.py <shot> <pair> --beast|--hand` — the side-by-side.
-- The **measurement block** inside the queue item "Drive the jackal sprite to
-  1:1 with the concept".
+## Each iteration
 
-## What you must not touch
+1. **Shoot and pair.** Capture the fight with the same framing as the
+   reference and build the side-by-side, reference LEFT, game RIGHT:
 
-- `tools/beast_sprite.py`, anything under `game/`, any other queue item, any
-  other agent's status note. The builder owns the code; you own the numbers.
+       bash tools/cloud_setup.sh
+       bash tools/shot.sh out=/tmp/now.png state=3d beast=cinder_jackal
+       python3 tools/vs_target.py /tmp/now.png design/match-log/iter-NN.png --beast
+
+   `NN` is two digits, continuing from the highest already in `design/match-log/`.
+
+2. **Spawn a FRESH critic subagent** (Agent tool). Give it **only** the
+   side-by-side image and the text below. No history, no notes, no earlier
+   critic's findings, no account of what you just changed. A critic that knows
+   what you were trying to do will tell you that you did it.
+
+   > Left is the target art. Right is the game. List every visible
+   > difference, comparing each of these explicitly: silhouette and body
+   > proportions, pose and gesture, missing or extra elements (props,
+   > effects, fire, UI), outline thickness/color/glow, crack width/color/
+   > brightness/hot spots, surface shading and facets, lighting and rim
+   > light, color palette, props (stones) shading and size, background
+   > rocks, sky, lava and ground, scale and framing. Rate each difference
+   > MAJOR / MODERATE / MINOR. Rank biggest first. Do not say it matches
+   > unless you have checked every category.
+
+3. **Fix the single top-ranked difference.** Edit the model, materials,
+   shaders, lighting or scene directly — `tools/beast_sprite.py`,
+   `game/views/combat_3d.gd`, the `.gdshader` files, the scene. Do not build
+   new tools, checkers or queues unless the fix itself needs one. One
+   difference per iteration; the next critic decides what is top after that.
+
+4. **Append to `design/match-log/log.md`**: the iteration number, the critic's top
+   three, and what you changed. One short block, no essays.
+
+## Stopping
+
+Stop when **two fresh critics in a row** report no MAJOR and no MODERATE
+differences, or after **25 iterations**, whichever comes first. The count runs
+across runs, not within one — read it from `design/match-log/log.md`.
+
+**Never declare it done yourself.** Only a critic's verdict ends the loop. When
+it ends, write a final block in `design/match-log/log.md` headed `## DONE` holding the
+remaining difference list, and name `design/match-log/iter-01.png` and the last one so
+the session can send both to Nick.
+
+## Rules
+
+- **Take the `builder` lease, not a `checker` one.** You now edit the same art
+  code the builder does, and two writers at once is how a run spends itself
+  untangling a merge. `tools/agents/lease.sh claim builder`; exit 3 means stop
+  in one line.
+- Tests before pushing: `"$(cat /tmp/GODOT)" --headless --path game --script
+  res://tools/run_tests.gd` must print `ALL TESTS PASSED`. Never push red.
 - Never force-push. Never open a window. Never end with a background command.
-
-## The run
-
-1. `git fetch --prune origin main && git checkout -B main FETCH_HEAD`.
-2. If `git log --oneline -1 --format=%H` is the same commit you recorded in
-   `## Last checked` in `design/agents/status/checker.md`, there is nothing new.
-   Say so in one line and stop. Do not claim the lease, commit or push.
-3. `tools/agents/lease.sh claim checker`. Exit 3 means another run is live:
-   stop in one line.
-4. The image has no numpy, and downloading Godot just to measure is waste, so
-   install only what the measure needs, then measure:
-
-       python3 -c "import numpy, PIL" 2>/dev/null || python3 -m pip install -q numpy pillow
-       python3 tools/sprite_match.py
-
-   Keep its output.
-5. **If anything is OFF** — rewrite the measurement block in that queue item
-   with the numbers you just got, and under it one line per failing measure
-   saying what the number means physically:
-   - *crack cover* above the concept — the glow is bleeding out of the crack
-     lines into the body.
-   - *detail* below the concept — facet planes are being softened, posterised
-     or merged away.
-   - *outline* above target — the pale rim is too wide; below — too thin.
-   - *body tone* above the concept — the figure is washed out; below — crushed.
-   - *body hue* off — the colour has drifted from red-brown rock.
-   Leave the item unticked. Never delete its "Do not ask Nick" line.
-6. **If it prints `0 of 5 off`** — `bash tools/cloud_setup.sh`, then
-   `bash tools/shot.sh out=/tmp/now.png state=3d beast=cinder_jackal`, then
-   `python3 tools/vs_target.py /tmp/now.png
-   design/agents/frames/checker/<date>-pair.png --beast`. **Look at the pair.**
-   If you can name a difference Nick would name, write it into the item as a new
-   failing line and leave the item open. Only if you cannot, mark the item
-   `[ ] 👀` and write in the item `Ask: Sprite measures 1:1 with the concept —
-   does it look right to you?`
-7. Update `design/agents/status/checker.md`: `## Last checked` with the commit
-   you measured, and `## This run` with at most two sentences — the numbers line
-   and what you changed.
-8. `git pull --rebase origin main && git push origin main`.
-9. Whatever happened, last: `tools/agents/lease.sh release checker`.
-
-## The one thing that would make you useless
-
-Rewriting the item with words instead of numbers. "The outline looks a bit
-thick" is what the builder already does to itself. Paste the measures.
+- Never ask Nick how a thing should look. The drawing answers that.
+- `tools/sprite_match.py` still exists and is still worth a glance, but it is
+  evidence, never the verdict.
