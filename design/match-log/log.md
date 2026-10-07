@@ -26,3 +26,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: framing (both critics' #1). `DRAWN_GAP_PER_HEIGHT` 1.1→1.35, `GROUND_VIEW_PITCH` 0.08→0.03, `GROUND_LIFT` 0.07→0.03. Measured on the shot: ears 0%→6.4% below the top, lava band 44%→48%, frog 54%→57% (TARGET, scaled to the space above the hand: ~6 / ~46 / ~57).
 - Tests: ALL TESTS PASSED. Playtest: the same 21 FAILs (hunter-off-marker, route-reversal on rung 5) before and after this change — they come with the builder's stones commit, not with this one.
 - Meshy: 0 credits.
+
+### iter 02
+- Critic A top 3: [MAJOR] extra second hero (Goblin + HP bar) right of centre; [MAJOR] framing/aspect — jackal ~33% of the frame width, right of the frog; [MAJOR] HUD over-decorated (glow borders on boss panel, chip, gauge, energy box, cards).
+- Critic B top 3: [MAJOR] framing/aspect — jackal ~32% of the width; [MAJOR] extra second hero (Goblin); [MAJOR] left third of the background a black void, no slate cliff.
+- Changed: the Goblin (both critics' MAJOR; the framing one is the 16:9-vs-square aspect, which no camera number fixes without clipping the ears — iter 01 set the height). `_stair_rest_x` puts the waiting Goblin 3 asides right (was 1.6), just off the right edge of the Frog's rest shot, as TARGET shows only the Frog (partner = Switch button + gauge pip). Switching to the Goblin still frames it (checked `state=goblin`).
+- Tests: ALL TESTS PASSED. Playtest: the same 21 pre-existing FAILs (hunter-off-marker, route-reversal rung 5), unchanged.
+- Meshy: 0 credits.

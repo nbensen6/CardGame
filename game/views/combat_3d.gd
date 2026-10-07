@@ -6855,13 +6855,16 @@ func _stair_index(foot: int) -> int:
 
 
 ## Where hunter line `side` waits: the Frog (-1) straight in front of the top
-## slab, as TARGET centres it under the sternum; the Goblin 1.6 asides right.
+## slab, as TARGET centres it under the sternum; the Goblin 3 asides right.
 func _stair_rest_x(side: float) -> float:
 	var ks := _stair_keys()
 	var top: Vector3 = _climb_points[ks[ks.size() - 1]]
-	# 1.6 asides, not 2: the over-the-shoulder yaw at this x put the Goblin
-	# half behind the climb gauge (grader, 2026-10-07).
-	return top.x + (0.0 if side < 0.0 else REST_ASIDE * 1.6)
+	# 3 asides (checker r2 iter 02, 2026-10-07; was 1.6): TARGET shows one
+	# hunter, the Frog, with the partner only as a Switch button and a pip on
+	# the climb gauge. Both critics named the Goblin standing in the rest
+	# frame MAJOR; at 3 asides it waits just off the right edge of the Frog's
+	# shot and still has its own shot when you Switch to it.
+	return top.x + (0.0 if side < 0.0 else REST_ASIDE * 3.0)
 
 
 func _stair_eye(side: float) -> Vector3:
