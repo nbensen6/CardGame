@@ -40,3 +40,11 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: jackal scale (both #1). `DRAWN_GAP_PER_HEIGHT` 1.35→1.05, `GROUND_VIEW_PITCH` 0.03→-0.02, `GROUND_LIFT` 0.03→-0.015. The jackal draws ~18% bigger (ears→lava 41.5%→49% of the frame): ears 3% under the top, lava 52%, frog 60%. Iter 01 shrank it to free the ears; this keeps them free by dropping the lava line instead.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing hunter-off-marker/route-reversal FAILs per step, nothing new.
 - Meshy: 0 credits.
+
+### iter 04
+- Critic A top 3: [MAJOR] framing — jackal ~1/3 of the width and centre-right, empty void on the left; [MAJOR] no faceted pedestal under the frog, frog ~1.3x too big; [MAJOR] extra rings on the belly, ember column, sky streak.
+- Critic B top 3: [MAJOR] framing — jackal right of centre, near-black void over the left third; [MAJOR] extra rings / sky streak / spark column; [MAJOR] frog pedestal missing.
+- Changed: horizontal framing (both #1; the width share itself is the 16:9-vs-square aspect). New `_yaw_point()` / `DRAWN_YAW_X = 0.12`: the follow camera's line from a DRAWN beast through the hunter starts 0.12 of its width right of the box centre (the box takes in TARGET's raised fist, so its centre sat left of the head). Ear band 55.2%→50.5% of the frame, over the Frog at 50.4% (TARGET 50.4 / 50.6). The stair eye uses the same point, so the slabs move with it.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
+- Note: this run was cut once mid-iteration; iter 04's critics were re-spawned fresh on the same pair.

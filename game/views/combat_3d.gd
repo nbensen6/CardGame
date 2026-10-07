@@ -4328,7 +4328,7 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		# fixed world yaw saw a hunter off the beast's axis side-on.
 		var ys: int = lock_slot_for(_lock_slot, _hunters.size(), _me())
 		if ys >= 0 and ys < _hunters.size():
-			var want_yaw := follow_yaw_for(_follow_pos(ys), _beast_box.get_center(), _yaw)
+			var want_yaw := follow_yaw_for(_follow_pos(ys), _yaw_point(), _yaw)
 			# Eased, not cut: a Switch, or a hop onto the other side of the
 			# beast's axis, used to swing the whole shot in one frame.
 			_yaw = want_yaw if snap else ease_yaw(_yaw, want_yaw, delta)
@@ -4353,6 +4353,22 @@ static func ease_yaw(yaw: float, want: float, delta: float) -> float:
 ## fixed follow distance is chosen to land in that band.
 static func hunter_frame_share(dist: float, fov_deg: float) -> float:
 	return HUNTER_HEIGHT / (2.0 * maxf(dist, 0.01) * tan(deg_to_rad(fov_deg) * 0.5))
+
+
+## Where the follow camera's line from the beast through the hunter starts.
+## The box centre for a modelled beast. A DRAWN beast's box takes in TARGET's
+## raised fist out to the left, so its centre sits left of the head and the
+## head drew ~5% of the frame right of the Frog (checker r2 iter 04: both
+## critics' top MAJOR, "jackal right of centre, empty void on the left").
+## TARGET puts the head straight over the Frog, so a drawn beast's line
+## starts DRAWN_YAW_X of its width right of the centre: at 0.12 the ear band
+## draws at 50.5% of the frame over a Frog at 50.4% (TARGET 50.4 / 50.6).
+const DRAWN_YAW_X := 0.12
+func _yaw_point() -> Vector3:
+	var c := _beast_box.get_center()
+	if _beast_drawn:
+		c.x += DRAWN_YAW_X * _beast_box.size.x
+	return c
 
 
 static func follow_yaw_for(hunter: Vector3, beast: Vector3, fallback: float) -> float:
@@ -6877,7 +6893,7 @@ func _stair_eye(side: float) -> Vector3:
 	# and so that the clamp never bites.
 	var rest := Vector3(_stair_rest_x(side),
 		rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))), _ground_back())
-	return stair_eye_for(rest, _beast_box.get_center())
+	return stair_eye_for(rest, _yaw_point())
 
 
 ## Slab `k` of line `side`: where it stands and its half-width.
