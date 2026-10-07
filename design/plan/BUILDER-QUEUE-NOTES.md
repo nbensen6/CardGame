@@ -1900,6 +1900,17 @@ Test: `state=3d beast=cinder_jackal`.
 
 ## Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.
 
+2026-10-06 20:54 EDT, builder (rim colour and glow).
+
+- **TARGET's rim, sampled across five edges:** line (252,201,122) amber-gold, ~5 px on a 600 px figure; a darker amber/orange step on its inner side; outside, the sky warmed about a quarter toward orange, fading over ~12 px.
+- **Game before:** the line reached the screen as (243,217,149), pale cream: the post chain caps red at ~243 and lifts blue. The halo (0.15 alpha, squared falloff, 14 px) was invisible at play size.
+- **Change:** LINE 255,214,140 -> 255,196,105 (lands on screen at 249,199,115); innermost px of the line LINE_IN 240,128,40; HALO 255,140,40 at 0.30 alpha over 22 px, falloff ^1.5. Width unchanged (LINE_W 5).
+- **sprite_match:** figure is now alpha > 128 (was > 40), so the translucent glow is not counted as outline; TARGET's 0.005 was measured on the line, not the glow.
+- **Grader R1 FAIL:** warmer, but no glow visible and no gold-over-orange split. R2: LINE 255,206,112, LINE_IN 250,140,45, halo 0.50 over 36 px -> FAIL: colour and glow MET, line reads as a wire inside a haze. R3: the drawing outranks "keep the width": TARGET's 4-5 px on a 600 px figure is ~7 px on the concept's 930, so LINE_W 5 -> 7 (outline 0.0074, inside tol 0.009); halo tightened to gold 255,172,66 over 28 px -> FAIL, CLOSER: colour and glow MET; the line still reads about half TARGET's weight in the pair, and the grader cannot see sprite_match output.
+- Final sprite_match: `0 of 5 off` (outline 0.0074).
+- Meshy: 0 credits.
+- Pair: ![[agents/frames/builder/2026-10-07-rim-gold-pair.png|520]]
+
 2026-10-06 20:21 EDT, builder.
 
 - **sprite_match, before:** crack cover 0.273 OFF, detail 0.032 OFF, outline 0.0120 OFF (3 of 5 off). **After:** `0 of 5 off`.

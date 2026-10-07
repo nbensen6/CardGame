@@ -46,9 +46,14 @@ BEASTS = {
     },
 }
 
-# TARGET.png, sampled.
-LINE = np.array([255, 214, 140], float)
-HALO = np.array([255, 150, 50], float)
+# TARGET.png, sampled across the rim (2026-10-07): the line is amber-gold,
+# (252, 201, 122), not cream. The fight's post chain caps red at ~243 and
+# lifts blue a little (the old 255,214,140 reached the screen as a pale
+# 243,217,149), so the line is drawn deeper to land on TARGET's gold. Its
+# innermost pixel is a hot orange edge, and outside it a warm glow.
+LINE = np.array([255, 206, 112], float)
+LINE_IN = np.array([250, 140, 45], float)
+HALO = np.array([255, 172, 66], float)
 
 # Draw at the concept's own size. Upscaling it 2x with Lanczos added no
 # detail and softened every facet edge into a two-pixel ramp; the game
@@ -57,11 +62,17 @@ SCALE = 1
 # px at 1x. TARGET's line is thin: about 4 px on a 600 px figure, so ~5 px
 # on the concept's 930 px one. The old 26 px cream stroke and 10 px ink ring
 # ate the ears, the muzzle and the eyes (Nick, 2026-10-06).
-LINE_W = 5
-HALO_W = 14
-# TARGET's glow outside the line is a faint haze, absent along most edges;
-# at 0.45 ours read as a second, orange outline.
-HALO_A = 0.15
+# Grader, 2026-10-07: at 5 px the line was a wire inside a halo. TARGET's
+# 4-5 px on a 600 px figure is ~7 px on this 930 px one, and sprite_match's
+# outline still lands inside its tolerance.
+LINE_W = 7
+# TARGET's glow outside the line: the sky beside it is warmed about a
+# quarter of the way to orange, fading over ~12 px of a 600 px figure; the
+# game mipmaps the sprite to ~330 px, so it is drawn wider and stronger here
+# to survive (grader, 2026-10-07: 0.30 over 22 px read as no glow). At 0.45 and a steep falloff ours read as a second, orange outline;
+# at 0.15 it vanished at play size (checker, 2026-10-07).
+HALO_W = 28
+HALO_A = 0.50
 # The fight sizes the beast by its texture's box, and its camera was framed
 # on the old box: 39 px of clear room round the line. Keep it, so the ears
 # stay on screen at the same size as before.
@@ -201,9 +212,11 @@ def build(beast_id):
     ring = ndi.binary_dilation(inside, disk(LINE_W)) & ~inside
     out[ring, :3] = LINE
     out[ring, 3] = 255
+    inner = ring & ndi.binary_dilation(inside, disk(1))
+    out[inner, :3] = LINE_IN
     dist = ndi.distance_transform_edt(~(inside | ring))
     halo = ~(inside | ring) & (dist < HALO_W)
-    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 2.0 * HALO_A
+    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 1.5 * HALO_A
     out[halo, :3] = HALO
     out[halo, 3] = 255 * fall[halo]
 

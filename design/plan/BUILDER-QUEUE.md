@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
+- [ ] 👀 **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
       Checker, 2026-10-07, on 02b55a8: all five measures land.
       `python tools/sprite_match.py` prints: ^drive-the-jackal-sprite-to-1-1-with-the-
@@ -37,9 +37,9 @@ run failed.
       **Done when** `tools/sprite_match.py` prints `0 of 5 off` and the pair from
       `tools/vs_target.py --beast` shows no difference Nick would name.
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.|details]]
-      Ask: Grader failed this: rim not visibly thinner. It measures TARGET's width; keep it?
+      Ask: Grader failed this: line half TARGET's weight. Thicken past the measured width?
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-10-07-sprite-1to1-after.png|420]] ^drive-the-jackal-sprite-to-1-1
+      ![[agents/frames/builder/2026-10-07-rim-gold-after.png|420]] ^drive-the-jackal-sprite-to-1-1
 
 
 - [ ] 👀 **Stop the inking from destroying the jackal. Quality, not pose.**
@@ -732,3 +732,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Ring markers on the jackal at rest.** A grey chest ring and a yellow pelvis ring sit on the drawing.
 - [ ] (proposed) **Grader can't see sprite_match.** It fails items for numbers it can't read off a frame; hand it the printout?
 - [ ] (proposed) **Post chain crushes dark art.** The fight blacks out everything under ~0.14 linear; other dark art may suffer.
+- [ ] (proposed) **Lava horizon reads brighter behind the jackal's feet.** Grader saw it brighten this run; the halo may spill on the lava line.

@@ -53,7 +53,10 @@ def figure(im):
     a = np.asarray(im.convert("RGBA"), dtype=np.float32)
     rgb, alpha = a[..., :3], a[..., 3]
     if alpha.min() < 250:
-        return rgb, alpha > 40
+        # Opaque only: the glow outside the line is a translucent haze (at
+        # most 0.30 alpha), not figure and not outline -- TARGET's rim width
+        # was measured on its line, not its glow.
+        return rgb, alpha > 128
     light = rgb.min(axis=2) > 200
     flat = np.ptp(rgb, axis=2) < 18
     return rgb, ~(light & flat)
