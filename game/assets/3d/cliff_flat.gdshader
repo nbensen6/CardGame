@@ -26,7 +26,10 @@ render_mode cull_back, unshaded;
 // the upper frame and hid A's open sky; A's walls are near-black silhouettes
 // (~21,21,28 to ~42,42,53). Darker and less blue, with the lit tone kept
 // well above the shade so the facets still separate.
-uniform vec4 lit_color : source_color = vec4(0.21, 0.205, 0.235, 1.0);
+// Checker iter 18 (2026-10-07), measured on the TARGET pair: TARGET's lit
+// cliff facets reach ~(47,48,63) on screen, ours topped out at ~(21,19,30),
+// so the planes did not separate. Only the lit tone is lifted, cooler.
+uniform vec4 lit_color : source_color = vec4(0.265, 0.265, 0.31, 1.0);
 uniform vec4 side_color : source_color = vec4(0.12, 0.118, 0.135, 1.0);
 uniform vec4 shade_color : source_color = vec4(0.055, 0.054, 0.062, 1.0);
 // The direction the cliffs' light comes from, in world space (towards the
