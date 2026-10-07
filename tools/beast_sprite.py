@@ -104,7 +104,10 @@ SCALE = 1
 # outline still lands inside its tolerance.
 # Checker iter 06 (2026-10-07): beside TARGET the line still read thin and
 # the halo wide and diffuse; 9 px line, 20 px halo.
-LINE_W = 9
+# Checker iter 13: measured on the pair at matched height, our line is 9 px
+# to TARGET's 6, and the critic read it as a thick sticker border. 6 px
+# measured 5 on screen; 7 measures 6.
+LINE_W = 7
 # TARGET's glow outside the line: the sky beside it is warmed about a
 # quarter of the way to orange, fading over ~12 px of a 600 px figure; the
 # game mipmaps the sprite to ~330 px, so it is drawn wider and stronger here
@@ -112,7 +115,8 @@ LINE_W = 9
 # at 0.15 it vanished at play size (checker, 2026-10-07).
 # Checker iter 10: still a glow bleeding off the line rather than TARGET's
 # crisp cel stroke with a slight warmth outside it; 14 px at 0.32.
-HALO_W = 14
+# Checker iter 13: still a wide hazy halo; 10 px.
+HALO_W = 10
 HALO_A = 0.32
 # The fight sizes the beast by its texture's box, and its camera was framed
 # on the old box: 39 px of clear room round the line. Keep it, so the ears

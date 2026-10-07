@@ -64,3 +64,9 @@ Skipped 1–4 under the rulings above. Skipped 5: since iter 09, critics have sp
 
 Run paused after iter 12 (12 of 25 spent). Every critic still ranks the raised flaming fist MAJOR #1–2, so no critic can report "no MAJOR" until Nick rules on the pose. The rest of the iteration budget is kept for after that call rather than spent on items the critics now rank below it, or split on (scale).
 Recurring items still open below the pose: dark, low-contrast facets with no warm lava up-light (critics 07–12), black background rocks with no blue-grey facet highlights (07–12), a thinner, dimmer lava band.
+
+## iter 13 — 2026-10-07 (pair iter-15.png; after: iter-16.png)
+Nick has still not ruled on the pose, so the loop carries on under it.
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR outline 1.5–2x too thick with a wide hazy halo, a sticker border rather than an inked line. Then (4) MAJOR framing, (5) MODERATE proportions, (6) MODERATE extra UI.
+Skipped 1–2 (Nick, 2026-10-06). Fixed 3 in `tools/beast_sprite.py`: measured on the pair at matched height the line was 9 px to TARGET's 6. LINE_W 9 → 7 (now 6 on screen) and HALO_W 14 → 10.
+Note for later runs: after rebuilding the sprite, run `godot --headless --path game --import` before `shot.sh`, or the shot shows the old texture.
