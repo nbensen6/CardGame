@@ -87,12 +87,17 @@ Round 1 (iters 01–25) could not finish. It tuned a front-facing sprite cut
 from the concept drawing, so TARGET's pose, fist and proportions were out of
 reach, and it skipped the stones and HUD as out of scope. **Nick, 2026-10-07:
 "make sure you are checking all the boxes to get to the concept. Ie stone
-design and placement."** Nothing in TARGET.png is out of scope now.
+design and placement."** and **"Override and start with a clean fresh slate.
+The goal is get to the concept as close as possible, any means necessary. Use
+Meshy or whatever is needed."** Nothing in TARGET.png is out of scope, and any
+earlier ruling that conflicts with it is void. Round 1's log is archived in
+`design/match-log/round-1/`. Meshy has no per-run cap here; log what you
+spend in each iteration's block.
 
 Round 2 starts when the builder appends `## Round 2` to
 `design/match-log/log.md` (after the rigged jackal and TARGET's stones ship);
 until then there is nothing to check. **The 25-iteration cap counts from that
-heading.** Shoot at rest (idle) so the jackal is in its rest pose.
+heading.** Count from the highest `iter-NN.png` in `design/match-log/`, starting at 01. Shoot at rest (idle) so the jackal is in its rest pose.
 
 **The checklist.** Both critics grade every box, every iteration:
 
