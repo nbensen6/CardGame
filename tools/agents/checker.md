@@ -33,7 +33,13 @@ So: never ask Nick how something should look. The references answer that.
    Say so in one line and stop. Do not claim the lease, commit or push.
 3. `tools/agents/lease.sh claim checker`. Exit 3 means another run is live:
    stop in one line.
-4. `python3 tools/sprite_match.py`. Keep its output.
+4. The image has no numpy, and downloading Godot just to measure is waste, so
+   install only what the measure needs, then measure:
+
+       python3 -c "import numpy, PIL" 2>/dev/null || python3 -m pip install -q numpy pillow
+       python3 tools/sprite_match.py
+
+   Keep its output.
 5. **If anything is OFF** — rewrite the measurement block in that queue item
    with the numbers you just got, and under it one line per failing measure
    saying what the number means physically:
