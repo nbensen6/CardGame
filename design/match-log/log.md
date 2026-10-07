@@ -36,3 +36,8 @@ Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) 
 Skipped 1–3 as before; 4–5 too, as noted. Fixed 7 in `tools/beast_sprite.py`: LINE_W 7 → 9 and HALO_W 28 → 20.
 
 Stalled on the pose: every critic since iter 01 ranks the raised flaming fist first, and TARGET.png shows it, but Nick ruled it out on 2026-10-06. The loop can't reach its stop condition (no MAJOR) until Nick picks one. Paused here for his call.
+
+## iter 07 — 2026-10-07 (pair iter-08.png; after: iter-09.png)
+Nick has not answered the pose question, so the loop carries on below it: the ruled-out items are skipped and the top remaining difference is fixed.
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR stone route, (5) MODERATE proportions, (6) MODERATE eyes a dim orange slit where TARGET's are the hottest point on the head.
+Skipped 1–5 under the rulings above (Nick's pose call, the HUD, the route Nick set, the concept's proportions). Fixed 6 in `tools/beast_sprite.py`: new per-beast `eyes` boxes; each eye gets a near-white core (255,244,190), a hot orange ring (255,150,40) and a 7 px orange glow over the rock.

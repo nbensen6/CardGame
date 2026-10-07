@@ -47,6 +47,9 @@ BEASTS = {
             3: (560, 430), 4: (535, 330), 5: (512, 225),
         },
         "ledges": [0, 2, 3, 4],
+        # Concept-pixel boxes round each eye (checker iter 07, 2026-10-07:
+        # TARGET's eyes are the hottest point on the head; ours read dim).
+        "eyes": [(462, 192, 498, 222), (527, 192, 561, 222)],
         # No "repose" and no "flame" (Nick, 2026-10-06: "The jackal should
         # be able to move. So the direction doesnt matter. Its the quality
         # that im looking for."): the cut-and-rotate arm tore the figure, and
@@ -68,6 +71,13 @@ CRACK_GROW = 1
 CRACK_EDGE = np.array([222, 72, 24], float)
 CRACK_CORE = np.array([255, 214, 96], float)
 CRACK_CORE_MIX = 0.4
+
+# The eyes: a near-white core, a hot orange ring and a short glow over the
+# rock, so they survive the mipmap as TARGET's two bright points.
+EYE_CORE = np.array([255, 244, 190], float)
+EYE_RIM = np.array([255, 150, 40], float)
+EYE_GLOW = 7
+EYE_GLOW_A = 0.55
 
 # Draw at the concept's own size. Upscaling it 2x with Lanczos added no
 # detail and softened every facet edge into a two-pixel ramp; the game
@@ -232,6 +242,16 @@ def build(beast_id):
     out[grown, :3] = CRACK_EDGE
     core = ndi.binary_erosion(crack, disk(1))
     out[core, :3] += (CRACK_CORE - out[core, :3]) * CRACK_CORE_MIX
+    for ex0, ey0, ex1, ey1 in spec.get("eyes", []):
+        box = np.zeros_like(inside)
+        box[ey0 * SCALE:ey1 * SCALE, ex0 * SCALE:ex1 * SCALE] = True
+        eye = box & inside & (r > 200) & (g > 110)
+        d = ndi.distance_transform_edt(~eye)
+        glow = inside & ~eye & (d < EYE_GLOW * SCALE)
+        t = (np.clip(1 - d / (EYE_GLOW * SCALE), 0, 1) ** 1.5 * EYE_GLOW_A)[glow, None]
+        out[glow, :3] += (EYE_RIM - out[glow, :3]) * t
+        out[eye, :3] = EYE_RIM
+        out[ndi.binary_erosion(eye, disk(1)), :3] = EYE_CORE
     out[inside, 3] = 255
 
     # TARGET.png's edge: a thin warm line hugging the figure, and outside it
