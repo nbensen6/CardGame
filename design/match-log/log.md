@@ -19,3 +19,10 @@ heading starts the checker. Until then this log ends in DONE on purpose.
 Waiting for the builder's `## Round 2` heading.
 
 ## Round 2 — rigged jackal, TARGET stones (2026-10-07)
+
+### iter 01
+- Critic A top 3: [MAJOR] framing (ears touch top, jackal fills only top half, frog mid-frame not lower third); [MAJOR] fist fire is a round sun disc, not flame tongues; [MAJOR] stone staircase veers right over the right forearm, bottom stone floats at the lava line.
+- Critic B top 3: [MAJOR] framing/scale (16:9, jackal ~40% of width); [MAJOR] extra second hero (goblin) at right; [MAJOR] stone staircase ends at the right pec, starts mid-left.
+- Changed: framing (both critics' #1). `DRAWN_GAP_PER_HEIGHT` 1.1→1.35, `GROUND_VIEW_PITCH` 0.08→0.03, `GROUND_LIFT` 0.07→0.03. Measured on the shot: ears 0%→6.4% below the top, lava band 44%→48%, frog 54%→57% (TARGET, scaled to the space above the hand: ~6 / ~46 / ~57).
+- Tests: ALL TESTS PASSED. Playtest: the same 21 FAILs (hunter-off-marker, route-reversal on rung 5) before and after this change — they come with the builder's stones commit, not with this one.
+- Meshy: 0 credits.
