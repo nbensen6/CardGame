@@ -55,3 +55,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the Frog's pedestal (both #1). `REST_ROCK_HEIGHT` 0.55→1.2 hunter heights; the rest rock is now ~1.6x wider (radius 2.1/2.3 HH, was 1.35/1.55) so it shows either side of the HP bar, flat-normal hex facets (was a smooth-shaded cylinder), tone 0.12→0.16. Also: `vs_target.py --beast` crops the shot at x 0.30–0.72 (was 0.38) now the jackal is centred, so its fist stays in the pair.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 06
+- Critic A top 3: [MAJOR] stray blue + yellow rings by the stones, vertical sparkle streaks by the fist, pink sky streaks; [MAJOR] HUD glow borders everywhere; [MAJOR] stones squashed into a near-vertical belly cluster, thick and dark.
+- Critic B top 3: [MAJOR] stones squashed/overlapping, bottom two oversized beside the frog; [MAJOR] stray blue + yellow rings and sparkle trail at the right hip; [MAJOR] HUD glow frames, green energy box, rectangular buttons.
+- Changed: the rings (A #1, B #2 — highest combined rank; stones are A #3, B #1). `_build_ledge_marks` builds no safe-ledge rings on a TARGET staircase beast: they stood on the beast's centre line, off both hunters' slabs, and TARGET draws none — the slabs are the holds. Other beasts keep them. The sparkle streaks are still there.
+- Tests: ALL TESTS PASSED. No gameplay position changed, so no playtest.
+- Meshy: 0 credits.

@@ -7272,6 +7272,13 @@ func _build_ledge_marks() -> void:
 	_ledge_marks.clear()
 	if _beast == null:
 		return
+	# Not on TARGET's staircase (checker r2 iter 05-06, 2026-10-07: both
+	# critics named "a blue ring and a yellow ring floating right of the
+	# stones" MAJOR, twice). The rings stood on the beast's centre line
+	# (_stand_on_model's side 0), off both hunters' slabs, and TARGET draws
+	# none: there the six pale slabs ARE the holds you read the climb from.
+	if _staircase():
+		return
 	for h in safe_ledge_marks(_safe_ledges, _climb_points.keys()):
 		var height := int(h)
 		var ring := MeshInstance3D.new()
