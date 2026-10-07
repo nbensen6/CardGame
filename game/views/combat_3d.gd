@@ -3327,7 +3327,9 @@ const REST_ROCK_TONE := Color(0.12, 0.115, 0.135)
 const SLAB_DEPTH := 0.6
 ## A slab stone's width over the pale stones': picture A's steps are wide grey
 ## blocks that join into one staircase, not discs with ground between them.
-const SLAB_SIZE := 1.4
+## 0.95 (checker iter 04, 2026-10-07): beside TARGET's slabs ours were
+## half again too wide and crowded the jackal's arm.
+const SLAB_SIZE := 0.95
 ## A slab's thickness, the same at every rung. Nick, 2026-10-05 ("hits the
 ## mark on recreating the stones"): TARGET.png's stones are flat, wide, thin
 ## slabs, about a fifth as thick as they are wide, not the Frog-and-a-half
@@ -6871,12 +6873,12 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		var ink := MeshInstance3D.new()
 		var ink_ol := PackedVector2Array()
 		for v in outline:
-			ink_ol.append(v * 1.05)
+			ink_ol.append(v * 1.025)
 		ink.mesh = slab_mesh(ink_ol, SLAB_BLOCK_HEIGHT * 1.1, Color.BLACK, Color.BLACK)
 		ink.position = Vector3(0.0, SLAB_BLOCK_HEIGHT * 0.05, 0.0)
 		var ink_mat := StandardMaterial3D.new()
 		ink_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		ink_mat.albedo_color = Color(0.05, 0.04, 0.05)
+		ink_mat.albedo_color = Color(0.20, 0.18, 0.18)   # TARGET's slab edge is a soft dark grey, not black (iter 04)
 		ink_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 		ink.material_override = ink_mat
 		ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF

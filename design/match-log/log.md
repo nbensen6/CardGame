@@ -22,3 +22,7 @@ Skipped 1–2: Nick ruled them out on 2026-10-06 ("The jackal should be able to 
 ## iter 03 — 2026-10-07
 Critic top 3: (1) MAJOR pose (no raised fist); (2) MAJOR fist fire missing; (3) MAJOR scale/framing — the jackal is small and set back, ears ~20% down the frame, where TARGET's fills it.
 Skipped 1–2 (Nick, 2026-10-06, see iter 02). Fixed 3: a billboard Sprite3D reports a CUBE as its AABB, so the flat drawing read as 27 units deep. Its "front edge" stood 13 units out, and that set the hunters' standoff, the camera and the arena, so DRAWN_GAP_PER_HEIGHT never bound. New `drawn_box` flattens it to the drawing's plane, and DRAWN_GAP_PER_HEIGHT 1.0 → 1.2 puts the ear tips just under the top of the frame. The jackal is ~1.3x larger on screen. New test for drawn_box.
+
+## iter 04 — 2026-10-07
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI (intent label, weak-point rings, frog and marker, spark column). Its 4th: MAJOR stones too big and thick, heavy black outlines, too close to the camera.
+Skipped 1–2 (Nick, 2026-10-06). Skipped 3: the label, rings and frog are the fight's own HUD, which TARGET also draws (its intent chip, its frog), and they land in the crop only because the layout differs. They are gameplay, not art. Fixed 4: SLAB_SIZE 1.4 → 0.95, and the ink hull went from 1.05x black to 1.025x dark grey (0.20, 0.18, 0.18), TARGET's soft slab edge. Stone placement is untouched.
