@@ -48,3 +48,10 @@ Waiting for the builder's `## Round 2` heading.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
 - Note: this run was cut once mid-iteration; iter 04's critics were re-spawned fresh on the same pair.
+
+### iter 05
+- Critic A top 3: [MAJOR] the Frog's dark faceted pedestal is missing; [MAJOR] stones chunky, darker, bunched on the belly, drifting right; [MAJOR] extra rings + sparkle trails.
+- Critic B top 3: [MAJOR] Frog pedestal missing; [MAJOR] stones clustered right of centre, thick, mid-grey; [MAJOR] extra ring gizmos, dotted particle trails, white specks.
+- Changed: the Frog's pedestal (both #1). `REST_ROCK_HEIGHT` 0.55→1.2 hunter heights; the rest rock is now ~1.6x wider (radius 2.1/2.3 HH, was 1.35/1.55) so it shows either side of the HP bar, flat-normal hex facets (was a smooth-shaded cylinder), tone 0.12→0.16. Also: `vs_target.py --beast` crops the shot at x 0.30–0.72 (was 0.38) now the jackal is centred, so its fist stays in the pair.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.

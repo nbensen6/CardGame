@@ -3324,7 +3324,11 @@ static func stone_style(biome: String) -> String:
 ## How high a waiting hunter stands: on a raised rock in a biome that asks
 ## for one (picture A: the Frog on a lit rock in the foreground), else on the
 ## ground. Static so run_tests.gd can pin it.
-const REST_ROCK_HEIGHT := HUNTER_HEIGHT * 0.55
+## 1.2 (checker r2 iter 05, 2026-10-07; was 0.55): both critics' top MAJOR
+## was "the Frog's pedestal is missing". At 0.55 the rock was a sliver under
+## the HP bar, flat-shaded smooth and lost in the floor. TARGET's is a hex
+## pillar about the Frog's own height, its facets reading as separate tones.
+const REST_ROCK_HEIGHT := HUNTER_HEIGHT * 1.2
 static func rest_rock_lift(biome: String) -> float:
 	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
 	return REST_ROCK_HEIGHT if bool(b.get("rest_rock", false)) else 0.0
@@ -3334,7 +3338,7 @@ static func rest_rock_lift(biome: String) -> float:
 ## dark charcoal hex pillar sunk into the floor; 0.36 grey with the cobble
 ## texture rendered pale beige under the warm key and was the brightest thing
 ## in the scene. Flat, no texture, so it matches the flat cliffs and slabs.
-const REST_ROCK_TONE := Color(0.12, 0.115, 0.135)
+const REST_ROCK_TONE := Color(0.16, 0.155, 0.18)
 
 
 ## A slab stone's depth as a multiple of its radius. Picture A's steps are
@@ -6984,15 +6988,26 @@ func _put_rest_rock(slot: int, top: Vector3) -> void:
 	var had: Variant = _rest_rocks[slot]
 	if had != null and is_instance_valid(had):
 		var old := had as MeshInstance3D
-		old.position = Vector3(top.x, top.y - (old.mesh as CylinderMesh).height * 0.5, top.z)
+		old.position = Vector3(top.x, top.y - float(old.get_meta("height")) * 0.5, top.z)
 		return
-	var rock := MeshInstance3D.new()
 	var m := CylinderMesh.new()
-	m.top_radius = HUNTER_HEIGHT * 1.35
-	m.bottom_radius = HUNTER_HEIGHT * 1.55
+	# Wider than the Frog's HP bar (r2 iter 05), so the pillar shows either
+	# side of it as TARGET's does; at 1.35 the bar hid all of it.
+	m.top_radius = HUNTER_HEIGHT * 2.1
+	m.bottom_radius = HUNTER_HEIGHT * 2.3
 	m.height = top.y + HUNTER_HEIGHT * 0.4
 	m.radial_segments = 6
-	rock.mesh = m
+	m.rings = 0
+	# Flat normals, one per face (checker r2 iter 05), so the six sides and
+	# the top read as separate facets under the key light as TARGET draws
+	# them; the CylinderMesh's smooth normals shaded it like a soft drum.
+	var st := SurfaceTool.new()
+	st.create_from(m, 0)
+	st.deindex()
+	st.generate_normals()
+	var rock := MeshInstance3D.new()
+	rock.mesh = st.commit()
+	rock.set_meta("height", m.height)
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = REST_ROCK_TONE
 	mat.roughness = 0.9

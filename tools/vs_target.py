@@ -24,7 +24,7 @@ FONTS = os.path.join("game", "assets", "fonts", "KenneyBold.ttf")
 # normalised crops, measured off TARGET.png and off a 1280x720 shot
 REGIONS = {
     "--full": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.0, 0.0, 1.0, 1.0)},
-    "--beast": {"target": (0.22, 0.05, 0.85, 0.58), "shot": (0.38, 0.0, 0.72, 0.52)},
+    "--beast": {"target": (0.22, 0.05, 0.85, 0.58), "shot": (0.30, 0.0, 0.72, 0.55)},
     "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.12, 0.68, 0.80, 1.0)},
 }
 
