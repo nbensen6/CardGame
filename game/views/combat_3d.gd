@@ -836,8 +836,8 @@ static func add_plate_frame(target: Control, kind: String, radius: float = 10.0,
 ## cut from the card pair by tools/hudpanel_a1.py, so a panel and a card are
 ## literally one material. Only the glow is coloured, by the seat, which is
 ## how a player's HUD and their hand light up together.
-const HUD_PANEL_BASE := preload("res://assets/ui/hud_panel_a1_base.png")
-const HUD_PANEL_GLOW := preload("res://assets/ui/hud_panel_a1_glow.png")
+const HUD_PANEL_BASE := preload("res://assets/ui/hud_panel_flat_base.png")
+const HUD_PANEL_GLOW := preload("res://assets/ui/hud_panel_flat_glow.png")
 ## Nine-patch margin in source px: the carved band plus a little stone.
 const HUD_PANEL_PATCH := 72.0
 ## Source px -> screen px. A card in the hand is drawn at ~0.25; the HUD's
@@ -845,9 +845,16 @@ const HUD_PANEL_PATCH := 72.0
 ## read as a hairline (grader, 2026-10-05), so they draw a little heavier.
 const HUD_PANEL_K := 0.32
 ## How much brighter the HUD's stone is drawn than the card's.
-const HUD_STONE_LIFT := Color(1.3, 1.3, 1.34)
+const HUD_STONE_LIFT := Color(1.0, 1.0, 1.0)
 ## The beast's own colour on its plate and intent, so it never reads as a seat.
 const BEAST_GLOW := Color(1.0, 0.62, 0.16)
+## TARGET.png's energy box: a gold hairline round a brown face (r2 iter 07).
+const ENERGY_GOLD := Color(1.0, 0.78, 0.34)
+const ENERGY_FACE := Color(0.42, 0.22, 0.07, 0.92)
+## TARGET.png's Switch: a navy pill under the amber End Turn.
+const SWITCH_FACE := Color(0.10, 0.14, 0.30, 0.92)
+## A pill's corner radius for the 46 px-tall turn buttons.
+const PILL_RADIUS := 23
 ## Every seat-lit panel, re-tinted when the held hunter changes.
 var _seat_panels: Array = []
 
@@ -912,11 +919,11 @@ static func add_a1_panel(target: Control, tint: Color, pad: float = 0.0,
 ## A stylebox that draws nothing but keeps the host's padding, so the A1
 ## stone behind it shows. `wash` tints the face (a Button's hover and press).
 static func a1_clear_style(margin_x: float, margin_y: float,
-		wash: Color = Color(0, 0, 0, 0)) -> StyleBoxFlat:
+		wash: Color = Color(0, 0, 0, 0), radius: int = 3) -> StyleBoxFlat:
 	var st := StyleBoxFlat.new()
 	st.bg_color = wash
 	st.draw_center = wash.a > 0.0
-	st.set_corner_radius_all(3)
+	st.set_corner_radius_all(radius)
 	st.content_margin_left = margin_x
 	st.content_margin_right = margin_x
 	st.content_margin_top = margin_y
@@ -930,13 +937,14 @@ static func a1_clear_style(margin_x: float, margin_y: float,
 static func a1_button_styles(tint: Color, loud: bool) -> Dictionary:
 	# End Turn's face is TARGET-UI's amber (the one loud button); its rim is
 	# still the seat's glow.
-	var rest := Color(END_TURN_FILL, 0.78) if loud else Color(0, 0, 0, 0)
-	var hover := Color(END_TURN_FILL.lightened(0.18), 0.9) if loud else Color(tint, 0.3)
+	# Pills, as TARGET draws both (checker r2 iter 07): End Turn amber, Switch navy.
+	var rest := Color(END_TURN_FILL, 0.95) if loud else SWITCH_FACE
+	var hover := Color(END_TURN_FILL.lightened(0.18), 0.95) if loud else SWITCH_FACE.lightened(0.15)
 	return {
-		"normal": a1_clear_style(20.0, 8.0, rest),
-		"hover": a1_clear_style(20.0, 8.0, hover),
-		"pressed": a1_clear_style(20.0, 8.0, Color(0, 0, 0, 0.45)),
-		"disabled": a1_clear_style(20.0, 8.0, Color(0.3, 0.3, 0.3, 0.55)),
+		"normal": a1_clear_style(20.0, 8.0, rest, PILL_RADIUS),
+		"hover": a1_clear_style(20.0, 8.0, hover, PILL_RADIUS),
+		"pressed": a1_clear_style(20.0, 8.0, Color(0, 0, 0, 0.45), PILL_RADIUS),
+		"disabled": a1_clear_style(20.0, 8.0, Color(0.3, 0.3, 0.3, 0.55), PILL_RADIUS),
 		"focus": StyleBoxEmpty.new(),
 	}
 
@@ -1006,13 +1014,22 @@ func _apply_sts_hud() -> void:
 	_end_btn.custom_minimum_size = Vector2(150, 46)
 	_end_btn.add_theme_font_size_override("font_size", 19)
 	_seat_panels.append(add_a1_panel(_end_btn, _seat_tint_now(), 4.0))
-	_seat_panels.append(add_a1_panel(_energy_orb, _seat_tint_now(), 6.0))
+	# TARGET's energy box is amber: a brown face and a gold hairline, not the
+	# seat colour (checker r2 iter 07).
+	add_a1_panel(_energy_orb, ENERGY_GOLD, 6.0)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
 		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
 	_switch_btn.custom_minimum_size = Vector2(118, 46)
 	var sw_glow := add_a1_panel(_switch_btn, Color(0.6, 0.6, 0.62), 4.0)
 	sw_glow.modulate.a = 0.6
+	# TARGET's turn buttons are bare pills (checker r2 iter 07): the pill face
+	# in a1_button_styles is the whole look, so the panel behind each, a
+	# square-cornered plate, stays hidden.
+	for b in [_end_btn, _switch_btn]:
+		var a1 := (b as Control).get_node_or_null("A1") as CanvasItem
+		if a1 != null:
+			a1.visible = false
 	_retint_seat_panels()
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
@@ -9275,13 +9292,13 @@ func _render_energy(p: Dictionary) -> void:
 	# in the seat colour, goes dark with the Energy like the number does.
 	var seat := _seat_tint_now()
 	_energy_orb.add_theme_stylebox_override("panel", a1_clear_style(style.content_margin_left,
-		style.content_margin_top, Color(seat, 0.14) if out > 0 else Color(0, 0, 0, 0)))
+		style.content_margin_top, ENERGY_FACE if out > 0 else Color(0, 0, 0, 0), 10))
 	var glow := _energy_orb.get_node_or_null("A1/A1Glow") as CanvasItem
 	if glow != null:
 		glow.modulate = Color.WHITE if out > 0 else Color(0.3, 0.3, 0.3)
 	_energy_label.text = str(out)
 	_energy_label.add_theme_color_override("font_color",
-		Color(1, 1, 1).lerp(seat, 0.3) if out > 0 else Color(0.55, 0.52, 0.5))
+		Color(1.0, 0.86, 0.55) if out > 0 else Color(0.55, 0.52, 0.5))
 
 	# Pile counts tucked under the orb. Small on purpose: they matter to the Goblin,
 	# whose kit scales off the burn pile, and to nobody else most turns.

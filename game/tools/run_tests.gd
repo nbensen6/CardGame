@@ -32042,7 +32042,11 @@ func _test_hud_wears_the_a1_card_material() -> void:
 	# End Turn is still the loud one; Switch is not.
 	var loud: Dictionary = Combat3D.a1_button_styles(tint, true)
 	var quiet: Dictionary = Combat3D.a1_button_styles(tint, false)
-	_expect(loud["normal"].draw_center and not quiet["normal"].draw_center,
-		"a1 hud: only End Turn has a face of its own at rest")
+	# TARGET.png (checker r2 iter 07): both are pills, End Turn amber, Switch navy.
+	_expect(loud["normal"].draw_center and quiet["normal"].draw_center
+		and quiet["normal"].bg_color.b > quiet["normal"].bg_color.r
+		and loud["normal"].corner_radius_top_left == Combat3D.PILL_RADIUS
+		and quiet["normal"].corner_radius_top_left == Combat3D.PILL_RADIUS,
+		"target hud: End Turn an amber pill, Switch a navy pill")
 	_expect(loud["normal"].bg_color.r > 0.6 and loud["normal"].bg_color.b < 0.3,
 		"a1 hud: End Turn's face is warm whatever the seat")

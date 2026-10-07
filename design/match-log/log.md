@@ -62,3 +62,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the rings (A #1, B #2 — highest combined rank; stones are A #3, B #1). `_build_ledge_marks` builds no safe-ledge rings on a TARGET staircase beast: they stood on the beast's centre line, off both hunters' slabs, and TARGET draws none — the slabs are the holds. Other beasts keep them. The sparkle streaks are still there.
 - Tests: ALL TESTS PASSED. No gameplay position changed, so no playtest.
 - Meshy: 0 credits.
+
+### iter 07
+- Critic A top 3: [MAJOR] HUD restyle — thick glowing borders on boss bar and chip, teal energy box, framed-rectangle End Turn/Switch, glowing gauge; [MAJOR] hand cards too big, green glow, flat fan; [MAJOR] framing (16:9 vs square, dark left side).
+- Critic B top 3: [MAJOR] strip the HUD glow borders, energy box brown/gold, End Turn orange pill, Switch navy pill; [MAJOR] shrink the hand ~35%, more fan; [MAJOR] left background black void.
+- Changed: HUD styling (both #1). New `tools/hudpanel_flat.py` → `hud_panel_flat_{base,glow}.png`, same nine-patch geometry as A1, swapped in for the A1 carved stone: a flat dark plate with a grey hairline, and the tinted layer is now a thin hairline, not a glow. Energy box: brown face + gold hairline + amber numeral (`ENERGY_FACE`, `ENERGY_GOLD`), no longer seat-coloured. End Turn: amber pill; Switch: navy pill (`PILL_RADIUS`, `SWITCH_FACE`), plates behind both hidden. The climb gauge's own green frame and the cards' glow are untouched.
+- Tests: ALL TESTS PASSED (the A1 button test now pins TARGET's two pills). No gameplay position changed.
+- Meshy: 0 credits.
