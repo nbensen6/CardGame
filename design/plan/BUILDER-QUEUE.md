@@ -10,22 +10,26 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] 👀 **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
+- [ ] **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
-      The last run fixed body tone and hue — both now land on the concept
-      exactly. Three measures are still off. `python tools/sprite_match.py`
-      prints them; today it says: ^drive-the-jackal-sprite-to-1-1-with-the-
+      Checker, 2026-10-07, on 02b55a8: all five measures land.
+      `python tools/sprite_match.py` prints: ^drive-the-jackal-sprite-to-1-1-with-the-
 
-          crack cover   concept 0.123   game 0.273   OFF
-          detail        concept 0.077   game 0.032   OFF
-          outline       target  0.0050  game 0.0120  OFF
+          body tone     concept 41.8    game 41.8    ok
+          body hue      concept 7.1     game 7.1     ok
+          crack cover   concept 0.125   game 0.127   ok
+          detail        concept 0.068   game 0.063   ok
+          outline       target  0.0050  game 0.0053  ok
 
-      **crack cover** — the glow is bleeding into the body. More than twice the
-      concept's share of the figure is reading as hot crack. Tighten the cracks
-      to the lines they are in the concept instead of letting them wash outward.
-      **detail** — facet edges inside the figure are at 40% of the concept's.
-      Whatever is softening or merging the planes, stop it.
-      **outline** — the pale rim is 2.4x the width of `TARGET.png`'s line.
+          0 of 5 off
+
+      **rim colour (seen in the pair, not measured)** — the rim is the right
+      width but it reads as a pale cream-white wire. In the concept the rim is
+      warm amber-gold with an orange inner edge and a soft glow falling off
+      outside it. Keep the width; warm the line to the concept's gold and give
+      it the glow. See `design/agents/frames/checker/2026-10-07-pair.png`.
+      Answer to the Ask below: keep TARGET's width — the outline measure says
+      it matches. The remaining gap is colour and glow, not thickness.
       **Do not ask Nick about any of these.** They are measured. Fix until
       `tools/sprite_match.py` prints `0 of 5 off`, re-running it after each
       change. Meshy is allowed inside the brief's 60-credit run cap if the
