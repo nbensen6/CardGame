@@ -76,3 +76,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (A #2, B #1 — highest combined rank). `STAIR_EYE_UP` is now derived from the rest camera's constants (the hand-measured 0.93 went stale when iters 01–03 moved pitch and lift, so every slab hung on a sight line from the wrong eye). Slab thickness `STAIR_THICK` 0.3→0.2 of the half-width, with its own floor `STAIR_MIN_THICK` (0.1 HH) instead of a plain slab's 0.28 HH, which had made the small upper slabs nearly as thick as wide. Still open: tops not lighter than sides; one of the Goblin's mirrored slabs shows by the top of the Frog's line.
 - Tests: ALL TESTS PASSED (the thickness test now also pins "thin"). Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 09
+- Critic A top 3: [MAJOR] stones — middle slabs bunch at belly height, no clean staircase, bottom slab against the frog; [MAJOR] left cliffs a flat near-black mass with no cool edges, top-left sky black; [MAJOR] hand too big, flat, green glow.
+- Critic B top 3: [MAJOR] black void in the top-left, no purple sky, no lit left cliff; [MAJOR] jackal too small for the wide frame; [MAJOR] stone staircase broken, clustered, stops at the belly.
+- Changed: the left background (A #2, B #1 — highest combined rank). `cliff_flat.gdshader` keys every facet off the better of `key_dir` and its mirror across x, so the left formation's middle-facing planes take the cool lit tone the right one's already did (it was all side/shade tone: the "void").
+- Tests: ALL TESTS PASSED. Shader only, no gameplay change.
+- Meshy: 0 credits.

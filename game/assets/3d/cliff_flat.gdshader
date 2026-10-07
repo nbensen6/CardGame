@@ -80,7 +80,13 @@ void fragment() {
 	if (dot(n, to_cam) < 0.0) {
 		n = -n;
 	}
-	float k = dot(n, normalize(key_dir));
+	// Checker r2 iter 09: TARGET lights the cool edges of BOTH formations, the
+	// left one's planes that face the middle as well as the right one's. One
+	// key from the upper left left the whole left cliff in side/shade tone, a
+	// flat black void over the left third. So the key is mirrored across the
+	// arena's x as well and a plane takes the better of the two.
+	vec3 kd = normalize(key_dir);
+	float k = max(dot(n, kd), dot(n, vec3(-kd.x, kd.y, kd.z)));
 	vec3 c = side_color.rgb;
 	if (k > lit_at) {
 		c = lit_color.rgb;
