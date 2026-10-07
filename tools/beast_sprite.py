@@ -73,6 +73,13 @@ LINE = np.array([255, 206, 112], float)
 LINE_IN = np.array([250, 140, 45], float)
 HALO = np.array([255, 172, 66], float)
 
+# Checker iter 17: the rock read near-black charcoal. Measured on the pair,
+# its brightness already matches TARGET's (median ~43 both); the hue does
+# not: ours (59,34,31), TARGET's warm maroon (74,32,26). Each rock pixel
+# keeps its brightness and moves ROCK_WARM of the way to TARGET's hue.
+ROCK_HUE = np.array([74, 32, 26], float) / 44.0
+ROCK_WARM = 0.7
+
 # The cracks, widened and heated (see build).
 CRACK_GROW = 1
 CRACK_EDGE = np.array([222, 72, 24], float)
@@ -267,6 +274,9 @@ def build(beast_id):
     # Grow each crack a pixel into the rock in its own red edge colour, then
     # pull the crack's interior toward TARGET's yellow core.
     crack = inside & (r > 150) & (r - b > 90)
+    rock = inside & (r < 150) & (r - b < 70)
+    lum = out[rock, :3].mean(1, keepdims=True)
+    out[rock, :3] += (lum * ROCK_HUE - out[rock, :3]) * ROCK_WARM
     grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
     out[grown, :3] = CRACK_EDGE
     d = ndi.distance_transform_edt(~(crack | grown))
