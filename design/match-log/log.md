@@ -53,3 +53,7 @@ Skipped 1–3 under the rulings above. Fixed 4 in `game/views/combat_3d.gd`: DRA
 ## iter 10 — 2026-10-07 (pair iter-11.png; after: iter-12.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR proportions, (5) MAJOR stones (route up the left edge, bigger, flatter), (6) MODERATE outline soft and glowy, bleeding into a halo, where TARGET's is a crisp cel line.
 Skipped 1–5 under the rulings above. Stone size was raised in iter 04 and the slabs shrunk then; what reads as "much bigger" now is mostly the near slab's perspective on the route Nick set. Fixed 6 in `tools/beast_sprite.py`: HALO_W 20 → 14 and HALO_A 0.50 → 0.32.
+
+## iter 11 — 2026-10-07 (pair iter-12.png; after: iter-13.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MODERATE scale, (6) MODERATE stones, (7) MODERATE outline bloom, (8) MODERATE cracks with no yellow-white sternum hot spot.
+Skipped 1–4 under the rulings above. Skipped 5: it called the jackal "smaller, further away" on the framing the iter-10 critic called "a bit closer" — the critics now split either way. Skipped 6 (the route). Left 7 alone: the halo was cut last iteration, and the drawn shader never blooms, so the next critic judges that change. Fixed 8, which every critic since iter 07 has named, in `tools/beast_sprite.py`: a per-beast `hot` spot at the sternum junction (512,355), r 70. Seams inside it swell 3 px and heat toward (255,240,170), and the rock right round it takes a faint orange wash.

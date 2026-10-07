@@ -53,6 +53,10 @@ BEASTS = {
         # Concept-pixel boxes round each eye (checker iter 07, 2026-10-07:
         # TARGET's eyes are the hottest point on the head; ours read dim).
         "eyes": [(462, 192, 498, 222), (527, 192, 561, 222)],
+        # Concept pixel of the sternum junction and the radius its heat
+        # reaches (checker iter 11: TARGET's chest burns yellow-white where
+        # the seams meet; ours was the same orange as every other crack).
+        "hot": ((512, 355), 70),
         # No "repose" and no "flame" (Nick, 2026-10-06: "The jackal should
         # be able to move. So the direction doesnt matter. Its the quality
         # that im looking for."): the cut-and-rotate arm tore the figure, and
@@ -81,6 +85,12 @@ EYE_CORE = np.array([255, 244, 190], float)
 EYE_RIM = np.array([255, 150, 40], float)
 EYE_GLOW = 7
 EYE_GLOW_A = 0.55
+
+# The sternum: cracks near it heat toward white-yellow, and the rock right
+# round the junction takes a warm orange wash.
+HOT_CORE = np.array([255, 240, 170], float)
+HOT_WASH = np.array([255, 120, 30], float)
+HOT_WASH_A = 0.35
 
 # Draw at the concept's own size. Upscaling it 2x with Lanczos added no
 # detail and softened every facet edge into a two-pixel ramp; the game
@@ -247,6 +257,17 @@ def build(beast_id):
     out[grown, :3] = CRACK_EDGE
     core = ndi.binary_erosion(crack, disk(1))
     out[core, :3] += (CRACK_CORE - out[core, :3]) * CRACK_CORE_MIX
+    if spec.get("hot"):
+        (hx, hy), hr = spec["hot"]
+        yy, xx = np.ogrid[:out.shape[0], :out.shape[1]]
+        heat = np.clip(1 - np.hypot(xx - hx * SCALE, yy - hy * SCALE) / (hr * SCALE), 0, 1)
+        # Near the junction the seams themselves swell into a molten pool.
+        swell = ndi.binary_dilation(crack, disk(3 * SCALE)) & inside & (heat > 0.35)
+        hc = (crack | grown | swell) & (heat > 0)
+        out[hc, :3] += (HOT_CORE - out[hc, :3]) * (heat[hc, None] ** 0.8)
+        hw = inside & ~hc & (heat > 0.45)
+        t = ((heat[hw] - 0.45) / 0.55)[:, None] ** 1.5 * HOT_WASH_A
+        out[hw, :3] += (HOT_WASH - out[hw, :3]) * t
     for ex0, ey0, ex1, ey1 in spec.get("eyes", []):
         box = np.zeros_like(inside)
         box[ey0 * SCALE:ey1 * SCALE, ex0 * SCALE:ex1 * SCALE] = True
