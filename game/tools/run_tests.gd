@@ -31383,10 +31383,11 @@ func _test_stone_style_lava_rock_only_in_the_jackal_biome() -> void:
 	_expect(is_zero_approx(Combat3D.rest_rock_lift("crag")), "other fights keep their hunters on the ground")
 	_expect(Combat3D.REST_ROCK_TONE.get_luminance() < 0.2,
 		"the waiting rock is dark charcoal like picture A's pedestal, not pale beige")
-	# Overnight pass 7: the slabs are cooled so the warm key lands them on
-	# picture A's neutral grey, not tan; blue leads red on both faces.
-	_expect(Combat3D.SLAB_SIDE_TONE.b > Combat3D.SLAB_SIDE_TONE.r and Combat3D.SLAB_TOP_TONE.b > Combat3D.SLAB_TOP_TONE.r,
-		"slab tones lean cool so they render grey under the warm key, not tan")
+	# Checker iter 02 (2026-10-07): the slabs are drawn unshaded, so their
+	# tones ARE TARGET.png's warm-neutral grey -- no cooling against a key.
+	for tone in [Combat3D.SLAB_SIDE_TONE, Combat3D.SLAB_TOP_TONE]:
+		_expect(tone.r >= tone.b and tone.r - tone.b < 0.08,
+			"slab tones are a barely-warm grey, not tan and not blue -- got %s" % tone)
 	_expect(Combat3D.SLAB_TOP_TONE.get_luminance() > Combat3D.SLAB_SIDE_TONE.get_luminance(),
 		"a slab's top is paler than its side")
 	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.4).y, 0.4),

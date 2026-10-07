@@ -3386,10 +3386,13 @@ static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, sid
 	for i in range(n):
 		var a := outline[i]
 		var b := outline[(i + 1) % n]
-		var nrm := Vector3(b.y - a.y, 0.0, a.x - b.x).normalized()
+		# Wound and lit OUTWARD. They faced in, so the ink hull's near walls
+		# (drawn back faces only) covered every slab side in black (checker
+		# iter 02, 2026-10-07).
+		var nrm := Vector3(a.y - b.y, 0.0, b.x - a.x).normalized()
 		var verts := [
-			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, 0.0, b.y), side], [Vector3(b.x, -thick, b.y), under],
-			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, -thick, b.y), under], [Vector3(a.x, -thick, a.y), under],
+			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, -thick, b.y), under], [Vector3(b.x, 0.0, b.y), side],
+			[Vector3(a.x, 0.0, a.y), side], [Vector3(a.x, -thick, a.y), under], [Vector3(b.x, -thick, b.y), under],
 		]
 		for vc in verts:
 			st.set_color(vc[1] as Color)
@@ -3407,8 +3410,11 @@ static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, sid
 ## grade. Flat, no texture, and cooled so the warm light lands them on grey.
 ## Pass 8: the sides face the warm key and rendered near-white (~218), the
 ## brightest thing on screen; A's sides are mid-grey (~157) under a lighter top.
-const SLAB_SIDE_TONE := Color(0.34, 0.36, 0.40)
-const SLAB_TOP_TONE := Color(0.44, 0.47, 0.52)
+## Checker iter 02 (2026-10-07): the slabs are unshaded now, so these are the
+## screen tones less the post chain -- TARGET's top ~(155,147,138) over a
+## side ~(105,100,90) -- and the cooling above no longer applies.
+const SLAB_SIDE_TONE := Color(0.42, 0.41, 0.39)
+const SLAB_TOP_TONE := Color(0.54, 0.52, 0.50)
 
 
 ## How high the stone route ends: the top climb point's own height, or, in a
@@ -6981,6 +6987,10 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		# Flat fills, like TARGET.png: no specular streak across the top.
 		body_mat.metallic_specular = 0.0
 		body_mat.roughness = 1.0
+		# Unshaded: TARGET.png's slabs are flat drawn fills, a lighter top over
+		# a mid-grey side. Lit, the tops blew out under the warm key and the
+		# sides fell to navy-black (checker iter 02, 2026-10-07).
+		body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)
