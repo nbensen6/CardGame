@@ -22,13 +22,16 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-07-rig-after.png|420]] ![[agents/frames/builder/2026-10-07-rig-strip.png|420]] ^rig-the-jackal-as-a-2d-cut-out-in-target
 
-- [ ] **Stones: TARGET's staircase, in TARGET's place.**
+- [ ] 👀 **Stones: TARGET's staircase, in TARGET's place.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's staircase, in TARGET's place.|details]]
+      Ask: nothing
       **Nick, 2026-10-07:** "make sure you are checking all the boxes to get to the concept. Ie stone design and placement." **This replaces the 2026-09-25 / 09-28 route** (first stone by the hunter, last in front of the head). TARGET.png is the route now.
       **Design:** six pale grey slabs, thin and flat with soft bevelled edges, light tops (~160–190) over mid-grey sides, no black outline, each a little smaller and higher than the one below.
       **Placement:** one staircase from the foreground, left of and just above the frog's rock, rising up and to the right across the front of the jackal's body, ending just under the sternum, where the cracks meet in the hot yellow seam. The face stays clear. Measure the slab positions off TARGET.png and match them in the rest shot.
       **The climb ends at the sternum, not the face**, so move the top hold, the sigil/weak point and the climb gauge's top to match, and update the tests that assumed the face ("climb ends at the face"). The Goblin's line gets the same look, mirrored, outside the rest frame.
       **Done when** a `--full` pair of the rest shot against TARGET (`python3 tools/vs_target.py <rest>.png <pair>.png --full`) shows the same slabs in the same places, and a climb from the ground to the top lands on each slab in turn. Tests green. Then append `## Round 2 — rigged jackal, TARGET stones (<date>)` to `design/match-log/log.md`: that heading restarts the checker on the whole frame.
-      Test: state=3d beast=cinder_jackal ^stones-target-s-staircase-in-target-s-pl
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-07-stones-after.png|420]] ![[agents/frames/builder/2026-10-07-stones-climb-strip.png|420]] ^stones-target-s-staircase-in-target-s-pl
 
 - [ ] 👀 **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
@@ -756,3 +759,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Fight reads the climb holds once.** The rig moves its climb_ markers, but stones and hunters stay where they were placed at load.
 - [ ] (proposed) **sprite_match aims at the concept, not TARGET.** TARGET's own jackal scores outline 0.0146 / crack 0.182 against its 0.005 / 0.125 targets; the fire layer counts as cracks.
 - [ ] (proposed) **Shoulder notch at the attack's impact.** A small dark wedge shows where the swung upper arm leaves the torso.
+- [ ] (proposed) **Frog can't stand under the sternum.** The shoulder truck draws a waiting hunter ~100 px left of it; TARGET centres the Frog there.
+- [ ] (proposed) **Bevelled slab tops.** TARGET's slab tops show crisp facet planes; ours are smooth.

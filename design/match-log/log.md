@@ -17,3 +17,5 @@ heading starts the checker. Until then this log ends in DONE on purpose.
 
 ## DONE
 Waiting for the builder's `## Round 2` heading.
+
+## Round 2 — rigged jackal, TARGET stones (2026-10-07)

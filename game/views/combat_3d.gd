@@ -4402,6 +4402,9 @@ func _rung_count() -> int:
 ## stand_offset_x always has (Nick, 2026-09-25: "two sets of stones, one set
 ## for each character") -- default 0.0 keeps every existing caller centred.
 func _top_hold(side: float = 0.0) -> Vector3:
+	if _staircase():
+		# TARGET's top slab, under the sternum: the climb ends there now.
+		return _stair_slab(_climb_points.size() - 1, -1.0 if side <= 0.0 else 1.0)[0] as Vector3
 	var top := 0
 	for h in _climb_points.keys():
 		top = maxi(top, int(h))
@@ -5762,6 +5765,8 @@ func _stand_on_model(foot: int, side: float, route_side: float = 0.0) -> Vector3
 	# The top rung IS the top stone: one position for the stone and the hunter
 	# on it, so nobody can hang beside it (Nick, 2026-09-25: "hopping in air,
 	# not stones").
+	if _staircase():
+		return _stair_slab(_stair_index(foot), route_side)[0] as Vector3
 	var n := _rung_count()
 	var i := _rung_index(foot)
 	# The TOP hold is the one place the route must still touch the beast -- it
@@ -6253,7 +6258,10 @@ func _place_hunters(s: Dictionary) -> void:
 			# right edge of the frame (VIS FAIL hunter1, measured).
 			pos = Vector3(side * (_beast_box.size.x * 0.06 + 0.5), 0.0,
 				minf(back, _arena_r * 0.86))
-			if _rung_count() > 1:
+			if _staircase():
+				var rs0: float = -1.0 if i == 0 else 1.0
+				pos = Vector3(_stair_rest_x(rs0), rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))), pos.z)
+			elif _rung_count() > 1:
 				# Each hunter starts in front of its OWN line's first stone
 				# (Nick, 2026-09-28: "hunters are not starting in front of the
 				# stones"). Same slot convention and same call as that stone.
@@ -6313,6 +6321,12 @@ func _place_hunters(s: Dictionary) -> void:
 			var way: Array = []
 			if not _climb_points.is_empty() and was != foot:
 				way = _route_between(was, foot)
+				if _staircase():
+					# Every slab is footing, so land on each in turn (Nick,
+					# 2026-10-07), and leave the ground by the first one.
+					way = route_between_rungs(_climb_points.keys(), was, foot)
+					if was <= 0 and foot > 0:
+						way.push_front(0)
 			var body: Node3D = h.get("body") as Node3D
 			# Cancel whatever the last move was still doing. Two live tweens on one
 			# node fight over its position every frame, and the hunter gets dragged
@@ -6712,6 +6726,167 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 	return p
 
 
+## TARGET.png's staircase (Nick, 2026-10-07: "make sure you are checking all
+## the boxes to get to the concept. Ie stone design and placement"). Six pale
+## slabs, one per climb point, from the foreground just left of and above the
+## Frog's rock, rising right across the front of the body to the top one just
+## under the sternum. The beast's climb points ARE TARGET's slab positions on
+## its drawing (tools/beast_rig.py HOLDS), so each slab hangs on the rest
+## camera's sight line through its climb point: at rest it draws exactly where
+## TARGET draws it, whatever depth it stands at. `near`/`far` are how far along
+## that line from the eye the first and last slab stand (the first just past
+## the Frog, the last just in front of the chest); `width` is each slab's width
+## as TARGET draws it, as a fraction of the beast's height, measured off
+## TARGET.png (155, 142, 88, 68, 80, 60 px on a 509 px-tall jackal).
+##
+## The low slabs are TARGET's against the Frog, the high ones against the
+## jackal. The fight's over-the-shoulder truck shows a waiting hunter ~100 px
+## left of the sternum wherever it stands (TARGET has no truck and centres the
+## Frog under it), so on the jackal's sight lines alone the first slab sat on
+## the Frog's head. `frog` is where TARGET draws the Frog's middle, from the
+## top slab, in beast heights (14 px left, 270 px down on a 508 px beast);
+## the sideways gap between that and where the Frog really draws is added to
+## each slab's climb point in full at the first slab, fading to none at the
+## top (stair_shift). The game's Frog draws bigger beside the jackal than
+## TARGET's, so the first slab is nudged a further `first_nudge` hunter heights
+## (left, up) to stand clear of it, out to the left as TARGET draws it (grader,
+## 2026-10-07: "butts against its left side"). Slab 5 is drawn 80 px in TARGET,
+## wider than slab 4; at its depth here that hid the top slab, so it steps
+## down to 0.125.
+const STAIRCASE := {
+	"cinder_jackal": {"near": 0.33, "far": 0.92,
+		"width": [0.305, 0.28, 0.173, 0.134, 0.125, 0.118],
+		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25)},
+}
+## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
+## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
+## beast's centre through the hunter, then trucked right over the shoulder
+## by shoulder_frame).
+## 1.29 up the orbit, less the 0.36 v_offset Godot moves the lens down by.
+const STAIR_EYE_UP := 0.93
+static func stair_eye_for(rest: Vector3, beast_centre: Vector3) -> Vector3:
+	var yaw := follow_yaw_for(rest, beast_centre, 0.0)
+	var truck: Vector3 = shoulder_frame(rest, yaw, FOLLOW_DIST, 1.0)["truck"]
+	return rest + truck + Vector3(sin(yaw) * FOLLOW_DIST, STAIR_EYE_UP, cos(yaw) * FOLLOW_DIST)
+
+
+## How far along the eye's sight line slab `k` of `n` stands (0 the eye, 1
+## the climb point), even steps from `near` to `far`.
+static func stair_depth(k: int, n: int, near: float, far: float) -> float:
+	return lerpf(near, far, clampf(float(k) / float(maxi(n - 1, 1)), 0.0, 1.0))
+
+
+## Slab `s` of the way from `eye` to `anchor`: on screen from `eye` it covers
+## `anchor` exactly, so the slab draws where the climb point is.
+static func stair_slab(anchor: Vector3, eye: Vector3, s: float) -> Vector3:
+	return eye.lerp(anchor, s)
+
+
+## A slab's half-width in world units: TARGET's drawn width at the climb
+## point's distance, scaled down to the slab's own distance.
+static func stair_radius(width_frac: float, beast_h: float, s: float) -> float:
+	return width_frac * beast_h * s * 0.5
+
+
+## How far slab `k` of `n`'s climb point moves to sit against the Frog: all
+## of `gap` at the first slab, none at the top.
+static func stair_shift(gap: Vector3, k: int, n: int) -> Vector3:
+	return gap * (1.0 - clampf(float(k) / float(maxi(n - 1, 1)), 0.0, 1.0))
+
+
+## Where the waiting hunter on line `side` draws, on the climb points' plane
+## seen from the rest eye, less where TARGET draws the Frog there.
+func _stair_frog_gap(side: float) -> Vector3:
+	var spec: Dictionary = STAIRCASE[_beast_id]
+	var ks := _stair_keys()
+	var top: Vector3 = _climb_points[ks[ks.size() - 1]]
+	var off: Vector2 = spec["frog"]
+	var want := top + Vector3(off.x * (1.0 if side < 0.0 else -1.0), off.y, 0.0) * _beast_box.size.y
+	var eye := _stair_eye(side)
+	var mid := Vector3(_stair_rest_x(side),
+		rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))) + HUNTER_HEIGHT * 0.5, _ground_back())
+	var t: float = (eye.z - top.z) / maxf(eye.z - mid.z, 0.01)
+	var seen := eye.lerp(mid, t)
+	# Sideways only: lifting the low slabs to the Frog's height as well
+	# squeezed the six into a heap at the chest.
+	return Vector3(seen.x - want.x, 0.0, 0.0)
+
+
+## A staircase slab's thickness for half-width `r`: TARGET's sides run about
+## a seventh to a quarter of the slab's width, never thinner than a plain slab.
+const STAIR_THICK := 0.3
+static func stair_thickness(r: float) -> float:
+	return maxf(SLAB_BLOCK_HEIGHT, r * STAIR_THICK)
+
+
+## Mirror of `anchor` across x = `about` (the Goblin's line is the Frog's,
+## flipped about the top slab).
+static func stair_mirror(anchor: Vector3, about: float) -> Vector3:
+	return Vector3(2.0 * about - anchor.x, anchor.y, anchor.z)
+
+
+func _staircase() -> bool:
+	return _beast_drawn and STAIRCASE.has(_beast_id) and _climb_points.size() > 1
+
+
+func _stair_keys() -> Array:
+	var ks: Array = []
+	for h in _climb_points.keys():
+		ks.append(int(h))
+	ks.sort()
+	return ks
+
+
+## Which slab a hunter at Height `foot` stands on: the highest climb point at
+## or below it.
+func _stair_index(foot: int) -> int:
+	var ks := _stair_keys()
+	var i := 0
+	for k in range(ks.size()):
+		if int(ks[k]) <= foot:
+			i = k
+	return i
+
+
+## Where hunter line `side` waits: the Frog (-1) straight in front of the top
+## slab, as TARGET centres it under the sternum; the Goblin 1.6 asides right.
+func _stair_rest_x(side: float) -> float:
+	var ks := _stair_keys()
+	var top: Vector3 = _climb_points[ks[ks.size() - 1]]
+	# 1.6 asides, not 2: the over-the-shoulder yaw at this x put the Goblin
+	# half behind the climb gauge (grader, 2026-10-07).
+	return top.x + (0.0 if side < 0.0 else REST_ASIDE * 1.6)
+
+
+func _stair_eye(side: float) -> Vector3:
+	# _ground_back(), not its arena clamp: the arena is sized after the stones
+	# and so that the clamp never bites.
+	var rest := Vector3(_stair_rest_x(side),
+		rest_rock_lift(String(BEAST_BIOME.get(_beast_id, "crag"))), _ground_back())
+	return stair_eye_for(rest, _beast_box.get_center())
+
+
+## Slab `k` of line `side`: where it stands and its half-width.
+func _stair_slab(k: int, side: float) -> Array:
+	var spec: Dictionary = STAIRCASE[_beast_id]
+	var ks := _stair_keys()
+	var n := ks.size()
+	k = clampi(k, 0, n - 1)
+	var top: Vector3 = _climb_points[ks[n - 1]]
+	var a: Vector3 = _climb_points[ks[k]]
+	if side > 0.0:
+		a = stair_mirror(a, top.x)
+	a += stair_shift(_stair_frog_gap(side), k, n)
+	var s := stair_depth(k, n, float(spec["near"]), float(spec["far"]))
+	var widths: Array = spec["width"]
+	var w: float = float(widths[mini(k, widths.size() - 1)])
+	var at := stair_slab(a, _stair_eye(side), s)
+	if k == 0 and spec.has("first_nudge"):
+		var nudge: Vector2 = spec["first_nudge"]
+		at += Vector3(nudge.x * (1.0 if side < 0.0 else -1.0), nudge.y, 0.0) * HUNTER_HEIGHT
+	return [at, stair_radius(w, _beast_box.size.y, s)]
+
+
 func _build_float_stones() -> void:
 	for st in _float_stones:
 		(st as Node3D).queue_free()
@@ -6734,6 +6909,13 @@ func _build_float_stones() -> void:
 	# real foot at this same rung and side, so a hunter always lands
 	# exactly on its own line's own stone, top hold included (t=1 there is
 	# `top_pt` itself, already `_top_hold(side)` -- no separate case needed).
+	if _staircase():
+		for side in [-1.0, 1.0]:
+			for k in range(_climb_points.size()):
+				var sl: Array = _stair_slab(k, side)
+				_add_float_stone(sl[0] as Vector3, k, _climb_points.size(), float(sl[1]), side)
+				_float_side.append(side)
+		return
 	var ground_z: float = _ground_back()
 	var n := _rung_count()
 	for side in [-1.0, 1.0]:
@@ -6809,7 +6991,8 @@ func _slab_shadow_tex() -> Texture2D:
 	return _slab_shadow
 
 
-func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
+func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0,
+		side: float = -1.0) -> void:
 	# A wrapper, not a mesh directly, so the bob/spin in _process (which
 	# reads/writes `st.position`/`st.rotation.y` by array index — see the
 	# loop over `_float_stones` above) still moves the whole shelf as one
@@ -6840,6 +7023,8 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		# TARGET.png's slabs shrink faster than the pale stones do, so the
 		# upper ones have clear air between them.
 		rock_radius *= SLAB_SIZE * lerpf(1.0, SLAB_FAR_SCALE, recede)
+	if radius > 0.0:
+		rock_radius = radius   # the staircase sizes each slab off TARGET
 	var rock_height := rock_radius * (SLAB_DEPTH if slab else stone_depth_ratio(recede))
 	# Sunk enough that the CAP below (not the bare rock) is what a
 	# hunter visually lands on, with no gap between the two.
@@ -6872,12 +7057,19 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		body.free()
 		var block := MeshInstance3D.new()
 		var outline := slab_outline(randi(), rock_radius)
-		block.mesh = slab_mesh(outline, SLAB_BLOCK_HEIGHT,
+		# TARGET's staircase slabs show a mid-grey side about a quarter as
+		# deep as the slab is wide (sampled ~110-123 under a ~157 top).
+		var stair_slab_on := radius > 0.0 and _staircase()
+		block.mesh = slab_mesh(outline, stair_thickness(rock_radius) if stair_slab_on else SLAB_BLOCK_HEIGHT,
 				SLAB_TOP_TONE.lightened(randf_range(-0.04, 0.04)), SLAB_SIDE_TONE)
 		block.rotation.y = randf_range(-0.25, 0.25)
 		# Lean the top toward the camera at the hunters' rest (+z, eye height).
 		var eye := Vector3(pos.x, HUNTER_HEIGHT * 1.5, _ground_back() + HUNTER_HEIGHT * 4.0)
 		block.rotation.x = slab_tilt(pos, eye)
+		var stair := radius > 0.0 and _staircase()
+		if stair:
+			# Tilt toward the eye that lines the staircase up.
+			block.rotation.x = slab_tilt(pos, _stair_eye(side))
 		# TARGET.png inks every stone with a dark line: an inverted hull, a
 		# little larger, drawn back faces only.
 		var ink := MeshInstance3D.new()
@@ -6892,7 +7084,11 @@ func _add_float_stone(pos: Vector3, index: int, count: int) -> void:
 		ink_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 		ink.material_override = ink_mat
 		ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		block.add_child(ink)
+		# TARGET's staircase slabs have no dark line (Nick, 2026-10-07).
+		if stair:
+			ink.free()
+		else:
+			block.add_child(ink)
 		body = block
 		# The soft drop shadow under each slab: a dark blur that faces the
 		# camera, just below the slab's under-edge. Unshaded, so it reads the

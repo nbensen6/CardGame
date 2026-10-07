@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-07T15:43
-working_on: "Rig the jackal as a 2D cut-out in TARGET's pose."
+updated: 2026-10-07T16:46
+working_on: "Stones: TARGET's staircase, in TARGET's place."
 ---
 
 # builder
@@ -13,27 +13,24 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-07 15:43 EDT
+2026-10-07 16:46 EDT
 
-- **Did:** Cut the jackal from TARGET into seven layers on a 2D rig; idle, attack, hit, death clips.
-- **Worked?** Partly: rest pose matches TARGET and it moves cleanly, but stones don't ride it. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-07-rig-before.png]] then ![[frames/builder/2026-10-07-rig-after.png]] and ![[frames/builder/2026-10-07-rig-strip.png]]
-- **Ask:** Grader failed this: climb stones don't ride the body. Make the fight re-read holds?
-- sprite_match last line: `3 of 5 off` (TARGET's own jackal also reads outline OFF under it; see notes). Meshy: 0 credits. The drawing outranked the concept-based sprite_match targets, per Nick's override.
+- **Did:** Six pale slabs now climb TARGET's staircase from beside the Frog to under the sternum.
+- **Worked?** Yes: the rest pair matches TARGET's route and a climb lands on every slab. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-07-stones-before.png]] then ![[frames/builder/2026-10-07-stones-after.png]] and ![[frames/builder/2026-10-07-stones-climb-strip.png]]
+- **Ask:** nothing
+- sprite_match last line: `3 of 5 off` (sprite PNGs untouched this run; same as the rig run). Meshy: 0 credits. Tests: ALL TESTS PASSED.
 
 ## Notes
 
-- **Found:** The fight reads climb holds once; the rig's moving markers don't move stones or hunters.
-- **Found:** sprite_match targets the concept; TARGET's own jackal fails its outline measure.
-- **Found:** Small dark notch at the shoulder on the attack's impact frame.
-- **Found:** Ear tips touch the top of the rest frame (camera; also in the before frame).
-
-- **Found:** Lava horizon reads brighter behind the jackal's feet in the after frame; the halo may spill onto it.
-- **Found:** Grader cannot read sprite_match numbers off a frame, so it fails items for them.
-- **Found:** The fight's post chain blacks out everything under ~0.14 linear; other dark art may be crushed too.
+- **Found:** The shoulder-truck camera always shows the Frog ~100 px left of the sternum, so TARGET's Frog-under-sternum cannot happen.
+- **Found:** Climb gauge is drawn by Height, so its top needed no move.
+- **Found:** Slab tops are smooth; TARGET's show crisp bevel facets.
+- **Found:** Ear tips still touch the top of the rest frame (camera; before frame too).
 
 ## Log
 
+- 2026-10-07 16:46 EDT — builder: TARGET staircase: rig holds = TARGET slab centres (beast_rig.py), slabs on the rest eye's sight line (stair_slab), Frog-side shift for low slabs, thicker unoutlined slabs, climb lands on all six, top hold/sigil under the sternum, tests updated; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-07 15:43 EDT — builder: jackal rigged from TARGET (tools/beast_rig.py, views/drawn_rig.gd, SubViewport onto the billboard, idle/attack/hit/death, fire layer, trim_box keeps framing) + tests; grader FAIL x3 (holds), CLOSER; marked 👀; tests green, pushed.
 
 - 2026-10-06 21:10 EDT — builder: jackal rim gold: LINE amber 255,206,112 + orange inner px, halo 0.50/28 px gold, LINE_W 7; sprite_match figure alpha>128; 0 of 5 off; grader FAIL x3 (line weight), CLOSER; marked 👀; tests green, pushed.

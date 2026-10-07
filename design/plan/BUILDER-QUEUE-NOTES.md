@@ -1937,3 +1937,17 @@ Test: `state=3d beast=cinder_jackal`.
 - **Meshy:** 0 credits; TARGET's own pixels were closer than any regeneration.
 - **Frames:** `2026-10-07-rig-before.png`, `-after.png`, `-pair-after.png`, `-strip.png` (idle, wind-up, impact, back to idle), `-hit-death.png`.
 
+## Stones: TARGET's staircase, in TARGET's place.
+
+Run 2026-10-07 16:46 EDT.
+
+- **Before:** five small dark-edged slabs per line on a straight route from beside the Frog to the face (`route_pos`).
+- **Placement rule:** the jackal's climb holds (`tools/beast_rig.py` HOLDS) are now TARGET's six slab centres, in TARGET px: (360,560) (410,485) (489,450) (556,425) (594,397) (526,375). Slab k hangs on the rest camera's sight line through climb point k (`stair_slab`), `near` 0.33 to `far` 0.92 of the way from the eye, so at rest it draws where TARGET draws it relative to the jackal. The eye is the rest camera rebuilt (`stair_eye_for`: follow yaw, shoulder truck, 0.93 up after the lens v_offset); STONE vs CLIMB screen positions agree to the pixel in x.
+- **Frog conflict:** the shoulder truck always draws the Frog ~100 px left of the sternum, so on jackal sight lines alone slab 0 sat on its head. Low slabs get the sideways gap between TARGET's Frog and ours, fading to none at the top (`stair_shift`), plus `first_nudge` (-1.3, 0.25) hunter heights on slab 0. Grader round 1 FAIL (slab 0 butting the Frog, slab 5 hiding the top one, Goblin behind the gauge) — fixed: nudge, slab-5 width 0.157→0.125, Goblin rest 2→1.6 asides.
+- **Design:** widths from TARGET (fraction of beast height), no ink hull, side thickness 0.3 × half-width (`stair_thickness`); tops render ~150-160, sides ~110-120 (TARGET 157-190 / 110-123).
+- **Climb:** every slab is footing; leaving Height 0 goes via slab 0, so climb 5 lands six times (frozen with `land=1..6`, strip in the frames).
+- **Top/sigil:** climb_5 is under the sternum, so the top hold and the sigil (climb_5 + lift) follow. The gauge is drawn by Height and needed no change.
+- **Goblin:** same staircase mirrored about the top slab, eye at its own rest spot; hidden at rest (one_line).
+- **Tests:** "climb ends at the face" → "under the sternum"; hold 0 may sit under the lava line; new `_test_staircase_slabs_sit_on_the_eyes_sight_line`. ALL TESTS PASSED.
+- Grader round 2: PASS. sprite_match `3 of 5 off` (PNGs untouched; same as the rig run). Meshy 0.
+- Harness: screenshot.gd now prints `CLIMB<h> screen=` beside each STONE.

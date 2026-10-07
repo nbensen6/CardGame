@@ -86,9 +86,13 @@ INK_UNDERLAY = True   # off only to debug a joint
 ORDER = ["torso", "arm_r", "fore_r", "head", "fire", "arm_l", "fore_l"]
 FIRE_BOX = [(140, 80), (380, 80), (380, 330), (140, 330)]   # TARGET px, round the fist
 
-# Climb holds: up the hips and chest to the face, as the stones climb in
-# TARGET. Each rides the part it sits on.
-HOLDS = {0: (560, 520), 1: (572, 482), 2: (580, 440), 3: (560, 392), 4: (532, 335), 5: (512, 218)}   # 5: between the eyes
+# Climb holds: where TARGET's six slabs sit on screen, the centre of each top
+# face, from the foreground left of the Frog up and right across the body to
+# the top one just under the sternum, where the cracks meet (Nick,
+# 2026-10-07: "stone design and placement"). The fight hangs slab k on the
+# rest camera's sight line through hold k (combat_3d.stair_slab), so the rest
+# shot draws each slab where TARGET does. 5 is the sigil, under the sternum.
+HOLDS = {0: (360, 560), 1: (410, 485), 2: (489, 450), 3: (556, 425), 4: (594, 397), 5: (526, 375)}
 LEDGES = [0, 2, 3, 4]
 
 LINE = np.array([252, 201, 122], float)   # TARGET's rim, sampled

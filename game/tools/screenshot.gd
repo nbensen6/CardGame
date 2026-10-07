@@ -801,6 +801,11 @@ func _report_visibility(view: Node) -> void:
 	# Every stone and every rung, in world and on screen: "the hunter hangs
 	# beside its stone" is a claim about two positions, so print both.
 	print("RUNGS %s" % [view.get("_climb_points")])
+	var cps: Dictionary = view.get("_climb_points")
+	for h in cps.keys():
+		var cw: Vector3 = cps[h]
+		if not cam.is_position_behind(cw):
+			print("CLIMB%d screen=(%d, %d)" % [int(h), int(cam.unproject_position(cw).x), int(cam.unproject_position(cw).y)])
 	var stones: Array = view.get("_float_stones")
 	for k in range(stones.size()):
 		var st: Node3D = stones[k]

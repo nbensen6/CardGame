@@ -480,52 +480,52 @@ centered = false
 position = Vector2(-321, -552)
 
 [node name="hold_0" type="Marker2D" parent="Rig/Root/torso"]
-position = Vector2(96, -28)
+position = Vector2(-304, 52)
 
 [node name="hold_1" type="Marker2D" parent="Rig/Root/torso"]
-position = Vector2(120, -104)
+position = Vector2(-204, -98)
 
 [node name="hold_2" type="Marker2D" parent="Rig/Root/torso"]
-position = Vector2(136, -188)
+position = Vector2(-46, -168)
 
 [node name="hold_3" type="Marker2D" parent="Rig/Root/torso"]
-position = Vector2(96, -284)
+position = Vector2(88, -218)
 
 [node name="hold_4" type="Marker2D" parent="Rig/Root/torso"]
-position = Vector2(40, -398)
+position = Vector2(164, -274)
 
-[node name="hold_5" type="Marker2D" parent="Rig/Root/torso/head"]
-position = Vector2(0, -140)
+[node name="hold_5" type="Marker2D" parent="Rig/Root/torso"]
+position = Vector2(28, -318)
 
 [node name="climb_0" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.202, 0.056, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.591, -0.103, 0.25)
 
 [node name="climb_1" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.250, 0.206, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.393, 0.194, 0.25)
 
 [node name="climb_2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.282, 0.373, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.079, 0.333, 0.25)
 
 [node name="climb_3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.202, 0.563, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.186, 0.432, 0.25)
 
 [node name="climb_4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.091, 0.789, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.337, 0.543, 0.25)
 
 [node name="climb_5" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.012, 1.253, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.067, 0.631, 0.25)
 
 [node name="ledge_0" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.202, 0.056, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.591, -0.103, 0.25)
 
 [node name="ledge_2" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.282, 0.373, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.079, 0.333, 0.25)
 
 [node name="ledge_3" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.202, 0.563, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.186, 0.432, 0.25)
 
 [node name="ledge_4" type="Node3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.091, 0.789, 0.25)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.337, 0.543, 0.25)
 
 [node name="AnimationPlayer" type="AnimationPlayer" parent="."]
 libraries = {

@@ -2417,6 +2417,7 @@ func _init() -> void:
 	_test_clean_shapes_welded_hull()
 	_test_upright_jackal_v2()
 	_test_jackal_is_a_drawing()
+	_test_staircase_slabs_sit_on_the_eyes_sight_line()
 	_test_rigged_jackal_idles_and_punches()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	_test_stone_staircase_is_one_line_to_the_chest()
@@ -31755,6 +31756,34 @@ func _test_intent_badge_sits_in_a_fixed_hud_slot() -> void:
 ## The jackal is a drawing (Nick, 2026-10-05: "have the builder do the 2.5D
 ## like in the reference"): a billboard sprite that always faces the camera,
 ## with its climb holds authored as points on the image, climbing to the face.
+## TARGET's staircase (Nick, 2026-10-07): each slab hangs on the rest eye's
+## sight line through its climb point, so it draws where TARGET draws it.
+func _test_staircase_slabs_sit_on_the_eyes_sight_line() -> void:
+	var eye := Vector3(1.0, 1.3, 30.0)
+	var hold := Vector3(-3.0, 5.0, 2.5)
+	for s in [0.33, 0.6, 0.92]:
+		var p: Vector3 = Combat3D.stair_slab(hold, eye, s)
+		var a := (p - eye).normalized()
+		var b := (hold - eye).normalized()
+		_expect(a.distance_to(b) < 0.0001, "slab at depth %.2f is on the eye's line to its hold" % s)
+		_expect(p.z < eye.z and p.z > hold.z, "slab at depth %.2f stands between the eye and the body" % s)
+	_expect(is_equal_approx(Combat3D.stair_depth(0, 6, 0.33, 0.92), 0.33)
+		and is_equal_approx(Combat3D.stair_depth(5, 6, 0.33, 0.92), 0.92),
+		"the first slab stands nearest, the top one at the chest")
+	# A slab TARGET draws w wide at the body draws w wide at its own depth.
+	_expect(is_equal_approx(Combat3D.stair_radius(0.3, 20.0, 0.5), 1.5), "slab width scales with its depth")
+	var gap := Vector3(2.0, 0.0, 0.0)
+	_expect(Combat3D.stair_shift(gap, 0, 6) == gap and Combat3D.stair_shift(gap, 5, 6) == Vector3.ZERO,
+		"the Frog's shift is whole at the first slab and gone at the top")
+	_expect(Combat3D.stair_thickness(2.0) > Combat3D.SLAB_BLOCK_HEIGHT,
+		"a staircase slab shows a side a good fraction of its width")
+	var m := Combat3D.stair_mirror(Vector3(-1.0, 2.0, 3.0), 1.0)
+	_expect(m == Vector3(3.0, 2.0, 3.0), "the Goblin's line is the Frog's, mirrored about the top slab")
+	# The eye is behind the hunter, on the line from the beast through them.
+	var e := Combat3D.stair_eye_for(Vector3(0.0, 0.4, 24.0), Vector3(0.0, 10.0, 1.0))
+	_expect(e.z > 24.0 + Combat3D.FOLLOW_DIST * 0.9 and e.y > 0.4, "the rest eye is behind and above the waiting hunter")
+
+
 func _test_jackal_is_a_drawing() -> void:
 	_expect(String(Combat3D.AI_ART.get("cinder_jackal", "")) == "_2d",
 		"the Cinder Jackal fights as the 2D sprite")
@@ -31783,12 +31812,20 @@ func _test_jackal_is_a_drawing() -> void:
 		var c := Vector2(spr.position.x, spr.position.y)
 		for h in tops:
 			var p: Vector3 = tops[h]
-			_expect(absf(p.x - c.x) < half.x and absf(p.y - c.y) < half.y,
+			# Hold 0 is TARGET's first slab, in the foreground under the lava
+			# line, so only its x has to be over the drawing.
+			_expect(absf(p.x - c.x) < half.x and (h == 0 or absf(p.y - c.y) < half.y),
 				"hold %d is on the drawing -- got (%.2f, %.2f)" % [h, p.x, p.y])
 	if tops.has(5):
 		# The drawing is 1.90 tall from the hips up (TARGET.png crops it at the
-		# lava line): the face is the top third of that, below the ears.
-		_expect((tops[5] as Vector3).y > 1.90 * 0.65, "the climb ends at the face -- got y=%.2f" % (tops[5] as Vector3).y)
+		# lava line). Nick, 2026-10-07: the climb ends just under the sternum,
+		# where the cracks meet, a third of the way up -- not at the face.
+		var top_y: float = (tops[5] as Vector3).y
+		_expect(top_y > 1.90 * 0.25 and top_y < 1.90 * 0.45,
+			"the climb ends under the sternum -- got y=%.2f" % top_y)
+	if tops.has(0):
+		_expect((tops[0] as Vector3).y < 0.0 and (tops[0] as Vector3).x < (tops[5] as Vector3).x,
+			"the first slab is in the foreground, left of the top one")
 	# The sprite keeps its source's quality (Nick, 2026-10-06: "Its the
 	# quality that im looking for"): a thin warm line around a dark body whose
 	# cracks burn, not a thick cream halo around a figure that glows all over.
