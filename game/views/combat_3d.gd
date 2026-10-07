@@ -6803,8 +6803,10 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.305, 0.28, 0.173, 0.134, 0.125, 0.118],
-		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25)},
+		"width": [0.25, 0.23, 0.173, 0.134, 0.125, 0.118],
+		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
+		"adjust": [Vector2(0.25, 0.074), Vector2(0.017, 0.106), Vector2(0.007, 0.07),
+			Vector2(-0.046, 0.05), Vector2(-0.075, 0.038), Vector2(0.0, 0.04)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
@@ -6935,6 +6937,15 @@ func _stair_slab(k: int, side: float) -> Array:
 	if side > 0.0:
 		a = stair_mirror(a, top.x)
 	a += stair_shift(_stair_frog_gap(side), k, n)
+	# Checker r2 iter 10: measured against TARGET in jackal heights (ears to
+	# lava), the six slabs drew ~0.04-0.1 too low and the upper ones too far
+	# right, so they stacked into a column at the belly. `adjust` moves each
+	# climb point by that measured gap (x right, y up, beast heights) before
+	# the sight-line projection, so the slab draws where TARGET draws it.
+	if spec.has("adjust"):
+		var adj: Array = spec["adjust"]
+		var d: Vector2 = adj[mini(k, adj.size() - 1)]
+		a += Vector3(d.x * (1.0 if side < 0.0 else -1.0), d.y, 0.0) * _beast_box.size.y
 	var s := stair_depth(k, n, float(spec["near"]), float(spec["far"]))
 	var widths: Array = spec["width"]
 	var w: float = float(widths[mini(k, widths.size() - 1)])

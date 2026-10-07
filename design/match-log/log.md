@@ -83,3 +83,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the left background (A #2, B #1 — highest combined rank). `cliff_flat.gdshader` keys every facet off the better of `key_dir` and its mirror across x, so the left formation's middle-facing planes take the cool lit tone the right one's already did (it was all side/shade tone: the "void").
 - Tests: ALL TESTS PASSED. Shader only, no gameplay change.
 - Meshy: 0 credits.
+
+### iter 10
+- Critic A top 3: [MAJOR] hand ~2x too big, flat, green glow, cost gems inside the card; [MAJOR] stones bunched in a vertical cluster at the belly, top ~40px too low; [MAJOR] End Turn/Switch side by side, not stacked.
+- Critic B top 3: [MAJOR] stones clumped in an overlapping column at belly centre, top slab at the navel; [MAJOR] hand too big; [MAJOR] frog pedestal unreadable, frog too high.
+- Changed: the stones (A #2, B #1; tied with the hand on rank, picked as the one named MAJOR every iteration since 03). Measured each slab against TARGET in jackal heights (ears→lava, x from the head): they drew 0.04–0.11 too low and s3/s4 0.05–0.07 too far right, s0 0.25 too far left and 0.08 too wide. New `STAIRCASE.adjust` moves each climb point by its measured gap before the sight-line projection; widths of the two low slabs 0.305/0.28 → 0.25/0.23. After: every slab within ~0.04 of TARGET's spot, top slab at the sternum.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs (route-reversal is TARGET's own zig at the top rung), nothing new.
+- Meshy: 0 credits.
