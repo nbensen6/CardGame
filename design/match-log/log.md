@@ -97,3 +97,7 @@ Run paused after iter 18 (18 of 25 spent). As in iter 12's pause, no critic can 
 Nick has still not ruled on the pose; the loop carries on under it.
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MODERATE proportions, (5) MODERATE framing, (6) MODERATE cracks thin and even, (7) MODERATE facets flat, (8) MODERATE stone route, (9) MODERATE no lava up-light or orange rim on the lower body.
 Skipped 1–5 and 8 under the rulings above; 6–7 were measured at TARGET's values in iters 18 and 17. Fixed 9, named by critics since iter 07, in `tools/beast_sprite.py`: rock within 14 px of the edge takes an orange (235,105,35) rim, and all rock a faint (190,70,30) wash, both strongest at the floor line and gone 55% of the figure's height above it.
+
+## iter 20 — 2026-10-07 (pair iter-23.png; after: iter-24.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MODERATE extra UI. Then (4) MODERATE proportions, (5) MODERATE cracks, (6) MODERATE facets, (7) MODERATE stone route, (8) MODERATE background rocks flat, lighter slate-blue cut-outs with almost no shading inside, where TARGET's are near-black masses with cool edge highlights.
+Skipped 1–7 under the rulings and measurements above. Fixed 8 in `game/assets/3d/cliff_flat.gdshader`: lit_at 0.42 → 0.6, so only the most key-facing planes take the lit tone, and every facet now darkens toward the ground (to 0.6x over 9 units) instead of holding one flat tone. Colours are unchanged from iter 18.

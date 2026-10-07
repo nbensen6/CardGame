@@ -36,12 +36,20 @@ uniform vec4 shade_color : source_color = vec4(0.055, 0.054, 0.062, 1.0);
 // light). Upper-left from the rest camera, like the picture.
 uniform vec3 key_dir = vec3(-0.45, 0.75, 0.35);
 // Where a facet stops being lit / starts being in shade, on dot(n, key).
-uniform float lit_at : hint_range(-1.0, 1.0) = 0.42;
+// Checker iter 20: lit at 0.42 lit whole cliff faces, so the walls read as
+// flat light-slate cut-outs; TARGET's are near-black masses whose lit
+// planes are narrow cool edges. Only the most key-facing planes light now.
+uniform float lit_at : hint_range(-1.0, 1.0) = 0.6;
 uniform float shade_at : hint_range(-1.0, 1.0) = -0.05;
 // The warm band at the foot of the wall, in world units above the floor.
 uniform vec4 heat_color : source_color = vec4(1.0, 0.36, 0.08, 1.0);
 uniform float heat_height = 2.0;
 uniform float heat_gain : hint_range(0.0, 2.0) = 0.55;
+// Checker iter 20: TARGET's cliffs are softly shaded inside each plane, not
+// one flat tone: every facet darkens toward the ground by shade_floor over
+// shade_span world units, and keeps its full tone above that.
+uniform float shade_floor : hint_range(0.0, 1.0) = 0.6;
+uniform float shade_span = 9.0;
 
 varying vec3 world_pos;
 
@@ -64,5 +72,6 @@ void fragment() {
 		c = shade_color.rgb;
 	}
 	float heat = 1.0 - smoothstep(0.0, max(heat_height, 1e-3), world_pos.y);
+	c *= mix(shade_floor, 1.0, smoothstep(0.0, max(shade_span, 1e-3), world_pos.y));
 	ALBEDO = c + heat_color.rgb * heat_gain * heat * heat;
 }
