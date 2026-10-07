@@ -80,6 +80,15 @@ stones climbing the gap between them, dark ground, cool sky.
    - Shoot the AFTER frame, same command, `-after.png`. Look at it 1:1 next
      to the before and the drawing. **If the frame did not change, the item
      is not done**, whatever else you proved. Say so and stop.
+   - **Measure the beast before you grade it.** On any item that touches a
+     drawn beast:
+
+           python tools\sprite_match.py
+
+     It counts body tone, hue, crack cover, facet detail and outline width
+     against the concept art and prints how far each one is off. Anything it
+     calls OFF is a fault you fix on this run, not a question for Nick. Paste
+     its last line into `## This run`.
    - **Get graded.** Run the `grader` agent (Agent tool, subagent_type
      "grader") with exactly: the item's full text, the absolute path of the
      before frame, the absolute path of the after frame, and the absolute
@@ -117,6 +126,14 @@ stones climbing the gap between them, dark ground, cool sky.
        - **Worked?** Yes / No / Partly, and why in the same sentence.
        - **Look at:** ![[frames/builder/<date>-<slug>-before.png]] then ![[frames/builder/<date>-<slug>-after.png]]
        - **Ask:** one question for Nick, 15 words or fewer, or "nothing".
+         **Never ask him how a thing should look.** Line thickness, glow
+         strength, colour, how much detail — the concept art and `TARGET.png`
+         already answer those, and `python tools/sprite_match.py` turns them
+         into numbers. Nick, 2026-10-06: "The builder shouldnt have to ask me
+         thickness you should see if it matches the concept and get it it to
+         1:1." Ask him only what no reference can answer: which of two
+         directions to take, whether a rule change is wanted, whether something
+         he owns is finished.
        - **Found:** anything you noticed and did not fix, one line each.
 
    Then in `BUILDER-QUEUE.md`, the item you worked. Its shape is fixed and

@@ -10,6 +10,31 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
+- [ ] **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
+      **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
+      The last run fixed body tone and hue — both now land on the concept
+      exactly. Three measures are still off. `python tools/sprite_match.py`
+      prints them; today it says:
+
+          crack cover   concept 0.123   game 0.273   OFF
+          detail        concept 0.077   game 0.032   OFF
+          outline       target  0.0050  game 0.0120  OFF
+
+      **crack cover** — the glow is bleeding into the body. More than twice the
+      concept's share of the figure is reading as hot crack. Tighten the cracks
+      to the lines they are in the concept instead of letting them wash outward.
+      **detail** — facet edges inside the figure are at 40% of the concept's.
+      Whatever is softening or merging the planes, stop it.
+      **outline** — the pale rim is 2.4x the width of `TARGET.png`'s line.
+      **Do not ask Nick about any of these.** They are measured. Fix until
+      `tools/sprite_match.py` prints `0 of 5 off`, re-running it after each
+      change. Meshy is allowed inside the brief's 60-credit run cap if the
+      inking alone cannot get there.
+      **Done when** `tools/sprite_match.py` prints `0 of 5 off` and the pair from
+      `tools/vs_target.py --beast` shows no difference Nick would name.
+      Test: state=3d beast=cinder_jackal ^drive-the-jackal-sprite-to-1-1
+
+
 - [ ] 👀 **Stop the inking from destroying the jackal. Quality, not pose.**
       **Nick, 2026-10-06:** "The jackal should be able to move. So the direction doesnt matter. Its the quality that im looking for."
       **The pose is no longer the job.** Drop pose-matching, and drop the
