@@ -79,6 +79,11 @@ HALO = np.array([255, 172, 66], float)
 # keeps its brightness and moves ROCK_WARM of the way to TARGET's hue.
 ROCK_HUE = np.array([74, 32, 26], float) / 44.0
 ROCK_WARM = 0.7
+# Checker iter 23: the planes blurred together into one dark brown; TARGET's
+# facets step sharply in value. The rock's brightness is pushed away from
+# its own FACET_BLUR-px blur by FACET_K, so plane boundaries snap.
+FACET_BLUR = 6
+FACET_K = 0.9
 
 # The cracks, widened and heated (see build).
 CRACK_GROW = 1
@@ -311,6 +316,11 @@ def build(beast_id):
     rock |= twig
     lum = out[rock, :3].mean(1, keepdims=True)
     out[rock, :3] += (lum * ROCK_HUE - out[rock, :3]) * ROCK_WARM
+    full = out[..., :3].mean(-1)
+    soft = ndi.gaussian_filter(np.where(rock, full, 0), FACET_BLUR * SCALE)
+    norm = ndi.gaussian_filter(rock.astype(float), FACET_BLUR * SCALE)
+    gain = np.clip(1 + FACET_K * (full - soft / np.maximum(norm, 1e-3)) / np.maximum(full, 1), 0.4, 1.8)
+    out[rock, :3] *= gain[rock, None]
     grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
     out[grown, :3] = CRACK_EDGE
     deep = ndi.binary_dilation(crack | grown, disk(CRACK_DEEP * SCALE)) & inside & ~crack & ~grown

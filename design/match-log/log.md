@@ -112,3 +112,7 @@ Skipped 1–4 under the rulings above. Fixed 5 in `tools/beast_sprite.py`: crack
 ## iter 22 — 2026-10-07 (pair iter-26.png; after: iter-27.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR stone route. Then (4) MAJOR extra UI, (5) MAJOR proportions, (6) MODERATE framing, (7) MODERATE cracks — thinner and more even, more yellow-orange with little red falloff, where TARGET's grade from dark-red edges to a hot core.
 Skipped 1–6 under the rulings above. Fixed 7 in `tools/beast_sprite.py`: every seam takes a second 1 px band outside its red edge, in deep red (150,34,18), before the orange bleed. The seams are wider and grade red → orange → yellow.
+
+## iter 23 — 2026-10-07 (pair iter-27.png; after: iter-28.png)
+Critic top 3: (1) MAJOR pose and fist fire; (2) MAJOR stone route (and stones "grey-blue, soft"); (3) MAJOR extra UI. Then (4) MAJOR proportions, (5) MODERATE cracks, (6) MODERATE facets — the surface smooth and evenly dark brown, with weak plane definition.
+Skipped 1–4 under the rulings above. Measured the stone tones: tops ~(150,143,136) against TARGET's (160–190), sides ~(95,88,80) against (108–157), all neutral. Not blue. Skipped 5: changed in iters 21–22, so the next critic judges it. Fixed 6 in `tools/beast_sprite.py`: the rock's brightness is pushed away from its own 6 px blur (gain 0.9) so plane boundaries snap. On screen the rock's median holds at 43, and p10–p90 goes 20–61 → 17–64.
