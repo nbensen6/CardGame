@@ -1,0 +1,29 @@
+{
+  "updated": "Wed Oct 7, 6:55 PM ET",
+  "last_commit": "1dd1356",
+  "status": [
+    {"label": "Builder", "value": "Idle: both items built, waiting on you", "state": "waiting"},
+    {"label": "Checker", "value": "Round 2, iter 2 of 25", "state": "working"},
+    {"label": "Meshy", "value": "0 credits spent today", "state": "idle"},
+    {"label": "Tests", "value": "All passing", "state": "idle"}
+  ],
+  "needs_you": [
+    "Stones don't move with the jackal when it animates. Make them ride the body? (builder Ask)",
+    "Playtest shows 21 failures since the new stones (hunter off marker, climb reverses on rung 5)."
+  ],
+  "latest": {"path": "design/match-log/iter-02.png", "caption": "Checker iter 02: TARGET left, game right"},
+  "entries": [
+    {"agent": "checker", "time": "Oct 7, 6:27 PM", "title": "Goblin moved out of the Frog's shot",
+     "bullets": ["Both critics: extra hero on screen", "Goblin waits off-frame; Switch still shows it", "Next: widescreen vs square framing"],
+     "images": [{"path": "design/match-log/iter-02.png", "caption": "Full frame"}, {"path": "design/match-log/iter-02-beast.png", "caption": "Jackal close-up"}]},
+    {"agent": "checker", "time": "Oct 7, 6:12 PM", "title": "Framing: jackal bigger, frog lower",
+     "bullets": ["Ears now just under the top edge", "Frog dropped toward the lower third", "Critics also flagged the fist fire shape"],
+     "images": [{"path": "design/match-log/iter-01.png", "caption": "Full frame"}, {"path": "design/match-log/iter-01-beast.png", "caption": "Jackal close-up"}]},
+    {"agent": "builder", "time": "Oct 7, 4:46 PM", "title": "Stones rebuilt as TARGET's staircase",
+     "bullets": ["Six pale slabs, positions measured off TARGET", "Climb now ends under the chest", "Grader: PASS"],
+     "images": [{"path": "design/agents/frames/builder/2026-10-07-stones-pair-after.png", "caption": "TARGET vs game"}, {"path": "design/agents/frames/builder/2026-10-07-stones-climb-strip.png", "caption": "Climbing the staircase"}]},
+    {"agent": "builder", "time": "Oct 7, 3:44 PM", "title": "Jackal rigged from your drawing",
+     "bullets": ["Cut from TARGET into 6 parts, hidden rock repainted", "Idle, attack, hit and death animations", "Meshy not needed: 0 credits"],
+     "images": [{"path": "design/agents/frames/builder/2026-10-07-rig-strip.png", "caption": "Idle, wind-up, impact, idle"}, {"path": "design/agents/frames/builder/2026-10-07-rig-hit-death.png", "caption": "Hit and death"}, {"path": "design/agents/frames/builder/2026-10-07-rig-pair-after.png", "caption": "TARGET vs rigged jackal"}]}
+  ]
+}
