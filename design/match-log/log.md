@@ -92,3 +92,8 @@ Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR framing. Then (4) M
 Skipped 1–6 under the rulings above. Skipped 7: measured on the pair, our chest cracks are wider and denser than TARGET's (29% coverage, 10 px runs, vs 20% and 8 px). Skipped 8: rock brightness p10–p90 is 19–56, against TARGET's 21–56. Fixed 11, which every critic since iter 07 has named, in `game/assets/3d/cliff_flat.gdshader`. TARGET's lit cliff facets reach ~(47,48,63) on screen and ours topped out at (21,19,30). lit_color went (0.21,0.205,0.235) → (0.265,0.265,0.31) and now renders (41,41,60). Side and shade tones are unchanged.
 
 Run paused after iter 18 (18 of 25 spent). As in iter 12's pause, no critic can report "no MAJOR" while the raised flaming fist (ranked #1–2 by all 18 critics) stays ruled out by Nick's 2026-10-06 call. The last 7 iterations are kept for after he rules on the pose.
+
+## iter 19 — 2026-10-07 (pair iter-22.png; after: iter-23.png)
+Nick has still not ruled on the pose; the loop carries on under it.
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MODERATE proportions, (5) MODERATE framing, (6) MODERATE cracks thin and even, (7) MODERATE facets flat, (8) MODERATE stone route, (9) MODERATE no lava up-light or orange rim on the lower body.
+Skipped 1–5 and 8 under the rulings above; 6–7 were measured at TARGET's values in iters 18 and 17. Fixed 9, named by critics since iter 07, in `tools/beast_sprite.py`: rock within 14 px of the edge takes an orange (235,105,35) rim, and all rock a faint (190,70,30) wash, both strongest at the floor line and gone 55% of the figure's height above it.

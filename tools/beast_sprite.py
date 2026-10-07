@@ -108,6 +108,19 @@ HOT_SQUASH = 0.45
 HOT_WASH = np.array([255, 120, 30], float)
 HOT_WASH_A = 0.35
 
+# Checker iter 19: TARGET's lava lights the figure from below -- the lower
+# arms, flanks and belly pick up an orange rim along their outer edges and a
+# faint warm wash, fading out by mid-chest. Ours was lit flat from the
+# front. Rock within RIM_W px of the edge takes RIM_RGB, and all rock takes
+# a little of UP_RGB; both grow toward the floor line and vanish UP_REACH
+# of the figure's height above it.
+RIM_W = 14
+RIM_A = 0.55
+RIM_RGB = np.array([235, 105, 35], float)
+UP_A = 0.22
+UP_RGB = np.array([190, 70, 30], float)
+UP_REACH = 0.55
+
 # Draw at the concept's own size. Upscaling it 2x with Lanczos added no
 # detail and softened every facet edge into a two-pixel ramp; the game
 # mipmaps the texture down to ~330 px anyway (sprite_match "detail", 2026-10-07).
@@ -296,6 +309,17 @@ def build(beast_id):
         hw = inside & ~hc & (heat > 0.45)
         t = ((heat[hw] - 0.45) / 0.55)[:, None] ** 1.5 * HOT_WASH_A
         out[hw, :3] += (HOT_WASH - out[hw, :3]) * t
+    rows = np.nonzero(inside.any(1))[0]
+    floor = cut * SCALE if cut else rows.max()
+    span = max(floor - rows.min(), 1)
+    yy = np.arange(out.shape[0])[:, None]
+    up = np.clip(1 - (floor - yy) / (UP_REACH * span), 0, 1) ** 1.6
+    edge = ndi.distance_transform_edt(inside)
+    lit = rock & (up > 0)
+    t = (UP_A * up + RIM_A * up * np.clip(1 - edge / (RIM_W * SCALE), 0, 1) ** 1.3)
+    t = np.clip(np.broadcast_to(t, inside.shape)[lit], 0, 0.8)[:, None]
+    tint = np.where(np.broadcast_to(edge < RIM_W * SCALE, inside.shape)[lit][:, None], RIM_RGB, UP_RGB)
+    out[lit, :3] += (tint - out[lit, :3]) * t
     for ex0, ey0, ex1, ey1 in spec.get("eyes", []):
         box = np.zeros_like(inside)
         box[ey0 * SCALE:ey1 * SCALE, ex0 * SCALE:ex1 * SCALE] = True
