@@ -63,6 +63,12 @@ LINE = np.array([255, 206, 112], float)
 LINE_IN = np.array([250, 140, 45], float)
 HALO = np.array([255, 172, 66], float)
 
+# The cracks, widened and heated (see build).
+CRACK_GROW = 1
+CRACK_EDGE = np.array([222, 72, 24], float)
+CRACK_CORE = np.array([255, 214, 96], float)
+CRACK_CORE_MIX = 0.4
+
 # Draw at the concept's own size. Upscaling it 2x with Lanczos added no
 # detail and softened every facet edge into a two-pixel ramp; the game
 # mipmaps the texture down to ~330 px anyway (sprite_match "detail", 2026-10-07).
@@ -214,6 +220,16 @@ def build(beast_id):
     inside = ndi.binary_erosion(body, disk(1))
     out = np.zeros(a.shape[:2] + (4,), float)
     out[..., :3] = a
+    # TARGET's cracks are wider than the concept's and burn yellower at the
+    # core: on screen its chest seams cover ~25 % with cores reaching
+    # (255,205,60), ours 20 % and (255,180,57) (checker iter 05, 2026-10-07).
+    # Grow each crack a pixel into the rock in its own red edge colour, then
+    # pull the crack's interior toward TARGET's yellow core.
+    crack = inside & (r > 150) & (r - b > 90)
+    grown = ndi.binary_dilation(crack, disk(CRACK_GROW * SCALE)) & inside & ~crack
+    out[grown, :3] = CRACK_EDGE
+    core = ndi.binary_erosion(crack, disk(1))
+    out[core, :3] += (CRACK_CORE - out[core, :3]) * CRACK_CORE_MIX
     out[inside, 3] = 255
 
     # TARGET.png's edge: a thin warm line hugging the figure, and outside it
