@@ -57,3 +57,10 @@ Skipped 1–5 under the rulings above. Stone size was raised in iter 04 and the 
 ## iter 11 — 2026-10-07 (pair iter-12.png; after: iter-13.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MODERATE scale, (6) MODERATE stones, (7) MODERATE outline bloom, (8) MODERATE cracks with no yellow-white sternum hot spot.
 Skipped 1–4 under the rulings above. Skipped 5: it called the jackal "smaller, further away" on the framing the iter-10 critic called "a bit closer" — the critics now split either way. Skipped 6 (the route). Left 7 alone: the halo was cut last iteration, and the drawn shader never blooms, so the next critic judges that change. Fixed 8, which every critic since iter 07 has named, in `tools/beast_sprite.py`: a per-beast `hot` spot at the sternum junction (512,355), r 70. Seams inside it swell 3 px and heat toward (255,240,170), and the rock right round it takes a faint orange wash.
+
+## iter 12 — 2026-10-07 (pair iter-13.png; after: iter-14.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR proportions, (5) MAJOR scale — now "too big, arms cut off at both sides", the reverse of iter 11's critic, (6) MODERATE stones much larger and thicker than TARGET's thin slabs.
+Skipped 1–4 under the rulings above. Skipped 5: since iter 09, critics have split both ways on the same framing. Fixed 6's size, not the route, in `game/views/combat_3d.gd`: SLAB_SIZE 0.95 → 0.8 and SLAB_BLOCK_HEIGHT 0.4 → 0.28 hunter heights.
+
+Run paused after iter 12 (12 of 25 spent). Every critic still ranks the raised flaming fist MAJOR #1–2, so no critic can report "no MAJOR" until Nick rules on the pose. The rest of the iteration budget is kept for after that call rather than spent on items the critics now rank below it, or split on (scale).
+Recurring items still open below the pose: dark, low-contrast facets with no warm lava up-light (critics 07–12), black background rocks with no blue-grey facet highlights (07–12), a thinner, dimmer lava band.

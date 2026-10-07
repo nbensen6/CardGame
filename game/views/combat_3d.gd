@@ -3332,12 +3332,15 @@ const SLAB_DEPTH := 0.6
 ## blocks that join into one staircase, not discs with ground between them.
 ## 0.95 (checker iter 04, 2026-10-07): beside TARGET's slabs ours were
 ## half again too wide and crowded the jackal's arm.
-const SLAB_SIZE := 0.95
+## 0.8 (checker iter 12): the jackal now fills the frame and the near slabs
+## still read "much larger and thicker" than TARGET's.
+const SLAB_SIZE := 0.8
 ## A slab's thickness, the same at every rung. Nick, 2026-10-05 ("hits the
 ## mark on recreating the stones"): TARGET.png's stones are flat, wide, thin
 ## slabs, about a fifth as thick as they are wide, not the Frog-and-a-half
 ## blocks of 2026-10-04, whose dark sides were most of every stone on screen.
-const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 0.4
+## 0.28 (checker iter 12): at 0.4 the near slabs read as thick blocks.
+const SLAB_BLOCK_HEIGHT := HUNTER_HEIGHT * 0.28
 ## The top slab's size over the near one's, on top of the pale stones' own
 ## shrink: TARGET.png's far slab is about a third of its near one.
 const SLAB_FAR_SCALE := 0.65
