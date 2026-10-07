@@ -78,3 +78,7 @@ Skipped 1–5 under the rulings above. Left 7 alone: iter 13 measured our line a
 ## iter 15 — 2026-10-07 (pair iter-17.png; after: iter-18.png)
 Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR proportions. Then (4) MAJOR extra UI, (5) MAJOR stone route, (6) MODERATE cracks — thin, uniform veins with no glow bleed, where TARGET's seams bleed orange onto the rock (it called the new sternum seam close to TARGET), (7) MODERATE outline thinner than TARGET's.
 Skipped 1–5 under the rulings above. Left 7: the line measures TARGET's 6 px (iter 13), and iter 13's critic called the 9 px line too thick. Fixed 6 in `tools/beast_sprite.py`: rock within 5 px of a crack takes a fading orange (200,70,25) wash, up to 45%.
+
+## iter 16 — 2026-10-07 (pair iter-18.png; after: iter-19.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR missing fist. Then (4) MAJOR extra UI, (5) MAJOR framing, (6) MAJOR stone route, (7) MODERATE proportions, (8) MODERATE outline thinner and uneven, breaking along the lower arms, with a weaker glow.
+Skipped 1–7 under the rulings above. Fixed 8's glow in `tools/beast_sprite.py`: HALO_W 10 → 14, undoing iter 13's halo cut (the 7 px line stays: it measures TARGET's 6 px). Two critics in a row (iters 14 and 16) read the glow as weak once the line was thinner. Not fixed: small white ticks where the inner arm lines meet the lava.

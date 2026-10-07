@@ -124,8 +124,9 @@ LINE_W = 7
 # at 0.15 it vanished at play size (checker, 2026-10-07).
 # Checker iter 10: still a glow bleeding off the line rather than TARGET's
 # crisp cel stroke with a slight warmth outside it; 14 px at 0.32.
-# Checker iter 13: still a wide hazy halo; 10 px.
-HALO_W = 10
+# Checker iter 13: still a wide hazy halo; 10 px. Iter 14-16 critics then
+# read the glow as weak, round the now-thinner line: back to 14 px.
+HALO_W = 14
 HALO_A = 0.32
 # The fight sizes the beast by its texture's box, and its camera was framed
 # on the old box: 39 px of clear room round the line. Keep it, so the ears
