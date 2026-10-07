@@ -120,3 +120,24 @@ Skipped 1–4 under the rulings above. Measured the stone tones: tops ~(150,143,
 ## iter 24 — 2026-10-07 (pair iter-28.png; after: iter-29.png)
 Critic top 3: (1) MAJOR pose and fist fire; (2) MAJOR extra UI; (3) MAJOR proportions. Then (4) MAJOR framing, (5) MODERATE stone route, (6) MODERATE cracks, (7) MODERATE outline "doubles or wobbles at the arms", (8) MODERATE background — a row of jagged dark rock teeth across the mid-ground behind the jackal that TARGET lacks (iter 21's critic named it too).
 Skipped 1–5 under the rulings above. Skipped 6: changed in iters 21–22. Checked 7 at 2x and found no defect: the "doubled" line is the arm's edge and the torso's edge either side of the gap, which TARGET draws too. Fixed 8 in `game/assets/3d/cliff_flat.gdshader`: wall more than 0.2 arena radii past the centre along the camera's view, and within 0.6 radii of its centre line, fades 70% toward the sky's tone (87,46,83). The far wall is now sky haze between the two big dark edge formations, which keep their tones. Raising fog_behind_density had no visible effect; the far wall is inside the fog's begin.
+
+## iter 25 — 2026-10-07 (pair iter-29.png; after: iter-30.png)
+Critic top 3: (1) MAJOR pose; (2) MAJOR fist fire; (3) MAJOR extra UI. Then (4) MAJOR proportions, (5) MODERATE framing, (6) MODERATE stone route, (7) MODERATE cracks, (8) MODERATE facets — still softer and lower in contrast than TARGET's cel planes, the arms rounded and blurry.
+Skipped 1–6 under the rulings above. Skipped 7: changed in iters 21–22. Fixed 8 in `tools/beast_sprite.py`: FACET_K 0.9 → 1.6. The planes on the shoulders and forearms now step apart, and the rock's median on screen holds at 42.
+
+## DONE
+Stopped at the 25-iteration cap (2026-10-07). No critic ever reported "no MAJOR": all 25, and a final one on iter-30.png, rank the raised flaming fist first, which Nick ruled out on 2026-10-06. Compare `design/match-log/iter-01.png` (start) with `design/match-log/iter-30.png` (end).
+The final critic's remaining differences on iter-30.png:
+- MAJOR pose: no raised fist, no three-quarter turn (Nick, 2026-10-06: the jackal moves; quality, not direction).
+- MAJOR fire on the raised fist: missing, because there is no raised fist.
+- MAJOR proportions: upright, symmetrical and boxy, where TARGET's brute is hunched and top-heavy. These come from the concept drawing.
+- MAJOR stone route: a column up the left arm, not a stair to the chest (Nick set the route, 2026-09-25/28).
+- MAJOR extra UI: intent chip, weak-point rings, frog and marker (gameplay HUD).
+- MODERATE framing: centred, with the ears at the top edge (critics split both ways since iter 09).
+- MODERATE cracks: the chest Y and rib bands read as a regular pattern, with few cracks on the arms.
+- MODERATE facets: torso still softer than TARGET's cel planes.
+- MODERATE outline: thinner, and breaks along the lower arms near the lava.
+- MODERATE head: longer and narrower, with dimmer eyes.
+- MODERATE background rocks: flatter, purple-navy silhouettes with less rim definition.
+- MODERATE lighting: no warm lava bounce on the stones, weak underlight on the body.
+- MINOR: lava band thinner and dimmer; stones a touch darker than TARGET's; sky more violet with more embers.

@@ -82,8 +82,9 @@ ROCK_WARM = 0.7
 # Checker iter 23: the planes blurred together into one dark brown; TARGET's
 # facets step sharply in value. The rock's brightness is pushed away from
 # its own FACET_BLUR-px blur by FACET_K, so plane boundaries snap.
+# Checker iter 25: 0.9 still read soft on the arms; 1.6.
 FACET_BLUR = 6
-FACET_K = 0.9
+FACET_K = 1.6
 
 # The cracks, widened and heated (see build).
 CRACK_GROW = 1
