@@ -1898,3 +1898,17 @@ Test: `state=3d beast=cinder_jackal`.
 - Grader: PASS. Meshy: 0 credits.
 - The drawing vs the words: agree here; TARGET's line is thin and warm.
 
+## Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.
+
+2026-10-06 20:21 EDT, builder.
+
+- **sprite_match, before:** crack cover 0.273 OFF, detail 0.032 OFF, outline 0.0120 OFF (3 of 5 off). **After:** `0 of 5 off`.
+- **crack cover was a measuring fault, not a drawing one.** The body inside the line already carried 0.124 hot (concept 0.123). The extra came from the cream line itself (255,214,140 has saturation 0.451, just over `hot()`'s 0.45) and the orange halo, both counted as "cracks". sprite_match now strips a band as wide as the measured rim off the silhouette before the body measures (symmetric: the concept's rim is ~1 px). Run on the OLD sprite, the new measure still calls detail and outline OFF, so those two were real.
+- **detail:** beast_sprite.py upscaled the concept 2x with Lanczos, softening every facet edge into a 2 px ramp. Now drawn at 1x (755x1019, same framing: margin kept so the box and on-screen size are unchanged). 0.032 -> 0.063 (concept 0.068 under the new rim rule).
+- **outline:** the halo at 0.45 peak alpha was counted as rim. TARGET's glow outside the line is a faint haze, absent along most edges, so peak alpha is now 0.15. 0.0120 -> 0.0053. The line itself is unchanged (5 px at 1x). Measured off TARGET.png: horizontal cream runs median 6 px on a ~600 px figure, ~4-5 px perpendicular, so 0.005 holds; the picture and the number agree.
+- **The real fault at play size: the fight's post chain.** Grader round 1 (FAIL, NOT CLOSER) saw no change, because the PNG never reached the screen as drawn: ACES + exposure 0.82 + contrast/saturation drop everything under ~0.14 linear to black. Measured with a ramp: linear 0.05 -> 0, 0.2 -> 18, 0.5 -> 133, 1.0 -> 234. The plates (sRGB ~42) landed at ~13 and the facets merged. An analytic inverse of Godot's ACES (round 2) did not match 4.7's chain and made it darker.
+- **Fix:** `drawn_sprite.gdshader` on the sprite (material_override, written by beast_sprite.py): fog off, every texel looked up in `drawn_sprite_lut.gdshaderinc`, the measured inverse curve (a shader constant, so no import setting can compress it). `tools/drawn_lut.py` re-measures it (shader `calibrate` mode paints a ramp, shoots the fight, fits). In-frame body luma 16 -> 38 (concept 42), body rgb (40,2,0) -> (57,29,28). run_tests pins the Environment numbers the LUT was measured against.
+- **Grader:** R1 FAIL (no visible change), R2 FAIL (body near black, the analytic inverse), R3 FAIL but CLOSER: cracks now lines, facets read; it still wants the rim visibly thinner than before. The rim is unchanged on purpose: it measures TARGET's width.
+- Meshy: 0 credits.
+- Pair: ![[agents/frames/builder/2026-10-07-sprite-1to1-pair.png|520]]
+

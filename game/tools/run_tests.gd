@@ -31811,7 +31811,29 @@ func _test_jackal_is_a_drawing() -> void:
 		_expect(share < 0.15, "the outline is a thin line, not a halo -- %.0f%% of the figure is cream" % (share * 100.0))
 		var mid: float = lums[lums.size() / 2] if lums.size() > 0 else 1.0
 		_expect(mid < 0.28, "the body stays dark, only the cracks glow -- median lum %.2f" % mid)
+	# The drawing reaches the screen as drawn (2026-10-07): its shader looks
+	# every texel up in the inverse of the fight's post chain. That table was
+	# measured against these exact Environment numbers; change one and
+	# re-run tools/drawn_lut.py, then update them here.
+	if spr != null:
+		var mat := spr.material_override as ShaderMaterial
+		_expect(mat != null and mat.shader != null and mat.shader.resource_path.ends_with("drawn_sprite.gdshader"),
+			"the drawing undoes the scene's tonemap")
+		if mat != null:
+			_expect(mat.shader.code.contains("drawn_sprite_lut.gdshaderinc"), "the drawing carries its measured LUT")
+			_expect(mat.get_shader_parameter("tex") == spr.texture, "the shader draws the sprite's own texture")
 	root.free()
+	var fight: Node = (load("res://views/combat_3d.tscn") as PackedScene).instantiate()
+	var we := fight.get_node_or_null("WorldEnvironment") as WorldEnvironment
+	if we != null and we.environment != null:
+		var e := we.environment
+		_expect(e.tonemap_mode == Environment.TONE_MAPPER_ACES and is_equal_approx(e.tonemap_exposure, 0.82)
+			and is_equal_approx(e.tonemap_white, 6.0) and is_equal_approx(e.adjustment_contrast, 1.10)
+			and is_equal_approx(e.adjustment_saturation, 1.18),
+			"the fight's post chain is the one drawn_sprite_lut.gdshaderinc was measured on")
+	else:
+		_expect(false, "combat_3d.tscn has its WorldEnvironment")
+	fight.free()
 	# A drawing has no depth to clear: hunters stand closer, so it towers.
 	var drawn: float = Combat3D.ground_standoff_for(0.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT)
 	_expect(drawn < Combat3D.ground_standoff_for(0.0, 20.0), "a drawn beast stands the hunters closer")

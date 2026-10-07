@@ -10,7 +10,7 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-- [ ] **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
+- [ ] 👀 **Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.**
       **Nick, 2026-10-06:** "I want you to automatically take what the builder outputs and reference it against the concept art till it becomes 1:1. The builder shouldnt have to ask me thickness you should see if it matches the concept and get it it to 1:1."
       The last run fixed body tone and hue — both now land on the concept
       exactly. Three measures are still off. `python tools/sprite_match.py`
@@ -32,7 +32,10 @@ run failed.
       inking alone cannot get there.
       **Done when** `tools/sprite_match.py` prints `0 of 5 off` and the pair from
       `tools/vs_target.py --beast` shows no difference Nick would name.
-      Test: state=3d beast=cinder_jackal ^drive-the-jackal-sprite-to-1-1
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Drive the jackal sprite to 1:1 with the concept. Numbers, not opinions.|details]]
+      Ask: Grader failed this: rim not visibly thinner. It measures TARGET's width; keep it?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-07-sprite-1to1-after.png|420]] ^drive-the-jackal-sprite-to-1-1
 
 
 - [ ] 👀 **Stop the inking from destroying the jackal. Quality, not pose.**
@@ -723,3 +726,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Grey arc behind End Turn in 3dclimb.** A pale arc shows at x 1000-1150, y 630-720 in the climb shot.
 - [ ] (proposed) **Jackal smaller than TARGET.** At rest the beast fills far less of the frame than in TARGET.png.
 - [ ] (proposed) **Ring markers on the jackal at rest.** A grey chest ring and a yellow pelvis ring sit on the drawing.
+- [ ] (proposed) **Grader can't see sprite_match.** It fails items for numbers it can't read off a frame; hand it the printout?
+- [ ] (proposed) **Post chain crushes dark art.** The fight blacks out everything under ~0.14 linear; other dark art may suffer.

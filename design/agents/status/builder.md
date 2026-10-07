@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-06T19:27
-working_on: "Stop the inking from destroying the jackal."
+updated: 2026-10-06T20:21
+working_on: "Drive the jackal sprite to 1:1 with the concept."
 ---
 
 # builder
@@ -13,20 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-06 19:27 EDT
+2026-10-06 20:21 EDT
 
-- **Did:** Jackal sprite now keeps the concept's own pixels with a thin warm line; arm repose and flame dropped.
-- **Worked?** Yes: facets, snout, eyes and dark body survive; thin line replaces the halo. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-06-inking-before.png]] then ![[frames/builder/2026-10-06-inking-after.png]]
-- **Ask:** Is the thin warm line thick enough, or thicken it toward TARGET's?
-- Meshy: 0 credits spent; fixing the inking was enough.
+- **Did:** Sprite drawn at 1x, fainter halo, and a measured colour table so the fight shows the concept's own tones.
+- **Worked?** Partly: sprite_match prints 0 of 5 off and plates read brown and faceted, but the grader wants a thinner rim. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-07-sprite-1to1-before.png]] then ![[frames/builder/2026-10-07-sprite-1to1-after.png]]
+- **Ask:** Grader failed this: rim not visibly thinner. It measures TARGET's width; keep it?
+- sprite_match last line: `0 of 5 off`. Meshy: 0 credits spent.
 
 ## Notes
 
-- **Found:** Beast stands smaller on screen than in TARGET.png; it fills half the frame there.
-- **Found:** Two ring markers (grey chest, yellow pelvis) sit on the jackal at rest.
+- **Found:** Grader cannot read sprite_match numbers off a frame, so it fails items for them.
+- **Found:** The fight's post chain blacks out everything under ~0.14 linear; other dark art may be crushed too.
 
 ## Log
+
+- 2026-10-06 20:21 EDT — builder: jackal 1:1: beast_sprite.py at 1x + halo 0.15; sprite_match strips the rim before body measures; drawn_sprite.gdshader + measured LUT (drawn_lut.py) undo the fight's tonemap for the drawing + test; sprite_match 0 of 5 off; grader FAIL x3 (rim); marked 👀; tests green, pushed.
 
 - 2026-10-06 19:27 EDT — builder: jackal inking: beast_sprite.py keeps the concept pixels (no posterise, no ink ring), thin warm line + faint halo, repose/flame dropped, padding keeps framing; quality test replaces flame test; grader PASS; marked 👀; tests green, pushed.
 - 2026-10-06 17:08 EDT — builder: jackal re-posed (beast_sprite.py repose: arm raised), looping fist flame (Fire Sprite3D + idle AnimationPlayer), bolder outline/glow, DRAWN_GAP 1.0 + tests; grader FAIL x2 (size, stones, climb camera); marked 👀 for Nick; tests green, pushed.

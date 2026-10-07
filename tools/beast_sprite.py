@@ -50,16 +50,22 @@ BEASTS = {
 LINE = np.array([255, 214, 140], float)
 HALO = np.array([255, 150, 50], float)
 
-SCALE = 2          # draw at 2x the concept so the strokes stay crisp
-# px at 2x. TARGET's line is thin: about 4 px on a 600 px figure, so ~6 px
-# on the concept's 930 px one. The old 52 px cream stroke and 20 px ink ring
+# Draw at the concept's own size. Upscaling it 2x with Lanczos added no
+# detail and softened every facet edge into a two-pixel ramp; the game
+# mipmaps the texture down to ~330 px anyway (sprite_match "detail", 2026-10-07).
+SCALE = 1
+# px at 1x. TARGET's line is thin: about 4 px on a 600 px figure, so ~5 px
+# on the concept's 930 px one. The old 26 px cream stroke and 10 px ink ring
 # ate the ears, the muzzle and the eyes (Nick, 2026-10-06).
-LINE_W = 10
-HALO_W = 28
+LINE_W = 5
+HALO_W = 14
+# TARGET's glow outside the line is a faint haze, absent along most edges;
+# at 0.45 ours read as a second, orange outline.
+HALO_A = 0.15
 # The fight sizes the beast by its texture's box, and its camera was framed
-# on the old 52 px stroke + 40 px halo. Keep that much clear room round the
-# thin line so the ears stay on screen at the same size as before.
-MARGIN = 2 + (52 + 40) - (LINE_W + HALO_W)
+# on the old box: 39 px of clear room round the line. Keep it, so the ears
+# stay on screen at the same size as before.
+MARGIN = 39
 
 
 def disk(r):
@@ -171,14 +177,14 @@ def build(beast_id):
     sizes = ndi.sum(bgish, lab, range(1, n + 1))
     bg = np.isin(lab, [i + 1 for i, s in enumerate(sizes) if s > 400 * SCALE * SCALE])
     body = ~bg
-    body = ndi.binary_opening(body, disk(2))
+    body = ndi.binary_opening(body, disk(1))
     body = ndi.binary_fill_holes(body)
     keep, n = ndi.label(body)
     if n > 1:
         sizes = ndi.sum(body, keep, range(1, n + 1))
         body = keep == (int(np.argmax(sizes)) + 1)
     # Smooth the edge so the stroke is a clean line, not the concept's AA.
-    body = ndi.gaussian_filter(body.astype(float), 1.5) > 0.5
+    body = ndi.gaussian_filter(body.astype(float), 0.75 * SCALE) > 0.5
 
     # The figure is the concept's own pixels (Nick, 2026-10-06: "Its the
     # quality that im looking for"): its facet planes, snout, eyes and cracks
@@ -197,12 +203,12 @@ def build(beast_id):
     out[ring, 3] = 255
     dist = ndi.distance_transform_edt(~(inside | ring))
     halo = ~(inside | ring) & (dist < HALO_W)
-    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 2.0 * 0.45
+    fall = np.clip(1 - dist / HALO_W, 0, 1) ** 2.0 * HALO_A
     out[halo, :3] = HALO
     out[halo, 3] = 255 * fall[halo]
 
     # Crop to the drawing plus margin; keep the concept's feet as the origin.
-    ys, xs = np.nonzero(out[..., 3] > 4)
+    ys, xs = np.nonzero(inside | ring)
     x0, x1 = max(xs.min() - MARGIN, 0), min(xs.max() + MARGIN, out.shape[1])
     y0, y1 = max(ys.min() - MARGIN, 0), min(ys.max() + MARGIN, out.shape[0])
     flame = spec.get("flame")
@@ -240,9 +246,17 @@ def build(beast_id):
 
     holds = {int(k): world(v) for k, v in spec["holds"].items()}
     lines = [
-        f'[gd_scene load_steps={5 if flame else 2} format=3]',
+        f'[gd_scene load_steps={7 if flame else 4} format=3]',
         '',
         f'[ext_resource type="Texture2D" path="res://assets/3d/cast/{png.name}" id="1"]',
+        '',
+        # The drawing shows its own pixels: the scene's tonemap and fog are
+        # undone for it (see the shader and tools/drawn_lut.py).
+        '[ext_resource type="Shader" path="res://assets/3d/drawn_sprite.gdshader" id="3"]',
+        '',
+        '[sub_resource type="ShaderMaterial" id="ShaderMaterial_drawn"]',
+        'shader = ExtResource("3")',
+        'shader_parameter/tex = ExtResource("1")',
         '',
     ]
     if flame:
@@ -289,6 +303,7 @@ def build(beast_id):
         'alpha_cut = 2',
         'texture_filter = 3',
         'texture = ExtResource("1")',
+        'material_override = SubResource("ShaderMaterial_drawn")',
         '',
     ]
     if flame:

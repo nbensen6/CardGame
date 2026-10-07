@@ -32,6 +32,7 @@ import sys
 
 import numpy as np
 from PIL import Image, ImageFilter
+from scipy import ndimage as ndi
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SPRITE = "game/assets/3d/cast/%s_2d.png"
@@ -70,6 +71,14 @@ def measures(im):
     rgb, fig = figure(im)
     if fig.sum() < 100:
         raise SystemExit("no figure found")
+    # The concept has no outline, so the body measures are taken inside the
+    # sprite's: strip a band as wide as its measured rim off the silhouette.
+    # The cream line is bright and saturated enough to pass for a crack, and
+    # counted as one it doubled "crack cover" with the body's cracks exactly
+    # the concept's (2026-10-07). The rim itself is the "outline" measure.
+    w = rim_px(im)
+    if w:
+        fig = fig & (ndi.distance_transform_edt(fig) > w)
     cracks = hot(rgb) & fig
     body = fig & ~cracks
     lum = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
@@ -92,12 +101,8 @@ def measures(im):
     }
 
 
-def outline_share(im):
-    """Width of the pale rim as a share of the figure's height.
-
-    Walks in from the silhouette on every row and counts how many pixels are
-    much brighter than the body before normal body tone starts.
-    """
+def rim_px(im):
+    """Median width in px of the pale rim, walking in from the silhouette."""
     rgb, fig = figure(im)
     lum = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
     body_tone = float(np.median(lum[fig & ~hot(rgb)]))
@@ -114,7 +119,20 @@ def outline_share(im):
                 n += 1
                 x += step
             widths.append(n)
-    return float(np.median(widths)) / float(rows[-1] - rows[0] + 1)
+    return float(np.median(widths))
+
+
+def outline_share(im):
+    """Width of the pale rim as a share of the figure's height.
+
+    Walks in from the silhouette on every row and counts how many pixels are
+    much brighter than the body before normal body tone starts.
+    """
+    _, fig = figure(im)
+    rows = np.where(fig.any(axis=1))[0]
+    if rows.size == 0:
+        return 0.0
+    return rim_px(im) / float(rows[-1] - rows[0] + 1)
 
 
 def main():
