@@ -22187,8 +22187,11 @@ func _test_cost_gems_back_on_a_redesigned_border() -> void:
 	for c in cv.get_children():
 		if c is NinePatchRect and c.texture == CardView.A1_GLOW:
 			glows += 1
-			_expect(c.self_modulate == CardView.seat_tint("goblin_mech"),
-				"the Goblin's card glows in the Goblin's seat colour")
+			# TARGET (queue, "HUD and cards: TARGET's look, no glow"): one
+			# dull-gold edge on every seat, no seat-coloured glow.
+			_expect(c.self_modulate == CardView.A1_RIM and CardView.A1_RIM.s < 0.7
+				and CardView.A1_RIM.a <= 0.61,
+				"a card's edge is TARGET's thin dull gold, not a seat glow")
 		if c is Label and c.text == "2":
 			costs += 1
 	_expect(glows == 1, "an A1 card stacks exactly one glow layer (got %d)" % glows)
@@ -32040,6 +32043,21 @@ func _test_hud_wears_the_a1_card_material() -> void:
 	_expect(host.get_combined_minimum_size().y < 2.0 * Combat3D.HUD_PANEL_PATCH,
 		"a1 hud: the nine-patch does not grow the container it decorates")
 	host.free()
+	# TARGET's HUD (2026-10-08): flat panels, a thin edge, no glow.
+	var flat := Combat3D.flat_panel_style(Combat3D.FLAT_FACE, Combat3D.FLAT_EDGE, 6, 1)
+	_expect(flat.shadow_size == 0 and flat.border_width_left == 1 and flat.bg_color.v < 0.15,
+		"target hud: a panel is dark with a thin edge and no glow")
+	var fhost := PanelContainer.new()
+	fhost.size = Vector2(120, 40)
+	var fp: Panel = Combat3D.add_flat_panel(fhost, flat, 2.0)
+	_expect(fp.mouse_filter == Control.MOUSE_FILTER_IGNORE
+		and (fhost.get_node("Flat") as Control).show_behind_parent
+		and fp.size.is_equal_approx(Vector2(124, 44)) and fp.position == Vector2(-2, -2),
+		"target hud: the flat panel sits behind its host, grown by its pad, tap-through")
+	fhost.free()
+	var disc := CardView.a1_cost_disc(176.0, 251.0)
+	_expect(disc.position.x < 0.0 and disc.position.y < 0.0 and disc.size.x >= 0.25 * 176.0,
+		"target cards: the green cost disc is big and hangs over the top-left corner")
 	# End Turn is still the loud one; Switch is not.
 	var loud: Dictionary = Combat3D.a1_button_styles(tint, true)
 	var quiet: Dictionary = Combat3D.a1_button_styles(tint, false)

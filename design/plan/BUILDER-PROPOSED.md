@@ -224,3 +224,6 @@ appends here, never to the queue.
 - [ ] **Stones step across the beast.** The climb blocks rise up the jackal's left side; picture A's step across the front of its body to the chest.
 - [ ] **Wide mauve sky between the cliffs.** Picture A opens a wide violet sky notch behind the beast with cliffs only at the edges; ours shows a small disc.
 - [ ] **Slab shadows on a lighter ground.** A floor-plane contact shadow per slab, since a black blur is invisible on the near-black floor.
+- [ ] **Brighter gold card edge.** The card frame's edge reads dull olive; TARGET's is a thin brighter gold line.
+- [ ] **Card title ribbon.** TARGET's card names sit on a slanted dark ribbon; ours are flat labels.
+- [ ] **Wider hand without covering the Frog's bar.** TARGET's fan spans ~70% of the frame; ours ~53%, limited by the Frog's HP bar.

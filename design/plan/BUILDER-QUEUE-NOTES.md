@@ -1951,3 +1951,15 @@ Run 2026-10-07 16:46 EDT.
 - **Tests:** "climb ends at the face" → "under the sternum"; hold 0 may sit under the lava line; new `_test_staircase_slabs_sit_on_the_eyes_sight_line`. ALL TESTS PASSED.
 - Grader round 2: PASS. sprite_match `3 of 5 off` (PNGs untouched; same as the rig run). Meshy 0.
 - Harness: screenshot.gd now prints `CLIMB<h> screen=` beside each STONE.
+
+## HUD and cards: TARGET's look, no glow.
+
+2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).
+Before: every card wore a green seat halo, the boss plate and intent chip sat on the A1 stone with a gold/red glow, the climb gauge had a green glowing frame, unit bars a seat-coloured plate.
+Done:
+- HUD: new `Combat3D.flat_panel_style` / `add_flat_panel` (dark translucent face, 1 px plain edge, no shadow) replace `add_a1_panel` on the boss plate (padding trimmed so it is thin), intent chip (dark red-brown, thin red edge when hostile, grey when calm), climb gauge (radius 12), unit bars. Energy box: brown face, 3 px gold border and a faint warm 5 px halo, because TARGET draws that soft edge (picture over the words' "no glow"; grader agreed it matches). End Turn/Switch: pills only, nothing behind.
+- Cards (A1): ground seat rim off; the A1 glow layer tinted one dull gold (`A1_RIM`) on every seat; stone darkened toward olive (`A1_STONE_SHADE`); a big green cost disc (`a1_cost_disc`, 0.30 of the width, centred on the top-left corner); type shown as a centred grey pill (`a1_type_pill`) instead of a caps strip.
+- Fan: `HAND_REST_SCALE` 0.8→0.86, `FAN_OVERLAP` 0.84→0.80, `HAND_REST_LIFT` 22→14 (higher lifts covered the Frog's 42/42 bar).
+Tests: seat-glow card test now pins the dull-gold rim; new tests for the flat panel (no glow, behind host, pad, tap-through) and the cost disc. Grader round 1 FAIL (fan narrow/low, caps type label, no hand pair); round 2 PASS.
+Meshy: 0 credits.
+

@@ -921,6 +921,57 @@ static func add_a1_panel(target: Control, tint: Color, pad: float = 0.0,
 	return glow
 
 
+## TARGET.png's HUD panels (queue, "HUD and cards: TARGET's look, no glow",
+## 2026-10-08): a dark translucent face and a thin plain edge, nothing lit.
+const FLAT_FACE := Color(0.06, 0.055, 0.07, 0.86)
+const FLAT_EDGE := Color(0.36, 0.34, 0.38, 0.9)
+## The intent chip: a dark red-brown face, a thin red edge while it swings.
+const INTENT_FACE := Color(0.20, 0.07, 0.07, 0.88)
+const INTENT_EDGE_HOSTILE := Color(0.78, 0.24, 0.20)
+const INTENT_EDGE_CALM := Color(0.45, 0.45, 0.45)
+
+
+## The flat panel's stylebox. Static so a test can pin "no glow".
+static func flat_panel_style(face: Color, edge: Color, radius: int = 6,
+		border: int = 1, halo: Color = Color(0, 0, 0, 0), halo_size: int = 0) -> StyleBoxFlat:
+	var st := StyleBoxFlat.new()
+	st.bg_color = face
+	st.border_color = edge
+	st.set_border_width_all(border)
+	st.set_corner_radius_all(radius)
+	st.anti_aliasing = true
+	st.shadow_color = halo
+	st.shadow_size = halo_size if halo.a > 0.0 else 0
+	return st
+
+
+## Lay a flat TARGET panel BEHIND `target` (grown by `pad` on every side).
+## Returns the Panel, whose stylebox a caller may restyle.
+static func add_flat_panel(target: Control, st: StyleBoxFlat, pad: float = 0.0) -> Panel:
+	# A plain holder between the target and the panel, as add_a1_panel does:
+	# a Container lays out its own children, the holder's child it leaves be.
+	var holder := Control.new()
+	holder.name = "Flat"
+	holder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	holder.show_behind_parent = true
+	target.add_child(holder)
+	target.move_child(holder, 0)
+	var p := Panel.new()
+	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	p.add_theme_stylebox_override("panel", st)
+	holder.add_child(p)
+	var pin := func() -> void:
+		holder.position = Vector2.ZERO
+		holder.size = target.size
+		p.position = -Vector2(pad, pad)
+		p.size = target.size + Vector2(pad, pad) * 2.0
+	if target is Container:
+		(target as Container).sort_children.connect(pin)
+	target.resized.connect(pin)
+	pin.call()
+	return p
+
+
 ## A stylebox that draws nothing but keeps the host's padding, so the A1
 ## stone behind it shows. `wash` tints the face (a Button's hover and press).
 static func a1_clear_style(margin_x: float, margin_y: float,
@@ -1000,10 +1051,15 @@ func _apply_sts_hud() -> void:
 		plate.content_margin_bottom = 13.0
 		top.add_theme_stylebox_override("panel", plate if BEAST_PLATE_ON_HUD else StyleBoxEmpty.new())
 		if BEAST_PLATE_ON_HUD:
-			# The A1 stone, lit in the beast's own ember (Nick, 2026-10-05).
+			# TARGET's plate: thin, dark, a plain grey edge, no glowing frame.
 			plate.draw_center = false
 			plate.shadow_size = 0
-			add_a1_panel(top, BEAST_GLOW, 6.0)
+			plate.set_border_width_all(0)
+			plate.content_margin_top = 7.0
+			plate.content_margin_bottom = 7.0
+			plate.content_margin_left = 12.0
+			plate.content_margin_right = 10.0
+			add_flat_panel(top, flat_panel_style(FLAT_FACE, FLAT_EDGE, 6, 1), 0.0)
 	var bar_st := beast_bar_styles()
 	for k in bar_st:
 		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
@@ -1018,23 +1074,15 @@ func _apply_sts_hud() -> void:
 	# held hunter's seat colour like their cards (_retint_seat_panels).
 	_end_btn.custom_minimum_size = Vector2(150, 46)
 	_end_btn.add_theme_font_size_override("font_size", 19)
-	_seat_panels.append(add_a1_panel(_end_btn, _seat_tint_now(), 4.0))
-	# TARGET's energy box is amber: a brown face and a gold hairline, not the
-	# seat colour (checker r2 iter 07).
-	add_a1_panel(_energy_orb, ENERGY_GOLD, 6.0)
+	# TARGET's energy box: a brown face, a warm gold border, the big number.
+	add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 12, 3,
+		Color(1.0, 0.70, 0.25, 0.22), 5), 2.0)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
 		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
 	_switch_btn.custom_minimum_size = Vector2(118, 46)
-	var sw_glow := add_a1_panel(_switch_btn, Color(0.6, 0.6, 0.62), 4.0)
-	sw_glow.modulate.a = 0.6
 	# TARGET's turn buttons are bare pills (checker r2 iter 07): the pill face
-	# in a1_button_styles is the whole look, so the panel behind each, a
-	# square-cornered plate, stays hidden.
-	for b in [_end_btn, _switch_btn]:
-		var a1 := (b as Control).get_node_or_null("A1") as CanvasItem
-		if a1 != null:
-			a1.visible = false
+	# in a1_button_styles is the whole look, nothing behind it.
 	_retint_seat_panels()
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
@@ -1444,8 +1492,8 @@ func _build_gauge() -> void:
 	# The same carved obsidian as the rest of the HUD (queue, "The climb gauge
 	# stands beside the beast", 2026-09-29): it was the last flat brown box.
 	panel.add_theme_stylebox_override("panel", a1_clear_style(0.0, 0.0))
-	# The A1 stone, in the held hunter's colour (Nick, 2026-10-05).
-	_seat_panels.append(add_a1_panel(panel, _seat_tint_now()))
+	# TARGET's gauge: a dark rounded panel with a thin plain border.
+	add_flat_panel(panel, flat_panel_style(FLAT_FACE, FLAT_EDGE, 12, 1))
 
 	_gauge = Control.new()
 	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -2587,7 +2635,7 @@ func _refresh() -> void:
 ##
 ## Aggressive moves wear the alarm colour; defensive and utility ones don't, so a
 ## turn where the beast isn't swinging reads as safe at a glance.
-var _intent_glow: NinePatchRect = null
+var _intent_glow: Panel = null
 
 
 func _set_intent(boss: Dictionary, s: Dictionary) -> void:
@@ -2612,9 +2660,11 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
 	# The A1 stone, its glow red while the beast is swinging (Nick, 2026-10-05).
 	_intent_tag.add_theme_stylebox_override("panel", a1_clear_style(12.0, 4.0))
+	# TARGET's chip: small, dark, a thin red edge (no glow).
 	if _intent_glow == null:
-		_intent_glow = add_a1_panel(_intent_tag, BEAST_GLOW, 6.0)
-	_intent_glow.self_modulate = Color(1.0, 0.22, 0.12) if hostile else Color(0.55, 0.55, 0.55)
+		_intent_glow = add_flat_panel(_intent_tag, flat_panel_style(INTENT_FACE, INTENT_EDGE_HOSTILE, 5, 1), 0.0)
+	_intent_glow.add_theme_stylebox_override("panel", flat_panel_style(INTENT_FACE,
+		INTENT_EDGE_HOSTILE if hostile else INTENT_EDGE_CALM, 5, 1))
 	_intent_tag.reset_size()             # shrink to the words, not the old banner
 
 
@@ -8711,7 +8761,7 @@ func _beast_shake() -> void:
 ## before it, including the right end of its name plate - so half the hand
 ## had its title hidden. The overlap has to leave the NAME readable, which is
 ## the only thing you scan a fanned hand for.
-const FAN_OVERLAP := 0.84     # of a card's width - how far the next one sits along
+const FAN_OVERLAP := 0.80     # TARGET overlaps its cards (2026-10-08); of a card's width - how far the next one sits along
 const FAN_TILT := 0.085       # radians per card away from centre
 const FAN_DROP := 7.0         # px each card sinks per step from centre, making the arc
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
@@ -8734,10 +8784,10 @@ const FAN_HOVER_SCALE := 1.34
 ## pedestal and HP bar behind it: both critics put the Frog's rock MAJOR.
 ## Scaled about the same low pivot as the fan's tilt, so the rest pose sinks
 ## as it shrinks; a hovered card still grows to FAN_HOVER_SCALE.
-const HAND_REST_SCALE := 0.8
+const HAND_REST_SCALE := 0.86
 ## Px the shrunken fan is lifted back up, so its name plates still clear the
 ## bottom edge where TARGET's sit.
-const HAND_REST_LIFT := 22.0
+const HAND_REST_LIFT := 14.0
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that
@@ -9274,7 +9324,7 @@ func _render_party(s: Dictionary, boss_target: int, move: Dictionary, add_attack
 		ub.visible = false
 		# A thin A1 plate under the bar, glowing in that hunter's seat colour
 		# like the marker over their head (Nick, 2026-10-05).
-		add_a1_panel(ub, _slot_color(_unit_bars.size()), 6.0, 0.16)
+		add_flat_panel(ub, flat_panel_style(FLAT_FACE, FLAT_EDGE, 4, 1), 3.0)
 		_hud.add_child(ub)
 		_hud.move_child(ub, 0)             # under every panel and the hand
 		_unit_bars.append(ub)

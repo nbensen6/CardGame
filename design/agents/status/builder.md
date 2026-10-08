@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-07T16:46
-working_on: "Stones: TARGET's staircase, in TARGET's place."
+updated: 2026-10-07T23:17
+working_on: "HUD and cards: TARGET's look, no glow."
 ---
 
 # builder
@@ -13,23 +13,24 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-07 16:46 EDT
+2026-10-07 23:17 EDT
 
-- **Did:** Six pale slabs now climb TARGET's staircase from beside the Frog to under the sternum.
-- **Worked?** Yes: the rest pair matches TARGET's route and a climb lands on every slab. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-07-stones-before.png]] then ![[frames/builder/2026-10-07-stones-after.png]] and ![[frames/builder/2026-10-07-stones-climb-strip.png]]
+- **Did:** Stripped every seat glow from cards and HUD; flat dark panels, green cost discs, type pills, wider fan.
+- **Worked?** Yes: both pairs show no glow and each piece reads as TARGET's. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-hud-noglow-before.png]] then ![[frames/builder/2026-10-08-hud-noglow-after.png]]
 - **Ask:** nothing
-- sprite_match last line: `3 of 5 off` (sprite PNGs untouched this run; same as the rig run). Meshy: 0 credits. Tests: ALL TESTS PASSED.
+- sprite_match: not run (no beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL (fan size, type label) then PASS.
 
 ## Notes
 
-- **Found:** The shoulder-truck camera always shows the Frog ~100 px left of the sternum, so TARGET's Frog-under-sternum cannot happen.
-- **Found:** Climb gauge is drawn by Height, so its top needed no move.
-- **Found:** Slab tops are smooth; TARGET's show crisp bevel facets.
-- **Found:** Ear tips still touch the top of the rest frame (camera; before frame too).
+- **Found:** Card edge reads dull olive; TARGET's is a brighter thin gold line.
+- **Found:** Fan spans ~53% of frame width vs TARGET's ~70%; bigger cards would cover the Frog's HP bar.
+- **Found:** Card titles are small and flat; TARGET's sit on a slanted dark ribbon.
+- **Found:** Outer cards' last rule line sits within ~8 px of the bottom edge at rest.
 
 ## Log
 
+- 2026-10-07 23:17 EDT — builder: HUD/cards no glow: flat_panel_style/add_flat_panel for boss plate, intent chip, energy, gauge, unit bars; cards drop seat rim, A1 glow tinted dull gold, darker olive stone, green cost disc, grey type pill; fan scale 0.86, overlap 0.80, lift 14; tests added; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-07 16:46 EDT — builder: TARGET staircase: rig holds = TARGET slab centres (beast_rig.py), slabs on the rest eye's sight line (stair_slab), Frog-side shift for low slabs, thicker unoutlined slabs, climb lands on all six, top hold/sigil under the sternum, tests updated; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-07 15:43 EDT — builder: jackal rigged from TARGET (tools/beast_rig.py, views/drawn_rig.gd, SubViewport onto the billboard, idle/attack/hit/death, fire layer, trim_box keeps framing) + tests; grader FAIL x3 (holds), CLOSER; marked 👀; tests green, pushed.
 

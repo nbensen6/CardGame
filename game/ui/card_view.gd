@@ -472,12 +472,10 @@ func _build_face(data: Dictionary) -> void:
 		glow = seat_glow(not disabled, String(data.get("character", "")))
 	gsb.shadow_color = glow
 	gsb.shadow_size = PLAYABLE_GLOW_SIZE if glow.a > 0.0 else 0
-	if SHIP_A1 and glow.a > 0.0:
-		# A thin seat-coloured rim, not a halo (checker r2 iter 21: "heavy
-		# green glow on every card", both critics). TARGET's hand has none; the
-		# rim keeps "this one is playable" readable at a glance.
-		gsb.shadow_color = Color(glow, 0.55)
-		gsb.shadow_size = SEAT_RIM_SIZE
+	if SHIP_A1:
+		# No glow at all (queue, "HUD and cards: TARGET's look, no glow",
+		# 2026-10-08): TARGET's cards sit on a plain dark edge.
+		gsb.shadow_size = 0
 	ground.add_theme_stylebox_override("panel", gsb)
 	_layer(ground, 0, 0, 1, 1, 1.0, 1.0, -1.0, -1.0)
 
@@ -643,6 +641,39 @@ const A1_ART := Rect2(0.095, 0.150, 0.905 - 0.095, 0.560 - 0.150)
 const A1_TYPE := Rect2(0.112, 0.585, 0.900 - 0.112, 0.640 - 0.585)
 const A1_TEXT := Rect2(0.112, 0.665, 0.900 - 0.112, 0.925 - 0.665)
 
+## TARGET's card edge: a thin dull-gold line, the same on every seat.
+const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
+## How dark the A1 stone is drawn: TARGET's card frame is near-black.
+const A1_STONE_SHADE := Color(0.52, 0.54, 0.42)
+## TARGET's cost disc: green, a darker rim, a lighter cap.
+const COST_DISC_FILL := Color(0.16, 0.58, 0.24)
+const COST_DISC_EDGE := Color(0.06, 0.26, 0.10)
+const COST_DISC_CAP := Color(0.42, 0.80, 0.42, 0.55)
+## The disc's diameter as a fraction of the card's width, and its centre as
+## fractions of the card: TARGET's disc is about a third of the card across
+## and its centre sits on the frame's top-left corner.
+const COST_DISC_D := 0.30
+const COST_DISC_C := Vector2(0.08, 0.045)
+
+
+## TARGET's type pill: pale grey, a darker edge.
+const TYPE_PILL_FILL := Color(0.80, 0.80, 0.82)
+const TYPE_PILL_EDGE := Color(0.35, 0.35, 0.38)
+
+
+## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
+static func a1_type_pill(ty: Rect2) -> Rect2:
+	var pw := ty.size.x * 0.44
+	var ph := maxf(ty.size.y * 0.86, 10.0)
+	return Rect2(ty.get_center().x - pw * 0.5, ty.get_center().y - ph * 0.5, pw, ph)
+
+
+## The cost disc's rect in px of a card w x h. Static so a test can pin it.
+static func a1_cost_disc(w: float, h: float) -> Rect2:
+	var d := COST_DISC_D * w
+	return Rect2(COST_DISC_C.x * w - d * 0.5, COST_DISC_C.y * h - d * 0.5, d, d)
+
+
 ## One colour per character: the glow on their cards and the halo round a
 ## playable one. The Frog and the Climbers are combat_3d.gd's SLOT_TINT, which
 ## now reads from here, so the cards match the markers on the floor.
@@ -724,6 +755,8 @@ func _build_a1() -> void:
 	# 1 - the stone, UNDER the art: the base is opaque, the art sits in its
 	# window. Straight after the ground.
 	var base := _a1_patch(A1_BASE)
+	# TARGET's frame is near-black, not grey stone.
+	base.self_modulate = A1_STONE_SHADE
 	move_child(base, 1)
 	_a1_fit(base)
 	_frame_rect = base
@@ -744,7 +777,8 @@ func _build_a1() -> void:
 	var add := CanvasItemMaterial.new()
 	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	glow.material = add
-	glow.self_modulate = tint
+	# TARGET's frame edge is a thin dull-gold line, not a seat-coloured glow.
+	glow.self_modulate = A1_RIM
 	resized.connect(func() -> void:
 		_a1_fit(base)
 		_a1_fit(glow))
@@ -764,10 +798,24 @@ func _build_a1() -> void:
 	var ty := a1_box(A1_TYPE, w, h)
 	var kind := String(_data.get("type", ""))
 	if kind != "":
-		var tl := _label(kind.to_upper(), 9)
+		# TARGET's type: a small centred grey pill, title case, dark ink.
+		var pr := a1_type_pill(ty)
+		var pill := Panel.new()
+		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var psb := StyleBoxFlat.new()
+		psb.bg_color = TYPE_PILL_FILL
+		psb.border_color = TYPE_PILL_EDGE
+		psb.set_border_width_all(1)
+		psb.set_corner_radius_all(int(ceil(pr.size.y * 0.5)))
+		psb.anti_aliasing = true
+		pill.add_theme_stylebox_override("panel", psb)
+		_place(pill, pr)
+		var tl := _label(kind.capitalize(), 9)
+		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		tl.add_theme_color_override("font_color", Color(0.78, 0.69, 0.59))
-		_place(tl, ty.grow_individual(-4.0, 0.0, -24.0, 0.0))
+		tl.add_theme_color_override("font_color", Color(0.16, 0.15, 0.15))
+		tl.add_theme_constant_override("outline_size", 0)
+		_place(tl, pr)
 	_place(_rarity_pips(_data), Rect2(ty.end.x - 26.0, ty.get_center().y - 3.0, 22.0, 6.0))
 
 	# 6 - the rules, wrapped inside the text box.
@@ -777,14 +825,33 @@ func _build_a1() -> void:
 	_place(_rules, xr.grow_individual(-4.0, -4.0, -4.0, -2.0))
 	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
 
-	# 7 - the cost, centred in the socket and sized to it.
+	# 7 - the cost: TARGET's big green disc, hung over the top-left corner.
 	if shows_cost(_data):
-		var so := a1_socket(w, h)
+		var dr := a1_cost_disc(w, h)
+		var so := Vector3(dr.get_center().x, dr.get_center().y, dr.size.x * 0.5)
 		var d := so.z * 2.0
-		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z))
+		var disc := Panel.new()
+		disc.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var dsb := StyleBoxFlat.new()
+		dsb.bg_color = COST_DISC_FILL
+		dsb.border_color = COST_DISC_EDGE
+		dsb.set_border_width_all(maxi(1, int(round(d * 0.06))))
+		dsb.set_corner_radius_all(int(ceil(so.z)) + 1)
+		dsb.anti_aliasing = true
+		disc.add_theme_stylebox_override("panel", dsb)
+		_place(disc, dr)
+		# A lighter cap on the upper half, TARGET's gem shading.
+		var cap := Panel.new()
+		cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var csb := StyleBoxFlat.new()
+		csb.bg_color = COST_DISC_CAP
+		csb.set_corner_radius_all(int(ceil(so.z * 0.8)))
+		cap.add_theme_stylebox_override("panel", csb)
+		_place(cap, Rect2(dr.position + Vector2(d * 0.16, d * 0.1), Vector2(d * 0.68, d * 0.42)))
+		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.85))
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cl.add_theme_color_override("font_color", Color(1, 1, 1).lerp(tint, 0.3))
+		cl.add_theme_color_override("font_color", Color(1, 1, 1))
 		cl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
 		cl.add_theme_constant_override("outline_size", 2)
 		# Heavy, so a 10px digit still reads at hand size (the grader, on the

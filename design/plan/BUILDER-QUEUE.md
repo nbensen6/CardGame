@@ -13,10 +13,11 @@ run failed.
 **Reset, Nick 2026-10-07: "reset all rules", "the goal is get to the concept as close as possible, any means necessary", "I want the builder to focus on aesthetic changes."**
 Every item from before this line is in `## Archive` at the bottom, and none of its instructions bind you, including the seat-colour glow, the old stone route and the old HUD material. The only references are `design/art/targets/TARGET.png` (the whole frame) and `TARGET-UI.png` (close-up of the cards and HUD). **Aesthetic work only:** change how things look, never rules, card numbers or balance. Shoot the rest frame with `state=3d beast=cinder_jackal` and pair it with `python3 tools/vs_target.py <shot>.png <pair>.png --full` (and `--hand` for cards). Meshy is open with no run cap; log what you spend.
 
-- [ ] **HUD and cards: TARGET's look, no glow.**
-      Remove the seat-colour glow from every card and every HUD panel. Match TARGET.png / TARGET-UI.png piece by piece: the boss plate (thin dark panel, segmented red bar, no glowing frame), the intent chip (small, dark, thin red edge), Log and Menu (plain text), the climb gauge (dark rounded panel, thin border), the energy box (dark fill, warm gold border, big number), draw/discard/burn, the cards (dark frame, green cost circle top left, no glow, TARGET's fan and size), End Turn (orange pill) and Switch (navy pill).
-      **Done when** `--full` and `--hand` pairs show no glow anywhere and each element reads as TARGET's.
-      Test: state=3d beast=cinder_jackal ^hud-and-cards-target-s-look-no-glow
+- [ ] 👀 **HUD and cards: TARGET's look, no glow.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and cards: TARGET's look, no glow.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-hud-noglow-after.png|420]] ^hud-and-cards-target-s-look-no-glow
 
 - [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
       Today they are thick grey hexagonal pucks bunched at the belly. TARGET's are thin, flat, irregular slabs with soft bevelled edges, light tops and a slightly darker side, no outline, climbing in a clear staircase from left of the frog up and right to just under the sternum. Re-fit the positions to the camera as it is now (the checker has moved it since the stones shipped).
