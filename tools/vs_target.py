@@ -15,8 +15,9 @@ builder looks at this pair rather than at an adjective.
 is 16:9, so the game's centred 720x720 square must hold TARGET's picture with
 everything in the same place. What lies outside that square is extra scene.
 
-Both halves are scaled so the beast is the same height in each, which is the
-only way an outline weight or a crack width can be compared at all.
+Every close-up is TARGET's box mapped through the shot's centred square, so
+both halves show the same part of the picture at the same scale: an element
+drawn at TARGET's size shows at the same size in the pair.
 """
 
 import os
@@ -30,8 +31,10 @@ FONTS = os.path.join("game", "assets", "fonts", "KenneyBold.ttf")
 # normalised crops, measured off TARGET.png and off a 1280x720 shot
 REGIONS = {
     "--full": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.0, 0.0, 1.0, 1.0)},
-    "--beast": {"target": (0.22, 0.05, 0.85, 0.58), "shot": (0.26, 0.0, 0.76, 0.60)},
-    "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.12, 0.68, 0.80, 1.0)},
+    # close-ups are TARGET boxes mapped through the centred square, so the
+    # game half shows the same part of the square at the same scale
+    "--beast": {"target": (0.22, 0.05, 0.85, 0.58), "shot": (0.3425, 0.05, 0.6969, 0.58)},
+    "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.2863, 0.79, 0.7137, 1.0)},
     # the centred square of a 1280x720 shot: x 280..1000
     "--square": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.21875, 0.0, 0.78125, 1.0)},
     # the slab staircase, from beside the frog's rock up to the sternum. The

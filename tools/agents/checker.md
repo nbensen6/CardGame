@@ -1,11 +1,12 @@
 # checker: the critic prompt, the checklist, and the matching loop
 
 The standard is **TARGET 1:1** (Nick, 2026-10-08: "build the concept 1:1").
-`design/art/targets/TARGET.png` is the scene, `TARGET-UI.png` the cards and
-HUD. The game's centred 720x720 square must hold TARGET's picture with every
-element the same shape, proportion, colour, shading, line, size and place.
-Nothing older than 2026-10-07 is a target or a rule. Never ask Nick how
-anything should look; TARGET answers.
+`design/art/targets/TARGET.png` is the only reference: scene, HUD and cards
+("the concept" means this picture; `TARGET-UI.png` is an older mockup and is
+not a target). The game's centred 720x720 square must hold TARGET's picture
+with every element the same shape, proportion, colour, shading, line, size and
+place. No older look rule applies. Never ask Nick how anything should look;
+TARGET answers.
 
 The builder uses the critic prompt and checklist below to queue its own work
 (`tools/builder/BRIEF.md`, step 2). The loop at the bottom is for this
@@ -22,7 +23,7 @@ checker routine when a `## Round N` heading is open in
 
 TARGET is always left, the game right, at the same scale. `--square` is
 TARGET against the centred square of the game frame: placement is judged
-there.
+there. The close-ups are cut from that same square.
 
 ## The critic prompt
 
@@ -41,12 +42,13 @@ the checklist included. No history, no notes, no account of what changed.
 
 ## The checklist
 
-1. **Jackal:** pose (hunched, three-quarter turn, left fist raised and on
-   fire), proportions and silhouette, outline, cracks and the sternum hot
+1. **Jackal:** pose (hunched, three-quarter turn, the fist on the viewer's
+   left raised and on fire), proportions and silhouette, outline, cracks and the sternum hot
    seam, eyes, facets and shading, rim and lava up-light, the fist's flame.
 2. **Stones:** six slabs: shape (thin, flat, irregular, chipped, wide), top
    and side tones, edges, tilt, size of each, and the staircase's exact path
-   and spacing from beside the frog's rock up to the sternum.
+   and spacing, from the big lowest slab (above and left of the frog) up to
+   the sternum.
 3. **Frog and its rock:** the frog's size and place, the pedestal's size,
    shape, faces and tone, the green marker, the HP bar.
 4. **Ground and lava:** the hex floor and its seams, the lava band's height,
@@ -55,12 +57,15 @@ the checklist included. No history, no notes, no account of what changed.
    light, the purple sky, embers.
 6. **HUD:** boss name plate and segmented HP bar, intent chip, Log and Menu,
    climb gauge, energy box, draw/discard/burn, the hand's fan, card frames and
-   cost coins, End Turn and Switch. Look, size and place. `TARGET-UI.png` is
-   the close-up.
+   cost coins, End Turn and Switch. Look, size and place, all as TARGET.png
+   draws them.
 7. **Framing:** where the jackal's ears, the lava line and the frog sit in
    the square; how much of the square the jackal fills.
 
 ## The loop (only while a `## Round N` heading is open)
+
+This section is the checker routine's own loop. Its one-fix-per-iteration and
+25-iteration limits do not apply to the builder.
 
 Each iteration: make the pairs into `design/match-log/iter-NN-*.png` (NN
 continues from the highest there); spawn TWO critics, blind to each other;

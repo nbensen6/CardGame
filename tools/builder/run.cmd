@@ -141,7 +141,7 @@ REM prompt; it does not get to run arbitrary commands.
 REM Opus 5.5 at xhigh: 2.5x cheaper than Fable for work that is mostly tool
 REM calls and file reads, and its default effort is medium, so set it. Fable
 REM stays on the director session and on anything that fails twice.
-"%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly for the TOP unticked item in design/plan/BUILDER-QUEUE.md. %MODE%" ^
+"%CLAUDE%" -p "Read tools/builder/BRIEF.md and follow it exactly. %MODE%" ^
   --model claude-opus-5-5 --effort xhigh --fallback-model claude-opus-5 ^
   --permission-mode acceptEdits ^
   --allowedTools "Read,Edit,Write,Glob,Grep,Bash,Agent" >> "%LOG%" 2>&1

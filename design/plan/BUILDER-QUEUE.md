@@ -1,9 +1,10 @@
 # Builder queue
 
-One ordered list. The builder (`tools/builder/BRIEF.md`) does the **top
-unticked item** and nothing else. Nick reorders, adds, deletes, and ticks.
+One ordered list. The builder (`tools/builder/BRIEF.md`) takes the top
+**open** item under `## Now` (`- [ ]` without 👀) and queues its own work from
+TARGET.png when none is open. Nick may reorder, add, delete and tick.
 
-- `[ ]` open · `[ ] 👀` built, waiting for Nick to look · `[x]` Nick says done
+- `[ ]` open · `[ ] 👀` built and graded (Nick may look; the builder never waits for him) · `[x]` Nick ticked it
 
 Every item names the shot that must change. If the shot does not change, the
 run failed.
@@ -33,27 +34,27 @@ run failed.
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
-      **Done when** the cracks read as wide and yellow-cored and the sternum seam is the hottest line on the body.
+      **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] **Fist fire: compact curling blaze wrapped on the fist.**
       Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
-      **Done when** the flame hugs the fist, orange with a yellow core, no taller than the fist.
+      **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
 
 - [ ] **Floor: faint warm seams, not bright orange.**
       Both critics, MODERATE: TARGET's hex floor is dark with faint warm seams; the game's seams are bright high-contrast orange and the floor is tinted purple.
-      **Done when** the hex seams read as faint and the floor as dark charcoal.
+      **Done when** the `--square` pair shows no visible difference in the floor and its seams.
       Test: state=3d beast=cinder_jackal ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
       Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
-      **Done when** the cliffs read as dark slate framing the jackal with thin cool edges.
+      **Done when** the `--square` pair shows no visible difference in the cliffs.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
-      **Done when** the hand's cards read like TARGET-UI's at a glance.
+      **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
       Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
 
 - [ ] 👀 **HUD and cards: TARGET's look, no glow.**

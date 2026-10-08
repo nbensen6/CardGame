@@ -1,3 +1,5 @@
+> Entries dated before 2026-10-07 are history and bind nothing; TARGET.png and `tools/builder/BRIEF.md` decide.
+
 # Queue notes
 
 The history behind each line of [[BUILDER-QUEUE]]: the original brief, what

@@ -1,3 +1,5 @@
+> **Overridden for the TARGET work (2026-10-08).** For anything TARGET.png shows, `tools/builder/BRIEF.md` governs and TARGET.png is the only reference. This page (written 2026-09-07) is history for that work: it is not a reference, and nothing here sends a look question to Nick.
+
 # What the art is aiming at
 
 Written 2026-09-07, because Nick asked the question the loop could not answer:

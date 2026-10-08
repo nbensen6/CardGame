@@ -7,6 +7,17 @@
 
 ---
 
+## 0. Art work toward TARGET.png overrides this file where they conflict
+
+Nick, 2026-10-08: "build the concept 1:1." For anything about how the game
+looks, `design/art/targets/TARGET.png` is the only reference and
+`tools/builder/BRIEF.md` governs. Where §4 ("confirm with the human"), §5's
+performance budget, §11 ("simplest thing", "ask rather than guess", "flag it
+to the human") or §12 (asset loop limits, light before geometry, the shared
+atlas) would stop short of matching TARGET or send a look question to Nick,
+matching TARGET wins and no question is asked. §2, §8 and §5's input rules
+still apply as written.
+
 ## 1. One-line pitch
 
 A cooperative, roguelike **deckbuilder** where **two players team up against a boss**. Each

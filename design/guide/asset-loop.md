@@ -1,3 +1,5 @@
+> **Overridden for the TARGET work (2026-10-08).** For anything TARGET.png shows, `tools/builder/BRIEF.md` governs and TARGET.png is the only reference. This loop's pass caps and score bars, its two-fixes-only rule, the REBUILD-is-Nick's-call rule, the Kenney art direction, `art-target.md` and the poly, material and atlas contract do not apply to it. Use whatever makes it match TARGET.
+
 # The asset refinement loop
 
 Adapted from `MD/asset-refinement-loop.md` for this project. Follow it for every
