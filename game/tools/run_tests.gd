@@ -2424,6 +2424,7 @@ func _init() -> void:
 	_test_stone_staircase_is_one_line_to_the_chest()
 	# Lava round the arena (session, 2026-09-29): the jackal's fight only,
 	# between the hunters' ground and the wall, lens always inside the shimmer.
+	_test_flank_cliffs_fill_the_jackal_left_only()
 	_test_lava_ring_only_in_the_jackal_biome()
 	_test_lava_ring_stays_off_the_hunters_and_inside_the_wall()
 	_test_lava_ring_mesh_spans_inner_to_outer()
@@ -31440,6 +31441,22 @@ func _test_stone_staircase_is_one_line_to_the_chest() -> void:
 	_expect(Combat3D.REST_ASIDE > Combat3D.HUNTER_HEIGHT * 1.5 * Combat3D.SLAB_SIZE,
 		"the aside clears the near block's radius, so the block shows beside the hunter")
 	_expect(is_equal_approx(Combat3D.rest_pos_for(Vector3(1, 5, 2), 9.0, 0.0, 2.0).x, 3.0), "rest_pos_for moves the hunter by the aside")
+
+
+func _test_flank_cliffs_fill_the_jackal_left_only() -> void:
+	var set_ := Combat3D.flank_cliffs(String(Combat3D.BEAST_BIOME["cinder_jackal"]))
+	_expect(not set_.is_empty(), "the jackal's arena stands a cliff mass at its flank")
+	var lava := Combat3D.lava_ring(String(Combat3D.BEAST_BIOME["cinder_jackal"]))
+	for c in set_:
+		var p: Vector3 = c["pos"]
+		# -x is screen left from the rest camera: the left mass is all -x.
+		_expect(p.x < 0.0, "a flank rock stands on the screen-left side")
+		# Behind the hunters' line and outside the floor, never on it.
+		_expect(Vector2(p.x, p.z).length() > lava.x, "a flank rock stands past the floor's edge")
+		_expect(Vector2(p.x, p.z).length() < Combat3D.LAVA_MAX_R + 0.6, "a flank rock stands at the wall, not beyond the sky fog")
+	for biome in Combat3D.BIOME.keys():
+		if biome != "quarry_ember":
+			_expect(Combat3D.flank_cliffs(biome).is_empty(), "biome %s keeps its own wall only" % biome)
 
 
 func _test_lava_ring_only_in_the_jackal_biome() -> void:

@@ -25,10 +25,11 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-slabs-after.png|420]] ^stones-target-s-thin-pale-slabs-spread-a
 
-- [ ] **Left background: cliff and purple sky, not black.**
-      The left third of the frame behind the jackal is a black void. TARGET has a dark slate cliff with cool edge highlights on the left and purple sky above it, mirroring the right side.
-      **Done when** the `--full` pair shows cliff and sky on both sides, matching TARGET's tones.
-      Test: state=3d beast=cinder_jackal ^left-background-cliff-and-purple-sky-not
+- [ ] 👀 **Left background: cliff and purple sky, not black.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Left background: cliff and purple sky, not black.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-leftbg-after.png|420]] ^left-background-cliff-and-purple-sky-not
 
 - [ ] **Fist fire: flame tongues, not a sun disc.**
       The fire on the raised fist reads as a round glowing disc. TARGET's is licking flame tongues rising off the fist, orange edges and a yellow-white core. Keep it animated (flicker) in idle.
@@ -799,3 +800,4 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - Zigzag width: about one hunter height each side of the old line.
 - Lava: a ring at the arena's edge, not rivers across the floor.
 - HUD palette: black glass, ember-orange rim, gold for energy and the sigil.
+- [ ] (proposed) **Left cliffs a shade lighter and bluer than TARGET.** Grader: TARGET's are charcoal planes, ours busier blue-grey spires.

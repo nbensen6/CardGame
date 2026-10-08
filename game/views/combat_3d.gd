@@ -3130,6 +3130,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_show_env(beast_id, want_r, ground)
 	_dress_floor(beast_id, ground)
 	_dress_wall(beast_id)
+	_add_flank_cliffs(beast_id)
 	_add_lava(beast_id)
 	_add_embers(beast_id)
 	_light_for(beast_id)
@@ -3245,6 +3246,11 @@ const BIOME := {
 		# ...and dark slate cliffs in three flat tones instead of the painted,
 		# lava-lit rock. See wall_style() / _dress_wall().
 		"wall": "flat",
+		# Left background (TARGET.png, 2026-10-08): the wall's left side read
+		# as thin spikes over grey haze; TARGET has one big dark slate mass
+		# with cool lit edges down to the lava line. Sides (-1 left, +1 right,
+		# from the rest camera) that get a cliff mass, see flank_cliffs().
+		"flank_cliffs": [-1.0],
 		# Lava rock under the hunters (session, 2026-09-29) made the climb
 		# stones red-black crates. Scene pass 2 (picture A, Nick 2026-10-04):
 		# pale grey flat slabs instead, thin enough that a high one no longer
@@ -3704,6 +3710,93 @@ func _dress_wall(beast_id: String) -> void:
 	mat.set_shader_parameter("arena_r", _arena_r)
 	for node in _all_meshes(wall):
 		(node as GeometryInstance3D).material_override = mat
+
+
+## The big faceted rock masses a biome stands at the flanks of the rest view,
+## each {pos, size, yaw, tilt, sides} in arena radii about the arena centre
+## (+z is toward the hunters, so -x is screen left from the rest camera).
+## TARGET.png: a slate mass fills the left third from the top down to the
+## lava line, tall columns at the back and boulders low in front of them.
+## Static so run_tests.gd can pin it.
+static func flank_cliffs(biome: String) -> Array:
+	var b: Dictionary = BIOME.get(biome, BIOME["crag"])
+	var out: Array = []
+	for side in b.get("flank_cliffs", []):
+		var sx := float(side)
+		for c in FLANK_CLIFF_SET:
+			var p: Vector3 = c["pos"]
+			out.append({"pos": Vector3(absf(p.x) * sx, p.y, p.z), "size": c["size"],
+				"yaw": float(c["yaw"]) * sx, "tilt": float(c["tilt"]) * sx,
+				"sides": int(c["sides"])})
+	return out
+
+## One flank, by its distance out from the centre line (the side's sign
+## picks left or right; yaw and tilt flip with it). Columns stand back near
+## the wall and lean out; boulders sit low and forward at the lava's edge.
+const FLANK_CLIFF_SET := [
+	{"pos": Vector3(-2.3, 0.0, -1.9), "size": Vector3(0.6, 1.9, 0.6), "yaw": 0.2, "tilt": -0.12, "sides": 4},
+	{"pos": Vector3(-1.95, 0.0, -1.7), "size": Vector3(0.5, 1.4, 0.5), "yaw": 0.9, "tilt": -0.16, "sides": 5},
+	{"pos": Vector3(-2.15, 0.0, -1.2), "size": Vector3(0.55, 2.1, 0.55), "yaw": 0.5, "tilt": -0.08, "sides": 4},
+	{"pos": Vector3(-1.75, 0.0, -1.05), "size": Vector3(0.42, 1.1, 0.42), "yaw": 1.4, "tilt": -0.18, "sides": 5},
+	{"pos": Vector3(-2.45, 0.0, -0.6), "size": Vector3(0.6, 2.3, 0.6), "yaw": 0.1, "tilt": -0.1, "sides": 5},
+	{"pos": Vector3(-1.75, 0.0, -2.25), "size": Vector3(0.55, 1.6, 0.55), "yaw": 0.7, "tilt": -0.14, "sides": 4},
+	{"pos": Vector3(-2.6, 0.0, -1.3), "size": Vector3(0.65, 2.5, 0.65), "yaw": 0.35, "tilt": -0.06, "sides": 5},
+	{"pos": Vector3(-1.6, 0.0, -1.4), "size": Vector3(0.4, 0.42, 0.34), "yaw": 0.6, "tilt": 0.0, "sides": 5},
+	{"pos": Vector3(-1.85, 0.0, -0.5), "size": Vector3(0.5, 0.55, 0.4), "yaw": 1.2, "tilt": 0.0, "sides": 6},
+]
+
+const FLANK_LIT_AT := 0.4
+const FLANK_LIT := Color(0.33, 0.35, 0.44)
+const FLANK_KEY := Vector3(-0.8, 0.35, -0.45)
+var _flank: Node3D = null
+
+## Stands flank_cliffs() in the arena, in CLIFF_FLAT's tones without its far
+## fade (the masses stay dark rock, never sky), the warm band at their feet.
+func _add_flank_cliffs(beast_id: String) -> void:
+	if _flank != null:
+		_flank.queue_free()
+		_flank = null
+	var biome := String(BEAST_BIOME.get(beast_id, "crag"))
+	var set_ := flank_cliffs(biome)
+	if set_.is_empty() or _env == null:
+		return
+	var r := _arena_r
+	_flank = Node3D.new()
+	_flank.name = "FlankCliffs"
+	_rig.add_child(_flank)
+	var mat := ShaderMaterial.new()
+	mat.shader = CLIFF_FLAT
+	var glow := lava_glow(biome)
+	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * r * glow * 1.6)
+	mat.set_shader_parameter("heat_gain", 1.1 * glow)
+	mat.set_shader_parameter("far_mix", 0.0)
+	# TARGET lights the masses' cool edges on their upright faces too; the
+	# wall's 0.7 only ever lights faces tipped toward the sky.
+	mat.set_shader_parameter("lit_at", FLANK_LIT_AT)
+	# The wall's key lights faces that look inward from its ring; the rest
+	# camera sees these masses' faces from the other side, so their key
+	# comes from the screen's centre: planes turned toward the jackal light.
+	mat.set_shader_parameter("key_dir", FLANK_KEY)
+	# TARGET's lit edges are cool blue-grey (~60,64,82), a step brighter
+	# than the wall's: these masses stand nearer, out of the sky haze.
+	mat.set_shader_parameter("lit_color", FLANK_LIT)
+	for c in set_:
+		var size: Vector3 = c["size"] * r
+		var m := CylinderMesh.new()
+		m.radial_segments = int(c["sides"])
+		m.rings = 1
+		m.top_radius = size.x * 0.12
+		m.bottom_radius = size.x * 0.5
+		m.height = size.y
+		var mi := MeshInstance3D.new()
+		mi.mesh = m
+		mi.material_override = mat
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		mi.scale = Vector3(1.0, 1.0, size.z / maxf(size.x, 1e-3))
+		mi.rotation = Vector3(0.0, float(c["yaw"]), float(c["tilt"]))
+		var p: Vector3 = c["pos"] * r
+		mi.position = Vector3(p.x, size.y * 0.5 - 0.05 * r, p.z)
+		_flank.add_child(mi)
 
 
 ## How high the lava's warm band climbs the flat cliffs, in arena radii.

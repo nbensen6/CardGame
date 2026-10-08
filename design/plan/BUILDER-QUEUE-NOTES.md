@@ -1975,3 +1975,14 @@ Meshy: 0 credits.
 - **Grader:** round 1 FAIL (regular polygons, slab 0 at Frog height), round 2 FAIL (all same rounded rectangle, upper four bunched), round 3 FAIL (straight-edged bricks, hard top edges, climb flatter/smaller than TARGET). CLOSER every round. Marked 👀 per brief.
 - Outlines come from `randi()`, so the slab silhouettes change each launch.
 - Tests: new `_test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel`. ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
+
+## Left background: cliff and purple sky, not black.
+
+2026-10-08 01:17 EDT. Before: the left third was the wall's thin spikes over grey-violet haze (the wall's far-fade), no lit planes, no lava glow at its foot; TARGET has a dark slate mass with cool lit edges, orange lava glow at its base, violet sky toward the centre.
+
+- Added `flank_cliffs()` / `FLANK_CLIFF_SET` / `_add_flank_cliffs()` in combat_3d: nine tapered 4-6 sided prisms (seven columns, two boulders) on the screen-left flank (-x), quarry_ember only (`"flank_cliffs": [-1.0]`). Shaded with CLIFF_FLAT, far_mix 0 (never fades to sky), its own key (FLANK_KEY, from screen centre: the wall's key lights faces seen from the ring's inside and left every flank face in shade/black), lit_at 0.4, cooler lit tone 0.33/0.35/0.44, heat band 1.6x taller and 2x hotter so the foot glows orange.
+- Round 1 (tall wide columns, lit_at 0.7): grader FAIL, NOT CLOSER: flat black slabs hid the sky. Round 2: shorter columns, taper top 0.12 of base, fewer sides, lower lit_at: PASS.
+- Tones (left 0-15% x, 6-30% y): before mean (25,24,36), TARGET (13,10,16). Grader notes ours is still a little lighter/bluer and busier than TARGET's planar charcoal faces (proposed at bottom of queue).
+- Test `_test_flank_cliffs_fill_the_jackal_left_only`. 3dclimb frame checked: masses out of the climb view, nothing clipping.
+- Meshy: 0 credits. sprite_match not run (no drawn beast touched).
+
