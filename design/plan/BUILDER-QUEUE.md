@@ -31,10 +31,11 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-leftbg-after.png|420]] ^left-background-cliff-and-purple-sky-not
 
-- [ ] **Fist fire: flame tongues, not a sun disc.**
-      The fire on the raised fist reads as a round glowing disc. TARGET's is licking flame tongues rising off the fist, orange edges and a yellow-white core. Keep it animated (flicker) in idle.
-      **Done when** the `--beast` pair shows TARGET's flame shape.
-      Test: state=3d beast=cinder_jackal ^fist-fire-flame-tongues-not-a-sun-disc
+- [ ] 👀 **Fist fire: flame tongues, not a sun disc.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fist fire: flame tongues, not a sun disc.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-fistfire-after.png|420]] ^fist-fire-flame-tongues-not-a-sun-disc
 
 - [ ] **Frog's rock and the floor: TARGET's pedestal and hex tiles.**
       TARGET's frog sits on a large dark faceted pedestal with its HP bar on the front; the floor is dark hex tiles with faint warm seams running to the lava band. Match both.
@@ -801,3 +802,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - Lava: a ring at the arena's edge, not rivers across the floor.
 - HUD palette: black glass, ember-orange rim, gold for energy and the sigil.
 - [ ] (proposed) **Left cliffs a shade lighter and bluer than TARGET.** Grader: TARGET's are charcoal planes, ours busier blue-grey spires.
+- [ ] (proposed) **Fist flame smaller than TARGET's.** The canvas top caps the plume; a taller canvas would shrink the beast via _fit_height.
+- [ ] (proposed) **sprite_match 3 of 5 OFF on main.** Crack cover, detail and outline read OFF before and after this run, unchanged by the fire.

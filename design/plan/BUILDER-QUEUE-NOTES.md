@@ -4,6 +4,17 @@ The history behind each line of [[BUILDER-QUEUE]]: the original brief, what
 the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
+
+## Fist fire: flame tongues, not a sun disc.
+
+2026-10-08 builder run.
+
+- **Before:** the fire layer (cut from TARGET by `tools/beast_rig.py`) had a soft alpha ramp that kept TARGET's glow as a faint rim, and idle scaled it up to 1.1 about the elbow, sliding the ball off the fist so its round underside showed. Read as a sun disc.
+- **Built (all in `tools/beast_rig.py`, assets regenerated):** crisp flame alpha; the plume leans back up-left above `FIRE_BASE` (`FIRE_LEAN` 0.32: the canvas top is already the flame's top, and a taller canvas would shrink the beast through `_fit_height`); below the base only a `FIRE_HUG` 22 px skirt hugs the fist; flame within `FIRE_CORE` 24 px of the fist burns yellow-white, tongue edges deep orange. The fire is now an 8-frame strip (`fire_frames`: a wave climbs the flame once a loop, tips sway and stretch up, the base stays put), stepped by a discrete `Art:frame` track at 10 fps in `idle`; the idle scale flicker is gone (attack/death keep theirs). `anim_resource` learned discrete `Art:` tracks.
+- sprite_match: `3 of 5 off` both before and after (crack cover, detail, outline): unchanged by this item; the body is TARGET's own pixels.
+- Grader: round 1 FAIL (NOT CLOSER: still a ball), round 2 FAIL (CLOSER; flicker unprovable from a still), round 3 PASS with the idle grid. Meshy: 0 credits. Tests: ALL TESTS PASSED.
+- Idle grid: ![[agents/frames/builder/2026-10-08-fistfire-idle.png|420]]
+
 ## Zoom out: stairs visible, beast whole.
 
 Your direction, built by the session 2026-09-25 20:55 EDT, not a

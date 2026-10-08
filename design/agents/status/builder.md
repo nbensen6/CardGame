@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T01:17
-working_on: "Left background: cliff and purple sky, not black."
+updated: 2026-10-08T02:18
+working_on: "Fist fire: flame tongues, not a sun disc."
 ---
 
 # builder
@@ -13,19 +13,22 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 01:17 EDT
+2026-10-08 02:18 EDT
 
-- **Did:** Stood faceted slate columns with cool lit edges and lava glow on the left flank.
-- **Worked?** Yes: left now mirrors the right's lit cliffs over violet sky. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-leftbg-before.png]] then ![[frames/builder/2026-10-08-leftbg-after.png]]
+- **Did:** Recut the fist fire as crisp licking tongues leaning up-left, hot core, frame-stepped flicker.
+- **Worked?** Yes: the disc is gone and tongues rise off the fist like TARGET's. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-fistfire-before.png]] then ![[frames/builder/2026-10-08-fistfire-after.png]]
 - **Ask:** nothing
-- sprite_match: not run (no drawn beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL (round 1, slabs hid sky), then PASS.
+- sprite_match: 3 of 5 off (same before and after; body untouched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL, FAIL (CLOSER), PASS.
 
 ## Notes
 
-- **Found:** Left cliffs are a shade lighter and bluer, and busier, than TARGET's charcoal planes.
+- **Found:** The flame is smaller than TARGET's; the canvas top caps it, and growing it shrinks the beast.
+- **Found:** sprite_match reports crack cover, detail and outline OFF on main, independent of this item.
 
 ## Log
+
+- 2026-10-08 02:18 EDT — builder: fist fire: beast_rig.py crisp fire alpha, plume leans up-left, skirt trimmed, yellow-white core + orange edges, 8-frame licking strip on a discrete idle track (scale flicker dropped); grader FAIL, FAIL (CLOSER), PASS; marked 👀; tests green, pushed.
 
 - 2026-10-08 01:17 EDT — builder: left background: flank_cliffs (nine tapered slate prisms, own key, cool lit tone, hot foot band) on the jackal's left; test added; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-08 00:16 EDT — builder: stones: stair_outline (chipped/notched flagstones) + stair_slab_mesh (lit bevel, darker wall), STAIR_THICK 0.35, STAIRCASE adjust/width re-fit to current camera; test added; grader FAIL x3 (bricks, flat climb), CLOSER; marked 👀; tests green, pushed.

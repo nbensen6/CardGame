@@ -230,4 +230,4 @@ appends here, never to the queue.
 - [ ] **Slab silhouettes from TARGET.** Trace TARGET's six slab outlines as fixed polygons instead of seeded random flagstones.
 - [ ] **Steeper, bigger staircase.** Grader: TARGET's lowest slab is ~16% of frame width and the column climbs steeper; needs the Frog lowered first.
 - [ ] **Seeded slab shapes.** Slab outlines use randi(), so every launch draws different stones; seed them per slab.
-
+- [ ] **Bigger fist flame.** Grow the rig canvas upward for a TARGET-sized plume while keeping _fit_height on the figure, not the canvas.

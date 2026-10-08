@@ -97,14 +97,14 @@ tracks/5/keys = {
 tracks/6/type = "value"
 tracks/6/imported = false
 tracks/6/enabled = true
-tracks/6/path = NodePath("Rig/Root/torso/arm_l/fore_l/fire:scale")
-tracks/6/interp = 2
+tracks/6/path = NodePath("Rig/Root/torso/arm_l/fore_l/fire/Art:frame")
+tracks/6/interp = 0
 tracks/6/loop_wrap = true
 tracks/6/keys = {
-"times": PackedFloat32Array(0, 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1, 2.4),
-"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1),
-"update": 0,
-"values": [Vector2(1, 1), Vector2(1.06, 1.1), Vector2(1, 1), Vector2(0.97, 1.05), Vector2(1, 1), Vector2(1.06, 1.1), Vector2(1, 1), Vector2(0.97, 1.05), Vector2(1, 1)]
+"times": PackedFloat32Array(0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2, 2.1, 2.2, 2.3),
+"transitions": PackedFloat32Array(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
+"update": 1,
+"values": [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7]
 }
 tracks/7/type = "value"
 tracks/7/imported = false
@@ -116,7 +116,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.45, 0.9, 1.5, 2.4),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 1), Color(1.15, 1.05, 1, 0.9), Color(1, 1, 1, 1), Color(1.2, 1.1, 1, 0.95), Color(1, 1, 1, 1)]
+"values": [Color(1, 1, 1, 1), Color(1.12, 1.05, 1, 1), Color(1, 1, 1, 1), Color(1.15, 1.08, 1, 1), Color(1, 1, 1, 1)]
 }
 
 [sub_resource type="Animation" id="anim_attack"]
@@ -477,7 +477,8 @@ z_index = 4
 z_as_relative = false
 texture = ExtResource("fire")
 centered = false
-position = Vector2(-321, -552)
+position = Vector2(-329, -579)
+hframes = 8
 
 [node name="hold_0" type="Marker2D" parent="Rig/Root/torso"]
 position = Vector2(-304, 52)

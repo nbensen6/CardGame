@@ -97,6 +97,27 @@ INK_UNDERLAY = True   # off only to debug a joint
 # grown in (fire_layer), and only shows once the fist swings away.
 ORDER = ["torso", "arm_r", "fore_r", "head", "fire", "arm_l", "fore_l"]
 FIRE_BOX = [(140, 80), (380, 80), (380, 330), (140, 330)]   # TARGET px, round the fist
+# The fire licks: FIRE_FRAMES frames of TARGET's flame, each warped by a wave
+# that climbs the flame once a loop, so its tongues sway and stretch upward
+# off the fist instead of the whole ball pulsing (Nick's queue, 2026-10-08:
+# "flame tongues, not a sun disc"). FIRE_BASE is the row (TARGET px) the
+# tongues rise from: below it nothing moves, the fist's own glow stays put.
+FIRE_FRAMES = 8
+FIRE_FPS = 10.0
+FIRE_BASE = 250
+FIRE_SWAY = 10.0      # TARGET px, sideways at the very tip
+FIRE_LIFT = 14.0      # TARGET px, how far a tip stretches up
+# TARGET's flame is a plume trailing up and back off the fist. The canvas
+# top is the flame's top (a taller canvas would shrink the whole beast,
+# _fit_height reads it), so above FIRE_BASE the plume leans back instead:
+# FIRE_LEAN px left per px of height. Below the base only a FIRE_HUG px skirt
+# hugs the fist (the round bowl under it read as a sun disc, grader
+# 2026-10-08), and fire within FIRE_CORE px of the fist burns yellow-white.
+FIRE_LEAN = 0.32
+FIRE_HUG = 22
+FIRE_CORE = 24
+FIRE_HOT = np.array([255, 244, 196], float)
+FIRE_EDGE = np.array([236, 84, 24], float)
 
 # Climb holds: where TARGET's six slabs sit on screen, the centre of each top
 # face, from the foreground left of the Frog up and right across the body to
@@ -273,19 +294,68 @@ def fire_layer(T, m):
     r, g, b = T[..., 0], T[..., 1], T[..., 2]
     a = np.clip((np.maximum(r, g) - 150) / 70, 0, 1) * np.clip((r - b - 70) / 50, 0, 1)
     a = a * box
+    # A drawn flame has a crisp edge. The soft ramp kept TARGET's glow round
+    # the fire as a faint rim that, with the shader's halo on top, rounded
+    # the tongues off into a ball.
+    a = np.clip((a - 0.35) / 0.3, 0, 1)
     a = ndi.gaussian_filter(a, 0.6) * box
     bg = np.array([28, 24, 40], float)
     col = (T - (1 - a[..., None]) * bg) / np.maximum(a[..., None], 0.05)
     # Behind the arm TARGET shows no fire, but the fist swings away from
-    # there: grow it in from the nearest flame, fading out 25-85 px in, so the
+    # there: grow it in from the nearest flame, solid 60 px in, fading out by 120, so the
     # swing never opens a fist-shaped hole in it.
+    H, W = a.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
     lit = a > 0.5
     dist, (iy, ix) = ndi.distance_transform_edt(~lit, return_indices=True)
     hid = inside & m
-    a = np.where(hid, a[iy, ix] * np.clip(1.4 - dist / 60.0, 0, 1), a)
+    a = np.where(hid, a[iy, ix] * np.clip(2.0 - dist / 60.0, 0, 1), a)
     grown = col[iy, ix] * 0.25 + np.array([250, 120, 30], float) * 0.75   # TARGET's flame orange
     col = np.where(hid[..., None], grown, col)
+    # Lean the plume back off the fist: above the base, column x samples the
+    # column FIRE_LEAN px per row further right.
+    sx = xx + FIRE_LEAN * np.clip(FIRE_BASE - yy, 0, None)
+    a = ndi.map_coordinates(a, [yy, sx], order=1) * inside
+    col = np.dstack([ndi.map_coordinates(col[..., k], [yy, sx], order=1) for k in range(3)])
+    # Fist distance: the skirt below the base, and the hot core.
+    fist = m & inside
+    d = ndi.distance_transform_edt(~fist)
+    skirt = np.clip(1.0 - (d - FIRE_HUG) / 10.0, 0, 1)
+    a = np.where(yy > FIRE_BASE, a * skirt, a)
+    # Next to the fist the flame is solid: half-lit cream there read grey.
+    a = np.where((d < FIRE_CORE) & (a > 0.15), 1.0, a)
+    hot = 0.85 * np.clip(1.0 - d / FIRE_CORE, 0, 1)[..., None] ** 0.8
+    # Tongue edges deep orange: how far inside the flame a pixel sits.
+    din = ndi.distance_transform_edt(a > 0.5)
+    edge = np.clip(1.0 - din / 7.0, 0, 1)[..., None] * (1 - hot)
+    col = col * (1 - hot) + FIRE_HOT * hot
+    col = col * (1 - 0.6 * edge) + FIRE_EDGE * 0.6 * edge
     return np.clip(col, 0, 255), a
+
+
+def fire_frames(L):
+    """FIRE_FRAMES copies of the fire layer L (canvas px, RGBA), each warped
+    by a wave climbing the flame. Tips move most, the base not at all."""
+    H, W = L.shape[:2]
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    base = (FIRE_BASE - BOX[1]) * SCALE
+    span = (FIRE_BASE - FIRE_BOX[0][1]) * SCALE
+    up = np.clip((base - yy) / span, 0, 1) ** 1.3
+    lam = 70.0 * SCALE
+    out = []
+    for f in range(FIRE_FRAMES):
+        ph = 2.0 * math.pi * f / FIRE_FRAMES
+        # sin(k*y + ph) with ph growing travels toward -y: the wave climbs.
+        dx = FIRE_SWAY * SCALE * up * np.sin(2 * math.pi * yy / lam + ph + xx / (90.0 * SCALE))
+        dy = FIRE_LIFT * SCALE * up * (0.5 + 0.5 * np.sin(2 * math.pi * xx / (55.0 * SCALE) - ph))
+        coords = [yy + dy, xx + dx]
+        pre = [ndi.map_coordinates(L[..., k] * L[..., 3] / 255.0, coords, order=1, mode="constant")
+               for k in range(3)]
+        a = ndi.map_coordinates(L[..., 3], coords, order=1, mode="constant")
+        A = np.clip(a / 255.0, 0, 1)
+        rgb = np.dstack([pre[k] / np.maximum(A, 1e-3) for k in range(3)])
+        out.append(np.dstack([np.clip(rgb, 0, 255), A * 255]))
+    return out
 
 
 def labels(m):
@@ -383,11 +453,14 @@ def build():
     Image.fromarray(np.clip(comp, 0, 255).astype(np.uint8), "RGBA").save(OUT / f"{ID}_2d.png", optimize=True)
 
     # Crop each layer to its pixels; remember where it sits on the canvas.
+    # The fire is a strip of FIRE_FRAMES frames, all cropped to one box.
     placed = {}
     for name, L in layers.items():
-        ys, xs = np.nonzero(L[..., 3] > 0)
+        frames = fire_frames(L) if name == "fire" else [L]
+        ys, xs = np.nonzero(np.max([F[..., 3] for F in frames], axis=0) > 0)
         x0, x1, y0, y1 = xs.min(), xs.max() + 1, ys.min(), ys.max() + 1
-        Image.fromarray(np.clip(L[y0:y1, x0:x1], 0, 255).astype(np.uint8), "RGBA").save(
+        strip = np.concatenate([F[y0:y1, x0:x1] for F in frames], axis=1)
+        Image.fromarray(np.clip(strip, 0, 255).astype(np.uint8), "RGBA").save(
             OUT / f"{ID}_2d_{name}.png", optimize=True)
         placed[name] = (int(x0), int(y0))
 
@@ -428,10 +501,11 @@ def clips():
         "arm_l": {"rotation": [(0, 0), (1.2, 2.5), (2.4, 0)]},
         "fore_l": {"rotation": [(0, 0), (1.2, -2.0), (2.4, 0)]},
         "arm_r": {"rotation": [(0, 0), (1.2, -0.6), (2.4, 0)]},
-        "fire": {"scale": [(t * 0.3, (1.0, 1.0) if i % 2 == 0 else ((1.06, 1.1) if i % 4 == 1 else (0.97, 1.05)))
-                           for i, t in enumerate(range(9))],
-                 "modulate": [(0, (1, 1, 1, 1)), (0.45, (1.15, 1.05, 1, 0.9)), (0.9, (1, 1, 1, 1)),
-                              (1.5, (1.2, 1.1, 1, 0.95)), (2.4, (1, 1, 1, 1))]},
+        # The flame licks frame by frame; it never scales about the elbow at
+        # rest, which slid the ball off the fist and showed its round rim.
+        "fire": {"Art:frame": [(i / FIRE_FPS, i % FIRE_FRAMES) for i in range(int(2.4 * FIRE_FPS))],
+                 "modulate": [(0, (1, 1, 1, 1)), (0.45, (1.12, 1.05, 1, 1)), (0.9, (1, 1, 1, 1)),
+                              (1.5, (1.15, 1.08, 1, 1)), (2.4, (1, 1, 1, 1))]},
     }
     L = 1.2
     imp = 0.4 * L
@@ -477,7 +551,8 @@ def anim_resource(rid, name, length, loop, tracks):
     rest = {"rotation": 0.0, "position:x": None, "position:y": None, "scale": (1, 1), "modulate": (1, 1, 1, 1)}
     for bone, props in tracks.items():
         for prop, keys in props.items():
-            path = f"Rig/Root/{bone_path(bone)}:{prop}"
+            path = f"Rig/Root/{bone_path(bone)}{'/' if '/' in prop or prop.startswith('Art:') else ':'}{prop}"
+            discrete = prop.endswith(":frame")
             vals = []
             for _, v in keys:
                 if prop == "rotation":
@@ -488,11 +563,11 @@ def anim_resource(rid, name, length, loop, tracks):
                 base = REST_POS[bone][axis]
                 vals = [base + v for v in vals]
             out += [f'tracks/{t}/type = "value"', f'tracks/{t}/imported = false', f'tracks/{t}/enabled = true',
-                    f'tracks/{t}/path = NodePath("{path}")', f'tracks/{t}/interp = 2',
+                    f'tracks/{t}/path = NodePath("{path}")', f'tracks/{t}/interp = {0 if discrete else 2}',
                     f'tracks/{t}/loop_wrap = true', f'tracks/{t}/keys = {{',
                     f'"times": PackedFloat32Array({", ".join(f"{k[0]:g}" for k in keys)}),',
                     f'"transitions": PackedFloat32Array({", ".join("1" for _ in keys)}),',
-                    '"update": 0,',
+                    f'"update": {1 if discrete else 0},',
                     f'"values": [{", ".join(gd(v) for v in vals)}]', '}']
             t += 1
     return out + [""]
@@ -551,7 +626,10 @@ def write_scene(W, H, placed, px, floor_px, mid_px, lab):
         # Draw order is tree order among siblings; the fire goes behind the fist.
         nodes += [f'[node name="Art" type="Sprite2D" parent="{ppath}/{name}"]',
                   f'z_index = {ORDER.index(name)}', 'z_as_relative = false',
-                  f'texture = ExtResource("{name}")', 'centered = false', f'position = Vector2({ox:g}, {oy:g})', '']
+                  f'texture = ExtResource("{name}")', 'centered = false', f'position = Vector2({ox:g}, {oy:g})']
+        if name == "fire":
+            nodes.append(f'hframes = {FIRE_FRAMES}')
+        nodes.append('')
     # Holds: a Marker2D on the part each sits on, and the 3D marker the fight
     # reads, which drawn_rig.gd keeps on that Marker2D as the rig moves.
     for h, p in sorted(HOLDS.items()):
