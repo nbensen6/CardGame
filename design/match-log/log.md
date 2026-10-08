@@ -188,3 +188,27 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (A #3, B #3 — the highest pair both name; framing is A only, B passes it). Low two widths 0.17/0.165 → 0.215/0.205 (iter 22 had shrunk them for the clip; this splits the difference and does not clip). s2/s3 y adjust 0.07/0.05 → 0.035/0.03, so the upper four spread down the body instead of bunching (y 0.83/0.76/0.69/0.63 jackal-heights).
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 25
+- Critic A top 3: [MAJOR] stones: the low two cut off from the top four, a gap, thin with no side shading; [MAJOR] cracks too wide, orange and blob-like, flat facets; [MAJOR] sternum seam short.
+- Critic B top 3 (one MAJOR): [MAJOR] HUD oversized and boxed, hand centred and flat, End Turn/Switch in the far corner; [MODERATE] jackal ~1/3 of the width; [MODERATE] fist fire a bloom blob.
+- Changed: the stones (A #1, B #5 — tied on rank with the cracks, A #2 / B #4; stones taken as the one named every iteration). s0/s1 `adjust` (0.17,0.04)/(0.05,0.075) → (0.23,0.10)/(0.12,0.055): the two low slabs step up and right into the upper four, one unbroken diagonal from left of the Frog to the sternum.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
+
+## DONE
+Round 2 stopped at its 25-iteration cap (counted from the `## Round 2` heading). It did **not** end on the critics' verdict: neither critic ever reported a clean frame, and iter 25's both still name MAJOR items. Pair images: `design/match-log/iter-01.png` (start) and `design/match-log/iter-25.png` (last critiqued); `design/match-log/final.png` is the frame after iter 25's fix.
+
+Remaining differences, from iter 25's two critics (both named, highest first):
+- **HUD scale and chrome** [MAJOR B / MODERATE A]: boss panel and intent chip about 2x TARGET's slim strip, in heavy rounded frames ("Attack 7" underlined); climb gauge taller, wider, green-framed; energy box larger; hand centred and flatly fanned with a gap after the energy box, small inset cost dots instead of big green coins off the corners; End Turn/Switch larger and in the far corner.
+- **Cracks and facets** [MAJOR A / MAJOR B]: cracks too wide and uniformly orange, too few thin branches; facets flat, missing TARGET's lighter warm planes; sternum seam short — TARGET's runs bright yellow down into the abs.
+- **Fist fire** [MODERATE both]: a round bloom disc behind the fist; TARGET's is flame tongues licking up and left off the top of the fist.
+- **Stones** [MAJOR A / MODERATE B]: the slabs have no darker side faces; the low two should be bigger, thicker, angular blocks. (Placement fixed in iter 25, not yet seen by a critic.)
+- **Frog's rock** [MODERATE both]: still reads as a dark blob; needs a lit hex top face; the Frog's HP bar wears a box TARGET's lacks.
+- **Background** [MODERATE/MINOR]: cliffs larger and noisier than TARGET's few slate masses, weak cool edges; faint horizontal streaks across the top of the sky; a stray rock at bottom right by the gauge.
+- **Jackal turn and build** [MODERATE]: reads more frontal than TARGET's three-quarter; shoulders/chest a little narrow.
+- **Artifacts** [MODERATE/MINOR]: pale speckle fringe where the waist meets the lava; a white spark column under the right forearm.
+- **Lava band** [MINOR]: thicker and more layered than TARGET's clean strip; a thin red line at its edge.
+- **Framing** [MODERATE/MINOR]: the jackal spans ~40% of the 16:9 frame against ~65% of TARGET's square one; the vertical bands match. Structural to the aspect ratio.
+
+Also found, not caused by this round: `tools/playtest.sh mode=play beast=cinder_jackal` FAILs `hunter-off-marker` and `route-reversal` (rung 5) on every step, identically before iter 01 and after iter 25. They arrived with the builder's TARGET-stones commit (f532e5c); the reversal is TARGET's own zig at the top rung.

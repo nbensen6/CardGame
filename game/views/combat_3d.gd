@@ -6819,7 +6819,7 @@ const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
 		"width": [0.215, 0.205, 0.125, 0.094, 0.125, 0.118],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.17, 0.04), Vector2(0.05, 0.075), Vector2(0.067, 0.035),
+		"adjust": [Vector2(0.23, 0.10), Vector2(0.12, 0.055), Vector2(0.067, 0.035),
 			Vector2(0.029, 0.03), Vector2(0.005, 0.038), Vector2(0.025, 0.045)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
