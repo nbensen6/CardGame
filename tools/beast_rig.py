@@ -207,8 +207,41 @@ def paint_hidden(T, m, line, walls):
         hard = ndi.binary_dilation(rects, iterations=5) & m & ~rim
         src = patch.copy()
         src[rim | ~m] = ROCK_DARK
-        filled = cv2.inpaint(src, hard.astype(np.uint8) * 255, 9, cv2.INPAINT_TELEA)
-        patch[hard] = filled[hard]
+        filled = cv2.inpaint(src, hard.astype(np.uint8) * 255, 9, cv2.INPAINT_TELEA).astype(float)
+        # The inpaint alone is a dark smudge (r2 iter 12: "a smoky column over
+        # the belly", both critics). So each hole takes TARGET's own cracked
+        # rock from the cleanest nearby offset, laid over the smudge with a
+        # feathered edge: cracks and facets, no pasted rectangle.
+        okay = m & ~rim & ~ndi.binary_dilation(rects | stone, iterations=4)
+        okay[CUT - 20:] = False
+        H2, W2 = m.shape
+        holes2, n2 = ndi.label(hard)
+        yellow = (T[..., 0] > 225) & (T[..., 1] > 170)
+        feather = np.clip(ndi.distance_transform_edt(hard) / 7.0, 0, 1)
+        for i in range(1, n2 + 1):
+            ys, xs = np.nonzero(holes2 == i)
+            best, score = None, -1e9
+            # Never straight up: from the belly's centre line that lands on the
+            # sternum seam and paints a second one.
+            for dx, dy in [(-90, -40), (90, -40), (-110, 0), (110, 0), (-70, -70), (70, -70),
+                           (-140, -30), (140, -30), (-60, 30), (60, 30)]:
+                sy, sx = ys + dy, xs + dx
+                inb = (sy >= 0) & (sy < H2) & (sx >= 0) & (sx < W2)
+                good = np.zeros_like(inb)
+                good[inb] = okay[sy[inb], sx[inb]]
+                # No borrowed sternum: a second bright Y down the belly is
+                # worse than plain rock.
+                heat2 = yellow[np.clip(sy, 0, H2 - 1), np.clip(sx, 0, W2 - 1)].mean()
+                sc = good.mean() - 6.0 * heat2
+                if sc > score:
+                    best, score = (dx, dy), sc
+            dx, dy = best
+            sy, sx = np.clip(ys + dy, 0, H2 - 1), np.clip(xs + dx, 0, W2 - 1)
+            src_px = T[sy, sx].astype(float)
+            use = okay[sy, sx][:, None]
+            a = feather[ys, xs][:, None]
+            filled[ys, xs] = np.where(use, filled[ys, xs] * (1 - a) + src_px * a, filled[ys, xs])
+        patch[hard] = np.clip(filled[hard], 0, 255).astype(np.uint8)
     out = patch.astype(float)
     # The silhouette's own line, wherever the cut-out has none (behind the
     # stones, where the walls run): a band as wide as TARGET's rim.

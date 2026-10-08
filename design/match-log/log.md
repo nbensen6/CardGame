@@ -97,3 +97,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the torso seam (both #1). It was the ghost of TARGET's own slab left on the belly by `tools/beast_rig.py` — its grey test missed the slabs' orange-lit undersides — with the borrowed patch beside it ending in a hard edge. New `STONES` in beast_rig.py: TARGET's five body slabs as hand-read rects, always counted as stone, and filled by inpainting from the rock round them with the gold rim masked out (borrowed blocks there read as pasted rectangles with a second sternum seam). Regenerated `cinder_jackal_2d.png` / `_torso.png`; the slab ghost and the seam are gone. The dotted speckle columns look like ember particles, not the sprite; left for now.
 - Tests: ALL TESTS PASSED. Art only.
 - Meshy: 0 credits.
+
+### iter 12
+- Critic A top 3: [MAJOR] stones — bottom two too big and thick, staircase a near-vertical stack; [MAJOR] a dark smoky blob with speckles over the lower belly; [MAJOR] hand ~1.4x too big, covers the pedestal.
+- Critic B top 3: [MAJOR] a dark smoke column over the abdomen and waist under the stones; [MAJOR] fist fire a round disc; [MAJOR] HUD and hand ~1.5x too big.
+- Changed: the belly smudge (A #2, B #1). Iter 11's inpaint filled the slab holes with a dark blur. `beast_rig.py` now lays TARGET's own cracked rock over each hole from the cleanest sideways/diagonal offset (never straight up — that lands on the sternum and paints a second Y; a yellow-heat penalty too), feathered 7 px into the inpaint. Regenerated `cinder_jackal_2d.png` / `_torso.png`.
+- Tests: ALL TESTS PASSED. Art only.
+- Meshy: 0 credits.
