@@ -16,27 +16,27 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
 - [ ] **HUD and cards: TARGET's look, no glow.**
       Remove the seat-colour glow from every card and every HUD panel. Match TARGET.png / TARGET-UI.png piece by piece: the boss plate (thin dark panel, segmented red bar, no glowing frame), the intent chip (small, dark, thin red edge), Log and Menu (plain text), the climb gauge (dark rounded panel, thin border), the energy box (dark fill, warm gold border, big number), draw/discard/burn, the cards (dark frame, green cost circle top left, no glow, TARGET's fan and size), End Turn (orange pill) and Switch (navy pill).
       **Done when** `--full` and `--hand` pairs show no glow anywhere and each element reads as TARGET's.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^hud-and-cards-target-s-look-no-glow
 
 - [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
       Today they are thick grey hexagonal pucks bunched at the belly. TARGET's are thin, flat, irregular slabs with soft bevelled edges, light tops and a slightly darker side, no outline, climbing in a clear staircase from left of the frog up and right to just under the sternum. Re-fit the positions to the camera as it is now (the checker has moved it since the stones shipped).
       **Done when** the `--full` pair shows the same six slab shapes in the same places as TARGET.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^stones-target-s-thin-pale-slabs-spread-a
 
 - [ ] **Left background: cliff and purple sky, not black.**
       The left third of the frame behind the jackal is a black void. TARGET has a dark slate cliff with cool edge highlights on the left and purple sky above it, mirroring the right side.
       **Done when** the `--full` pair shows cliff and sky on both sides, matching TARGET's tones.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^left-background-cliff-and-purple-sky-not
 
 - [ ] **Fist fire: flame tongues, not a sun disc.**
       The fire on the raised fist reads as a round glowing disc. TARGET's is licking flame tongues rising off the fist, orange edges and a yellow-white core. Keep it animated (flicker) in idle.
       **Done when** the `--beast` pair shows TARGET's flame shape.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^fist-fire-flame-tongues-not-a-sun-disc
 
 - [ ] **Frog's rock and the floor: TARGET's pedestal and hex tiles.**
       TARGET's frog sits on a large dark faceted pedestal with its HP bar on the front; the floor is dark hex tiles with faint warm seams running to the lava band. Match both.
       **Done when** the `--full` pair shows TARGET's pedestal size and shape and its floor.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^frog-s-rock-and-the-floor-target-s-pedes
 
 
 ## Waiting on Nick
