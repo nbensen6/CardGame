@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T13:15
-working_on: "Stones: TARGET's thin pale slabs, spread as a staircase."
+updated: 2026-10-08T14:16
+working_on: "Stones: thin soft slabs, lower and spread like TARGET."
 ---
 
 # builder
@@ -13,22 +13,23 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 13:15 EDT
+2026-10-08 14:16 EDT
 
-- **Did:** Steepened the slab staircase to TARGET's climb, gave slabs angular crooked outlines, shaded sides and a thin ink edge.
-- **Worked?** Yes: the grader saw the climb match TARGET's slope and the slabs read as cut stone. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-slabs2-before.png]] then ![[frames/builder/2026-10-08-slabs2-after.png]]
+- **Did:** Queued six critic-agreed gaps; made the stone staircase thin soft pale plates, lower and spread diagonally.
+- **Worked?** Yes: the grader saw thin plates, soft edges, a spaced diagonal, lowest left of the Frog. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-softslabs-before.png]] then ![[frames/builder/2026-10-08-softslabs-after.png]]
 - **Ask:** nothing
 - sprite_match: not run (no drawn beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL round 1, PASS round 2.
-- The picture outranked the old words: TARGET's slabs do carry a thin soft dark edge, so the staircase now has one.
+- Both critics agreed (MAJOR/MODERATE) on: stones, cracks/sternum seam, fist fire, floor seams, cliffs, card look. Queued in that order.
 
 ## Notes
 
-- **Found:** The staircase spreads ~24% of the frame wide against TARGET's ~34%; the low slab floats beside the Frog, not on the floor in front.
-- **Found:** The upper three slabs are narrower lozenges than TARGET's flat wide plates.
+- **Found:** The lowest slab sits level with the Frog's body; TARGET floats it near the lava horizon, above the Frog.
+- **Found:** Slab outlines are seeded from randi(), so the staircase silhouette changes every launch.
 
 ## Log
 
+- 2026-10-08 14:16 EDT — builder: queued 6 items from two blind critics; soft slabs: STAIR_THICK 0.2, bevel 0.12, lighter walls/ink, slabs lowered and spread left; test bound updated; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-08 02:18 EDT — builder: fist fire: beast_rig.py crisp fire alpha, plume leans up-left, skirt trimmed, yellow-white core + orange edges, 8-frame licking strip on a discrete idle track (scale flicker dropped); grader FAIL, FAIL (CLOSER), PASS; marked 👀; tests green, pushed.
 
 - 2026-10-08 01:17 EDT — builder: left background: flank_cliffs (nine tapered slate prisms, own key, cool lit tone, hot foot band) on the jackal's left; test added; grader FAIL then PASS; marked 👀; tests green, pushed.

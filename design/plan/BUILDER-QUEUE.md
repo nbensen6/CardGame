@@ -23,6 +23,37 @@ run failed.
       Test: state=3d beast=cinder_jackal
 
 
+- [ ] 👀 **Stones: thin soft slabs, lower and spread like TARGET.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: thin soft slabs, lower and spread like TARGET.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
+
+- [ ] **Cracks: wide hot cores and a long sternum seam.**
+      Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
+      **Done when** the cracks read as wide and yellow-cored and the sternum seam is the hottest line on the body.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Fist fire: compact curling blaze wrapped on the fist.**
+      Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
+      **Done when** the flame hugs the fist, orange with a yellow core, no taller than the fist.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Floor: faint warm seams, not bright orange.**
+      Both critics, MODERATE: TARGET's hex floor is dark with faint warm seams; the game's seams are bright high-contrast orange and the floor is tinted purple.
+      **Done when** the hex seams read as faint and the floor as dark charcoal.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Cliffs: dark slate closing in, not blue and far back.**
+      Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
+      **Done when** the cliffs read as dark slate framing the jackal with thin cool edges.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Cards: big bright art, light trim, no pips.**
+      Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
+      **Done when** the hand's cards read like TARGET-UI's at a glance.
+      Test: state=3d beast=cinder_jackal
+
 - [ ] 👀 **HUD and cards: TARGET's look, no glow.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and cards: TARGET's look, no glow.|details]]
       Ask: nothing
@@ -820,3 +851,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Goblin's rest rock at the right edge.** A dark pedestal block sits at the right edge of the Frog's rest shot.
 - [ ] (proposed) **Staircase bunched over the belly.** TARGET's six slabs spread ~34% of the frame wide; ours ~24%, and the low slab floats beside the Frog instead of sitting on the floor in front.
 - [ ] (proposed) **Upper slabs narrow lozenges.** TARGET's top three are flatter, wider plates than ours.
+- [ ] (proposed) **Lowest slab level with the Frog, not above it.** TARGET's lowest slab floats near the lava horizon; ours sits beside the Frog's body because our Frog draws higher.
+- [ ] (proposed) **Slab outlines change every launch.** stair_outline is seeded from randi(), so the staircase silhouette differs per run.

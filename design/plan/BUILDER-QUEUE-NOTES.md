@@ -2014,3 +2014,13 @@ Meshy: 0 credits.
 - Test `_test_flank_cliffs_fill_the_jackal_left_only`. 3dclimb frame checked: masses out of the climb view, nothing clipping.
 - Meshy: 0 credits. sprite_match not run (no drawn beast touched).
 
+
+
+## Stones: thin soft slabs, lower and spread like TARGET.
+
+2026-10-08 builder. Queued this run from two blind critics (both MAJOR on stones; also both MODERATE on cracks, fist fire, floor seams, cliffs, cards, queued below it).
+- **Measured** on the `--beast` pair against the sternum Y: all six slabs ~30-45 crop px too high; walls ~2x TARGET's depth and dark.
+- **Shape:** `STAIR_THICK` 0.35 -> 0.2, `STAIR_BEVEL` 0.05 -> 0.12, bevel drop 0.4 -> 0.6 of the bevel (rounded lit rim), `stair_side_tone` lightened (walls 0.1 lighter, shadow 0.22 -> 0.12), `STAIR_INK` 0.22 -> 0.36 grey (soft edge, not a hard dark line).
+- **Places:** `adjust` (x right, y up, beast heights) now (0.13,0) (0.02,0.025) (0.015,0) (0.008,-0.012) (-0.01,-0.02) (-0.008,-0.03); widths 0.33/0.28/0.165/... Lowest slab now left of the Frog with a gap, a spaced diagonal up to the sternum.
+- Grader round 1 FAIL (lower walls still thick and dark, slabs overlapping in a column, lowest touching the Frog), round 2 PASS.
+- Test `staircase slabs` thickness bound changed to 0.15-0.25 of r. ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
