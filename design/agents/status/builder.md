@@ -13,14 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 18:32 EDT
+2026-10-08 18:51 EDT
 
-- **Did:** sharpened the jackal and widened its cracks with gold cores and a sternum glow, in the sprite shader.
-- **Worked?** Partly: sharper and hotter chest, grader says closer but not 1:1. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-08-cracks2-before.png]] then ![[frames/builder/2026-10-08-cracks2-after.png]]
+- **Did:** jackal sharpened with wider gold-cored cracks; fist fire is now TARGET's own flame, calmer flicker.
+- **Worked?** Partly: both closer per grader, neither 1:1. Cracks VERDICT: FAIL; fist fire VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-08-fistfire2-before.png]] then ![[frames/builder/2026-10-08-fistfire2-after.png]]
 - **Ask:** nothing
-- **Found:** the grader's verdicts on crack glow swung between "smear" and "too narrow" across rounds; stopped the item after R7 to spend the run on the next one.
-- **Found:** the HUD sits outside the centred square (boss bar cut, climb gauge and End Turn outside), named out of scope by every grader round.
+- **Found:** scene bloom washes the jackal's fire and cracks into soft blobs; raising the glow threshold had no visible effect.
+- **Found:** the HUD sits outside the centred square (boss bar cut, climb gauge and End Turn outside); every grader round names it.
+- **Found:** the crack grader rounds swung between "smear" and "too narrow"; stopped that item after R7 to work the next.
 
 ## Notes
 

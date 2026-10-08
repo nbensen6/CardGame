@@ -116,7 +116,7 @@ tracks/7/keys = {
 "times": PackedFloat32Array(0, 0.45, 0.9, 1.5, 2.4),
 "transitions": PackedFloat32Array(1, 1, 1, 1, 1),
 "update": 0,
-"values": [Color(1, 1, 1, 1), Color(1.12, 1.05, 1, 1), Color(1, 1, 1, 1), Color(1.15, 1.08, 1, 1), Color(1, 1, 1, 1)]
+"values": [Color(1, 1, 1, 1), Color(1.04, 1.02, 1, 1), Color(1, 1, 1, 1), Color(1.05, 1.02, 1, 1), Color(1, 1, 1, 1)]
 }
 
 [sub_resource type="Animation" id="anim_attack"]
@@ -477,7 +477,7 @@ z_index = 4
 z_as_relative = false
 texture = ExtResource("fire")
 centered = false
-position = Vector2(-329, -579)
+position = Vector2(-325, -561)
 hframes = 8
 
 [node name="hold_0" type="Marker2D" parent="Rig/Root/torso"]

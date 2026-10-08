@@ -2074,3 +2074,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - has_open.py counted 0 open items (it split on the first `## Now` text, inside the intro line); fixed to match the heading.
 - Frames: ![[agents/frames/builder/2026-10-08-cracks2-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks2-after.png|420]]
 - Meshy: 0 credits.
+
+## Fist fire: compact curling blaze wrapped on the fist.
+
+2026-10-08 18:51 EDT, builder. Not passed; item left open.
+
+- **Built (tools/beast_rig.py, `FIRE_RAW`):** TARGET's own flame, unwarped: no lean, no cream core, no orange edge recolour, TARGET's colours (no un-blend off the slate), a hard key on the drawn tongues (r > 125, r-b > 75), TARGET's flame pixels kept where the figure's mask overlaps the fist. Flicker calmer: FIRE_SWAY 10 -> 2.5, FIRE_LIFT 14 -> 3.5, idle modulate peaks 1.15 -> 1.05. The rig's rest composite now equals TARGET pixel for pixel round the fist.
+- **Shader:** crack_grow / heat / hot_glow now act only near dark plates and onto pixels darker than the fire's glow (`plate`, `rock`), so they never touch the flame.
+- **Found:** with the scene's glow off, the flame shows TARGET's tongues and dark gaps; with it on they wash into one orange dome. Raising `glow_hdr_threshold` 1.0 -> 1.7 (above the jackal's 1.6 emission cap) changed nothing in the shot, so something else drives that bloom. Not changed: global glow also lights the lava.
+- On-screen colour bands round the fist, TARGET/game: yellow (253,211,66)/(254,198,77), orange (247,136,31)/(250,149,50), dark red (134,47,22)/(141,47,22).
+- **Grader:** R1 FAIL (round puffs, pale), R2 FAIL (blob, airbrushed), R3 FAIL (colour right; dark smoky halo), R4 FAIL (soft dome, no tongues). Every round: closer than before, no penalties. Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-08-fistfire2-before.png|420]] ![[agents/frames/builder/2026-10-08-fistfire2-after.png|420]]
+- Meshy: 0 credits.

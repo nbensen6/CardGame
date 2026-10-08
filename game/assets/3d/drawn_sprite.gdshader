@@ -139,18 +139,27 @@ void fragment() {
 			vec4 best = vec4(0.0);
 			float bm = 0.0;
 			float bh = 0.0;
+			// A crack is a line between dark plates; the fist's fire is a broad
+			// bright field. Only pixels with dark rock within reach are cracks.
+			float plate = 0.0;
 			for (int i = 0; i < 8; i++) {
 				float ang = float(i) * 0.7854;
 				vec4 c = texture(tex, UV + vec2(cos(ang), sin(ang)) * px);
 				float m = crackness(c);
 				if (m > bm) { bm = m; best = c; }
 				bh = max(bh, hotness(c));
+				if (c.a > 0.9) plate = max(plate, smoothstep(0.32, 0.18, dot(c.rgb / c.a, vec3(0.3, 0.59, 0.11))));
 			}
 			float own = crackness(t);
-			float ownh = hotness(t);
+			float ownh = hotness(t) * plate;
+			bm *= plate;
+			bh *= plate;
 			// Never over a light pixel: the cream line and the eyes' cores stay.
 			float light = smoothstep(0.45, 0.65, t.g / max(t.a, 1e-4));
-			float w = crack_grow * bm * (1.0 - own) * (1.0 - ownh) * (1.0 - light);
+			// Only onto the dark rock plates: the fire's dark red glow between
+			// its tongues is brighter red than any plate and must stay a gap.
+			float rock = smoothstep(0.55, 0.42, t.r / max(t.a, 1e-4));
+			float w = crack_grow * bm * (1.0 - own) * (1.0 - ownh) * (1.0 - light) * rock;
 			// One solid stroke: the fringe takes the crack's own colour.
 			t = mix(t, best, clamp(w, 0.0, 1.0));
 			// TARGET's limb cracks are orange, not deep red: lift green in the
@@ -158,7 +167,7 @@ void fragment() {
 			float cm = max(own, w);
 			t.g = mix(t.g, max(t.g, t.r * 0.36), clamp(cm * crack_orange, 0.0, 1.0));
 			// The yellow cores spread too (TARGET's sternum Y is a wide fan).
-			float h = crack_heat * max(ownh, bh * 0.8 * (1.0 - light));
+			float h = crack_heat * max(ownh, bh * 0.8 * (1.0 - light) * rock);
 			t.rgb = mix(t.rgb, crack_core * t.a, clamp(h, 0.0, 1.0));
 			// TARGET's hottest seams (the sternum Y) throw a soft gold glow over
 			// the plates round them: the yellow cores, blurred wide, added.
@@ -170,7 +179,7 @@ void fragment() {
 					gsum += hotness(texture(tex, UV + d * hot_glow_px * 0.4)) * 0.5
 						+ hotness(texture(tex, UV + d * hot_glow_px)) * 0.5;
 				}
-				float gl = clamp(gsum / 12.0 * hot_glow, 0.0, 1.0) * (1.0 - light);
+				float gl = clamp(gsum / 12.0 * hot_glow, 0.0, 1.0) * (1.0 - light) * plate * rock;
 				t.rgb = mix(t.rgb, crack_core * t.a, gl);
 			}
 		}

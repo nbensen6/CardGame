@@ -117,8 +117,8 @@ FIRE_BOX = [(140, 80), (380, 80), (380, 330), (140, 330)]   # TARGET px, round t
 FIRE_FRAMES = 8
 FIRE_FPS = 10.0
 FIRE_BASE = 250
-FIRE_SWAY = 10.0      # TARGET px, sideways at the very tip
-FIRE_LIFT = 14.0      # TARGET px, how far a tip stretches up
+FIRE_SWAY = 2.5       # TARGET px, sideways at the very tip
+FIRE_LIFT = 3.5       # TARGET px, how far a tip stretches up
 # TARGET's flame is a plume trailing up and back off the fist. The canvas
 # top is the flame's top (a taller canvas would shrink the whole beast,
 # _fit_height reads it), so above FIRE_BASE the plume leans back instead:
@@ -126,6 +126,11 @@ FIRE_LIFT = 14.0      # TARGET px, how far a tip stretches up
 # hugs the fist (the round bowl under it read as a sun disc, grader
 # 2026-10-08), and fire within FIRE_CORE px of the fist burns yellow-white.
 FIRE_LEAN = 0.32
+# 2026-10-08 (queue "Fist fire: compact curling blaze wrapped on the fist"):
+# TARGET's own flame, unwarped. The lean, the cream core and the orange
+# edge pushed it into a tall pale plume off the fist; TARGET's is a compact
+# orange-yellow blaze curling round the top and back of the fist.
+FIRE_RAW = True
 FIRE_HUG = 22
 FIRE_CORE = 24
 FIRE_HOT = np.array([255, 244, 196], float)
@@ -315,15 +320,32 @@ def fire_layer(T, m):
     inside = poly_mask(FIRE_BOX, m.shape)
     box = inside & ~m
     r, g, b = T[..., 0], T[..., 1], T[..., 2]
-    a = np.clip((np.maximum(r, g) - 150) / 70, 0, 1) * np.clip((r - b - 70) / 50, 0, 1)
+    if FIRE_RAW:
+        # Against TARGET's dark slate, so the dark red tips of the tongues
+        # stay flame (a bright-only key cut them and left round puffs).
+        # Solid down into the dark red glow between the tongues: a half-keyed
+        # glow took the shader's orange halo (it fills every pixel under
+        # alpha 1) and the gaps read as one orange disc.
+        # A hard key on the drawn tongues: the dark glow round them read as
+        # a smoky halo over the game's lighter cliffs, and half-keyed glow
+        # took the shader's halo and filled the gaps orange.
+        a = ((r > 125) & (r - b > 75)).astype(float)
+    else:
+        a = np.clip((np.maximum(r, g) - 150) / 70, 0, 1) * np.clip((r - b - 70) / 50, 0, 1)
     a = a * box
     # A drawn flame has a crisp edge. The soft ramp kept TARGET's glow round
     # the fire as a faint rim that, with the shader's halo on top, rounded
     # the tongues off into a ball.
-    a = np.clip((a - 0.35) / 0.3, 0, 1)
-    a = ndi.gaussian_filter(a, 0.6) * box
+    if not FIRE_RAW:
+        a = np.clip((a - 0.35) / 0.3, 0, 1)
+    a = ndi.gaussian_filter(a, 0.5 if FIRE_RAW else 0.6) * box
     bg = np.array([28, 24, 40], float)
-    col = (T - (1 - a[..., None]) * bg) / np.maximum(a[..., None], 0.05)
+    if FIRE_RAW:
+        # TARGET's own colours: un-blending the half-keyed dark glow between
+        # the tongues off the slate blew it up to solid orange, a disc.
+        col = T.astype(float)
+    else:
+        col = (T - (1 - a[..., None]) * bg) / np.maximum(a[..., None], 0.05)
     # Behind the arm TARGET shows no fire, but the fist swings away from
     # there: grow it in from the nearest flame, solid 60 px in, fading out by 120, so the
     # swing never opens a fist-shaped hole in it.
@@ -335,6 +357,14 @@ def fire_layer(T, m):
     a = np.where(hid, a[iy, ix] * np.clip(2.0 - dist / 60.0, 0, 1), a)
     grown = col[iy, ix] * 0.25 + np.array([250, 120, 30], float) * 0.75   # TARGET's flame orange
     col = np.where(hid[..., None], grown, col)
+    if FIRE_RAW:
+        # Where TARGET itself shows flame inside the figure's mask (the
+        # yellow core hugging the back of the fist), keep TARGET's pixel.
+        flame = hid & (r > 170) & (r - b > 90) & (g > 60)
+        col = np.where(flame[..., None], T, col)
+        a = np.where(flame, 1.0, a)
+    if FIRE_RAW:
+        return np.clip(col, 0, 255), a
     # Lean the plume back off the fist: above the base, column x samples the
     # column FIRE_LEAN px per row further right.
     sx = xx + FIRE_LEAN * np.clip(FIRE_BASE - yy, 0, None)
@@ -527,8 +557,8 @@ def clips():
         # The flame licks frame by frame; it never scales about the elbow at
         # rest, which slid the ball off the fist and showed its round rim.
         "fire": {"Art:frame": [(i / FIRE_FPS, i % FIRE_FRAMES) for i in range(int(2.4 * FIRE_FPS))],
-                 "modulate": [(0, (1, 1, 1, 1)), (0.45, (1.12, 1.05, 1, 1)), (0.9, (1, 1, 1, 1)),
-                              (1.5, (1.15, 1.08, 1, 1)), (2.4, (1, 1, 1, 1))]},
+                 "modulate": [(0, (1, 1, 1, 1)), (0.45, (1.04, 1.02, 1, 1)), (0.9, (1, 1, 1, 1)),
+                              (1.5, (1.05, 1.02, 1, 1)), (2.4, (1, 1, 1, 1))]},
     }
     L = 1.2
     imp = 0.4 * L
