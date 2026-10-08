@@ -13,7 +13,7 @@ const FILL_BLOCKED := Color(0.22, 0.52, 0.86)
 const TRACK := Color(0.16, 0.04, 0.04, 0.92)
 const EDGE := Color(0.02, 0.01, 0.01, 0.95)
 const SHIELD := Color(0.30, 0.62, 0.95)
-const BAR_H := 14.0
+const BAR_H := 13.0
 
 var hp := 0
 var max_hp := 1
@@ -48,7 +48,7 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	var y0 := (size.y - BAR_H) * 0.5
 	var bar := Rect2(0.0, y0, size.x, BAR_H)
-	draw_rect(bar.grow(2.0), EDGE)
+	draw_rect(bar.grow(1.0), EDGE)
 	draw_rect(bar, TRACK)
 	var f := fill_frac(hp, max_hp)
 	if f > 0.0:

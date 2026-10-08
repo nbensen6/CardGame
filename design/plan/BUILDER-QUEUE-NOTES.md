@@ -5,6 +5,17 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Frog and its rock: TARGET's size and place.
+
+2026-10-08 15:22 EDT. Grader PASS on round 4.
+
+- Frog drawn at `HUNTER_DRAW_SCALE` 0.72 of HUNTER_HEIGHT (climb maths untouched); marker smaller and lowered onto the head.
+- Pedestal: `PEDESTAL_TOP_POLY`, a chamfered pentagon with its corner at the lens a little right of the Frog, R 1.32, depth 1.6, 1.5 hunter-heights deep so the column shows down to the cards. Navy-black front faces (probe matches TARGET within ~4/channel), warm narrow side bands, an ember strip on the back-right top edge only.
+- HP bar: 102x17, 13px bar, 1px edge, no plate (TARGET ~102x13).
+- Hand: HAND_REST_SCALE 0.86 -> 0.70, HAND_REST_LIFT 14 -> 36, so card tops land on TARGET's line (~545 in the square pair) with all text on screen. Lowering alone (round 3) cut the text off: grader auto-FAIL.
+- Grader rounds: 1 FAIL (pedestal flat/diamond), 2 FAIL (tone judged by eye; probe disproved it), 3 FAIL (cards cropped), 4 PASS.
+- Meshy: none.
+
 ## Frog's rock and the floor: TARGET's pedestal and hex tiles.
 
 Builder 2026-10-08 03:15 EDT. Before: the Frog stood on a dark rounded lump whose top was a sliver; the floor was a faint random crack web.

@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T14:16
-working_on: "Stones: thin soft slabs, lower and spread like TARGET."
+updated: 2026-10-08T15:22
+working_on: "Frog and its rock: TARGET's size and place."
 ---
 
 # builder
@@ -13,19 +13,19 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 14:16 EDT
+2026-10-08 15:22 EDT
 
-- **Did:** Queued six critic-agreed gaps; made the stone staircase thin soft pale plates, lower and spread diagonally.
-- **Worked?** Yes: the grader saw thin plates, soft edges, a spaced diagonal, lowest left of the Frog. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-softslabs-before.png]] then ![[frames/builder/2026-10-08-softslabs-after.png]]
+- **Did:** Shrank the Frog, reshaped its pedestal to TARGET's faceted column, slimmed its HP bar, lowered and shrank the hand.
+- **Worked?** Yes: frog, pedestal, HP bar and card-top line now match TARGET's place and size. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-frogsize-before.png]] then ![[frames/builder/2026-10-08-frogsize-after.png]]
 - **Ask:** nothing
-- sprite_match: not run (no drawn beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL round 1, PASS round 2.
-- Both critics agreed (MAJOR/MODERATE) on: stones, cracks/sternum seam, fist fire, floor seams, cliffs, card look. Queued in that order.
+- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-3 (pedestal shape, then cropped cards), PASS round 4.
 
 ## Notes
 
-- **Found:** The lowest slab sits level with the Frog's body; TARGET floats it near the lava horizon, above the Frog.
-- **Found:** Slab outlines are seeded from randi(), so the staircase silhouette changes every launch.
+- **Found:** The lowest slab sits beside the Frog at its height; TARGET floats it well above and left.
+- **Found:** The hand sits about 55px left of the square's centre; TARGET's cards are wider and centred.
+- **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
 

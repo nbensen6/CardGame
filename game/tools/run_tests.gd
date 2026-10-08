@@ -32141,11 +32141,14 @@ func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
 	_expect(aabb.size.z > aabb.size.x * 0.866 * 1.2,
 		"the pedestal is stretched toward the lens so its top reads from the rest camera")
 	var verts: PackedVector3Array = m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
-	var front := 0
+	var front_x := INF
 	for v in verts:
-		if v.y < -0.5 and v.z > 0.0 and absf(v.z - aabb.end.z) < 0.01:
-			front += 1
-	_expect(front >= 2, "a flat face of the hex looks straight at the camera (+z)")
+		if v.y < -0.5 and absf(v.z - aabb.end.z) < 0.01:
+			front_x = v.x
+	_expect(front_x > 0.0 and front_x < 0.4,
+		"TARGET: one corner of the pedestal points at the lens, a little right of the Frog [got=%.2f]" % front_x)
+	_expect(Combat3D.HUNTER_DRAW_SCALE < 0.85 and Combat3D.HUNTER_BAR_SIZE.x < 110.0,
+		"TARGET: the Frog and its HP bar are drawn smaller than the climb's HUNTER_HEIGHT")
 	_expect(Combat3D.PEDESTAL_TOP.get_luminance() > Combat3D.PEDESTAL_FRONT.get_luminance() * 2.0,
 		"TARGET's pedestal top is a pale plum over near-black sides")
 	var fp: Dictionary = Combat3D.BIOME[String(Combat3D.BEAST_BIOME["cinder_jackal"])]["floor_params"]

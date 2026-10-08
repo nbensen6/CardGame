@@ -407,6 +407,11 @@ const GRIP_TIMER_ON := Coach.GRIP_TIMER_ON
 ## Titan ~38x, where before it was 14x and 24x. Lowering this is cheaper than raising
 ## the beasts alone, because it costs no extra camera pull-back.
 const HUNTER_HEIGHT := 0.7
+## How tall a hunter's body is DRAWN, as a share of HUNTER_HEIGHT (builder
+## 2026-10-08, TARGET.png). Every distance in the climb is still measured in
+## HUNTER_HEIGHT; only the model shrinks. In the `--square` pair the Frog
+## stood about 1.35x TARGET's, its feet already on TARGET's line.
+const HUNTER_DRAW_SCALE := 0.72
 ## Orbit camera (Nick's call, 2026-08-05). The beast is a PLACE, so you can walk
 ## the camera around it. Auto-framing still sets the opening shot off the model's
 ## own size; dragging only takes over from there, and never below the ground or
@@ -2909,6 +2914,10 @@ func _position_unit_bars() -> void:
 			continue
 		bar.position = at
 		bar.visible = true
+
+
+## A hunter's HP bar on screen, px (TARGET.png: ~102x13 in its 720 square).
+const HUNTER_BAR_SIZE := Vector2(102, 17)
 
 
 ## Centred just under the hunter's feet.
@@ -6774,7 +6783,7 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 		var m := (load(path) as PackedScene).instantiate()
 		holder.add_child(m)
 		_shade_model(m, false, hunter_toon, cid)
-		_fit_height(m, HUNTER_HEIGHT)
+		_fit_height(m, HUNTER_HEIGHT * HUNTER_DRAW_SCALE)
 		# The hop squashes and restores the body's scale; this is the size it
 		# restores TO. Restoring to Vector3.ONE threw away the fit above, so
 		# after one hop the Frog (fit 0.61) stood 1.64x its size (Nick,
@@ -6801,8 +6810,9 @@ func _hunter_pip(slot: int) -> Node3D:
 	var pip := MeshInstance3D.new()
 	var cone := CylinderMesh.new()
 	cone.top_radius = 0.0
-	cone.bottom_radius = 0.12
-	cone.height = 0.22
+	# TARGET.png: a small marker sitting on the head (builder 2026-10-08).
+	cone.bottom_radius = 0.09
+	cone.height = 0.16
 	cone.radial_segments = 8
 	pip.mesh = cone
 	var mat := StandardMaterial3D.new()
@@ -6813,7 +6823,7 @@ func _hunter_pip(slot: int) -> Node3D:
 	pip.material_override = mat
 	pip.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	pip.rotation.z = PI  # point down at the hunter it marks
-	pip.position = Vector3(0, 0.72, 0)
+	pip.position = Vector3(0, HUNTER_HEIGHT * HUNTER_DRAW_SCALE + 0.04, 0)
 	return pip
 
 
@@ -7321,7 +7331,7 @@ func _put_rest_rock(slot: int, top: Vector3) -> void:
 		old.rotation.y = yaw
 		return
 	var rock := MeshInstance3D.new()
-	rock.mesh = pedestal_mesh(HUNTER_HEIGHT * PEDESTAL_R, top.y + HUNTER_HEIGHT * 0.4, PEDESTAL_DEPTH)
+	rock.mesh = pedestal_mesh(HUNTER_HEIGHT * PEDESTAL_R, top.y + HUNTER_HEIGHT * 1.5, PEDESTAL_DEPTH)
 	var mat := ShaderMaterial.new()
 	mat.shader = PEDESTAL
 	rock.material_override = mat
@@ -7341,54 +7351,92 @@ func _put_rest_rock(slot: int, top: Vector3) -> void:
 ## sliver; PEDESTAL_DEPTH stretches the top toward the lens so it reads as the
 ## face TARGET draws. Flat colour per face, no texture, like the cliffs.
 const PEDESTAL := preload("res://assets/3d/pedestal.gdshader")
-const PEDESTAL_R := 2.1
-const PEDESTAL_DEPTH := 1.35
+const PEDESTAL_R := 1.32
+const PEDESTAL_DEPTH := 1.6
 ## The tones, TARGET sampled (vertex colour, rendered through the glow and
 ## the scene's purple ambient, so the top is set grey to land plum): top ~(54,44,59), front ~(16,15,28), the side
 ## faces a warmer near-black, the back rim ember.
 const PEDESTAL_TOP := Color(0.176, 0.162, 0.183)
-const PEDESTAL_FRONT := Color(0.06, 0.06, 0.11)
-const PEDESTAL_SIDE := Color(0.13, 0.09, 0.12)
-const PEDESTAL_RIM := Color(0.42, 0.19, 0.07)
+const PEDESTAL_FRONT := Color(0.025, 0.03, 0.10)
+const PEDESTAL_SIDE := Color(0.17, 0.035, 0.03)
+const PEDESTAL_RIM := Color(0.45, 0.23, 0.15)
 const PEDESTAL_BEVEL := 0.06
+const PEDESTAL_RIM_W := 0.08
 
 
-## The pedestal mesh: a hexagonal prism of radius `r`, `h` tall below its top
-## face (top at y = 0), stretched by `depth` along local z, with a flat face
-## toward +z. Vertex colours carry each face's tone. Static so run_tests.gd
-## can pin its shape.
+## The pedestal's top face, in units of the pedestal radius, x right and
+## +z toward the rest camera (builder 2026-10-08, cut from TARGET.png's
+## --square pair): a long straight back edge behind the Frog, a left and a
+## right shoulder level with its feet, and one corner pointing at the lens a
+## little right of the Frog, so TARGET's two front faces show (a wide left
+## one, a narrow right one) instead of one flat face.
+const PEDESTAL_TOP_POLY: Array[Vector2] = [
+	Vector2(-0.98, 0.18),   # left shoulder
+	Vector2(-0.80, -0.90),  # back left
+	Vector2(0.58, -0.92),   # back right
+	Vector2(0.95, 0.08),    # right shoulder
+	Vector2(0.90, 0.26),    # (a narrow warm band down the right)
+	Vector2(0.44, 1.00),    # the front corner's right
+	Vector2(0.32, 1.02),    # the front corner's left (a narrow warm band)
+	Vector2(-0.88, 0.34),   # (a narrow warm band down the left)
+]
+
+
+## The pedestal mesh: a prism on PEDESTAL_TOP_POLY scaled by `r`, `h` tall
+## below its top face (top at y = 0), stretched by `depth` along local z.
+## Vertex colours carry each face's tone. Static so run_tests.gd can pin its
+## shape.
 static func pedestal_mesh(r: float, h: float, depth: float) -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var outer: Array[Vector3] = []
 	var inner: Array[Vector3] = []
 	var bot: Array[Vector3] = []
+	var n_pts := PEDESTAL_TOP_POLY.size()
 	var bev := r * PEDESTAL_BEVEL
-	for k in range(6):
-		var a := deg_to_rad(30.0 + 60.0 * float(k))
-		var d := Vector3(sin(a), 0.0, cos(a) * depth)
+	for k in range(n_pts):
+		var q: Vector2 = PEDESTAL_TOP_POLY[k]
+		var d := Vector3(q.x, 0.0, q.y * depth)
 		inner.append(d * (r - bev))
 		outer.append(d * r + Vector3(0.0, -bev, 0.0))
-		bot.append(d * r * 1.04 + Vector3(0.0, -h, 0.0))
+		bot.append(d * r * 1.02 + Vector3(0.0, -h, 0.0))
 	var tri := func(a: Vector3, b: Vector3, c: Vector3, n: Vector3, col: Color) -> void:
 		for v in [a, b, c]:
 			st.set_color(col)
 			st.set_normal(n)
 			st.add_vertex(v)
-	for k in range(6):
-		tri.call(Vector3.ZERO, inner[k], inner[(k + 1) % 6], Vector3.UP, PEDESTAL_TOP)
-	for k in range(6):
-		var k2 := (k + 1) % 6
-		var mid := (outer[k] + outer[k2]) * 0.5
-		var n := Vector3(mid.x, 0.0, mid.z).normalized()
-		# Edge k..k+1 faces along `n`: k = 5 is the front face (+z), 2 the back.
-		var side_col := PEDESTAL_FRONT if n.z > 0.9 else PEDESTAL_SIDE
-		var rim_col := PEDESTAL_RIM if n.z < 0.1 else PEDESTAL_TOP.darkened(0.3)
+	# The top face sits a hair under the node so the ember strip below can
+	# lie on it at y = 0 without z-fighting.
+	var sink := Vector3(0.0, -r * 0.004, 0.0)
+	for k in range(1, n_pts - 1):
+		tri.call(inner[0] + sink, inner[k + 1] + sink, inner[k] + sink, Vector3.UP, PEDESTAL_TOP)
+	for k in range(n_pts):
+		var k2 := (k + 1) % n_pts
+		var edge := outer[k2] - outer[k]
+		# Outward: walking the polygon in its order, the inside is on the
+		# left, so the outward normal of edge a->b is (e.z, 0, -e.x).
+		var n := Vector3(edge.z, 0.0, -edge.x).normalized()
+		# TARGET: the wide left front face near-black navy, the narrow right
+		# one blacker still, the back shoulders warm near-black.
+		# Every face toward the lens is near-black navy (the front corner's
+		# chamfer too); only the narrow side chamfers carry TARGET's faint
+		# warm band.
+		var side_col := PEDESTAL_SIDE
+		if n.z > 0.3:
+			side_col = PEDESTAL_FRONT
+		var rim_col := PEDESTAL_RIM if (n.z < 0.1 and n.x > 0.2) else PEDESTAL_TOP.darkened(0.3)
 		var bn := (n + Vector3.UP).normalized()
-		tri.call(inner[k], outer[k], outer[k2], bn, rim_col)
-		tri.call(inner[k], outer[k2], inner[k2], bn, rim_col)
-		tri.call(outer[k], bot[k], bot[k2], n, side_col)
-		tri.call(outer[k], bot[k2], outer[k2], n, side_col)
+		tri.call(inner[k], outer[k2], outer[k], bn, rim_col)
+		tri.call(inner[k], inner[k2], outer[k2], bn, rim_col)
+		if rim_col == PEDESTAL_RIM:
+			# TARGET's ember line along the back-right edge is a few px wide,
+			# lying on the top face: a flat strip at the node's height.
+			var ia: Vector3 = inner[k] - n * r * PEDESTAL_RIM_W
+			var ib: Vector3 = inner[k2] - n * r * PEDESTAL_RIM_W
+			tri.call(ia, inner[k2], inner[k], Vector3.UP, rim_col)
+			tri.call(ia, ib, inner[k2], Vector3.UP, rim_col)
+		tri.call(outer[k], bot[k2], bot[k], n, side_col)
+		tri.call(outer[k], outer[k2], bot[k2], n, side_col)
 	return st.commit()
 
 
@@ -9073,10 +9121,12 @@ const FAN_HOVER_SCALE := 1.34
 ## pedestal and HP bar behind it: both critics put the Frog's rock MAJOR.
 ## Scaled about the same low pivot as the fan's tilt, so the rest pose sinks
 ## as it shrinks; a hovered card still grows to FAN_HOVER_SCALE.
-const HAND_REST_SCALE := 0.86
+const HAND_REST_SCALE := 0.70
 ## Px the shrunken fan is lifted back up, so its name plates still clear the
 ## bottom edge where TARGET's sit.
-const HAND_REST_LIFT := 14.0
+## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
+## `--square` pair, leaving the Frog's pedestal column showing above them.
+const HAND_REST_LIFT := 36.0
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that
@@ -9609,11 +9659,10 @@ func _render_party(s: Dictionary, boss_target: int, move: Dictionary, add_attack
 		_party.add_child(_party_card(p, i, aimed))
 	while _unit_bars.size() < players.size():
 		var ub: Control = UnitBar.new()
-		ub.size = Vector2(124, 24)
+		# TARGET.png (builder 2026-10-08): a slim bare red bar about the
+		# Frog's own width plus a third, no plate behind it.
+		ub.size = HUNTER_BAR_SIZE
 		ub.visible = false
-		# A thin A1 plate under the bar, glowing in that hunter's seat colour
-		# like the marker over their head (Nick, 2026-10-05).
-		add_flat_panel(ub, flat_panel_style(FLAT_FACE, FLAT_EDGE, 4, 1), 3.0)
 		_hud.add_child(ub)
 		_hud.move_child(ub, 0)             # under every panel and the hand
 		_unit_bars.append(ub)

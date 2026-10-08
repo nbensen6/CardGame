@@ -12,10 +12,11 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
-- [ ] **Frog and its rock: TARGET's size and place.**
-      In the `--square` pair the frog is about 1.5x TARGET's size and sits higher, overlapping where TARGET's lowest slab goes; its pedestal is wider and flatter than TARGET's tall dark faceted block. Match TARGET: the frog's height, its position (centred, just above the hand), the pedestal's size, shape, faces and tone, and the HP bar under the frog. Move the camera, the hunter's rest spot or the frog's scale as needed; this is the look, keep the fight working and update tests that encode the old layout.
-      **Done when** the `--square` pair shows the frog and pedestal the same size and in the same place as TARGET's.
-      Test: state=3d beast=cinder_jackal ^frog-and-its-rock-target-s-size-and-plac
+- [ ] 👀 **Frog and its rock: TARGET's size and place.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Frog and its rock: TARGET's size and place.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-frogsize-after.png|420]] ^frog-and-its-rock-target-s-size-and-plac
 
 - [ ] **Stones: TARGET's slabs, shape and path 1:1.**
       Look at the `--stones` pair. TARGET's six slabs are wide, thin, flat, irregular flagstones seen from slightly above, so their pale chipped top faces show, with a thin lighter side band and no dark ink line. Ours are thick boxy bricks seen nearly edge-on, with a dark outline. TARGET's path: the big bottom slab low on the floor left of the frog, the next one up and right over the lava line, then four smaller ones climbing to just under the sternum, overlapping the torso. Match each slab's shape, thickness, tilt, size, tones and position. If the procedural mesh cannot take TARGET's shapes, cut the six slabs out of TARGET.png and draw them as sprites, or model them.
@@ -83,6 +84,16 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-pedestal-after.png|420]] ^frog-s-rock-and-the-floor-target-s-pedes
+
+- [ ] **Lowest slab: float it above and left of the Frog.**
+      TARGET's lowest slab floats well above the Frog and to its left (square pair ~x190-290, y372-410); the game's sits beside the Frog at its own height.
+      **Done when** the `--square` and `--stones` pairs show the lowest slab in TARGET's place, clear of the Frog.
+      Test: state=3d beast=cinder_jackal ^lowest-slab-float-it-above-and-left-of
+
+- [ ] **Hand: centred and as wide as TARGET's.**
+      TARGET's five cards span the square's middle (~x108-555 of 640) and are wider; the game's sit ~55px left of centre and narrower.
+      **Done when** the `--square` and `--hand` pairs show the hand the same width and centred like TARGET's.
+      Test: state=3d beast=cinder_jackal ^hand-centred-and-as-wide-as-target-s
 
 
 ## Waiting on Nick
