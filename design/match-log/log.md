@@ -111,3 +111,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the dark lower body (A #1, B #3 — highest combined rank). TARGET's up-light lives in the sprite's last rows, which the floor's lava strip hides in the fight, so the lower torso read unlit. `beast_rig.py` now screens a warm ramp (`UPLIGHT` 0.75 of (255,105,25), over the 110 px above the cut) onto the body, so the glow starts above what the floor hides. Regenerated the rig PNGs. The "black shards" are the cliffs seen through the gap between the flank and the arm (TARGET's own silhouette); the white specks are falling ember particles — both left.
 - Tests: ALL TESTS PASSED. Art only.
 - Meshy: 0 credits.
+
+### iter 14
+- Critic A top 3: [MAJOR] stones a near-vertical stack from the frog's head to the chest; the bottom slab should be left of the frog's rock at floor level, lower slabs larger; [MAJOR] cracks thin and dim, short sternum seam; [MAJOR] HUD oversized.
+- Critic B top 3: [MAJOR] fist too low and tucked in, fire a disc not tongues; [MODERATE] hand too big; [MODERATE] jackal too narrow for the wide frame.
+- Changed: the stones (A #1, B #4 [MODERATE] — highest combined rank). Re-measured every slab against TARGET in jackal units: s0 sat 0.07 too far right (crowding the Frog), s1 0.03 high, the top slab 0.06 right. `STAIRCASE.adjust` s0 x 0.25→0.17, s1 y 0.106→0.075, s5 x 0→-0.06; widths of s0/s1 0.25/0.23 → 0.26/0.26. Now (dx, y, w) per slab vs TARGET: (-0.36,1.02,.32)/(-0.31,1.04,.32), (-0.23,.88,.25)/(-0.23,.88,.28), (-0.04,.79)/(-0.05,.81), (.07,.74)/(.08,.76), (.13,.69)/(.15,.71), (.00,.66)/(.02,.66) — one diagonal from left of the Frog up to the sternum.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.

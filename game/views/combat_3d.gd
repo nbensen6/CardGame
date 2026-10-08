@@ -6803,10 +6803,10 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.25, 0.23, 0.173, 0.134, 0.125, 0.118],
+		"width": [0.26, 0.26, 0.173, 0.134, 0.125, 0.118],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.25, 0.074), Vector2(0.017, 0.106), Vector2(0.007, 0.07),
-			Vector2(-0.046, 0.05), Vector2(-0.075, 0.038), Vector2(0.0, 0.04)]},
+		"adjust": [Vector2(0.17, 0.074), Vector2(0.017, 0.075), Vector2(0.007, 0.07),
+			Vector2(-0.046, 0.05), Vector2(-0.075, 0.038), Vector2(-0.06, 0.03)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
