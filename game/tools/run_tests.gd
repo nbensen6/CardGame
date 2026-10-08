@@ -31812,6 +31812,14 @@ func _test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel() -> void:
 	_expect(is_equal_approx(lowest, -0.7), "the slab is as deep as asked")
 	_expect(Combat3D.stair_thickness(2.0) >= 2.0 * 0.3,
 		"a staircase slab shows a side band TARGET's size, not a paper disc")
+	# Grader 2026-10-08: "straight bricks". Walls are cut planes, lit on the
+	# left, shadowed round to the right, so the side band reads faceted.
+	var lit_w: Color = Combat3D.stair_side_tone(Combat3D.SLAB_SIDE_TONE, Vector3(-1, 0, 0))
+	var dark_w: Color = Combat3D.stair_side_tone(Combat3D.SLAB_SIDE_TONE, Vector3(1, 0, 0))
+	_expect(lit_w.get_luminance() > dark_w.get_luminance() + 0.05,
+		"a slab's left wall is lit and its right wall in shadow")
+	_expect(dark_w.get_luminance() < Combat3D.SLAB_TOP_TONE.get_luminance(),
+		"every slab wall is darker than its pale top")
 
 
 func _test_staircase_slabs_sit_on_the_eyes_sight_line() -> void:

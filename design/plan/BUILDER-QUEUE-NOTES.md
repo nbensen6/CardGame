@@ -1996,6 +1996,14 @@ Meshy: 0 credits.
 - Outlines come from `randi()`, so the slab silhouettes change each launch.
 - Tests: new `_test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel`. ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
 
+2026-10-08 13:15 EDT, builder (second pass, from the `Next pass:` line).
+- **Measured** on the `--beast` pair against the sternum Y-junction: the top four sat ~30-36 frame px too low, the low two 45-75 px too far left, so the climb was wide and flat.
+- **Placement:** `adjust` re-fit (0.179,0.044) (0.061,0.07) (0.029,0.064) (0.003,0.039) (-0.021,0.041) (-0.008,0.033); slab 0 held to +50 px so it clears the Frog. Screen now (516,419) (575,357) (638,324) (691,308) (719,282) (663,269). Widths 0.30/0.26/0.165/0.125/0.144/0.105 (low two bigger, top one wider).
+- **Shape:** `stair_outline` keeps 40% of corners sharp, cuts the rest by a long uneven bevel, and kinks up to three edges in or out (no notch); `STAIR_ASPECT` 0.5→0.55; staircase slabs spin ±0.55 rad (was ±0.25) so edges run at angles.
+- **Sides:** new `stair_side_tone` gives each wall a flat tone by facing (left/front lit, right in shadow, darkened 0.04-0.34); the lit bevel drop 0.7→0.4 of the bevel so the wall reads. TARGET samples: top 188-202, side 108-160; ours top ~187, side ~96-140.
+- **Ink:** TARGET's slabs carry a thin soft dark edge (looked at 1:1), so the staircase now gets the hull too (`STAIR_INK` 0.22/0.19/0.19, `STAIR_INK_GROW` 1.035, slab-deep). The old "no dark line" note is pre-reset.
+- Grader round 1 FAIL (sides not dark, still boxes, no ink), round 2 PASS. Tests: side-tone checks added to the flagstone test; ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
+
 ## Left background: cliff and purple sky, not black.
 
 2026-10-08 01:17 EDT. Before: the left third was the wall's thin spikes over grey-violet haze (the wall's far-fade), no lit planes, no lava glow at its foot; TARGET has a dark slate mass with cool lit edges, orange lava glow at its base, violet sky toward the centre.

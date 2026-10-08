@@ -19,11 +19,11 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-hud-noglow-after.png|420]] ^hud-and-cards-target-s-look-no-glow
 
-- [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
+- [ ] 👀 **Stones: TARGET's thin pale slabs, spread as a staircase.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's thin pale slabs, spread as a staircase.|details]]
-      Next pass: slabs read as straight bricks and the climb is flatter than TARGET's. Give them darker side faces and irregular angular outlines, make the low two bigger and chunkier, and steepen the climb to TARGET's.
+      Ask: nothing
       Test: state=3d beast=cinder_jackal
-      ![[agents/frames/builder/2026-10-08-slabs-after.png|420]] ^stones-target-s-thin-pale-slabs-spread-a
+      ![[agents/frames/builder/2026-10-08-slabs2-after.png|420]] ^stones-target-s-thin-pale-slabs-spread-a
 
 - [ ] 👀 **Left background: cliff and purple sky, not black.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Left background: cliff and purple sky, not black.|details]]
@@ -808,3 +808,5 @@ Non-quadrupeds need a new body plan in `ai_beast.py`; ask first.
 - [ ] (proposed) **Pedestal sides hidden by the cards.** TARGET shows the pillar's dark sides above the fan; ours end behind it.
 - [ ] (proposed) **Floor seams near the lens too bold.** Close tiles read bigger and brighter than TARGET's finer, fainter grid.
 - [ ] (proposed) **Goblin's rest rock at the right edge.** A dark pedestal block sits at the right edge of the Frog's rest shot.
+- [ ] (proposed) **Staircase bunched over the belly.** TARGET's six slabs spread ~34% of the frame wide; ours ~24%, and the low slab floats beside the Frog instead of sitting on the floor in front.
+- [ ] (proposed) **Upper slabs narrow lozenges.** TARGET's top three are flatter, wider plates than ours.

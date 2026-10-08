@@ -3500,9 +3500,11 @@ static func slab_outline(seed: int, rx: float, sides: int = 9) -> PackedVector2A
 ## each nudged by up to STAIR_JITTER of rx, then every corner clipped by
 ## STAIR_CHIP of its two edges, so it reads as a worn slab with chipped
 ## corners. Convex, rising-angle order, as slab_mesh and stair_slab_mesh want.
-const STAIR_ASPECT := 0.5
+const STAIR_ASPECT := 0.55
 const STAIR_JITTER := 0.3
 const STAIR_CHIP := 0.22
+## How often a staircase slab's corner stays sharp.
+const STAIR_SHARP := 0.4
 ## Grader 2026-10-08: "regular octagon pucks with even chamfers". Each corner
 ## now moves on its own, is clipped by a different amount along each edge (or
 ## not at all), and one edge in two carries a shallow notch, so no two slabs
@@ -3516,23 +3518,28 @@ static func stair_outline(seed: int, rx: float) -> PackedVector2Array:
 	for c in [Vector2(1, 1), Vector2(-1, 1), Vector2(-1, -1), Vector2(1, -1)]:
 		corners.append(Vector2(c.x * rx * (1.0 - rng.randf_range(0.0, STAIR_JITTER)),
 			c.y * rz * (1.0 + rng.randf_range(-STAIR_JITTER * 1.6, STAIR_JITTER * 0.6)))
-			+ Vector2(rng.randf_range(-STAIR_JITTER, STAIR_JITTER) * rx * 0.4, 0.0))
-	var notch_edge := rng.randi_range(0, 7)
+			+ Vector2(rng.randf_range(-STAIR_JITTER, STAIR_JITTER) * rx * 0.4,
+				rng.randf_range(-STAIR_JITTER, STAIR_JITTER) * rz * 0.25))
+	# Up to three edges carry a kink, pushed in or out, so the slab's sides
+	# run crooked like TARGET's chipped flagstones, not ruler-straight.
+	var kinks := 0
 	var pts := PackedVector2Array()
 	for i in range(4):
 		var a: Vector2 = corners[i]
 		var prev: Vector2 = corners[(i + 3) % 4]
 		var nxt: Vector2 = corners[(i + 1) % 4]
-		if rng.randf() < 0.25:
+		# Grader 2026-10-08 round 3: "straight bricks". TARGET's slabs are
+		# angular: most corners stay sharp, a chipped one is cut by a long
+		# uneven bevel, never two even nicks.
+		if rng.randf() < STAIR_SHARP:
 			pts.append(a)   # a sharp, unchipped corner
 		else:
-			pts.append(a.lerp(prev, STAIR_CHIP * rng.randf_range(0.2, 1.4)))
-			pts.append(a.lerp(nxt, STAIR_CHIP * rng.randf_range(0.2, 1.4)))
-		if notch_edge == i:
-			var m := a.lerp(nxt, rng.randf_range(0.4, 0.6))
-			pts.append(m.lerp(a, 0.08))
-			pts.append(m * 0.88)
-			pts.append(m.lerp(nxt, 0.1))
+			pts.append(a.lerp(prev, STAIR_CHIP * rng.randf_range(0.3, 0.9)))
+			pts.append(a.lerp(nxt, STAIR_CHIP * rng.randf_range(0.9, 2.0)))
+		if kinks < 3 and rng.randf() < 0.75:
+			kinks += 1
+			var m := a.lerp(nxt, rng.randf_range(0.3, 0.7))
+			pts.append(m * rng.randf_range(0.84, 1.1))
 	var arr := Array(pts)
 	arr.sort_custom(func(p: Vector2, q: Vector2) -> bool: return p.angle() < q.angle())
 	return PackedVector2Array(arr)
@@ -3555,7 +3562,7 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 	for v in outline:
 		var d := v - c
 		inner.append(c + d * maxf(0.0, 1.0 - bevel / maxf(d.length(), 0.001)))
-	var drop := bevel * 0.7
+	var drop := bevel * 0.4
 	var edge := top.lerp(Color.WHITE, 0.12)
 	var under := side.darkened(0.25)
 	# Top: a fan from the centre (the outline may be notched), corners a
@@ -3566,7 +3573,7 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 		st.set_normal(Vector3.UP)
 		st.add_vertex(Vector3(c.x, 0.0, c.y))
 		for k in [j, i]:
-			var col: Color = top.lightened(0.05) if k % 3 == 0 else (top.darkened(0.06) if k % 3 == 1 else top)
+			var col: Color = top.lightened(0.07) if k % 3 == 0 else (top.darkened(0.1) if k % 3 == 1 else top)
 			st.set_color(col)
 			st.set_normal(Vector3.UP)
 			st.add_vertex(Vector3(inner[k].x, 0.0, inner[k].y))
@@ -3577,14 +3584,19 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 		var ia := inner[i]
 		var ib := inner[j]
 		var nrm := Vector3(a.y - b.y, 0.0, b.x - a.x).normalized()
+		# Each wall its own flat tone by which way it faces (TARGET's sides are
+		# cut planes: lit toward the upper left, dark round to the right), so
+		# the side band reads as faceted stone, not one smooth grey ribbon.
+		var face := stair_side_tone(side, nrm)
+		var face_under := face.darkened(0.2)
 		# Bevel ring: lit edge at the top, the side tone where it meets the wall.
 		var ring := [
 			[Vector3(ia.x, 0.0, ia.y), edge], [Vector3(b.x, -drop, b.y), side.lerp(edge, 0.5)], [Vector3(ib.x, 0.0, ib.y), edge],
 			[Vector3(ia.x, 0.0, ia.y), edge], [Vector3(a.x, -drop, a.y), side.lerp(edge, 0.5)], [Vector3(b.x, -drop, b.y), side.lerp(edge, 0.5)],
 		]
 		var wall := [
-			[Vector3(a.x, -drop, a.y), side], [Vector3(b.x, -thick, b.y), under], [Vector3(b.x, -drop, b.y), side],
-			[Vector3(a.x, -drop, a.y), side], [Vector3(a.x, -thick, a.y), under], [Vector3(b.x, -thick, b.y), under],
+			[Vector3(a.x, -drop, a.y), face], [Vector3(b.x, -thick, b.y), face_under], [Vector3(b.x, -drop, b.y), face],
+			[Vector3(a.x, -drop, a.y), face], [Vector3(a.x, -thick, a.y), face_under], [Vector3(b.x, -thick, b.y), face_under],
 		]
 		for vc in ring + wall:
 			st.set_color(vc[1] as Color)
@@ -3596,6 +3608,14 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 		for v in [c, outline[i], outline[(i + 1) % n]]:
 			st.add_vertex(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
 	return st.commit()
+
+
+## A staircase slab wall's tone for outward normal `nrm` (slab space, +z
+## toward the eye): walls facing left and toward the eye catch the light,
+## walls turned right fall into shadow, from `side` darkened 0.04 (lit) to 0.34 (shadow).
+static func stair_side_tone(side: Color, nrm: Vector3) -> Color:
+	var lit := clampf(-nrm.x * 0.6 + nrm.z * 0.4, -1.0, 1.0)
+	return side.darkened(0.12 + 0.22 * maxf(-lit, 0.0) + 0.08 * (1.0 - absf(lit)) - 0.08 * maxf(lit, 0.0))
 
 
 ## A flat prism on `outline`: top face at y=0 in `top`, sides `thick` deep
@@ -7067,10 +7087,10 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.266, 0.236, 0.19, 0.125, 0.144, 0.089],
+		"width": [0.30, 0.26, 0.165, 0.125, 0.144, 0.105],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.06, 0.02), Vector2(-0.046, 0.018), Vector2(-0.045, -0.005),
-			Vector2(-0.03, -0.03), Vector2(-0.021, -0.045), Vector2(-0.008, -0.043)]},
+		"adjust": [Vector2(0.179, 0.044), Vector2(0.061, 0.07), Vector2(0.029, 0.064),
+			Vector2(0.003, 0.039), Vector2(-0.021, 0.041), Vector2(-0.008, 0.033)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
@@ -7139,6 +7159,9 @@ func _stair_frog_gap(side: float) -> Vector3:
 const STAIR_THICK := 0.35
 ## The lit bevel round a staircase slab's top, as a fraction of its half-width.
 const STAIR_BEVEL := 0.05
+## A staircase slab's ink: TARGET's soft dark grey edge, the hull this much wider.
+const STAIR_INK := Color(0.22, 0.19, 0.19)
+const STAIR_INK_GROW := 1.035
 const STAIR_MIN_THICK := HUNTER_HEIGHT * 0.1
 static func stair_thickness(r: float) -> float:
 	return maxf(STAIR_MIN_THICK, r * STAIR_THICK)
@@ -7461,7 +7484,9 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		else:
 			block.mesh = slab_mesh(outline, SLAB_BLOCK_HEIGHT,
 					SLAB_TOP_TONE.lightened(randf_range(-0.04, 0.04)), SLAB_SIDE_TONE)
-		block.rotation.y = randf_range(-0.25, 0.25)
+		# A wider spin on the staircase so its slabs' edges run at angles,
+		# not all square to the lens like a stack of bricks (grader 2026-10-08).
+		block.rotation.y = randf_range(-0.55, 0.55) if stair_slab_on else randf_range(-0.25, 0.25)
 		# Lean the top toward the camera at the hunters' rest (+z, eye height).
 		var eye := Vector3(pos.x, HUNTER_HEIGHT * 1.5, _ground_back() + HUNTER_HEIGHT * 4.0)
 		block.rotation.x = slab_tilt(pos, eye)
@@ -7483,11 +7508,18 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		ink_mat.cull_mode = BaseMaterial3D.CULL_FRONT
 		ink.material_override = ink_mat
 		ink.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		# TARGET's staircase slabs have no dark line (Nick, 2026-10-07).
+		# TARGET.png's staircase slabs DO carry a thin soft dark edge (looked
+		# at 1:1, builder 2026-10-08; the 10-07 reset voids the older "no
+		# line" ruling): the same hull, as deep as the slab, a touch wider.
 		if stair:
-			ink.free()
-		else:
-			block.add_child(ink)
+			var st_ol := PackedVector2Array()
+			for v in outline:
+				st_ol.append(v * STAIR_INK_GROW)
+			var st_thick := stair_thickness(rock_radius)
+			ink.mesh = slab_mesh(st_ol, st_thick * 1.12, Color.BLACK, Color.BLACK)
+			ink.position = Vector3(0.0, st_thick * 0.05, 0.0)
+			ink_mat.albedo_color = STAIR_INK
+		block.add_child(ink)
 		body = block
 		# The soft drop shadow under each slab: a dark blur that faces the
 		# camera, just below the slab's under-edge. Unshaded, so it reads the

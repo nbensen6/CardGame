@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T03:15
-working_on: "Frog's rock and the floor: TARGET's pedestal and hex tiles."
+updated: 2026-10-08T13:15
+working_on: "Stones: TARGET's thin pale slabs, spread as a staircase."
 ---
 
 # builder
@@ -13,19 +13,19 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 03:15 EDT
+2026-10-08 13:15 EDT
 
-- **Did:** Rebuilt the Frog's rock as a flat-toned plum hex pedestal and laid the floor in warm-seamed hex tiles.
-- **Worked?** Yes: the pedestal top and hex floor now read like TARGET's. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-pedestal-before.png]] then ![[frames/builder/2026-10-08-pedestal-after.png]]
+- **Did:** Steepened the slab staircase to TARGET's climb, gave slabs angular crooked outlines, shaded sides and a thin ink edge.
+- **Worked?** Yes: the grader saw the climb match TARGET's slope and the slabs read as cut stone. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-slabs2-before.png]] then ![[frames/builder/2026-10-08-slabs2-after.png]]
 - **Ask:** nothing
-- sprite_match: 3 of 5 off (beast untouched by this item). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: PASS first round.
+- sprite_match: not run (no drawn beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL round 1, PASS round 2.
+- The picture outranked the old words: TARGET's slabs do carry a thin soft dark edge, so the staircase now has one.
 
 ## Notes
 
-- **Found:** The pedestal's tall dark sides hide behind the card fan; TARGET shows them above the cards.
-- **Found:** Near the lens the seams read brighter and the tiles bigger than TARGET's finer grid.
-- **Found:** The Goblin's rest rock still shows as a dark block at the right edge of the Frog's shot.
+- **Found:** The staircase spreads ~24% of the frame wide against TARGET's ~34%; the low slab floats beside the Frog, not on the floor in front.
+- **Found:** The upper three slabs are narrower lozenges than TARGET's flat wide plates.
 
 ## Log
 
