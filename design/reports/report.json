@@ -1,10 +1,10 @@
 {
-  "updated": "Thu Oct 8, 2:51 PM ET",
-  "last_commit": "db6c62f",
+  "updated": "Thu Oct 8, 4:51 PM ET",
+  "last_commit": "cdc439a",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; 7 items queued, 6 await your look",
+      "value": "Idle; 9 items queued, 8 await your look",
       "state": "idle"
     },
     {
@@ -31,6 +31,46 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 4:23 PM",
+      "title": "Stones cut from your drawing",
+      "bullets": [
+        "Six slabs cut straight from your picture",
+        "Placed where they sit in your drawing",
+        "No more thick boxy bricks"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-slabsprite-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-slabsprite-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 3:23 PM",
+      "title": "Frog and rock resized",
+      "bullets": [
+        "Frog smaller, sitting just above the hand",
+        "Rock now a tall dark faceted block",
+        "Hand of cards shrunk to match"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-frogsize-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-frogsize-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 2:16 PM",
