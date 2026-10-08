@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-07T23:17
-working_on: "HUD and cards: TARGET's look, no glow."
+updated: 2026-10-08T00:16
+working_on: "Stones: TARGET's thin pale slabs, spread as a staircase."
 ---
 
 # builder
@@ -13,23 +13,23 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-07 23:17 EDT
+2026-10-08 00:16 EDT
 
-- **Did:** Stripped every seat glow from cards and HUD; flat dark panels, green cost discs, type pills, wider fan.
-- **Worked?** Yes: both pairs show no glow and each piece reads as TARGET's. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-hud-noglow-before.png]] then ![[frames/builder/2026-10-08-hud-noglow-after.png]]
-- **Ask:** nothing
-- sprite_match: not run (no beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL (fan size, type label) then PASS.
+- **Did:** Recut the stones as chipped bevelled flagstones and re-fit all six to TARGET's places.
+- **Worked?** Partly: the climb now runs from left of the Frog to under the sternum, but the grader still calls the stones bricks. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-08-slabs-before.png]] then ![[frames/builder/2026-10-08-slabs-after.png]]
+- **Ask:** Grader failed this: slabs read as straight bricks. Keep this, or run another pass?
+- sprite_match: not run (no drawn beast touched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL x3, CLOSER each round.
 
 ## Notes
 
-- **Found:** Card edge reads dull olive; TARGET's is a brighter thin gold line.
-- **Found:** Fan spans ~53% of frame width vs TARGET's ~70%; bigger cards would cover the Frog's HP bar.
-- **Found:** Card titles are small and flat; TARGET's sit on a slanted dark ribbon.
-- **Found:** Outer cards' last rule line sits within ~8 px of the bottom edge at rest.
+- **Found:** Slab outlines come from randi(), so each launch draws different stone shapes.
+- **Found:** Our Frog draws ~55 px higher against the jackal than TARGET's, which crowds the lowest slab.
+- **Found:** TARGET's lowest slab is ~16% of frame width and the climb is steeper than ours.
 
 ## Log
 
+- 2026-10-08 00:16 EDT — builder: stones: stair_outline (chipped/notched flagstones) + stair_slab_mesh (lit bevel, darker wall), STAIR_THICK 0.35, STAIRCASE adjust/width re-fit to current camera; test added; grader FAIL x3 (bricks, flat climb), CLOSER; marked 👀; tests green, pushed.
 - 2026-10-07 23:17 EDT — builder: HUD/cards no glow: flat_panel_style/add_flat_panel for boss plate, intent chip, energy, gauge, unit bars; cards drop seat rim, A1 glow tinted dull gold, darker olive stone, green cost disc, grey type pill; fan scale 0.86, overlap 0.80, lift 14; tests added; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-07 16:46 EDT — builder: TARGET staircase: rig holds = TARGET slab centres (beast_rig.py), slabs on the rest eye's sight line (stair_slab), Frog-side shift for low slabs, thicker unoutlined slabs, climb lands on all six, top hold/sigil under the sternum, tests updated; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-07 15:43 EDT — builder: jackal rigged from TARGET (tools/beast_rig.py, views/drawn_rig.gd, SubViewport onto the billboard, idle/attack/hit/death, fire layer, trim_box keeps framing) + tests; grader FAIL x3 (holds), CLOSER; marked 👀; tests green, pushed.

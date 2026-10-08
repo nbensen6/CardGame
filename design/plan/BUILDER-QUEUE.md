@@ -19,10 +19,11 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-hud-noglow-after.png|420]] ^hud-and-cards-target-s-look-no-glow
 
-- [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
-      Today they are thick grey hexagonal pucks bunched at the belly. TARGET's are thin, flat, irregular slabs with soft bevelled edges, light tops and a slightly darker side, no outline, climbing in a clear staircase from left of the frog up and right to just under the sternum. Re-fit the positions to the camera as it is now (the checker has moved it since the stones shipped).
-      **Done when** the `--full` pair shows the same six slab shapes in the same places as TARGET.
-      Test: state=3d beast=cinder_jackal ^stones-target-s-thin-pale-slabs-spread-a
+- [ ] 👀 **Stones: TARGET's thin pale slabs, spread as a staircase.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's thin pale slabs, spread as a staircase.|details]]
+      Ask: Grader failed this: slabs read as straight bricks, climb flatter than TARGET's. Keep, or another pass?
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-slabs-after.png|420]] ^stones-target-s-thin-pale-slabs-spread-a
 
 - [ ] **Left background: cliff and purple sky, not black.**
       The left third of the frame behind the jackal is a black void. TARGET has a dark slate cliff with cool edge highlights on the left and purple sky above it, mirroring the right side.

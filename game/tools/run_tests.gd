@@ -2418,6 +2418,7 @@ func _init() -> void:
 	_test_upright_jackal_v2()
 	_test_jackal_is_a_drawing()
 	_test_staircase_slabs_sit_on_the_eyes_sight_line()
+	_test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel()
 	_test_rigged_jackal_idles_and_punches()
 	_test_stone_style_lava_rock_only_in_the_jackal_biome()
 	_test_stone_staircase_is_one_line_to_the_chest()
@@ -31761,6 +31762,39 @@ func _test_intent_badge_sits_in_a_fixed_hud_slot() -> void:
 ## with its climb holds authored as points on the image, climbing to the face.
 ## TARGET's staircase (Nick, 2026-10-07): each slab hangs on the rest eye's
 ## sight line through its climb point, so it draws where TARGET draws it.
+func _test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel() -> void:
+	# Builder 2026-10-08 (queue: "thin pale slabs ... soft bevelled edges"):
+	# TARGET's staircase slabs are wide chipped flagstones, not hexagons.
+	for seed in [1, 7, 42]:
+		var ol: PackedVector2Array = Combat3D.stair_outline(seed, 2.0)
+		var w := 0.0
+		var d := 0.0
+		for v in ol:
+			w = maxf(w, absf(v.x))
+			d = maxf(d, absf(v.y))
+		_expect(ol.size() >= 4 and ol.size() <= 11, "a flagstone is a few chipped corners (%d points)" % ol.size())
+		_expect(w > d * 1.5, "a flagstone is wide and shallow (%.2f x %.2f)" % [w, d])
+		_expect(Geometry2D.is_polygon_clockwise(ol) == Geometry2D.is_polygon_clockwise(Combat3D.slab_outline(seed, 2.0)),
+			"a flagstone winds like slab_outline")
+	_expect(Combat3D.stair_outline(7, 2.0) == Combat3D.stair_outline(7, 2.0), "a flagstone repeats for its seed")
+	_expect(Combat3D.stair_outline(7, 2.0) != Combat3D.stair_outline(8, 2.0), "two seeds give two silhouettes")
+	var m: ArrayMesh = Combat3D.stair_slab_mesh(Combat3D.stair_outline(7, 2.0), 0.7, 0.18,
+		Combat3D.SLAB_TOP_TONE, Combat3D.SLAB_SIDE_TONE)
+	var arr: Array = m.surface_get_arrays(0)
+	var cols: PackedColorArray = arr[Mesh.ARRAY_COLOR]
+	var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+	var lightest := 0.0
+	var lowest := 0.0
+	for i in range(verts.size()):
+		lightest = maxf(lightest, cols[i].get_luminance())
+		lowest = minf(lowest, verts[i].y)
+	_expect(lightest > Combat3D.SLAB_TOP_TONE.lightened(0.05).get_luminance(),
+		"the bevel's lit edge is lighter than the slab's top")
+	_expect(is_equal_approx(lowest, -0.7), "the slab is as deep as asked")
+	_expect(Combat3D.stair_thickness(2.0) >= 2.0 * 0.3,
+		"a staircase slab shows a side band TARGET's size, not a paper disc")
+
+
 func _test_staircase_slabs_sit_on_the_eyes_sight_line() -> void:
 	var eye := Vector3(1.0, 1.3, 30.0)
 	var hold := Vector3(-3.0, 5.0, 2.5)

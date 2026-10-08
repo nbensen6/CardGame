@@ -227,3 +227,7 @@ appends here, never to the queue.
 - [ ] **Brighter gold card edge.** The card frame's edge reads dull olive; TARGET's is a thin brighter gold line.
 - [ ] **Card title ribbon.** TARGET's card names sit on a slanted dark ribbon; ours are flat labels.
 - [ ] **Wider hand without covering the Frog's bar.** TARGET's fan spans ~70% of the frame; ours ~53%, limited by the Frog's HP bar.
+- [ ] **Slab silhouettes from TARGET.** Trace TARGET's six slab outlines as fixed polygons instead of seeded random flagstones.
+- [ ] **Steeper, bigger staircase.** Grader: TARGET's lowest slab is ~16% of frame width and the column climbs steeper; needs the Frog lowered first.
+- [ ] **Seeded slab shapes.** Slab outlines use randi(), so every launch draws different stones; seed them per slab.
+

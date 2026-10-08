@@ -1963,3 +1963,15 @@ Done:
 Tests: seat-glow card test now pins the dull-gold rim; new tests for the flat panel (no glow, behind host, pad, tap-through) and the cost disc. Grader round 1 FAIL (fan narrow/low, caps type label, no hand pair); round 2 PASS.
 Meshy: 0 credits.
 
+
+## Stones: TARGET's thin pale slabs, spread as a staircase.
+
+2026-10-08 00:16 EDT, builder. Brief: the queue item verbatim.
+- **Before:** six nine-cornered pucks (convex hull of a jittered ellipse, read as hexagons), side 0.2 r, stacked at the belly: screen (540,392) (604,364) (656,338) (704,312) (732,283) (679,263).
+- **Measured TARGET** against the jackal (sternum Y-junction anchor, 0.81 px scale TARGET→frame): wants ≈ (505,440) w130, (568,388) w114, (635,360) w73, (689,340) w53, (721,318) w63, (665,300) w49 — every slab ~25-60 px lower than ours, low two further left.
+- **Shape:** new `stair_outline` (four jittered corners on a 2:1 rectangle, each chipped by its own amount or left sharp, one edge in two notched; star-shaped, fanned from the centre) and `stair_slab_mesh` (pale top inset by a lit bevel ring `STAIR_BEVEL` 0.05 r, then a darker wall). `STAIR_THICK` 0.2 → 0.35 (TARGET's side band ~1/6 of width). Only the staircase uses them; other slab biomes keep `slab_outline`/`slab_mesh`.
+- **Places:** STAIRCASE `adjust` and `width` re-fit to the current camera. After: (460,431) (524,382) (602,358) (676,341) (719,323) (663,305). Tones sampled: top ~189 / side ~117 vs TARGET ~168 / ~107.
+- **Frog conflict:** our Frog draws ~55 px higher against the jackal than TARGET's, so slab 0 cannot be both TARGET's place on the jackal and clear of the Frog; it sits left of the Frog, below the lava line.
+- **Grader:** round 1 FAIL (regular polygons, slab 0 at Frog height), round 2 FAIL (all same rounded rectangle, upper four bunched), round 3 FAIL (straight-edged bricks, hard top edges, climb flatter/smaller than TARGET). CLOSER every round. Marked 👀 per brief.
+- Outlines come from `randi()`, so the slab silhouettes change each launch.
+- Tests: new `_test_staircase_slabs_are_chipped_flagstones_with_a_lit_bevel`. ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
