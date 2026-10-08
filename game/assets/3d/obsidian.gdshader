@@ -28,6 +28,10 @@ uniform float crack_px : hint_range(0.5, 4.0) = 1.2;
 // tone steps up or down by up to this much, so the floor reads as big cracked
 // slabs, not one sheet with lines drawn on it. 0 = one tone everywhere.
 uniform float slab_var : hint_range(0.0, 1.0) = 0.0;
+// Hex tiles (TARGET.png, 2026-10-08): 1 lays the cracks on a hex grid, so the
+// floor reads as TARGET's dark hexagonal flagstones with warm seams; 0 keeps
+// the random Voronoi crack network.
+uniform float hex_tiles : hint_range(0.0, 1.0) = 0.0;
 
 // Rim heat — "Lava flows around the arena", 2026-09-30. Where lava rings the
 // floor (combat_3d._add_lava sets these), the glass nearest it glows orange
@@ -83,10 +87,24 @@ float crack_edge(vec2 p, out vec2 cell) {
 	return md;
 }
 
+// Distance to the nearest edge of a pointy hex grid of unit flat-to-flat
+// width, in cell units, and the cell's id.
+float hex_edge(vec2 p, out vec2 cell) {
+	vec2 r = vec2(1.0, 1.7320508);
+	vec2 h = r * 0.5;
+	vec2 a = mod(p, r) - h;
+	vec2 b = mod(p - h, r) - h;
+	vec2 gv = dot(a, a) < dot(b, b) ? a : b;
+	cell = floor((p - gv) * 2.0 + 0.5);
+	vec2 q = abs(gv);
+	float hd = max(dot(q, vec2(0.5, 0.8660254)), q.x);
+	return 0.5 - hd;
+}
+
 void fragment() {
 	vec2 cp = world_pos.xz / crack_cell;
 	vec2 cell;
-	float e = crack_edge(cp, cell);
+	float e = hex_tiles > 0.5 ? hex_edge(cp, cell) : crack_edge(cp, cell);
 	// Three flat steps per slab, never a gradient: picture A's floor is flat
 	// planes like its cliffs.
 	float slab = 1.0 + slab_var * (floor(hash2(cell * 1.7 + 3.1).x * 3.0) - 1.0);

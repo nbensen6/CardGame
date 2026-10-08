@@ -3242,7 +3242,10 @@ const BIOME := {
 		# Cliffs and floor in picture A's flat style (Nick, 2026-10-04): big
 		# slabs in flat steps of tone with seams that glow, not hairlines on
 		# one sheet. Obsidian shader uniforms, see _dress_floor().
-		"floor_params": {"crack_cell": 6.0, "crack_px": 2.2, "crack_gain": 0.3, "slab_var": 0.2, "crack_color": Color(1.0, 0.62, 0.2)},
+		# Hex tiles (builder 2026-10-08, TARGET.png): TARGET's floor is big dark
+		# hexagonal flagstones whose seams glow a faint warm orange across the
+		# whole floor, not a random crack web that fades out near the lens.
+		"floor_params": {"crack_cell": 6.0, "crack_px": 2.8, "crack_gain": 0.4, "slab_var": 0.2, "crack_color": Color(1.0, 0.62, 0.2), "hex_tiles": 1.0},
 		# ...and dark slate cliffs in three flat tones instead of the painted,
 		# lava-lit rock. See wall_style() / _dress_wall().
 		"wall": "flat",
@@ -7285,37 +7288,83 @@ static func stone_depth_ratio(recede: float) -> float:
 func _put_rest_rock(slot: int, top: Vector3) -> void:
 	while _rest_rocks.size() <= slot:
 		_rest_rocks.append(null)
+	var yaw := follow_yaw_for(top, _yaw_point(), 0.0)
 	var had: Variant = _rest_rocks[slot]
 	if had != null and is_instance_valid(had):
 		var old := had as MeshInstance3D
-		old.position = Vector3(top.x, top.y - float(old.get_meta("height")) * 0.5, top.z)
+		old.position = top
+		old.rotation.y = yaw
 		return
-	var m := CylinderMesh.new()
-	# Wider than the Frog's HP bar (r2 iter 05), so the pillar shows either
-	# side of it as TARGET's does; at 1.35 the bar hid all of it.
-	m.top_radius = HUNTER_HEIGHT * 2.1
-	m.bottom_radius = HUNTER_HEIGHT * 2.3
-	m.height = top.y + HUNTER_HEIGHT * 0.4
-	m.radial_segments = 6
-	m.rings = 0
-	# Flat normals, one per face (checker r2 iter 05), so the six sides and
-	# the top read as separate facets under the key light as TARGET draws
-	# them; the CylinderMesh's smooth normals shaded it like a soft drum.
-	var st := SurfaceTool.new()
-	st.create_from(m, 0)
-	st.deindex()
-	st.generate_normals()
 	var rock := MeshInstance3D.new()
-	rock.mesh = st.commit()
-	rock.set_meta("height", m.height)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = REST_ROCK_TONE
-	mat.roughness = 0.9
+	rock.mesh = pedestal_mesh(HUNTER_HEIGHT * PEDESTAL_R, top.y + HUNTER_HEIGHT * 0.4, PEDESTAL_DEPTH)
+	var mat := ShaderMaterial.new()
+	mat.shader = PEDESTAL
 	rock.material_override = mat
-	rock.position = Vector3(top.x, top.y - m.height * 0.5, top.z)
-	rock.rotation.y = PI / 6.0
+	# The node sits at the top face's centre; its local +z faces the rest
+	# camera, which stands behind the hunter along the beast-to-hunter yaw.
+	rock.position = top
+	rock.rotation.y = yaw
 	_rig.add_child(rock)
 	_rest_rocks[slot] = rock
+
+
+## The Frog's pedestal (builder 2026-10-08, TARGET.png). TARGET's is a dark
+## hex pillar seen from above: a big pale plum top the Frog sits in the middle
+## of, a flat front face straight at the camera with the HP bar on it, two
+## angled side faces, and a thin ember rim along its back edges. The rest
+## camera looks down only ~8 degrees, so a regular hex showed its top as a
+## sliver; PEDESTAL_DEPTH stretches the top toward the lens so it reads as the
+## face TARGET draws. Flat colour per face, no texture, like the cliffs.
+const PEDESTAL := preload("res://assets/3d/pedestal.gdshader")
+const PEDESTAL_R := 2.1
+const PEDESTAL_DEPTH := 1.35
+## The tones, TARGET sampled (vertex colour, rendered through the glow and
+## the scene's purple ambient, so the top is set grey to land plum): top ~(54,44,59), front ~(16,15,28), the side
+## faces a warmer near-black, the back rim ember.
+const PEDESTAL_TOP := Color(0.176, 0.162, 0.183)
+const PEDESTAL_FRONT := Color(0.06, 0.06, 0.11)
+const PEDESTAL_SIDE := Color(0.13, 0.09, 0.12)
+const PEDESTAL_RIM := Color(0.42, 0.19, 0.07)
+const PEDESTAL_BEVEL := 0.06
+
+
+## The pedestal mesh: a hexagonal prism of radius `r`, `h` tall below its top
+## face (top at y = 0), stretched by `depth` along local z, with a flat face
+## toward +z. Vertex colours carry each face's tone. Static so run_tests.gd
+## can pin its shape.
+static func pedestal_mesh(r: float, h: float, depth: float) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var outer: Array[Vector3] = []
+	var inner: Array[Vector3] = []
+	var bot: Array[Vector3] = []
+	var bev := r * PEDESTAL_BEVEL
+	for k in range(6):
+		var a := deg_to_rad(30.0 + 60.0 * float(k))
+		var d := Vector3(sin(a), 0.0, cos(a) * depth)
+		inner.append(d * (r - bev))
+		outer.append(d * r + Vector3(0.0, -bev, 0.0))
+		bot.append(d * r * 1.04 + Vector3(0.0, -h, 0.0))
+	var tri := func(a: Vector3, b: Vector3, c: Vector3, n: Vector3, col: Color) -> void:
+		for v in [a, b, c]:
+			st.set_color(col)
+			st.set_normal(n)
+			st.add_vertex(v)
+	for k in range(6):
+		tri.call(Vector3.ZERO, inner[k], inner[(k + 1) % 6], Vector3.UP, PEDESTAL_TOP)
+	for k in range(6):
+		var k2 := (k + 1) % 6
+		var mid := (outer[k] + outer[k2]) * 0.5
+		var n := Vector3(mid.x, 0.0, mid.z).normalized()
+		# Edge k..k+1 faces along `n`: k = 5 is the front face (+z), 2 the back.
+		var side_col := PEDESTAL_FRONT if n.z > 0.9 else PEDESTAL_SIDE
+		var rim_col := PEDESTAL_RIM if n.z < 0.1 else PEDESTAL_TOP.darkened(0.3)
+		var bn := (n + Vector3.UP).normalized()
+		tri.call(inner[k], outer[k], outer[k2], bn, rim_col)
+		tri.call(inner[k], outer[k2], inner[k2], bn, rim_col)
+		tri.call(outer[k], bot[k], bot[k2], n, side_col)
+		tri.call(outer[k], bot[k2], outer[k2], n, side_col)
+	return st.commit()
 
 
 ## The slab drop shadow's soft dark ellipse, built once.

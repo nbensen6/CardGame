@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T02:18
-working_on: "Fist fire: flame tongues, not a sun disc."
+updated: 2026-10-08T03:15
+working_on: "Frog's rock and the floor: TARGET's pedestal and hex tiles."
 ---
 
 # builder
@@ -13,18 +13,19 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 02:18 EDT
+2026-10-08 03:15 EDT
 
-- **Did:** Recut the fist fire as crisp licking tongues leaning up-left, hot core, frame-stepped flicker.
-- **Worked?** Yes: the disc is gone and tongues rise off the fist like TARGET's. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-fistfire-before.png]] then ![[frames/builder/2026-10-08-fistfire-after.png]]
+- **Did:** Rebuilt the Frog's rock as a flat-toned plum hex pedestal and laid the floor in warm-seamed hex tiles.
+- **Worked?** Yes: the pedestal top and hex floor now read like TARGET's. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-pedestal-before.png]] then ![[frames/builder/2026-10-08-pedestal-after.png]]
 - **Ask:** nothing
-- sprite_match: 3 of 5 off (same before and after; body untouched). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL, FAIL (CLOSER), PASS.
+- sprite_match: 3 of 5 off (beast untouched by this item). Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: PASS first round.
 
 ## Notes
 
-- **Found:** The flame is smaller than TARGET's; the canvas top caps it, and growing it shrinks the beast.
-- **Found:** sprite_match reports crack cover, detail and outline OFF on main, independent of this item.
+- **Found:** The pedestal's tall dark sides hide behind the card fan; TARGET shows them above the cards.
+- **Found:** Near the lens the seams read brighter and the tiles bigger than TARGET's finer grid.
+- **Found:** The Goblin's rest rock still shows as a dark block at the right edge of the Frog's shot.
 
 ## Log
 

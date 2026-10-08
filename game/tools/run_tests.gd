@@ -2410,6 +2410,8 @@ func _init() -> void:
 	_test_fog_behind_range_scales_with_the_arena_and_ends_past_its_begin()
 	# Obsidian floor (session, 2026-09-29): black glass for the jackal only.
 	_test_floor_style_obsidian_only_in_the_jackal_biome()
+	# Frog's pedestal and hex floor (builder 2026-10-08, TARGET.png).
+	_test_pedestal_is_a_deep_hex_with_a_plum_top()
 	_test_scene_pass1_picture_a()
 	_test_overnight_p3_lava_glow()
 	_test_overnight_p17_haze_glow()
@@ -32120,3 +32122,21 @@ func _test_hud_wears_the_a1_card_material() -> void:
 		"target hud: End Turn an amber pill, Switch a navy pill")
 	_expect(loud["normal"].bg_color.r > 0.6 and loud["normal"].bg_color.b < 0.3,
 		"a1 hud: End Turn's face is warm whatever the seat")
+
+
+func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
+	var m: ArrayMesh = Combat3D.pedestal_mesh(1.0, 1.0, 1.35)
+	var aabb := m.get_aabb()
+	_expect(is_equal_approx(aabb.end.y, 0.0), "the pedestal's top face sits at its node (the hunter's feet)")
+	_expect(aabb.size.z > aabb.size.x * 0.866 * 1.2,
+		"the pedestal is stretched toward the lens so its top reads from the rest camera")
+	var verts: PackedVector3Array = m.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]
+	var front := 0
+	for v in verts:
+		if v.y < -0.5 and v.z > 0.0 and absf(v.z - aabb.end.z) < 0.01:
+			front += 1
+	_expect(front >= 2, "a flat face of the hex looks straight at the camera (+z)")
+	_expect(Combat3D.PEDESTAL_TOP.get_luminance() > Combat3D.PEDESTAL_FRONT.get_luminance() * 2.0,
+		"TARGET's pedestal top is a pale plum over near-black sides")
+	var fp: Dictionary = Combat3D.BIOME[String(Combat3D.BEAST_BIOME["cinder_jackal"])]["floor_params"]
+	_expect(float(fp.get("hex_tiles", 0.0)) > 0.5, "the jackal's floor is laid in hex tiles")

@@ -5,6 +5,15 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Frog's rock and the floor: TARGET's pedestal and hex tiles.
+
+Builder 2026-10-08 03:15 EDT. Before: the Frog stood on a dark rounded lump whose top was a sliver; the floor was a faint random crack web.
+- Pedestal: `_put_rest_rock` now builds `pedestal_mesh()` (new `pedestal.gdshader`): a hex prism with a flat face to the rest camera, top stretched 1.35x toward the lens (the rest eye looks down only ~8 degrees, so a regular hex showed no top). Flat vertex-colour tones: top renders (53,45,58) vs TARGET (54,44,59); near-black navy front; dim ember rim on the back edges. Mostly emission so the lava lights do not turn it maroon.
+- Floor: obsidian shader gains `hex_tiles`; the jackal biome sets it, crack_px 2.8, crack_gain 0.4 (old test caps gain at 0.4).
+- Test: `_test_pedestal_is_a_deep_hex_with_a_plum_top`.
+- Grader: PASS first round. Remaining gaps: sides hidden behind the card fan; near seams bolder and tiles bigger than TARGET's; Goblin's rock block at right edge.
+- sprite_match: 3 of 5 off (beast untouched). Meshy: 0 credits.
+
 ## Fist fire: flame tongues, not a sun disc.
 
 2026-10-08 builder run.
