@@ -1,10 +1,10 @@
 {
-  "updated": "Thu Oct 8, 12:51 AM ET",
-  "last_commit": "25290d6",
+  "updated": "Thu Oct 8, 2:51 AM ET",
+  "last_commit": "1e7d1d7",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; 2 items await your look, 3 queued",
+      "value": "Idle; 4 items await your look, 1 queued",
       "state": "idle"
     },
     {
@@ -32,6 +32,50 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 2:18 AM",
+      "title": "Fist fire now licking flames",
+      "bullets": [
+        "Round sun disc replaced by flame tongues",
+        "Flames lean up-left, flicker frame by frame",
+        "Still smaller than your drawing's fire"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-fistfire-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-fistfire-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-fistfire-idle.png",
+          "caption": "Flicker frames"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 1:17 AM",
+      "title": "Left side gets slate cliffs",
+      "bullets": [
+        "Black left edge now grey slate cliffs",
+        "Cool lit edges, lava glow at base",
+        "Grader passed it on second try"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-leftbg-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-leftbg-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 12:17 AM",
