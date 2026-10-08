@@ -39,7 +39,7 @@ uniform vec3 key_dir = vec3(-0.45, 0.75, 0.35);
 // Checker iter 20: lit at 0.42 lit whole cliff faces, so the walls read as
 // flat light-slate cut-outs; TARGET's are near-black masses whose lit
 // planes are narrow cool edges. Only the most key-facing planes light now.
-uniform float lit_at : hint_range(-1.0, 1.0) = 0.6;
+uniform float lit_at : hint_range(-1.0, 1.0) = 0.7;
 uniform float shade_at : hint_range(-1.0, 1.0) = -0.05;
 // The warm band at the foot of the wall, in world units above the floor.
 uniform vec4 heat_color : source_color = vec4(1.0, 0.36, 0.08, 1.0);
@@ -60,12 +60,17 @@ uniform float shade_span = 9.0;
 // tones, so the two big formations at the frame edges stay as TARGET's.
 uniform vec3 arena_centre = vec3(0.0);
 uniform float arena_r = 12.0;
-uniform float far_from = 0.2;
-uniform float far_to = 0.9;
+// Checker r2 iter 23: both critics' top MAJOR -- "a continuous cliff wall
+// across the whole width behind the jackal, purple only in a thin strip".
+// The fade to sky now starts nearer, finishes fully, and spans most of the
+// view's width, so only the two flank formations stay rock; fewer planes take
+// the lit tone, so the flanks read as dark masses, not shard noise.
+uniform float far_from = 0.1;
+uniform float far_to = 0.6;
 uniform vec4 far_color : source_color = vec4(0.341, 0.18, 0.325, 1.0);
-uniform float far_mix : hint_range(0.0, 1.0) = 0.7;
-uniform float lat_from = 0.6;
-uniform float lat_to = 0.95;
+uniform float far_mix : hint_range(0.0, 1.0) = 1.0;
+uniform float lat_from = 1.0;
+uniform float lat_to = 1.45;
 
 varying vec3 world_pos;
 

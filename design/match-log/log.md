@@ -174,3 +174,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the two low slabs (A #1, B #2). Widths 0.23/0.225 → 0.17/0.165 (thickness follows the width): they no longer reach back into the jackal's plane, so the clip is gone, and the stair reads as one run with the four upper slabs.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 23
+- Critic A top 3: [MAJOR] cliffs are black and blue-grey shard noise, not readable slate masses; [MAJOR] fist fire a glow ball; [MAJOR] HUD 1.5–2x too large, heavy borders.
+- Critic B top 3: [MAJOR] a continuous lighter cliff wall across the whole width behind the jackal, purple only in a thin strip; [MAJOR] jackal ~42% of the width; [MAJOR] stones bunched, low two small.
+- Changed: the background (both #1). `cliff_flat.gdshader`'s fade of the far wall into the sky now starts nearer (`far_from` 0.2→0.1, `far_to` 0.9→0.6), goes all the way (`far_mix` 0.7→1.0) and spans most of the view (`lat_from/to` 0.6/0.95 → 1.0/1.45): the wall behind the jackal is sky now, only the two flank formations stay rock. `lit_at` 0.6→0.7, so fewer planes light and the flanks read as dark masses.
+- Tests: ALL TESTS PASSED. Shader only.
+- Meshy: 0 credits.
