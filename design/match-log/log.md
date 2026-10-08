@@ -167,3 +167,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the HUD (A #1–#4, B #3 — highest combined rank), its two pieces both critics name: End Turn and Switch are stacked (Controls is a VBox, End Turn on top, 164 px wide), and the A1 card's seat-coloured 16 px halo is now a 4 px rim at 55% (`SEAT_RIM_SIZE`) — still says "playable", no longer a glow. Energy box position, boss bar height and cost chips not touched yet.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs; End Turn still clicks.
 - Meshy: 0 credits.
+
+### iter 22
+- Critic A top 3: [MAJOR] lower two stones thick, blocky, flat-lit, slab 2 clipped by a hard vertical cut into the body, staircase compressed; [MAJOR] hand too small and flat, detached from the energy box; [MAJOR] boss plate and intent chip oversized.
+- Critic B top 3: [MAJOR] fist fire a round disc; [MAJOR] lower two slabs big, thick, flat white, a gap mid-stair, one clipping into the belly; [MAJOR] cliffs jagged shards across the whole horizon.
+- Changed: the two low slabs (A #1, B #2). Widths 0.23/0.225 → 0.17/0.165 (thickness follows the width): they no longer reach back into the jackal's plane, so the clip is gone, and the stair reads as one run with the four upper slabs.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
