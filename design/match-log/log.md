@@ -146,3 +146,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: framing (A #1, B #1). `DRAWN_GAP_PER_HEIGHT` 1.05→0.9, `GROUND_VIEW_PITCH` -0.02→-0.06: the jackal draws ~13% bigger (ears→lava 47%→52% of the frame), ears 5.1%→3.5% under the top, lava 52.5%→55.6%. Tried a lower Frog too (lift -0.05/-0.08 → frog 63–65%): its HP bar went behind the hand, so the Frog stays at ~60% until the hand shrinks. The width share stays the 16:9-vs-square difference.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 19
+- Critic A top 3: [MAJOR] fist fire an orb behind the fist; [MAJOR] jackal ~43% of the width; [MAJOR] stones: top three tilted and overlapping, bottom two too big and white.
+- Critic B top 3: [MAJOR] stones: steep zig-zag, oversized bottom slab, top two tilted over the seam; [MAJOR] hand too big; [MAJOR] frog pedestal hidden.
+- Changed: the stones (B #1, A #3 — highest combined rank). Iter 18's bigger jackal left the slabs ~1.35x TARGET's width against it (s0 0.44 vs 0.32, s1 0.37 vs 0.28, s2 0.24 vs 0.17, s3 0.19 vs 0.13 jackal-heights); widths of s0–s3 → 0.23/0.225/0.125/0.094, now 0.28/0.28/0.14/0.13. And the staircase slabs no longer spin in place (`rotation.y += delta*0.25`): turning, their hex outlines read as tilted, overlapping plates; TARGET's lie still. `vs_target.py --beast` crop widened to the larger jackal (x 0.26–0.76, y to 0.60).
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.

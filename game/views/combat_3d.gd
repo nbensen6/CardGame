@@ -2310,6 +2310,7 @@ func _process(delta: float) -> void:
 	for h in _hunters:
 		ridden[riding_stone((h as Dictionary)["home"] as Vector3, _float_home)] = true
 	var one_line := _one_line()
+	var stair_still := _staircase()
 	for i in _float_stones.size():
 		var st := _float_stones[i] as Node3D
 		if not is_instance_valid(st):
@@ -2318,7 +2319,10 @@ func _process(delta: float) -> void:
 			st.visible = stone_line_shown(float(_float_side[i]), _active_slot, ridden.has(i))
 		var home: Vector3 = _float_home[i]
 		st.position.y = home.y + (0.0 if ridden.has(i) else stone_bob(_time, i))
-		st.rotation.y += delta * 0.25
+		# TARGET's slabs lie still and square to the eye; spinning, their hex
+		# outlines read as tilted, overlapping plates (r2 iter 19).
+		if not stair_still:
+			st.rotation.y += delta * 0.25
 	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
 	_step_enemy_turn(delta)
 	_step_low_health(delta)
@@ -6810,7 +6814,7 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.32, 0.30, 0.173, 0.134, 0.125, 0.118],
+		"width": [0.23, 0.225, 0.125, 0.094, 0.125, 0.118],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
 		"adjust": [Vector2(0.17, 0.04), Vector2(0.05, 0.075), Vector2(0.067, 0.07),
 			Vector2(0.029, 0.05), Vector2(0.005, 0.038), Vector2(0.025, 0.045)]},
