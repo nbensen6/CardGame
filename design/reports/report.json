@@ -1,16 +1,16 @@
 {
-  "updated": "Wed Oct 7, 8:52 PM ET",
-  "last_commit": "2bb3c80",
+  "updated": "Wed Oct 7, 10:51 PM ET",
+  "last_commit": "639d916",
   "status": [
     {
       "label": "Builder",
-      "value": "Queue reset: 5 look items to build",
+      "value": "Lease released; 5 look items queued",
       "state": "idle"
     },
     {
       "label": "Checker",
-      "value": "Round 2, iter 15 of 25",
-      "state": "working"
+      "value": "Round 2 done (hit 25 cap)",
+      "state": "idle"
     },
     {
       "label": "Meshy",
@@ -27,10 +27,34 @@
     "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?"
   ],
   "latest": {
-    "path": "design/match-log/iter-15.png",
-    "caption": "Checker iter 15: your drawing left, game right"
+    "path": "design/match-log/iter-25.png",
+    "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "checker",
+      "time": "Oct 7, 10:34 PM",
+      "title": "Round 2 finished at 25 passes",
+      "bullets": [
+        "Stones now one clear staircase up the jackal",
+        "Jackal bigger, open sky, smaller hand",
+        "Still off: big HUD, wide cracks, fist fire"
+      ],
+      "images": [
+        {
+          "path": "design/match-log/iter-25.png",
+          "caption": "Now (iter 25)"
+        },
+        {
+          "path": "design/match-log/iter-25-beast.png",
+          "caption": "Jackal close-up"
+        },
+        {
+          "path": "design/match-log/iter-16.png",
+          "caption": "Before (iter 16)"
+        }
+      ]
+    },
     {
       "agent": "checker",
       "time": "Oct 7, 8:40 PM",
