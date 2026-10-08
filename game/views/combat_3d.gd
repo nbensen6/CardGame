@@ -6805,8 +6805,8 @@ const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
 		"width": [0.26, 0.26, 0.173, 0.134, 0.125, 0.118],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(-0.03, 0.074), Vector2(-0.10, 0.075), Vector2(0.007, 0.07),
-			Vector2(-0.046, 0.05), Vector2(-0.075, 0.038), Vector2(-0.06, 0.03)]},
+		"adjust": [Vector2(0.17, 0.04), Vector2(0.05, 0.075), Vector2(0.067, 0.07),
+			Vector2(0.029, 0.05), Vector2(0.005, 0.038), Vector2(0.025, 0.045)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
@@ -7182,7 +7182,13 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		shade.pixel_size = rock_radius * 2.8 / 256.0
 		shade.position = Vector3(0.0, -SLAB_BLOCK_HEIGHT - rock_radius * 0.45, -rock_radius * 0.6)
 		shade.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		stone.add_child(shade)
+		# Not under TARGET's staircase slabs (checker r2 iter 16: "the stones
+		# cast dark blotches on the body", both critics): TARGET draws them
+		# clean against the jackal, no drop shadow.
+		if stair:
+			shade.free()
+		else:
+			stone.add_child(shade)
 	stone.add_child(body)
 	# Geometry only — no colour/texture of its own (foothold_rock.md) —
 	# so the #12 palette and the ROCK_DETAIL multiply below still apply

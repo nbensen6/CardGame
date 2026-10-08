@@ -125,3 +125,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (A #1, B #2). Iter 14 matched each slab to TARGET in *jackal* units, but the Frog draws ~1.6x TARGET's size against the jackal, so the low slabs still sat on top of it. Both critics measure them against the Frog: s0/s1 now step out to ~15% of the frame width left of it (`adjust` x 0.17/0.017 → -0.03/-0.10): one diagonal from left of the Frog's rock to the sternum. Tried and backed out: `FOLLOW_DIST` 8 to shrink the Frog itself (it pulls the Goblin, the arena edge and the climb camera along; a bigger change than one iteration).
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 16
+- Critic A top 3: [MAJOR] stones a narrow vertical stack over the belly, top one a stone-height low, bottom one too high and right; slab shadows blotch the body; [MAJOR] HUD panels ~2.5x too tall; [MAJOR] hand too big, flat, cropped.
+- Critic B top 3: [MAJOR] stones a vertical stack at screen centre, not TARGET's diagonal, plus dark blotches on the body; [MODERATE] hand too big; [MODERATE] fist fire a ball.
+- Changed: the stones (both #1). My slab measurements since iter 10 used the wrong head x (the eyes' 50.5% instead of the ear band's 52.3%), so every slab sat ~0.07 jackal-heights further left than I logged. Re-measured off the ear band and re-set `adjust`: now (dx, y) per slab vs TARGET: s0 (-0.42,1.06)/(-0.31,1.04), s1 (-0.26,.88)/(-0.23,.88), s2 (-0.04,.80)/(-0.05,.81), s3 (.10,.74)/(.08,.76), s4 (.17,.69)/(.15,.71), s5 (.04,.64)/(.02,.66). The staircase slabs also lose their soft drop shadow (TARGET draws them clean on the body).
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
