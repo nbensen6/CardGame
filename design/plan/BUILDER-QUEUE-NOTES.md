@@ -2065,3 +2065,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (frame barely changed), R2 FAIL (seam hidden; after the resize), R3 FAIL, R4 FAIL, R5 FAIL, R6 FAIL. Each said the cracks part moved toward TARGET, no penalties. Every round asked for 2-3x wider cracks with painted yellow cores, which the registered pixels do not support. Final: VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-08-cracks-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-08 18:32 EDT, builder (run 2). Not passed; item left open.
+
+- **Sharpness.** The parts reach the screen through two linear resamples; the Laplacian inside the body was 5.0 against TARGET's 9.8. New `sharpen` (unsharp mask) in drawn_sprite.gdshader, `RIG_SHARPEN` 2.2 in drawn_rig.gd: now ~9.
+- **Width and heat.** New shader knobs, all set from drawn_rig.gd: `crack_grow` (0.85, radius `crack_px` 2.6 texels) spreads each crack's colour over the plate pixel next to it, never over light pixels (outline, eye cores); `crack_heat` (0.9) lifts the hot pixels to `crack_core` gold; `hot_glow` (0.55, `hot_glow_px` 3.5) adds a short gold glow round the hot cores (the sternum Y); `crack_orange` (0) is there but off (0.35-0.8 turned limbs and ears pale). EMIT_CAP 1.3 was tried and reverted: it turned the yellow cores orange.
+- **Grader:** R1 FAIL (unchanged at frame scale), R2 FAIL, R3 FAIL, R4 FAIL (glow 1.6@7: smear), R5 FAIL (0.7@4: still smear), R6 FAIL (0.35@3: too narrow), R7 FAIL (0.55@3.5, wider cracks: sternum closer, limbs still thin). No penalties in any round; each said the chest moved toward TARGET. Final: VERDICT: FAIL. Graders also repeatedly claim the game has more, smaller plates than TARGET, which cannot be (the jackal is TARGET's own pixels).
+- has_open.py counted 0 open items (it split on the first `## Now` text, inside the intro line); fixed to match the heading.
+- Frames: ![[agents/frames/builder/2026-10-08-cracks2-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks2-after.png|420]]
+- Meshy: 0 credits.

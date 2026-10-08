@@ -30,6 +30,35 @@ uniform bool premul = false;
 // TARGET's warm glow outside the line, grown from the figure's alpha so it
 // follows the parts as they move. 0 = none (a PNG that carries its own).
 uniform float halo = 0.0;
+// Unsharp mask, in texture pixels. The rig's parts reach the screen through
+// two linear resamples (part -> rig viewport, viewport -> billboard), which
+// halve the edge contrast TARGET's own pixels carry: the cracks read thin
+// and dim. This puts it back. 0 = off.
+uniform float sharpen = 0.0;
+// TARGET's lava cracks read as wide channels with yellow-hot cores; through
+// the resamples they thin to lines. crack_grow spreads each crack's colour
+// over the plate pixels next to it (radius in texture pixels), crack_heat
+// lifts the brightest crack pixels toward TARGET's yellow core. 0 = off.
+uniform float crack_grow = 0.0;
+uniform float crack_px = 2.6;
+uniform float crack_heat = 0.0;
+uniform float crack_orange = 0.0;
+uniform float hot_glow = 0.0;
+uniform float hot_glow_px = 3.5;
+uniform vec3 crack_core = vec3(1.0, 0.82, 0.30);
+
+float hotness(vec4 c) {
+	if (c.a < 0.9) return 0.0;
+	vec3 r = c.rgb / c.a;
+	return smoothstep(0.78, 0.95, r.r) * smoothstep(0.38, 0.62, r.g) * smoothstep(0.30, 0.16, r.b);
+}
+
+float crackness(vec4 c) {
+	if (c.a < 0.9) return 0.0;
+	vec3 r = c.rgb / c.a;
+	// Hot orange-red: red high, blue low, red well above green.
+	return smoothstep(0.55, 0.8, r.r) * smoothstep(0.25, 0.1, r.b) * smoothstep(0.12, 0.3, r.r - r.g);
+}
 uniform float halo_px = 10.0;
 uniform vec3 halo_color = vec3(1.0, 0.674, 0.259);
 
@@ -98,6 +127,53 @@ void fragment() {
 		ALPHA = 1.0;
 	} else {
 		vec4 t = texture(tex, UV);
+		if (sharpen > 0.0) {
+			vec2 px = 1.0 / vec2(textureSize(tex, 0));
+			vec4 n = (texture(tex, UV + vec2(px.x, 0.0)) + texture(tex, UV - vec2(px.x, 0.0))
+				+ texture(tex, UV + vec2(0.0, px.y)) + texture(tex, UV - vec2(0.0, px.y))) * 0.25;
+			t = clamp(t + (t - n) * sharpen, vec4(0.0), vec4(1.0));
+			t.rgb = min(t.rgb, vec3(t.a));
+		}
+		if (crack_grow > 0.0 && t.a > 0.9) {
+			vec2 px = crack_px / vec2(textureSize(tex, 0));
+			vec4 best = vec4(0.0);
+			float bm = 0.0;
+			float bh = 0.0;
+			for (int i = 0; i < 8; i++) {
+				float ang = float(i) * 0.7854;
+				vec4 c = texture(tex, UV + vec2(cos(ang), sin(ang)) * px);
+				float m = crackness(c);
+				if (m > bm) { bm = m; best = c; }
+				bh = max(bh, hotness(c));
+			}
+			float own = crackness(t);
+			float ownh = hotness(t);
+			// Never over a light pixel: the cream line and the eyes' cores stay.
+			float light = smoothstep(0.45, 0.65, t.g / max(t.a, 1e-4));
+			float w = crack_grow * bm * (1.0 - own) * (1.0 - ownh) * (1.0 - light);
+			// One solid stroke: the fringe takes the crack's own colour.
+			t = mix(t, best, clamp(w, 0.0, 1.0));
+			// TARGET's limb cracks are orange, not deep red: lift green in the
+			// crack (its own and the grown fringe) toward orange.
+			float cm = max(own, w);
+			t.g = mix(t.g, max(t.g, t.r * 0.36), clamp(cm * crack_orange, 0.0, 1.0));
+			// The yellow cores spread too (TARGET's sternum Y is a wide fan).
+			float h = crack_heat * max(ownh, bh * 0.8 * (1.0 - light));
+			t.rgb = mix(t.rgb, crack_core * t.a, clamp(h, 0.0, 1.0));
+			// TARGET's hottest seams (the sternum Y) throw a soft gold glow over
+			// the plates round them: the yellow cores, blurred wide, added.
+			if (hot_glow > 0.0) {
+				float gsum = 0.0;
+				for (int i = 0; i < 12; i++) {
+					float ang = float(i) * 0.5236 + 0.26;
+					vec2 d = vec2(cos(ang), sin(ang)) * px / crack_px;
+					gsum += hotness(texture(tex, UV + d * hot_glow_px * 0.4)) * 0.5
+						+ hotness(texture(tex, UV + d * hot_glow_px)) * 0.5;
+				}
+				float gl = clamp(gsum / 12.0 * hot_glow, 0.0, 1.0) * (1.0 - light);
+				t.rgb = mix(t.rgb, crack_core * t.a, gl);
+			}
+		}
 		if (premul && t.a > 0.0) {
 			t.rgb /= t.a;
 		}

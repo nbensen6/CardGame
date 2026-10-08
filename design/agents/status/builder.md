@@ -13,16 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 17:56 EDT
+2026-10-08 18:32 EDT
 
-- **Did:** Jackal drawn at TARGET's size, place and colours; lava line raised; sternum seam restored.
-- **Worked?** Partly: in the jackal's outline the game is within ~12 levels of TARGET per pixel, but the grader still reads the cracks thinner. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-08-cracks-before.png]] then ![[frames/builder/2026-10-08-cracks-after.png]]
+- **Did:** sharpened the jackal and widened its cracks with gold cores and a sternum glow, in the sprite shader.
+- **Worked?** Partly: sharper and hotter chest, grader says closer but not 1:1. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-08-cracks2-before.png]] then ![[frames/builder/2026-10-08-cracks2-after.png]]
 - **Ask:** nothing
-- **Found:** Purple sky shows between the jackal's limbs where TARGET is near-black navy.
-- **Found:** Red bars and white specks where the jackal's legs meet the lava.
-- **Found:** "Jackal: TARGET's size in the square" and "Floor horizon" now measure at TARGET's (scale 0.350 vs 0.352, lava y 381); grade them next.
-- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-6 (each closer than before).
+- **Found:** the grader's verdicts on crack glow swung between "smear" and "too narrow" across rounds; stopped the item after R7 to spend the run on the next one.
+- **Found:** the HUD sits outside the centred square (boss bar cut, climb gauge and End Turn outside), named out of scope by every grader round.
 
 ## Notes
 
