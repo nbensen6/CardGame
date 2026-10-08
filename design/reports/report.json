@@ -1,11 +1,11 @@
 {
-  "updated": "Thu Oct 8, 2:51 AM ET",
-  "last_commit": "1e7d1d7",
+  "updated": "Thu Oct 8, 4:51 AM ET",
+  "last_commit": "cc399c2",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; 4 items await your look, 1 queued",
-      "state": "idle"
+      "value": "Waiting; all 5 items await your look",
+      "state": "waiting"
     },
     {
       "label": "Checker",
@@ -32,6 +32,26 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 3:15 AM",
+      "title": "Frog's hex pedestal and tiled floor",
+      "bullets": [
+        "Frog now stands on a plum hex pedestal",
+        "Floor cracks now form a hex tile grid",
+        "Floor seams still bolder than your drawing"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-pedestal-pair.png",
+          "caption": "Drawing vs game"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-pedestal-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 2:18 AM",
