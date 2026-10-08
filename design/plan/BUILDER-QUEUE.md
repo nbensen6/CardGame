@@ -18,10 +18,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-frogsize-after.png|420]] ^frog-and-its-rock-target-s-size-and-plac
 
-- [ ] **Stones: TARGET's slabs, shape and path 1:1.**
-      Look at the `--stones` pair. TARGET's six slabs are wide, thin, flat, irregular flagstones seen from slightly above, so their pale chipped top faces show, with a thin lighter side band and no dark ink line. Ours are thick boxy bricks seen nearly edge-on, with a dark outline. TARGET's path: the big bottom slab low on the floor left of the frog, the next one up and right over the lava line, then four smaller ones climbing to just under the sternum, overlapping the torso. Match each slab's shape, thickness, tilt, size, tones and position. If the procedural mesh cannot take TARGET's shapes, cut the six slabs out of TARGET.png and draw them as sprites, or model them.
-      **Done when** the `--stones` and `--square` pairs show no visible difference in the slabs.
-      Test: state=3d beast=cinder_jackal ^stones-target-s-slabs-shape-and-path-1-1
+- [ ] 👀 **Stones: TARGET's slabs, shape and path 1:1.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's slabs, shape and path 1:1.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-08-slabsprite-after.png|420]] ^stones-target-s-slabs-shape-and-path-1-1
 
 
 - [ ] 👀 **Stones: thin soft slabs, lower and spread like TARGET.**
@@ -94,6 +95,16 @@ run failed.
       TARGET's five cards span the square's middle (~x108-555 of 640) and are wider; the game's sit ~55px left of centre and narrower.
       **Done when** the `--square` and `--hand` pairs show the hand the same width and centred like TARGET's.
       Test: state=3d beast=cinder_jackal ^hand-centred-and-as-wide-as-target-s
+
+- [ ] **Floor horizon: the lava line at TARGET's height.**
+      In the `--square` pair TARGET's lava line and floor horizon sit about 55% down the square (~y380 game px); the game's sit ~40-55 px lower, so the bottom slab, drawn in TARGET's place, overlaps the lava band instead of the dark floor.
+      **Done when** the `--square` and `--stones` pairs show the lava line at TARGET's height, the bottom slab over dark floor.
+      Test: state=3d beast=cinder_jackal ^floor-horizon-the-lava-line-at-target-s-h
+
+- [ ] **Jackal: TARGET's size in the square.**
+      In the `--square` pair the game's jackal is drawn ~1.2x TARGET's (shoulders fill the square's width; ears to lava ~335 px against ~275), so slabs placed in TARGET's square sit lower on its body than TARGET's.
+      **Done when** the `--square` pair shows the jackal the same height, width and place as TARGET's.
+      Test: state=3d beast=cinder_jackal ^jackal-target-s-size-in-the-square
 
 
 ## Waiting on Nick

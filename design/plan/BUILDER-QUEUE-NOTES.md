@@ -2035,3 +2035,14 @@ Meshy: 0 credits.
 - **Places:** `adjust` (x right, y up, beast heights) now (0.13,0) (0.02,0.025) (0.015,0) (0.008,-0.012) (-0.01,-0.02) (-0.008,-0.03); widths 0.33/0.28/0.165/... Lowest slab now left of the Frog with a gap, a spaced diagonal up to the sternum.
 - Grader round 1 FAIL (lower walls still thick and dark, slabs overlapping in a column, lowest touching the Frog), round 2 PASS.
 - Test `staircase slabs` thickness bound changed to 0.15-0.25 of r. ALL TESTS PASSED. sprite_match not run (no drawn beast touched). Meshy: 0 credits.
+
+## Stones: TARGET's slabs, shape and path 1:1.
+
+2026-10-08 16:22 EDT, builder.
+- **Approach:** the six slabs are now TARGET's own pixels. `tools/cut_slabs.py` segments TARGET.png's grey slabs (low saturation, bright), smooths the edge at 4x with a soft grey-share score, bleeds colour under the transparent rim, and writes `game/assets/3d/slabs/slab_0..5.png` (0 lowest) at native size. `stair_slab_sprite` draws slab k as an unshaded billboard Sprite3D (`STAIR_SLAB_TOP` 0.35 puts the top face at the stone's origin, so hunters still land on it); the procedural mesh stays as the hidden body. Goblin's line flips the picture.
+- **Placement:** STAIRCASE widths 0.248/0.221/0.147/0.115/0.13/0.103 and `adjust` refit so each sprite's centre lands on TARGET's centre mapped into the square (x 280+0.703t, y 0.703t): measured (534,398) (568,343) (624,320) (671,301) (698,281) (650,264) vs wanted (534,397) (568,344) (624,320) (671,301) (698,281) (650,264). `adjust` moves ~480 px per beast height on screen.
+- **vs_target `--stones`:** its shot box was fitted to the beast, not the square, so it showed the game ~1.2x larger and disagreed with `--square` (graders alternated between the two). The shot box is now the target box mapped through the square (0.3594,0.33,0.5891,0.60).
+- **Grader:** R1 FAIL (placement vs lava/frog in --stones), R2 FAIL (beast-relative refit too big in --square), R3 FAIL (jagged edges, over-lava), R4 FAIL (square placement), R5 FAIL (--stones crop inconsistent with frame; soft edges), R6 PASS after the native-res recut and the square-mapped --stones crop.
+- Root cause left: the game's jackal draws ~1.2x TARGET's and its lava horizon ~40-55 px lower; queued both.
+- Tests: ALL TESTS PASSED. Meshy: 0 credits.
+

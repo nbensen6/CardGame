@@ -34,8 +34,11 @@ REGIONS = {
     "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.12, 0.68, 0.80, 1.0)},
     # the centred square of a 1280x720 shot: x 280..1000
     "--square": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.21875, 0.0, 0.78125, 1.0)},
-    # the slab staircase, from beside the frog's rock up to the sternum
-    "--stones": {"target": (0.25, 0.33, 0.66, 0.60), "shot": (0.31, 0.33, 0.62, 0.66)},
+    # the slab staircase, from beside the frog's rock up to the sternum. The
+    # shot box is the target box mapped through the --square test (x 280 +
+    # 0.703 t, y 0.703 t), so the close-up zooms the same place 1:1 (builder
+    # 2026-10-08; the older box was fitted to the beast, not to the square).
+    "--stones": {"target": (0.25, 0.33, 0.66, 0.60), "shot": (0.3594, 0.33, 0.5891, 0.60)},
 }
 
 

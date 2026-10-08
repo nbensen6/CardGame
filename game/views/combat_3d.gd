@@ -7097,10 +7097,10 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.33, 0.28, 0.165, 0.125, 0.144, 0.105],
+		"width": [0.248, 0.221, 0.147, 0.115, 0.13, 0.103],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.13, 0.0), Vector2(0.02, 0.025), Vector2(0.015, 0.0),
-			Vector2(0.008, -0.012), Vector2(-0.01, -0.02), Vector2(-0.008, -0.03)]},
+		"adjust": [Vector2(0.215, 0.106), Vector2(0.045, 0.11), Vector2(-0.002, 0.079),
+			Vector2(-0.042, 0.061), Vector2(-0.066, 0.053), Vector2(-0.037, 0.049)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
@@ -7442,6 +7442,42 @@ static func pedestal_mesh(r: float, h: float, depth: float) -> ArrayMesh:
 
 ## The slab drop shadow's soft dark ellipse, built once.
 var _slab_shadow: Texture2D = null
+
+## TARGET.png's six staircase slabs, cut out by tools/cut_slabs.py: 0 the
+## lowest, 5 the top. The game draws these pictures, not a modelled stone
+## (Nick, 2026-10-08: "build the concept 1:1"; every procedural flagstone
+## pass read as bricks or plates, never TARGET's slabs).
+const STAIR_SLAB_TEX := [
+	preload("res://assets/3d/slabs/slab_0.png"), preload("res://assets/3d/slabs/slab_1.png"),
+	preload("res://assets/3d/slabs/slab_2.png"), preload("res://assets/3d/slabs/slab_3.png"),
+	preload("res://assets/3d/slabs/slab_4.png"), preload("res://assets/3d/slabs/slab_5.png")]
+## Where a slab's top face sits in its picture, down from the top edge, as a
+## fraction of the picture's height: the stone's origin (a hunter's feet).
+const STAIR_SLAB_TOP := 0.35
+## The picture's width over the slab's top width (2 r): the cut-out carries
+## the slab's chipped ends and a few pixels of feather.
+const STAIR_SLAB_SPAN := 1.0
+
+
+## Slab `k`'s picture as a camera-facing sprite, `r` its half-width, mirrored
+## for the Goblin's line (`side` > 0). Unshaded: TARGET's tones, as drawn.
+static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
+	var tex: Texture2D = STAIR_SLAB_TEX[clampi(k, 0, STAIR_SLAB_TEX.size() - 1)]
+	var sp := Sprite3D.new()
+	sp.name = "SlabPicture"
+	sp.texture = tex
+	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	sp.shaded = false
+	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
+	sp.transparent = true
+	sp.flip_h = side > 0.0
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(tex.get_width())
+	sp.offset = Vector2(0.0, -float(tex.get_height()) * (0.5 - STAIR_SLAB_TOP))
+	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# Behind a hunter standing on it, whatever the transparent sort says.
+	sp.sorting_offset = -HUNTER_HEIGHT
+	return sp
 func _slab_shadow_tex() -> Texture2D:
 	if _slab_shadow == null:
 		var g := Gradient.new()
@@ -7703,6 +7739,12 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		# a mid-grey side. Lit, the tops blew out under the warm key and the
 		# sides fell to navy-black (checker iter 02, 2026-10-07).
 		body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+		if radius > 0.0 and _staircase():
+			# TARGET 1:1 (builder 2026-10-08): the staircase draws TARGET's own
+			# six slabs, cut from TARGET.png (tools/cut_slabs.py). The mesh
+			# stays as the slab's invisible body; the picture is the sprite.
+			body.visible = false
+			stone.add_child(stair_slab_sprite(index, rock_radius, side))
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)

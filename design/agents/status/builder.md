@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T15:22
-working_on: "Frog and its rock: TARGET's size and place."
+updated: 2026-10-08T16:22
+working_on: "Stones: TARGET's slabs, shape and path 1:1."
 ---
 
 # builder
@@ -13,13 +13,16 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 15:22 EDT
+2026-10-08 16:22 EDT
 
-- **Did:** Shrank the Frog, reshaped its pedestal to TARGET's faceted column, slimmed its HP bar, lowered and shrank the hand.
-- **Worked?** Yes: frog, pedestal, HP bar and card-top line now match TARGET's place and size. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-frogsize-before.png]] then ![[frames/builder/2026-10-08-frogsize-after.png]]
+- **Did:** Replaced the procedural staircase with TARGET's own six slabs, cut out and placed in TARGET's square.
+- **Worked?** Yes: shape, tone and place of all six slabs match TARGET within ~3 px. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-08-slabsprite-before.png]] then ![[frames/builder/2026-10-08-slabsprite-after.png]]
 - **Ask:** nothing
-- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-3 (pedestal shape, then cropped cards), PASS round 4.
+- **Found:** The lava horizon sits ~40-55 px lower than TARGET's, so the bottom slab overlaps the lava band.
+- **Found:** The jackal draws ~1.2x TARGET's size in the square.
+- **Found:** `vs_target --beast`/`--hand` crops are beast-fitted, not square-mapped like `--stones` now.
+- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-5, PASS round 6.
 
 ## Notes
 
