@@ -181,3 +181,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the background (both #1). `cliff_flat.gdshader`'s fade of the far wall into the sky now starts nearer (`far_from` 0.2→0.1, `far_to` 0.9→0.6), goes all the way (`far_mix` 0.7→1.0) and spans most of the view (`lat_from/to` 0.6/0.95 → 1.0/1.45): the wall behind the jackal is sky now, only the two flank formations stay rock. `lit_at` 0.6→0.7, so fewer planes light and the flanks read as dark masses.
 - Tests: ALL TESTS PASSED. Shader only.
 - Meshy: 0 credits.
+
+### iter 24
+- Critic A top 3: [MAJOR] framing — jackal ~43% of the width; [MAJOR] cliffs too many, tall, light-edged; [MAJOR] stones compressed onto the belly, low two small and floating.
+- Critic B top 3 (no MAJOR at all): [MODERATE] fist fire a round ball; [MODERATE] the lower body narrows into an hourglass above the lava; [MODERATE] stones: upper four bunched, low two should be ~1.5x and thicker.
+- Changed: the stones (A #3, B #3 — the highest pair both name; framing is A only, B passes it). Low two widths 0.17/0.165 → 0.215/0.205 (iter 22 had shrunk them for the clip; this splits the difference and does not clip). s2/s3 y adjust 0.07/0.05 → 0.035/0.03, so the upper four spread down the body instead of bunching (y 0.83/0.76/0.69/0.63 jackal-heights).
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
