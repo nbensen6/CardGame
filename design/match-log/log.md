@@ -104,3 +104,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the belly smudge (A #2, B #1). Iter 11's inpaint filled the slab holes with a dark blur. `beast_rig.py` now lays TARGET's own cracked rock over each hole from the cleanest sideways/diagonal offset (never straight up — that lands on the sternum and paints a second Y; a yellow-heat penalty too), feathered 7 px into the inpaint. Regenerated `cinder_jackal_2d.png` / `_torso.png`.
 - Tests: ALL TESTS PASSED. Art only.
 - Meshy: 0 credits.
+
+### iter 13
+- Critic A top 3: [MAJOR] lower-body artifacts — black shards and a dark gap under the stones, white fringe on the right arm/leg; [MAJOR] staircase steep and bunched over the belly; [MAJOR] frog too high and big, pedestal invisible.
+- Critic B top 3: [MAJOR] HUD ~1.5–2x too big, hand covers the pedestal; [MAJOR] hand flat, glowing; [MAJOR] lower torso fades to a dark blob with no cracks or lava up-light.
+- Changed: the dark lower body (A #1, B #3 — highest combined rank). TARGET's up-light lives in the sprite's last rows, which the floor's lava strip hides in the fight, so the lower torso read unlit. `beast_rig.py` now screens a warm ramp (`UPLIGHT` 0.75 of (255,105,25), over the 110 px above the cut) onto the body, so the glow starts above what the floor hides. Regenerated the rig PNGs. The "black shards" are the cliffs seen through the gap between the flank and the arm (TARGET's own silhouette); the white specks are falling ember particles — both left.
+- Tests: ALL TESTS PASSED. Art only.
+- Meshy: 0 credits.

@@ -47,6 +47,9 @@ FIGURE_X = (140, 830)
 # Where TARGET's stones cross the body.
 STONE_BOX = [(330, 355), (648, 355), (648, 530), (330, 530)]
 INPAINT_STONES = True
+UPLIGHT = 0.75
+UPLIGHT_SPAN = 110
+UPLIGHT_COLOR = (255, 105, 25)
 ROCK_DARK = (52, 26, 22)
 # Each of TARGET's slabs over the body, (x0, y0, x1, y1), read off a 3x crop
 # of TARGET.png. The grey test alone missed their orange-lit undersides and
@@ -243,6 +246,17 @@ def paint_hidden(T, m, line, walls):
             filled[ys, xs] = np.where(use, filled[ys, xs] * (1 - a) + src_px * a, filled[ys, xs])
         patch[hard] = np.clip(filled[hard], 0, 255).astype(np.uint8)
     out = patch.astype(float)
+    # TARGET's lava up-light: the bottom of the torso glows orange into the
+    # cut. In the fight the floor's lava strip hides the sprite's last rows,
+    # where TARGET's own glow lives, so the lower body read as an unlit dark
+    # blob (r2 iter 13, both critics). Screen a warm ramp over the lower body
+    # so the glow starts above what the floor hides.
+    if UPLIGHT:
+        yy = np.arange(m.shape[0], dtype=float)[:, None]
+        ramp = np.clip((yy - (CUT - UPLIGHT_SPAN)) / UPLIGHT_SPAN, 0, 1) ** 1.6 * UPLIGHT
+        ramp = np.where(m, ramp, 0.0)[..., None]
+        warm = np.array(UPLIGHT_COLOR, float)
+        out = 255.0 - (255.0 - out) * (1.0 - ramp * warm / 255.0)
     # The silhouette's own line, wherever the cut-out has none (behind the
     # stones, where the walls run): a band as wide as TARGET's rim.
     band = m & ~ndi.binary_erosion(m, iterations=5)
