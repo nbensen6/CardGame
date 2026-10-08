@@ -58,10 +58,14 @@ func _ready() -> void:
 		mat.set_shader_parameter("tex", tex)
 		mat.set_shader_parameter("premul", true)
 		mat.set_shader_parameter("sharpen", RIG_SHARPEN)
+		mat.set_shader_parameter("footprint", RIG_SUPERSAMPLE > 1.0)
 		mat.set_shader_parameter("crack_grow", RIG_CRACK_GROW)
 		mat.set_shader_parameter("crack_heat", RIG_CRACK_HEAT)
 		mat.set_shader_parameter("crack_orange", RIG_CRACK_ORANGE)
 		mat.set_shader_parameter("hot_glow", RIG_HOT_GLOW)
+		# The crack radii are in texture pixels; the viewport is supersampled.
+		mat.set_shader_parameter("crack_px", RIG_CRACK_PX * RIG_SUPERSAMPLE)
+		mat.set_shader_parameter("hot_glow_px", RIG_HOT_GLOW_PX * RIG_SUPERSAMPLE)
 		if down > 1.0:
 			# halo_px is in texture pixels.
 			var hp = mat.get_shader_parameter("halo_px")
@@ -112,21 +116,29 @@ static func _mipmap(sp: Sprite2D) -> void:
 ## 1 / 0.35 there, rendering it 1:1 with the screen; less on a taller
 ## window so the line stays sharp there.
 const RIG_SCREEN_SCALE := 0.35
-## The billboard's unsharp mask (drawn_sprite.gdshader `sharpen`): the two
-## resamples between the cut parts and the screen halve TARGET's edge
-## contrast; this restores it (Laplacian inside the body, TARGET 9.8).
-const RIG_SHARPEN := 2.2
+## How many rig pixels per screen pixel: the viewport renders this much
+## above screen size and the billboard box-filters each pixel's footprint
+## (drawn_sprite.gdshader `footprint`), so the parts reach the screen as
+## one clean downsample of TARGET's pixels, not two soft resamples.
+const RIG_SUPERSAMPLE := 2.0
+## The billboard's unsharp mask (drawn_sprite.gdshader `sharpen`). Off since
+## the footprint filter: at 2.2 it rang round every crack (an orange rim on
+## both sides of a dark middle, 2026-10-08 run 3).
+const RIG_SHARPEN := 0.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.
-const RIG_CRACK_GROW := 0.85
-const RIG_CRACK_HEAT := 0.9
+const RIG_CRACK_GROW := 0.95
+const RIG_CRACK_HEAT := 1.0
 const RIG_CRACK_ORANGE := 0.0
-const RIG_HOT_GLOW := 0.55
+const RIG_HOT_GLOW := 0.6
+## Their reach, in screen pixels.
+const RIG_CRACK_PX := 1.5
+const RIG_HOT_GLOW_PX := 5.0
 func rig_downsample() -> float:
 	var h := 720.0
 	if is_inside_tree():
 		h = maxf(get_viewport().get_visible_rect().size.y, 1.0)
-	return clampf(720.0 / (RIG_SCREEN_SCALE * h), 1.0, 4.0)
+	return clampf(720.0 / (RIG_SCREEN_SCALE * h * RIG_SUPERSAMPLE), 1.0, 4.0)
 
 
 ## Where a point on the rig canvas sits in this node's space. Static so the

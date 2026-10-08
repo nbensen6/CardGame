@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T17:56
+updated: 2026-10-08T19:34
 working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
@@ -13,15 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 18:51 EDT
+2026-10-08 19:34 EDT
 
-- **Did:** jackal sharpened with wider gold-cored cracks; fist fire is now TARGET's own flame, calmer flicker.
-- **Worked?** Partly: both closer per grader, neither 1:1. Cracks VERDICT: FAIL; fist fire VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-08-fistfire2-before.png]] then ![[frames/builder/2026-10-08-fistfire2-after.png]]
+- **Did:** jackal cracks drawn solid and wider through a cleaner downsample, hot cores no longer capped dim.
+- **Worked?** Partly: grader says the sternum moved toward TARGET, limb cracks still read thin. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-08-cracks3-before.png]] then ![[frames/builder/2026-10-08-cracks3-after.png]]
 - **Ask:** nothing
-- **Found:** scene bloom washes the jackal's fire and cracks into soft blobs; raising the glow threshold had no visible effect.
-- **Found:** the HUD sits outside the centred square (boss bar cut, climb gauge and End Turn outside); every grader round names it.
-- **Found:** the crack grader rounds swung between "smear" and "too narrow"; stopped that item after R7 to work the next.
+- **Found:** with every crack knob off the jackal's pixels already match TARGET's; graders still call them thin, so shader tweaks have run out.
+- **Found:** the HUD still sits outside the centred square; every grader round names it.
 
 ## Notes
 

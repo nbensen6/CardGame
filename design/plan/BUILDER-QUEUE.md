@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R7 (2026-10-08 run 2): limb/shoulder cracks still read thin and soft with no yellow core, chest bloom too soft, sternum yellow should be a compact patch fading to orange below the pecs; the drawn_sprite crack_* knobs in drawn_rig.gd are the levers (graders R4-R7 swung between 'smear' and 'too narrow').
+      Next pass: grader R3 (2026-10-08 run 3): limb cracks still read thin and red with no yellow core, sternum Y half TARGET's size with no glow into the plates and no thick yellow seam to the stones; registered pixels already match TARGET (crack/hot coverage within 1-5%), so the next try is painting TARGET's look into the torso/arm part PNGs (tools/beast_rig.py) rather than more shader knobs.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum

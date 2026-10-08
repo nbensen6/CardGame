@@ -35,6 +35,11 @@ uniform float halo = 0.0;
 // halve the edge contrast TARGET's own pixels carry: the cracks read thin
 // and dim. This puts it back. 0 = off.
 uniform float sharpen = 0.0;
+// Box-filter each screen pixel's whole footprint in the texture (3x3 taps
+// across dFdx/dFdy) instead of one bilinear tap. The rig renders above
+// screen size so its parts are drawn sharp; this brings it down without
+// skipping texels (thin cracks) or the blur of a mip chain. false = one tap.
+uniform bool footprint = false;
 // TARGET's lava cracks read as wide channels with yellow-hot cores; through
 // the resamples they thin to lines. crack_grow spreads each crack's colour
 // over the plate pixels next to it (radius in texture pixels), crack_heat
@@ -75,7 +80,7 @@ float glow_at(vec2 uv) {
 
 // Emission for a texel the screen should show as `want` (sRGB 0..1):
 // trilinear in the measured table, then the table's curve back to linear.
-const float EMIT_CAP = 1.6;
+const float EMIT_CAP = 2.2;
 vec3 emit3(vec3 want) {
 	vec3 f = clamp(want, 0.0, 1.0) * float(LUT3_N - 1);
 	ivec3 lo = ivec3(floor(f));
@@ -126,7 +131,20 @@ void fragment() {
 		ALBEDO = UV.y < 0.4 ? vec3(UV.x) : (UV.y < 0.6 ? vec3(1.0) : vec3(UV.x * 0.25));
 		ALPHA = 1.0;
 	} else {
-		vec4 t = texture(tex, UV);
+		vec4 t;
+		if (footprint) {
+			vec2 dx = dFdx(UV);
+			vec2 dy = dFdy(UV);
+			t = vec4(0.0);
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					t += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
+				}
+			}
+			t /= 9.0;
+		} else {
+			t = texture(tex, UV);
+		}
 		if (sharpen > 0.0) {
 			vec2 px = 1.0 / vec2(textureSize(tex, 0));
 			vec4 n = (texture(tex, UV + vec2(px.x, 0.0)) + texture(tex, UV - vec2(px.x, 0.0))
@@ -138,15 +156,21 @@ void fragment() {
 			vec2 px = crack_px / vec2(textureSize(tex, 0));
 			vec4 best = vec4(0.0);
 			float bm = 0.0;
+			float bs = 0.0;
 			float bh = 0.0;
 			// A crack is a line between dark plates; the fist's fire is a broad
 			// bright field. Only pixels with dark rock within reach are cracks.
 			float plate = 0.0;
-			for (int i = 0; i < 8; i++) {
-				float ang = float(i) * 0.7854;
-				vec4 c = texture(tex, UV + vec2(cos(ang), sin(ang)) * px);
+			for (int i = 0; i < 16; i++) {
+				float ang = float(i) * 0.7854 + (i >= 8 ? 0.3927 : 0.0);
+				// Two rings (half and full reach), so the grown fringe is solid
+				// from the crack out, not a parallel line with a gap.
+				vec4 c = texture(tex, UV + vec2(cos(ang), sin(ang)) * px * (i >= 8 ? 0.5 : 1.0));
+				// The brightest crack pixel in reach (the orange core, not the
+				// deep red edge), so the widened channel keeps the core's colour.
 				float m = crackness(c);
-				if (m > bm) { bm = m; best = c; }
+				float score = m * (0.3 + dot(c.rgb, vec3(0.3, 0.59, 0.11)));
+				if (score > bs) { bs = score; bm = m; best = c; }
 				bh = max(bh, hotness(c));
 				if (c.a > 0.9) plate = max(plate, smoothstep(0.32, 0.18, dot(c.rgb / c.a, vec3(0.3, 0.59, 0.11))));
 			}
@@ -159,7 +183,13 @@ void fragment() {
 			// Only onto the dark rock plates: the fire's dark red glow between
 			// its tongues is brighter red than any plate and must stay a gap.
 			float rock = smoothstep(0.55, 0.42, t.r / max(t.a, 1e-4));
-			float w = crack_grow * bm * (1.0 - own) * (1.0 - ownh) * (1.0 - light) * rock;
+			// Grow only where a neighbour is more crack than this pixel, by how
+			// much more: the crack's own soft edge fills in instead of gapping.
+			// A max filter: take the crack's colour wherever it is brighter than
+			// this pixel, so the channel widens solid from its core outwards.
+			float lt = dot(t.rgb, vec3(0.3, 0.59, 0.11));
+			float lb = dot(best.rgb, vec3(0.3, 0.59, 0.11));
+			float w = crack_grow * bm * smoothstep(0.0, 0.06, lb - lt) * (1.0 - light);
 			// One solid stroke: the fringe takes the crack's own colour.
 			t = mix(t, best, clamp(w, 0.0, 1.0));
 			// TARGET's limb cracks are orange, not deep red: lift green in the
@@ -167,6 +197,11 @@ void fragment() {
 			float cm = max(own, w);
 			t.g = mix(t.g, max(t.g, t.r * 0.36), clamp(cm * crack_orange, 0.0, 1.0));
 			// The yellow cores spread too (TARGET's sternum Y is a wide fan).
+			// TARGET's channels read orange at their middle, red only at the
+			// rim: the red-hot middle of each channel is lifted to orange.
+			vec3 tu = t.rgb / max(t.a, 1e-4);
+			float core = smoothstep(0.74, 0.92, tu.r) * smoothstep(0.16, 0.32, tu.g) * smoothstep(0.35, 0.2, tu.b) * plate;
+			t.rgb = mix(t.rgb, vec3(1.0, 0.58, 0.16) * t.a, clamp(core * crack_heat * 0.55, 0.0, 1.0));
 			float h = crack_heat * max(ownh, bh * 0.8 * (1.0 - light) * rock);
 			t.rgb = mix(t.rgb, crack_core * t.a, clamp(h, 0.0, 1.0));
 			// TARGET's hottest seams (the sternum Y) throw a soft gold glow over

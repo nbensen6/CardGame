@@ -2075,6 +2075,18 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-08-cracks2-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks2-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-08 19:34 EDT, builder (run 3). Not passed; item left open.
+
+- **The hollow cracks were the shader.** Close up, run 2's cracks were an orange rim on both sides of a dark middle: the 2.2 unsharp mask rang, and `crack_grow` gated its fringe by `(1 - own)` so a crack's own soft edge stayed dark. `sharpen` is off; grow is now a max filter (two rings, the brightest crack pixel in reach, applied where it is brighter than the pixel).
+- **Footprint filter.** New `footprint` in drawn_sprite.gdshader, `RIG_SUPERSAMPLE` 2 in drawn_rig.gd: the rig viewport renders 2x screen and the billboard box-filters each pixel's footprint (3x3 taps over dFdx/dFdy). One clean downsample instead of trilinear mips plus a bilinear tap. Crack radii now in screen px (`RIG_CRACK_PX` 1.5, `RIG_HOT_GLOW_PX` 5), scaled by the supersample.
+- **EMIT_CAP 1.6 -> 2.2.** The cap was crushing the hot cores' green (-26 against TARGET); now -7. Above 2.2 nothing changes.
+- **Channel middle to orange.** `crack_heat` 1.0 now also lifts the red-hot middle of each channel toward (1.0, 0.58, 0.16). The old heat test (r > 0.78, g > 0.38) almost never fired: the part PNGs' median crack is (0.82, 0.25, 0.05), i.e. TARGET's cracks are red-orange and only the sternum is yellow.
+- **Measured (chest, registered, TARGET/game):** crack coverage 0.123/0.176, hot 0.049/0.040, crack mean (214,83,32)/(219,84,31). With every knob off and the footprint filter alone the pixels match TARGET almost exactly (0.123/0.129, 0.049/0.050), and graders still call the cracks thin, so they judge the look, not the pixels.
+- **Grader:** R1 FAIL (footprint only), R2 FAIL (cap 2.2), R3 FAIL (max-filter grow + orange middle). No penalties; each said the sternum moved toward TARGET. Final: VERDICT: FAIL.
+- Graders again claim more hairline cracks than TARGET, which the cut-out cannot have.
+- Frames: ![[agents/frames/builder/2026-10-08-cracks3-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks3-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.
