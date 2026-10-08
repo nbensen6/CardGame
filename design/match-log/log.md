@@ -139,3 +139,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones' tone and size (A #2, B #1). Measured on screen the slab tops peaked at ~155 and the sides at ~89 against TARGET's ~193 / ~108: `SLAB_TOP_TONE` 0.54→0.69, `SLAB_SIDE_TONE` 0.42→0.48 (now ~193 / ~104). The two low slabs' widths 0.26/0.26 → 0.32/0.30.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 18
+- Critic A top 3: [MAJOR] framing — jackal ~38% of the width, empty cliff both sides; [MAJOR] floating black shards, stippled right edge, sky streaks; [MAJOR] right arm hangs straight, not bent forward.
+- Critic B top 3: [MAJOR] framing — jackal fills less, ~2x TARGET's air over the ears; [MAJOR] hand ~1.6x, flat, cropped; [MAJOR] stones: upper four a column, low two too big.
+- Changed: framing (A #1, B #1). `DRAWN_GAP_PER_HEIGHT` 1.05→0.9, `GROUND_VIEW_PITCH` -0.02→-0.06: the jackal draws ~13% bigger (ears→lava 47%→52% of the frame), ears 5.1%→3.5% under the top, lava 52.5%→55.6%. Tried a lower Frog too (lift -0.05/-0.08 → frog 63–65%): its HP bar went behind the hand, so the Frog stays at ~60% until the hand shrinks. The width share stays the 16:9-vs-square difference.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.

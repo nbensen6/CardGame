@@ -597,7 +597,11 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## 1.05 (r2 iter 03): both critics then called the jackal too small (~32% of
 ## the width against TARGET's ~64%). With pitch -0.02 and lift -0.015 it
 ## grows ~18%: ears ~3% under the top, lava ~52%, frog ~60%.
-const DRAWN_GAP_PER_HEIGHT := 1.05
+## 0.9 with pitch -0.06 (r2 iter 18): both critics called the jackal too
+## small with too much air over the ears. ~13% bigger: ears ~3.5% under the
+## top, lava ~55.6%. A lower Frog (more negative lift) hid its HP bar behind
+## the hand, so the Frog stays at ~60%.
+const DRAWN_GAP_PER_HEIGHT := 0.9
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -679,7 +683,7 @@ const ROR2_PIVOT_OFFSET := 1.37
 const ROR2_CAMERA_DEPTH := 10.0
 ## The aim, in hunter heights above the feet, at rest AND climbing: RoR2's pivot.
 const GROUND_VIEW_EYE := (ROR2_CAPSULE_HEIGHT * 0.5 + ROR2_PIVOT_OFFSET) / ROR2_CAPSULE_HEIGHT   # 1.25
-const GROUND_VIEW_PITCH := -0.02   # 0.03 in r2 iter 01-02, 0.08 before; level-to-slightly-up drops the lava band to TARGET's waist. 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
+const GROUND_VIEW_PITCH := -0.06   # -0.02 in r2 iter 03-17, 0.03 in r2 iter 01-02, 0.08 before; level-to-slightly-up drops the lava band to TARGET's waist. 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
 ## Stand-off at the top hold. The hunter stands in front of the face there
 ## (top_hold_z_for), so the shot is of the face: further back than the
 ## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.
