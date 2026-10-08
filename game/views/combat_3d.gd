@@ -533,8 +533,9 @@ const SCENE_SHIFT := 0.0
 ## 0.03 (checker r2 iter 01, 2026-10-07; was 0.07): less lift drops the Frog
 ## toward TARGET's lower third without moving the far jackal much.
 ## -0.015 (r2 iter 03): the lens rises a touch to keep the Frog low under
-## the larger jackal.
-const GROUND_LIFT := -0.015
+## the larger jackal. -0.05 (r2 iter 20): with the hand shrunk
+## (HAND_REST_SCALE) the Frog sits at ~63%, its rock and HP bar clear of it.
+const GROUND_LIFT := -0.05
 ## Lowest the camera may sit, in world units. Below this it is under the ground
 ## plane and the shot looks up through the floor.
 const CAMERA_FLOOR := 0.5
@@ -8726,6 +8727,15 @@ const FAN_RISE := 96.0        # px a hovered card lifts, clear of the deep tuck
 ## size and THAT is where the rules become readable. Their cards feel larger
 ## because the one you are looking at is.
 const FAN_HOVER_SCALE := 1.34
+## A resting card's scale in the fan (checker r2 iter 20). TARGET's hand is
+## about a fifth of the frame, ours took nearly a third and hid the Frog's
+## pedestal and HP bar behind it: both critics put the Frog's rock MAJOR.
+## Scaled about the same low pivot as the fan's tilt, so the rest pose sinks
+## as it shrinks; a hovered card still grows to FAN_HOVER_SCALE.
+const HAND_REST_SCALE := 0.8
+## Px the shrunken fan is lifted back up, so its name plates still clear the
+## bottom edge where TARGET's sit.
+const HAND_REST_LIFT := 22.0
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that
@@ -8767,7 +8777,7 @@ func _layout_hand() -> void:
 	if n == 0:
 		return
 	var w: float = maxf((cards[0] as Control).custom_minimum_size.x, 60.0)
-	var step := w * FAN_OVERLAP
+	var step := w * FAN_OVERLAP * HAND_REST_SCALE
 	# Squeeze further if the hand is wider than the band it has to live in, so a
 	# big hand overlaps more rather than running off the screen.
 	#
@@ -8790,7 +8800,7 @@ func _layout_hand() -> void:
 	# 2026-09-22, after Take Aim drew a sixth card).
 	var h: float = (cards[0] as Control).custom_minimum_size.y
 	var overhang: float = h * 1.35 * sin(mid * FAN_TILT)
-	step = hand_fan_step(n, w, maxf(room - 2.0 * overhang, w), step)
+	step = hand_fan_step(n, w * HAND_REST_SCALE, maxf(room - 2.0 * overhang, w), step)
 	# Desktop tucks DEEP - at rest you see the name and the art and the rules
 	# are below the screen edge, which is precisely the Slay the Spire hand:
 	# their resting cards show the top half and nothing else, and that is why
@@ -8806,19 +8816,21 @@ func _layout_hand() -> void:
 		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
-		var rest := Vector2(hand_card_x(i, n, w, step, room), tuck + absf(off) * FAN_DROP)
+		var rest := Vector2(hand_card_x(i, n, w, step, room),
+				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE)
 		c.position = rest - Vector2(0.0, lift)
 		# A raised card keeps its resting spot as hover area (CardView.hover_hold):
-		# the resting pose's global transform, tilt and all.
+		# the resting pose's global transform, tilt, scale and all.
 		if c is CardView:
-			var pose := Transform2D(off * FAN_TILT, rest + c.pivot_offset) * Transform2D(0.0, -c.pivot_offset)
+			var pose := Transform2D(off * FAN_TILT, Vector2.ONE * HAND_REST_SCALE, 0.0, rest + c.pivot_offset) \
+					* Transform2D(0.0, -c.pivot_offset)
 			(c as CardView).hover_hold = (_hand_row.get_global_transform() * pose) if raised else null
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
 		c.rotation = 0.0 if raised else off * FAN_TILT
 		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
 		# instead of swelling in all directions and shoving its neighbours.
-		c.scale = (Vector2.ONE * FAN_HOVER_SCALE) if raised else Vector2.ONE
+		c.scale = Vector2.ONE * (FAN_HOVER_SCALE if raised else HAND_REST_SCALE)
 		# The panel stays on the card always; the TUCK is what hides it at
 		# rest, exactly as in the reference. Toggling visibility instead made a
 		# resting card read as borderless full art (Nick's screenshots).

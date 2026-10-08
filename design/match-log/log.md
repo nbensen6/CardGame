@@ -153,3 +153,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (B #1, A #3 — highest combined rank). Iter 18's bigger jackal left the slabs ~1.35x TARGET's width against it (s0 0.44 vs 0.32, s1 0.37 vs 0.28, s2 0.24 vs 0.17, s3 0.19 vs 0.13 jackal-heights); widths of s0–s3 → 0.23/0.225/0.125/0.094, now 0.28/0.28/0.14/0.13. And the staircase slabs no longer spin in place (`rotation.y += delta*0.25`): turning, their hex outlines read as tilted, overlapping plates; TARGET's lie still. `vs_target.py --beast` crop widened to the larger jackal (x 0.26–0.76, y to 0.60).
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 20
+- Critic A top 3: [MAJOR] framing — jackal ~43% of the width, frog up at the lava line not in the lower third; [MAJOR] HUD/hand oversized; [MAJOR] frog pedestal invisible, HP bar boxed.
+- Critic B top 3: [MAJOR] frog too high, on the lava band, pedestal hidden; [MODERATE] cracks thin and red; [MODERATE] fist fire a disc.
+- Changed: the Frog and its rock (A #3 + the frog half of A #1, B #1). The rock was hidden by a hand ~1.6x TARGET's size, which is also what pinned the Frog high. New `HAND_REST_SCALE` 0.8 (+ `HAND_REST_LIFT` 22 px): resting cards draw at 0.8 about the fan's low pivot, the hover hit-area pose carries the same scale, a hovered card still grows to 1.34. Then `GROUND_LIFT` -0.015→-0.05: the Frog drops to ~63% of the frame (TARGET ~64%) with its faceted rock and HP bar clear above the cards.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs; cards still play by click.
+- Meshy: 0 credits.
