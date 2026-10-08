@@ -69,8 +69,18 @@ def main():
     region = REGIONS[flags[0]] if flags and flags[0] in REGIONS else REGIONS["--full"]
 
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-    tgt = crop(Image.open(os.path.join(root, TARGET)).convert("RGB"), region["target"])
-    shot = crop(Image.open(paths[0]).convert("RGB"), region["shot"])
+    full = Image.open(os.path.join(root, TARGET)).convert("RGB")
+    shot_full = Image.open(paths[0]).convert("RGB")
+    # Same detail on both sides (builder 2026-10-08): 1:1 means TARGET in the
+    # shot's centred square, so TARGET is first brought to that square's
+    # pixels (720 for a 1280x720 shot). Cropped from its 1024 original, a
+    # close-up showed TARGET with ~1.4x the game's resolution and every
+    # line in the game half read thinner and softer than the same pixels are.
+    sq = min(shot_full.size)
+    if full.height > sq:
+        full = full.resize((int(full.width * sq / full.height), sq), Image.LANCZOS)
+    tgt = crop(full, region["target"])
+    shot = crop(shot_full, region["shot"])
 
     # one height, so a line weight on the left means the same as on the right
     h = 640

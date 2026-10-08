@@ -33,6 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
+      Next pass: grader R6 still reads the arm/thigh cracks thinner and redder and wants a wider yellow fan at the sternum Y; the game's pixels inside the outline are TARGET's within ~12 levels (see notes), so check the hot-core saturation (game 247,190,91 vs 251,203,69) and the outline's soft halo first, not repainting the cracks.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
@@ -107,6 +108,16 @@ run failed.
       **Done when** the `--square` pair shows the jackal the same height, width and place as TARGET's.
       Test: state=3d beast=cinder_jackal ^jackal-target-s-size-in-the-square
 
+
+- [ ] **Gaps between the jackal's limbs: near-black, not purple sky.**
+      Between the legs and under the arms TARGET shows near-black navy rock; the game shows the purple sky through them.
+      **Done when** the `--square` and `--beast` pairs show no visible difference in the gaps between the jackal's limbs.
+      Test: state=3d beast=cinder_jackal ^gaps-between-the-jackal-s-limbs-near-bla
+
+- [ ] **Jackal's feet in the lava: no red bars or white specks.**
+      Where the legs meet the lava TARGET's glow fades softly; the game shows hard red bars and white specks at the cut.
+      **Done when** the `--beast` pair shows no visible difference where the legs meet the lava.
+      Test: state=3d beast=cinder_jackal ^jackal-s-feet-in-the-lava-no-red-bars-or
 
 ## Waiting on Nick
 

@@ -47,7 +47,19 @@ FIGURE_X = (140, 830)
 # Where TARGET's stones cross the body.
 STONE_BOX = [(330, 355), (648, 355), (648, 530), (330, 530)]
 INPAINT_STONES = True
-UPLIGHT = 0.75
+# 2026-10-08 (queue "Cracks: wide hot cores and a long sternum seam"): the
+# fight now draws the jackal at TARGET's size and place and TARGET's own
+# slabs exactly over TARGET's stones, so the body only has to be filled
+# where a stone's own pixels are. The wide fills (borrowed blocks and the
+# inpainted STONES rects) wiped out TARGET's sternum seam between the
+# stones and read as a dark smudge round them. TIGHT keeps every TARGET
+# pixel that is not stone and inpaints only the stones, grown a little.
+TIGHT = True
+TIGHT_GROW = 3
+# 0 since 2026-10-08: the fight draws the jackal at TARGET's place, its cut
+# on TARGET's lava line, so TARGET's own glow rows show and the ramp only
+# hazed the hips orange (grader, "Cracks: wide hot cores").
+UPLIGHT = 0.0
 UPLIGHT_SPAN = 110
 UPLIGHT_COLOR = (255, 105, 25)
 ROCK_DARK = (52, 26, 22)
@@ -184,6 +196,13 @@ def paint_hidden(T, m, line, walls):
     rects = np.zeros_like(m)
     for x0, y0, x1, y1 in STONES:
         rects[y0:y1, x0:x1] = True
+    if TIGHT:
+        stone = ndi.binary_dilation(stone, iterations=TIGHT_GROW) & m
+        rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
+        src = np.clip(T, 0, 255).astype(np.uint8).copy()
+        hole = stone & ~rim
+        out = cv2.inpaint(src, hole.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA).astype(float)
+        return _finish_body(out, T, m, line, walls, stone)
     stone = (ndi.binary_dilation(stone, iterations=6) | ndi.binary_dilation(rects, iterations=3)) & m
     edge = m & ~ndi.binary_erosion(m, iterations=6)
     clean = m & ~stone & ~edge
@@ -267,6 +286,10 @@ def paint_hidden(T, m, line, walls):
             filled[ys, xs] = np.where(use, filled[ys, xs] * (1 - a) + src_px * a, filled[ys, xs])
         patch[hard] = np.clip(filled[hard], 0, 255).astype(np.uint8)
     out = patch.astype(float)
+    return _finish_body(out, T, m, line, walls, stone)
+
+
+def _finish_body(out, T, m, line, walls, stone):
     # TARGET's lava up-light: the bottom of the torso glows orange into the
     # cut. In the fight the floor's lava strip hides the sprite's last rows,
     # where TARGET's own glow lives, so the lower body read as an unlit dark

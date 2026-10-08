@@ -607,7 +607,15 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## small with too much air over the ears. ~13% bigger: ears ~3.5% under the
 ## top, lava ~55.6%. A lower Frog (more negative lift) hid its HP bar behind
 ## the hand, so the Frog stays at ~60%.
-const DRAWN_GAP_PER_HEIGHT := 0.9
+## 1.21 (builder 2026-10-08, TARGET 1:1): with the pitch at 0.012 the jackal
+## drew 1.17x TARGET's and its cut sat 40 px under TARGET's lava line; at 1.21
+## its rig canvas reaches the screen at 0.350 (TARGET: 0.352) with the ears
+## at TARGET's row. DRAWN_SHIFT_PX then lays it on TARGET's columns.
+const DRAWN_GAP_PER_HEIGHT := 1.21
+## A drawn beast's slide, in its rig-canvas pixels (x right, y up): where TARGET draws the figure in the square, once the camera is
+## right for everything else (builder 2026-10-08, "Cracks: wide hot cores";
+## with the gap and pitch below, the jackal drew 27 px right of TARGET's).
+const DRAWN_SHIFT_PX := {"cinder_jackal": Vector2(-82.0, 43.0)}
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -689,7 +697,7 @@ const ROR2_PIVOT_OFFSET := 1.37
 const ROR2_CAMERA_DEPTH := 10.0
 ## The aim, in hunter heights above the feet, at rest AND climbing: RoR2's pivot.
 const GROUND_VIEW_EYE := (ROR2_CAPSULE_HEIGHT * 0.5 + ROR2_PIVOT_OFFSET) / ROR2_CAPSULE_HEIGHT   # 1.25
-const GROUND_VIEW_PITCH := -0.06   # -0.02 in r2 iter 03-17, 0.03 in r2 iter 01-02, 0.08 before; level-to-slightly-up drops the lava band to TARGET's waist. 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
+const GROUND_VIEW_PITCH := 0.012   # 0.012 (builder 2026-10-08, TARGET 1:1): the orbit rises round the Frog, so the Frog holds its place while the lava line lifts to TARGET's ~53% of the square (y 381); was -0.06. -0.02 in r2 iter 03-17, 0.03 in r2 iter 01-02, 0.08 before; level-to-slightly-up drops the lava band to TARGET's waist. 0.08 until checker r2 iter 01 (lava band to TARGET's waist line). Low and near level like the RoR2 frame; 0.20 put the jackal under the boss bar (2026-09-28)
 ## Stand-off at the top hold. The hunter stands in front of the face there
 ## (top_hold_z_for), so the shot is of the face: further back than the
 ## fixed ACTIVE_HUNTER_DIST or it fills the frame as unlit silhouette.
@@ -3097,6 +3105,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		_beast_anim.play("idle")
 	_shade_model(_beast)
 	_rig_glow()
+	if _beast.has_method("shift_view"):   # a rigged drawing (views/drawn_rig.gd)
+		_beast.call("shift_view", DRAWN_SHIFT_PX.get(key, Vector2.ZERO))
 	_beast_scale = _fit_height(_beast, want)
 	_beast_box = _merged_aabb(_beast)
 	if _beast.has_method("trim_box"):   # a rigged drawing (views/drawn_rig.gd)
@@ -7097,10 +7107,9 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.248, 0.221, 0.147, 0.115, 0.13, 0.103],
+		"width": [0.315, 0.278, 0.195, 0.138, 0.158, 0.130],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.215, 0.106), Vector2(0.045, 0.11), Vector2(-0.002, 0.079),
-			Vector2(-0.042, 0.061), Vector2(-0.066, 0.053), Vector2(-0.037, 0.049)]},
+		"adjust": [Vector2(0.159, -0.017), Vector2(0.009, 0.001), Vector2(0.006, -0.010), Vector2(-0.003, -0.020), Vector2(-0.002, -0.017), Vector2(0.010, -0.015)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the

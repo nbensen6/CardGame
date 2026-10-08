@@ -30,18 +30,88 @@ func _ready() -> void:
 	var body := get_node_or_null("Body") as Sprite3D
 	if rig == null or body == null:
 		return
+	# Render the rig at about the size it reaches the screen (2026-10-08,
+	# queue "Cracks: wide hot cores"). The parts are cut at 2x TARGET, and a
+	# 2x viewport drawn at ~0.4 with no mipmaps skipped texels: the thin
+	# crack cores broke up, read thinner and lost their yellow. The canvas
+	# keeps its 2x coordinates (size_2d_override), so the poses, the holds
+	# and every *_px export are unchanged; only the target shrinks, and the
+	# billboard's pixel_size grows by the same factor so the world size holds.
+	var down := rig_downsample()
+	if down > 1.0:
+		var full := rig.size
+		rig.size_2d_override = full
+		rig.size_2d_override_stretch = true
+		rig.size = Vector2i(roundi(full.x / down), roundi(full.y / down))
+		# The parts are then drawn shrunk inside the viewport: mipmapped so
+		# the 2D pass filters, not skips. Built here, not in the imports
+		# (*.import is not in git, so an import setting never ships).
+		rig.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		for n in rig.find_children("*", "Sprite2D", true, false):
+			_mipmap(n as Sprite2D)
+		var k := float(full.x) / float(rig.size.x)
+		body.pixel_size *= k
 	var tex := rig.get_texture()
 	body.texture = tex
 	var mat := body.material_override as ShaderMaterial
 	if mat != null:
 		mat.set_shader_parameter("tex", tex)
 		mat.set_shader_parameter("premul", true)
+		if down > 1.0:
+			# halo_px is in texture pixels.
+			var hp = mat.get_shader_parameter("halo_px")
+			if hp != null:
+				mat.set_shader_parameter("halo_px", float(hp) * float(rig.size.x) / float(rig.size_2d_override.x))
 	for c in get_children():
 		var n := String(c.name)
 		if n.begins_with("climb_") or n.begins_with("ledge_"):
 			var m := rig.find_child("hold_" + n.substr(6), true, false) as Node2D
 			if m != null:
 				_holds[c] = m
+
+
+## Slide the drawing and its holds by `px` canvas pixels (x right, y up),
+## so the fight can put the figure where TARGET draws it in the
+## square without moving the camera every other part is placed by.
+var view_shift := Vector2.ZERO
+
+
+func shift_view(px: Vector2) -> void:
+	var dv := (px - view_shift) * pixel_size
+	var d := Vector3(dv.x, dv.y, 0.0)
+	view_shift = px
+	var body := get_node_or_null("Body") as Node3D
+	if body != null:
+		body.position += d
+	for c in get_children():
+		var n := String(c.name)
+		if n.begins_with("climb_") or n.begins_with("ledge_"):
+			(c as Node3D).position += d
+
+
+## Give a part's texture mipmaps (a copy; the imported one stays as it is).
+static func _mipmap(sp: Sprite2D) -> void:
+	if sp.texture == null or sp.texture.has_mipmaps():
+		return
+	var img := sp.texture.get_image()
+	if img == null:
+		return
+	if img.is_compressed():
+		img.decompress()
+	img.generate_mipmaps()
+	sp.texture = ImageTexture.create_from_image(img)
+
+
+## How much smaller than its 2x canvas the rig renders: the canvas reaches
+## a 720-row screen at 0.35 (TARGET's jackal in the centred square), so
+## 1 / 0.35 there, rendering it 1:1 with the screen; less on a taller
+## window so the line stays sharp there.
+const RIG_SCREEN_SCALE := 0.35
+func rig_downsample() -> float:
+	var h := 720.0
+	if is_inside_tree():
+		h = maxf(get_viewport().get_visible_rect().size.y, 1.0)
+	return clampf(720.0 / (RIG_SCREEN_SCALE * h), 1.0, 4.0)
 
 
 ## Where a point on the rig canvas sits in this node's space. Static so the
@@ -64,4 +134,5 @@ func trim_box(box: AABB) -> AABB:
 func _process(_dt: float) -> void:
 	for c in _holds:
 		var m: Node2D = _holds[c]
-		(c as Node3D).position = canvas_to_local(m.global_position, pixel_size, floor_px, mid_px)
+		(c as Node3D).position = canvas_to_local(m.global_position, pixel_size, floor_px, mid_px) \
+				+ Vector3(view_shift.x, view_shift.y, 0.0) * pixel_size

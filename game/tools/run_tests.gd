@@ -31973,13 +31973,15 @@ func _test_jackal_is_a_drawing() -> void:
 	# The drawing reaches the screen as drawn (2026-10-07): its shader looks
 	# every texel up in the inverse of the fight's post chain. That table was
 	# measured against these exact Environment numbers; change one and
-	# re-run tools/drawn_lut.py, then update them here.
+	# re-run tools/drawn_lut3d.py, then update them here.
 	if spr != null:
 		var mat := spr.material_override as ShaderMaterial
 		_expect(mat != null and mat.shader != null and mat.shader.resource_path.ends_with("drawn_sprite.gdshader"),
 			"the drawing undoes the scene's tonemap")
 		if mat != null:
-			_expect(mat.shader.code.contains("drawn_sprite_lut.gdshaderinc"), "the drawing carries its measured LUT")
+			# 3D since 2026-10-08: ACES, contrast and saturation mix the
+			# channels, so a grey curve turned TARGET's orange cracks red.
+			_expect(mat.shader.code.contains("drawn_sprite_lut3d.gdshaderinc"), "the drawing carries its measured 3D LUT")
 			_expect(mat.get_shader_parameter("tex") == spr.texture, "the shader draws the sprite's own texture")
 	root.free()
 	var fight: Node = (load("res://views/combat_3d.tscn") as PackedScene).instantiate()
@@ -31989,7 +31991,7 @@ func _test_jackal_is_a_drawing() -> void:
 		_expect(e.tonemap_mode == Environment.TONE_MAPPER_ACES and is_equal_approx(e.tonemap_exposure, 0.82)
 			and is_equal_approx(e.tonemap_white, 6.0) and is_equal_approx(e.adjustment_contrast, 1.10)
 			and is_equal_approx(e.adjustment_saturation, 1.18),
-			"the fight's post chain is the one drawn_sprite_lut.gdshaderinc was measured on")
+			"the fight's post chain is the one drawn_sprite_lut3d.gdshaderinc was measured on")
 	else:
 		_expect(false, "combat_3d.tscn has its WorldEnvironment")
 	fight.free()

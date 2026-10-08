@@ -2048,3 +2048,20 @@ Meshy: 0 credits.
 - Root cause left: the game's jackal draws ~1.2x TARGET's and its lava horizon ~40-55 px lower; queued both.
 - Tests: ALL TESTS PASSED. Meshy: 0 credits.
 
+
+
+## Cracks: wide hot cores and a long sternum seam.
+
+2026-10-08 17:56 EDT, builder. Not passed; item left open.
+
+Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crack difference came from how the game draws them.
+
+- **Colour, a 3D LUT.** The fight's ACES + contrast 1.10 + saturation 1.18 mix the channels. The old per-channel LUT (tools/drawn_lut.py) turned TARGET's crack orange (247,161,23) red (255,117,44) and capped everything at grey 232. New `tools/drawn_lut3d.py` paints a 17^3 grid of emissions on the jackal's quad (`cal_grid` mode in drawn_sprite.gdshader, drawn over everything, a grey shot for covered cells and 180-degree turned repeats), reads it back through a homography fitted to the quad's green frame, and inverts it by Gauss-Newton into `drawn_sprite_lut3d.gdshaderinc`. It is measured with bloom off (a flat patch blooms into itself and made thin cracks ~10% dark), emission = 0.12 + 2.28 u^1.7. The shader caps the emitted colour at 1.6 by scaling the whole colour (clipping red alone turned the hot cores cream). Three calibrations, ~11 shots each.
+- **Thin lines, rig resolution.** The rig SubViewport rendered at 2x TARGET (1560 px) and was sampled at ~0.4 on screen without mipmaps, which skipped texels in the thin cracks. DrawnRig now renders the viewport at screen size (`size_2d_override`, so canvas coordinates, poses and holds are unchanged), grows the billboard's pixel_size and halo_px to match, and mipmaps the parts at runtime (*.import is gitignored). Edge sharpness now 6.2 against TARGET's 6.3.
+- **Seam, size and place.** The seam below the Y was hidden because the jackal drew 1.17x TARGET's, so TARGET's stones landed higher on its body. GROUND_VIEW_PITCH -0.06 -> 0.012 (the orbit rises round the Frog: the Frog stays, the lava line lifts from y 420 to 381, TARGET 381), DRAWN_GAP_PER_HEIGHT 0.9 -> 1.21 (rig canvas on screen 0.415 -> 0.350, TARGET 0.352), and new DRAWN_SHIFT_PX (-82, 43) with `DrawnRig.shift_view`, which moves the picture and its climb markers but not the box the camera aims at. The stones follow the climb points, so STAIRCASE `adjust` and `width` were re-solved from measured slab centroids: all six now sit within 1-4 px of TARGET's.
+- **Seam, the cut-out.** beast_rig.py filled a wide region round TARGET's stones (borrowed blocks and inpainted STONES rects), which wiped the seam between the stones and left a dark smudge. `TIGHT` now inpaints only the stone pixels (grown 3 px), keeping TARGET's seam glow. UPLIGHT 0.75 -> 0: with the cut on TARGET's lava line, TARGET's own glow rows show and the ramp only hazed the hips.
+- **vs_target.py.** Close-ups cropped TARGET from its 1024-px original but the game from 720 rows, so TARGET's half carried ~1.4x the detail and every game line read thinner. TARGET is now brought to the shot's square resolution first.
+- **Measured, inside the jackal's outline (TARGET at 720 vs the game, registered):** mean abs error 41.8 before -> 12.3 after. Bands T/G: dark (57,16,13)/(60,15,10), brown (102,36,21)/(109,40,21), dim orange (156,51,21)/(161,56,20), orange (231,72,17)/(227,85,25), hot (251,203,69)/(247,190,91). Crack coverage on the --beast pair: TARGET 16.2%, game 15.6%.
+- **Grader:** R1 FAIL (frame barely changed), R2 FAIL (seam hidden; after the resize), R3 FAIL, R4 FAIL, R5 FAIL, R6 FAIL. Each said the cracks part moved toward TARGET, no penalties. Every round asked for 2-3x wider cracks with painted yellow cores, which the registered pixels do not support. Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-08-cracks-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks-after.png|420]]
+- Meshy: 0 credits.

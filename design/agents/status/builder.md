@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T16:22
-working_on: "Stones: TARGET's slabs, shape and path 1:1."
+updated: 2026-10-08T17:56
+working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
 # builder
@@ -13,16 +13,16 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 16:22 EDT
+2026-10-08 17:56 EDT
 
-- **Did:** Replaced the procedural staircase with TARGET's own six slabs, cut out and placed in TARGET's square.
-- **Worked?** Yes: shape, tone and place of all six slabs match TARGET within ~3 px. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-08-slabsprite-before.png]] then ![[frames/builder/2026-10-08-slabsprite-after.png]]
+- **Did:** Jackal drawn at TARGET's size, place and colours; lava line raised; sternum seam restored.
+- **Worked?** Partly: in the jackal's outline the game is within ~12 levels of TARGET per pixel, but the grader still reads the cracks thinner. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-08-cracks-before.png]] then ![[frames/builder/2026-10-08-cracks-after.png]]
 - **Ask:** nothing
-- **Found:** The lava horizon sits ~40-55 px lower than TARGET's, so the bottom slab overlaps the lava band.
-- **Found:** The jackal draws ~1.2x TARGET's size in the square.
-- **Found:** `vs_target --beast`/`--hand` crops are beast-fitted, not square-mapped like `--stones` now.
-- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-5, PASS round 6.
+- **Found:** Purple sky shows between the jackal's limbs where TARGET is near-black navy.
+- **Found:** Red bars and white specks where the jackal's legs meet the lava.
+- **Found:** "Jackal: TARGET's size in the square" and "Floor horizon" now measure at TARGET's (scale 0.350 vs 0.352, lava y 381); grade them next.
+- Meshy: 0 credits. Tests: ALL TESTS PASSED. Grader: FAIL rounds 1-6 (each closer than before).
 
 ## Notes
 

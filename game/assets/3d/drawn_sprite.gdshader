@@ -13,10 +13,17 @@ render_mode unshaded, fog_disabled, cull_back, depth_prepass_alpha;
 
 // Raw sRGB: the LUT is indexed by the value the screen should show.
 uniform sampler2D tex : filter_linear_mipmap;
-#include "res://assets/3d/drawn_sprite_lut.gdshaderinc"
+#include "res://assets/3d/drawn_sprite_lut3d.gdshaderinc"
 
 // tools/drawn_lut.py paints a ramp with this to measure the curve.
 uniform bool calibrate = false;
+// tools/drawn_lut3d.py: >= 0 paints LUT3_N^3 emission samples, four blue
+// slices per shot (slices 4*cal_grid..+3), in a green frame with a red
+// corner at UV 0,0; 99 paints every cell one grey (finds what covers the
+// quad); cal_flip turns the cells 180 degrees so a covered cell is seen in
+// the other shot.
+uniform int cal_grid = -1;
+uniform bool cal_flip = false;
 // A rigged drawing (views/drawn_rig.gd) reaches here through a SubViewport,
 // whose transparent target holds colour premultiplied by alpha.
 uniform bool premul = false;
@@ -37,15 +44,56 @@ float glow_at(vec2 uv) {
 	return g / 12.0;
 }
 
-float emit(float target) {
-	float i = clamp(target, 0.0, 1.0) * 255.0;
-	int lo = int(floor(i));
-	int hi = min(lo + 1, 255);
-	return mix(DRAWN_LUT[lo], DRAWN_LUT[hi], i - float(lo));
+// Emission for a texel the screen should show as `want` (sRGB 0..1):
+// trilinear in the measured table, then the table's curve back to linear.
+const float EMIT_CAP = 1.6;
+vec3 emit3(vec3 want) {
+	vec3 f = clamp(want, 0.0, 1.0) * float(LUT3_N - 1);
+	ivec3 lo = ivec3(floor(f));
+	ivec3 hi = min(lo + 1, ivec3(LUT3_N - 1));
+	vec3 w = f - vec3(lo);
+	int n = LUT3_N;
+	vec3 c000 = LUT3[lo.r + n * (lo.g + n * lo.b)];
+	vec3 c100 = LUT3[hi.r + n * (lo.g + n * lo.b)];
+	vec3 c010 = LUT3[lo.r + n * (hi.g + n * lo.b)];
+	vec3 c110 = LUT3[hi.r + n * (hi.g + n * lo.b)];
+	vec3 c001 = LUT3[lo.r + n * (lo.g + n * hi.b)];
+	vec3 c101 = LUT3[hi.r + n * (lo.g + n * hi.b)];
+	vec3 c011 = LUT3[lo.r + n * (hi.g + n * hi.b)];
+	vec3 c111 = LUT3[hi.r + n * (hi.g + n * hi.b)];
+	vec3 u = mix(mix(mix(c000, c100, w.r), mix(c010, c110, w.r), w.g),
+		mix(mix(c001, c101, w.r), mix(c011, c111, w.r), w.g), w.b);
+	vec3 e = LUT3_E0 + (LUT3_EMAX - LUT3_E0) * pow(max(u, vec3(0.0)), vec3(LUT3_GAMMA));
+	// The table was measured with the scene's bloom off, so it reaches for
+	// emission past what the eye needs where only bloom could add the rest
+	// (the cream outline, near-white). Capped, the line glows a little, as
+	// TARGET's does, instead of fogging the whole figure. The whole colour
+	// scales, not one channel: clipping red alone turned the yellow-hot
+	// cores cream.
+	float top = max(e.r, max(e.g, e.b));
+	return e * min(1.0, EMIT_CAP / max(top, 1e-4));
+}
+
+vec3 cal_cell(vec2 uv) {
+	const float B = 0.04;
+	if (uv.x < B && uv.y < B) return vec3(1.0, 0.0, 0.0);
+	if (uv.x < B || uv.y < B || uv.x > 1.0 - B || uv.y > 1.0 - B) return vec3(0.0, 1.0, 0.0);
+	vec2 q = (uv - B) / (1.0 - 2.0 * B);
+	if (cal_flip) q = 1.0 - q;
+	if (cal_grid == 99) return vec3(0.3);
+	ivec2 blk = ivec2(floor(q * 2.0));
+	int slice = cal_grid * 4 + blk.y * 2 + blk.x;
+	ivec2 cell = ivec2(floor(fract(q * 2.0) * float(LUT3_N)));
+	if (slice >= LUT3_N) return vec3(0.0);
+	vec3 u = vec3(float(cell.x), float(cell.y), float(slice)) / float(LUT3_N - 1);
+	return LUT3_E0 + (LUT3_EMAX - LUT3_E0) * pow(u, vec3(LUT3_GAMMA));
 }
 
 void fragment() {
-	if (calibrate) {
+	if (calibrate && cal_grid >= 0) {
+		ALBEDO = cal_cell(UV);
+		ALPHA = 1.0;
+	} else if (calibrate) {
 		ALBEDO = UV.y < 0.4 ? vec3(UV.x) : (UV.y < 0.6 ? vec3(1.0) : vec3(UV.x * 0.25));
 		ALPHA = 1.0;
 	} else {
@@ -59,7 +107,7 @@ void fragment() {
 			t.rgb = (t.rgb * t.a + halo_color * g) / max(a, 0.0001);
 			t.a = a;
 		}
-		ALBEDO = vec3(emit(t.r), emit(t.g), emit(t.b));
+		ALBEDO = emit3(t.rgb);
 		ALPHA = t.a;
 	}
 }
