@@ -3472,8 +3472,11 @@ static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, sid
 ## Checker iter 02 (2026-10-07): the slabs are unshaded now, so these are the
 ## screen tones less the post chain -- TARGET's top ~(155,147,138) over a
 ## side ~(105,100,90) -- and the cooling above no longer applies.
-const SLAB_SIDE_TONE := Color(0.42, 0.41, 0.39)
-const SLAB_TOP_TONE := Color(0.54, 0.52, 0.50)
+## Checker r2 iter 17: measured on screen, the tops topped out at ~155 and
+## the sides at ~89 against TARGET's ~193 / ~108 ("mid-grey with dark
+## undersides, not pale with light tops", both critics). Lifted to land there.
+const SLAB_SIDE_TONE := Color(0.48, 0.47, 0.45)
+const SLAB_TOP_TONE := Color(0.69, 0.67, 0.645)
 
 
 ## How high the stone route ends: the top climb point's own height, or, in a
@@ -6803,7 +6806,7 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## down to 0.125.
 const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
-		"width": [0.26, 0.26, 0.173, 0.134, 0.125, 0.118],
+		"width": [0.32, 0.30, 0.173, 0.134, 0.125, 0.118],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
 		"adjust": [Vector2(0.17, 0.04), Vector2(0.05, 0.075), Vector2(0.067, 0.07),
 			Vector2(0.029, 0.05), Vector2(0.005, 0.038), Vector2(0.025, 0.045)]},

@@ -132,3 +132,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (both #1). My slab measurements since iter 10 used the wrong head x (the eyes' 50.5% instead of the ear band's 52.3%), so every slab sat ~0.07 jackal-heights further left than I logged. Re-measured off the ear band and re-set `adjust`: now (dx, y) per slab vs TARGET: s0 (-0.42,1.06)/(-0.31,1.04), s1 (-0.26,.88)/(-0.23,.88), s2 (-0.04,.80)/(-0.05,.81), s3 (.10,.74)/(.08,.76), s4 (.17,.69)/(.15,.71), s5 (.04,.64)/(.02,.66). The staircase slabs also lose their soft drop shadow (TARGET draws them clean on the body).
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 17
+- Critic A top 3: [MAJOR] hand ~1.6x too big, flat, green glow; [MAJOR] stones mid-grey with dark undersides, not pale with light tops, compact and steep; [MAJOR] fist fire a round halo.
+- Critic B top 3: [MAJOR] stones too dark and too small, bottom two should be ~1.5x; [MAJOR] cliffs flat black spires without cool edges; [MAJOR] HUD too heavy.
+- Changed: the stones' tone and size (A #2, B #1). Measured on screen the slab tops peaked at ~155 and the sides at ~89 against TARGET's ~193 / ~108: `SLAB_TOP_TONE` 0.54→0.69, `SLAB_SIDE_TONE` 0.42→0.48 (now ~193 / ~104). The two low slabs' widths 0.26/0.26 → 0.32/0.30.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
