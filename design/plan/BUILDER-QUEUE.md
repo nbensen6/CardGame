@@ -15,12 +15,12 @@ run failed.
 - [ ] **Frog and its rock: TARGET's size and place.**
       In the `--square` pair the frog is about 1.5x TARGET's size and sits higher, overlapping where TARGET's lowest slab goes; its pedestal is wider and flatter than TARGET's tall dark faceted block. Match TARGET: the frog's height, its position (centred, just above the hand), the pedestal's size, shape, faces and tone, and the HP bar under the frog. Move the camera, the hunter's rest spot or the frog's scale as needed; this is the look, keep the fight working and update tests that encode the old layout.
       **Done when** the `--square` pair shows the frog and pedestal the same size and in the same place as TARGET's.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^frog-and-its-rock-target-s-size-and-plac
 
 - [ ] **Stones: TARGET's slabs, shape and path 1:1.**
       Look at the `--stones` pair. TARGET's six slabs are wide, thin, flat, irregular flagstones seen from slightly above, so their pale chipped top faces show, with a thin lighter side band and no dark ink line. Ours are thick boxy bricks seen nearly edge-on, with a dark outline. TARGET's path: the big bottom slab low on the floor left of the frog, the next one up and right over the lava line, then four smaller ones climbing to just under the sternum, overlapping the torso. Match each slab's shape, thickness, tilt, size, tones and position. If the procedural mesh cannot take TARGET's shapes, cut the six slabs out of TARGET.png and draw them as sprites, or model them.
       **Done when** the `--stones` and `--square` pairs show no visible difference in the slabs.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^stones-target-s-slabs-shape-and-path-1-1
 
 
 - [ ] 👀 **Stones: thin soft slabs, lower and spread like TARGET.**
@@ -32,27 +32,27 @@ run failed.
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the cracks read as wide and yellow-cored and the sternum seam is the hottest line on the body.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] **Fist fire: compact curling blaze wrapped on the fist.**
       Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
       **Done when** the flame hugs the fist, orange with a yellow core, no taller than the fist.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
 
 - [ ] **Floor: faint warm seams, not bright orange.**
       Both critics, MODERATE: TARGET's hex floor is dark with faint warm seams; the game's seams are bright high-contrast orange and the floor is tinted purple.
       **Done when** the hex seams read as faint and the floor as dark charcoal.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
       Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
       **Done when** the cliffs read as dark slate framing the jackal with thin cool edges.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
       **Done when** the hand's cards read like TARGET-UI's at a glance.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
 
 - [ ] 👀 **HUD and cards: TARGET's look, no glow.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and cards: TARGET's look, no glow.|details]]
