@@ -1039,8 +1039,10 @@ func _apply_sts_hud() -> void:
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
 		(b as Button).add_theme_constant_override("outline_size", 5)
+	# Stacked, End Turn over Switch, as TARGET draws them (checker r2 iter 21;
+	# side by side until then).
 	var controls := _end_btn.get_parent() as Control
-	controls.offset_top = -58.0
+	controls.offset_top = -112.0
 
 
 var _client: GameClient

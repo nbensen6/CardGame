@@ -160,3 +160,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the Frog and its rock (A #3 + the frog half of A #1, B #1). The rock was hidden by a hand ~1.6x TARGET's size, which is also what pinned the Frog high. New `HAND_REST_SCALE` 0.8 (+ `HAND_REST_LIFT` 22 px): resting cards draw at 0.8 about the fan's low pivot, the hover hit-area pose carries the same scale, a hovered card still grows to 1.34. Then `GROUND_LIFT` -0.015→-0.05: the Frog drops to ~63% of the frame (TARGET ~64%) with its faceted rock and HP bar clear above the cards.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs; cards still play by click.
 - Meshy: 0 credits.
+
+### iter 21
+- Critic A top 3: [MAJOR] energy box floats inset, hand narrow and barely fanned; [MAJOR] always-on green glow on the cards, small cost chips; [MAJOR] End Turn/Switch side by side, not stacked.
+- Critic B top 3: [MAJOR] fist fire an orb; [MAJOR] stones uneven: four bunched over the belly, a gap, two low; [MAJOR] HUD layout: energy by the hand, stack Switch under End Turn, no card glow, slim boss bar.
+- Changed: the HUD (A #1–#4, B #3 — highest combined rank), its two pieces both critics name: End Turn and Switch are stacked (Controls is a VBox, End Turn on top, 164 px wide), and the A1 card's seat-coloured 16 px halo is now a 4 px rim at 55% (`SEAT_RIM_SIZE`) — still says "playable", no longer a glow. Energy box position, boss bar height and cost chips not touched yet.
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs; End Turn still clicks.
+- Meshy: 0 credits.

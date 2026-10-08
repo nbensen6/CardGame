@@ -172,6 +172,8 @@ const BORDER_HUES := {
 
 ## The warm halo round a playable card, px, and its colour.
 const PLAYABLE_GLOW_SIZE := 16
+## The playable rim on the A1 frame, px.
+const SEAT_RIM_SIZE := 4
 const PLAYABLE_GLOW := Color(1.0, 0.70, 0.22, 0.85)
 
 
@@ -470,6 +472,12 @@ func _build_face(data: Dictionary) -> void:
 		glow = seat_glow(not disabled, String(data.get("character", "")))
 	gsb.shadow_color = glow
 	gsb.shadow_size = PLAYABLE_GLOW_SIZE if glow.a > 0.0 else 0
+	if SHIP_A1 and glow.a > 0.0:
+		# A thin seat-coloured rim, not a halo (checker r2 iter 21: "heavy
+		# green glow on every card", both critics). TARGET's hand has none; the
+		# rim keeps "this one is playable" readable at a glance.
+		gsb.shadow_color = Color(glow, 0.55)
+		gsb.shadow_size = SEAT_RIM_SIZE
 	ground.add_theme_stylebox_override("panel", gsb)
 	_layer(ground, 0, 0, 1, 1, 1.0, 1.0, -1.0, -1.0)
 
