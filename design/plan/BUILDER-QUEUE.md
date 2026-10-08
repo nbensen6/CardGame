@@ -19,9 +19,9 @@ Every item from before this line is in `## Archive` at the bottom, and none of i
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-hud-noglow-after.png|420]] ^hud-and-cards-target-s-look-no-glow
 
-- [ ] 👀 **Stones: TARGET's thin pale slabs, spread as a staircase.**
+- [ ] **Stones: TARGET's thin pale slabs, spread as a staircase.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's thin pale slabs, spread as a staircase.|details]]
-      Ask: Grader failed this: slabs read as straight bricks, climb flatter than TARGET's. Keep, or another pass?
+      Next pass: slabs read as straight bricks and the climb is flatter than TARGET's. Give them darker side faces and irregular angular outlines, make the low two bigger and chunkier, and steepen the climb to TARGET's.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-slabs-after.png|420]] ^stones-target-s-thin-pale-slabs-spread-a
 

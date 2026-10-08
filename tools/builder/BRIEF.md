@@ -50,7 +50,23 @@ stones climbing the gap between them, dark ground, cool sky.
 2. **Take the top unticked item under `## Now` in
    `design/plan/BUILDER-QUEUE.md`.** Not the one you like. Not the one you
    think is more important. The top one. Never touch `## Waiting on Nick` or
-   `## Proposed`. If `## Now` has no unticked item, stop and say so.
+   `## Proposed`. If `## Now` has no unticked item, **queue your own work
+   toward TARGET** (Nick, 2026-10-08), as below, then take the top new item
+   in the same run.
+
+   **Queueing your own work.** Shoot the rest frame
+   (`state=3d beast=cinder_jackal`) and pair it three ways with
+   `tools/vs_target.py`: `--full`, `--beast` and `--hand`. Spawn TWO fresh
+   critic subagents, each blind to the other, each given only the three pairs
+   and the critic prompt and Round 2 checklist from `tools/agents/checker.md`.
+   Every difference BOTH name at MAJOR or MODERATE becomes a new `- [ ]` item
+   at the top of `## Now`, highest-ranked first: a plain title, what TARGET
+   shows against what the game shows, a `**Done when**` line and a `Test:`
+   line. Skip differences that only the 16:9-vs-square frame shape causes. If
+   neither critic names a MAJOR or MODERATE difference, add one line
+   `Matched check <date>: clean` at the top of `## Now` and stop. When the two
+   newest such lines are both clean with no built item between them, the
+   game matches TARGET: stop without queueing.
 
    **Standing items.** An item whose text says "A standing item" is taken
    only when every item above it is built, and it is NOT marked `👀` after
@@ -107,12 +123,17 @@ stones climbing the gap between them, dark ground, cool sky.
      outrank TARGET-UI). Look at the targets yourself before you build.
      Nothing else: not
      your summary, not the diff. It answers PASS or FAIL with evidence. On
-     FAIL, fix what it names and reshoot: at most two more rounds. Still
-     FAIL after that: mark the item `👀` anyway and start its `Ask:` with
-     "Grader failed this: <its one-line reason>." so Nick decides. Never
-     leave a pushed change as `- [ ]`: the next run re-takes the item and
-     redoes your work (that happened 2026-09-28 with F8). Paste the final
-     VERDICT line into the status note's `Worked?` bullet either way.
+     FAIL, fix what it names and reshoot: at most two more rounds.
+     **Still FAIL after that: you decide, not Nick** (Nick, 2026-10-08:
+     "make its own decision till it gets to the concept"). Push what you have
+     if it is closer to TARGET than the before frame, revert it if not, and
+     leave the item `- [ ]` (open). Under its title add one line
+     `Next pass: <the grader's reasons, one line>` (replace any older
+     `Next pass:` line) so the next run continues from where you stopped
+     instead of redoing your work. Never write `Grader failed this` as an
+     `Ask:`. An item still failing after five runs moves, still open, to the
+     bottom of `## Now`. Mark `👀` only on PASS. Paste the final VERDICT line
+     into the status note's `Worked?` bullet either way.
    - `"%GODOT%" --headless --path game --script res://tools/run_tests.gd`
      must print `ALL TESTS PASSED`. Never push red.
    - Logic gets a test in `game/tools/run_tests.gd`. A camera or layout rule
@@ -133,7 +154,10 @@ stones climbing the gap between them, dark ground, cool sky.
        - **Did:** one sentence, 20 words or fewer, no file paths.
        - **Worked?** Yes / No / Partly, and why in the same sentence.
        - **Look at:** ![[frames/builder/<date>-<slug>-before.png]] then ![[frames/builder/<date>-<slug>-after.png]]
-       - **Ask:** one question for Nick, 15 words or fewer, or "nothing".
+       - **Ask:** "nothing". Since 2026-10-08 you make every look call
+         yourself against TARGET (Nick: "make its own decision till it gets
+         to the concept"). Ask only if a change would alter the rules or
+         balance, which is out of scope anyway.
          **Never ask him how a thing should look.** Line thickness, glow
          strength, colour, how much detail — the concept art and `TARGET.png`
          already answer those, and `python tools/sprite_match.py` turns them
