@@ -1,11 +1,11 @@
 {
-  "updated": "Thu Oct 8, 4:51 AM ET",
-  "last_commit": "cc399c2",
+  "updated": "Thu Oct 8, 2:51 PM ET",
+  "last_commit": "db6c62f",
   "status": [
     {
       "label": "Builder",
-      "value": "Waiting; all 5 items await your look",
-      "state": "waiting"
+      "value": "Idle; 7 items queued, 6 await your look",
+      "state": "idle"
     },
     {
       "label": "Checker",
@@ -24,7 +24,6 @@
     }
   ],
   "needs_you": [
-    "Stones failed the grader: they look like straight bricks and the climb is flatter. Keep them, or another pass?",
     "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?"
   ],
   "latest": {
@@ -32,6 +31,46 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 2:16 PM",
+      "title": "Stones thinner, lower and spread out",
+      "bullets": [
+        "Stones are now thin, soft pale plates",
+        "Lowest stone sits left of the Frog",
+        "Six new gaps queued from two critics"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-softslabs-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-softslabs-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 1:15 PM",
+      "title": "Steeper, angular stone staircase",
+      "bullets": [
+        "Stones climb steeper toward the chest",
+        "Sides shaded with a thin dark edge",
+        "Still too thick next to your drawing"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-slabs2-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-slabs2-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 3:15 AM",
