@@ -1,11 +1,11 @@
 {
-  "updated": "Thu Oct 8, 4:51 PM ET",
-  "last_commit": "cdc439a",
+  "updated": "Thu Oct 8, 6:51 PM ET",
+  "last_commit": "9b6e563",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; 9 items queued, 8 await your look",
-      "state": "idle"
+      "value": "Running; cracks item still open",
+      "state": "working"
     },
     {
       "label": "Checker",
@@ -31,6 +31,46 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 6:32 PM",
+      "title": "Sharper jackal, hotter chest cracks",
+      "bullets": [
+        "Jackal drawn crisper, less blurry",
+        "Cracks wider with gold centres",
+        "Grader: closer, still not a match"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks2-after-beast.png",
+          "caption": "Drawing vs game"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks2-after.png",
+          "caption": "Full screen now"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 5:56 PM",
+      "title": "Jackal matches drawing's size, colours",
+      "bullets": [
+        "Jackal and lava line moved into place",
+        "Colours now match your drawing",
+        "Chest seam back; cracks still too thin"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks-before-beast.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks-after-beast.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 4:23 PM",
