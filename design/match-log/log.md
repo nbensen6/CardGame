@@ -118,3 +118,10 @@ Waiting for the builder's `## Round 2` heading.
 - Changed: the stones (A #1, B #4 [MODERATE] — highest combined rank). Re-measured every slab against TARGET in jackal units: s0 sat 0.07 too far right (crowding the Frog), s1 0.03 high, the top slab 0.06 right. `STAIRCASE.adjust` s0 x 0.25→0.17, s1 y 0.106→0.075, s5 x 0→-0.06; widths of s0/s1 0.25/0.23 → 0.26/0.26. Now (dx, y, w) per slab vs TARGET: (-0.36,1.02,.32)/(-0.31,1.04,.32), (-0.23,.88,.25)/(-0.23,.88,.28), (-0.04,.79)/(-0.05,.81), (.07,.74)/(.08,.76), (.13,.69)/(.15,.71), (.00,.66)/(.02,.66) — one diagonal from left of the Frog up to the sternum.
 - Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
 - Meshy: 0 credits.
+
+### iter 15
+- Critic A top 3: [MAJOR] stones a near-vertical stack over the frog, the bottom slab should start about a frog-width left of the frog's rock; [MAJOR] framing (16:9, dead sides); [MODERATE] floating black shards beside the jackal.
+- Critic B top 3: [MAJOR] 16:9 vs square, jackal ~40% of the width; [MAJOR] stones a column over the frog, bottom slab should be ~15% of the frame width left of it; [MAJOR] HUD/hand oversized.
+- Changed: the stones (A #1, B #2). Iter 14 matched each slab to TARGET in *jackal* units, but the Frog draws ~1.6x TARGET's size against the jackal, so the low slabs still sat on top of it. Both critics measure them against the Frog: s0/s1 now step out to ~15% of the frame width left of it (`adjust` x 0.17/0.017 → -0.03/-0.10): one diagonal from left of the Frog's rock to the sternum. Tried and backed out: `FOLLOW_DIST` 8 to shrink the Frog itself (it pulls the Goblin, the arena edge and the climb camera along; a bigger change than one iteration).
+- Tests: ALL TESTS PASSED. Playtest: the same pre-existing FAILs, nothing new.
+- Meshy: 0 credits.
