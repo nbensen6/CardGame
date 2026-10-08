@@ -9,7 +9,7 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png --beast    just the beast
     python tools/vs_target.py shot.png out.png --hand     just the hand
     python tools/vs_target.py shot.png out.png --square   TARGET vs the centred square of the shot
-    python tools/vs_target.py shot.png out.png --stones   just the staircase of slabs
+    python tools/vs_target.py shot.png out.png --stones   just the staircase of slabs, cut from the same square
 
 `--square` is the 1:1 test (Nick, 2026-10-08): TARGET.png is square, the game
 is 16:9, so the game's centred 720x720 square must hold TARGET's picture with
@@ -37,7 +37,7 @@ REGIONS = {
     "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.2863, 0.79, 0.7137, 1.0)},
     # the centred square of a 1280x720 shot: x 280..1000
     "--square": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.21875, 0.0, 0.78125, 1.0)},
-    # the slab staircase, from beside the frog's rock up to the sternum. The
+    # the slab staircase, from the big lowest slab (above and left of the frog) up to the sternum. The
     # shot box is the target box mapped through the --square test (x 280 +
     # 0.703 t, y 0.703 t), so the close-up zooms the same place 1:1 (builder
     # 2026-10-08; the older box was fitted to the beast, not to the square).

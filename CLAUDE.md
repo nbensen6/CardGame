@@ -61,8 +61,8 @@ These are assumptions this document currently makes. Flag them; don't silently c
 2. **Monetization: premium on both PC and mobile.** A free-to-play mobile economy would reshape
    progression/pacing and should be decided *before* building, not bolted on later.
 3. **Theme/setting/art style: decided** (Nick, 2026-10-07/08). The look is
-   `design/art/targets/TARGET.png` (scene) and `TARGET-UI.png` (cards and HUD), and
-   the goal is to match them 1:1, by any means, including Meshy. This is final art,
+   `design/art/targets/TARGET.png`, the whole picture (scene, HUD and cards), and
+   the goal is to match it 1:1, by any means, including Meshy. This is final art,
    not placeholder; invest in it.
 4. **Netcode hosting model:** start with a Godot **authoritative host/server** (one player hosts,
    or a headless server build). Confirm whether launch is online co-op, LAN, or both.
@@ -184,7 +184,7 @@ prove a model meets its contract and cannot tell you it reads as a lamp.
 
 - `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/renders/`
 - `design/progress/<asset>.md` — the score history for one asset
-- `design/art/ART-REVIEW.md` — assets still waiting on a human eye
+- `design/art/ART-REVIEW.md` — superseded; nothing in it waits on Nick
 - `tools\blender\palette.py` — the shared colour atlas. Derives from
   `colormap_base.png`, so it is safe to re-run and the numbers in it always mean
   what they say. **Every model embeds the atlas**, so changing it means

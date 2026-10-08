@@ -18,8 +18,9 @@ gets to the concept." "Build the concept 1:1."
   frame) holds TARGET's picture: every element TARGET shows, the same shape,
   proportion, colour, shading, line, size and **place**, HUD and hand
   included. Outside that square is extra scene. Anchor the HUD and hand to
-  that square, sized by the window's height, so it holds at any resolution
-  (this satisfies CLAUDE.md §5; no flag to Nick needed).
+  that square, sized by the smaller of the window's width and height, so it
+  holds at any resolution and aspect, tall phones included (this satisfies
+  CLAUDE.md §5; no flag to Nick needed).
   `python3 tools/vs_target.py <shot> <pair> --square` is that test, and the
   close-ups (`--beast`, `--stones`, `--hand`) are cut from the same square at
   the same scale.
@@ -36,8 +37,10 @@ gets to the concept." "Build the concept 1:1."
 - **Meshy: use it whenever it gets closer** (image passes, 3D generation,
   anything). No credit cap from this brief. `tools/meshy.py` does text-to-3D
   today; extend it against Meshy's API for image-to-3D, retexture or image
-  generation when you need them (the key is `MESHY_API_KEY`; if it is not
-  set, say so in Found and use another means). The script keeps a daily task
+  generation when you need them. In the cloud `MESHY_API_KEY` is normally
+  unset because the agent proxy adds the key to Meshy calls itself: call the
+  API anyway, and only if the calls fail say so in Found and use another
+  means. The script keeps a daily task
   guard as a runaway brake; log every task and its credits in the notes.
 - **What else still applies.** From `CLAUDE.md`: the code structure (§2, §8:
   `/core` stays free of views, input and net; data in `game/data`) and
@@ -73,8 +76,9 @@ gets to the concept." "Build the concept 1:1."
    The import is not optional: without it every `class_name` fails to resolve.
 
    A line starting `**Nick, <time>:**` on an item is his answer and outranks
-   everything else in the item, including TARGET where it says so. It may
-   carry an image; read it, it is the spec.
+   everything else in the item. It departs from TARGET only where it says so
+   in words ("unlike TARGET, ..."); otherwise TARGET still decides. An image
+   on it shows what Nick means for that item.
 
 2. **Take the top open item under `## Now`** in
    `design/plan/BUILDER-QUEUE.md`: the first `- [ ] **` line WITHOUT 👀.
@@ -85,12 +89,13 @@ gets to the concept." "Build the concept 1:1."
    with `tools/vs_target.py`: `--square`, `--beast`, `--stones`, `--hand`.
    Spawn TWO fresh critic subagents, each blind to the other, each given only
    the four pairs and the critic prompt and checklist from
-   `tools/agents/checker.md`. Every difference BOTH name, at any severity,
-   becomes a new item at the top of `## Now`, biggest first, in exactly this
+   `tools/agents/checker.md`. Every difference EITHER critic names at MAJOR
+   or MODERATE, and every MINOR one BOTH name, becomes a new item at the top of `## Now`, biggest first, in exactly this
    shape: `- [ ] **Title.**`, then what TARGET shows against what the game
    shows, then `**Done when** the --square and <close-up> pairs show no
    visible difference in <part>.`, then `Test: state=3d beast=cinder_jackal`.
-   If the two critics agree on no difference at all, add one line
+   If neither critic names anything above MINOR and they agree on no MINOR
+   difference, add one line
    `Matched check <date>: clean` at the top of `## Now` and stop. When the two
    newest such lines are both clean with no built item between them, the
    game matches TARGET: stop without queueing.
@@ -110,8 +115,10 @@ gets to the concept." "Build the concept 1:1."
    current approach cannot reach TARGET (a procedural mesh that cannot take
    TARGET's shape, a texture too coarse), replace it: cut the art from
    TARGET.png itself, repaint, model it, or use Meshy. A replacement may look
-   worse on its first try: keep working on it in the same run until it is at
-   least as close as what it replaces before you push it. Grep every caller
+   worse on its first try: build it on a branch `builder/<slug>`, push the
+   branch at the end of every run, name the branch in the item's `Next pass:`
+   line so the next run checks it out and carries on, and merge it into
+   `main` only once it is at least as close to TARGET as what it replaces. Grep every caller
    before you edit a shared function.
 
 5. **Prove it.**
@@ -125,7 +132,8 @@ gets to the concept." "Build the concept 1:1."
    - **FAIL: fix what it names and grade again. Keep going** until PASS, for
      as long as the run allows (start no new round after about 2.5 hours in).
      If the run ends without a PASS: push what you have if the grader did
-     not call it further from TARGET (revert it if it did), leave the item
+     not call it further from TARGET (if it did: a replacement goes on its
+     `builder/<slug>` branch as above, anything else is reverted), leave the item
      `- [ ]` open, and put one line under its title, `Next pass: <the
      grader's MISMATCHES and FIX, one line>` (replace any older one), so the
      next run continues from there. Never write a question for Nick.
