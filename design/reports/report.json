@@ -1,15 +1,15 @@
 {
-  "updated": "Wed Oct 7, 6:52 PM ET",
-  "last_commit": "ea5e52b",
+  "updated": "Wed Oct 7, 8:52 PM ET",
+  "last_commit": "2bb3c80",
   "status": [
     {
       "label": "Builder",
-      "value": "All items built, waiting on you (lease idle since 5:36 PM)",
-      "state": "waiting"
+      "value": "Queue reset: 5 look items to build",
+      "state": "idle"
     },
     {
       "label": "Checker",
-      "value": "Round 2, iter 3 of 25",
+      "value": "Round 2, iter 15 of 25",
       "state": "working"
     },
     {
@@ -19,19 +19,42 @@
     },
     {
       "label": "Tests",
-      "value": "All passing",
+      "value": "All passing (old playtest fails remain)",
       "state": "idle"
     }
   ],
   "needs_you": [
-    "Stones don't move with the jackal when it animates. Make them ride the body? (builder Ask)",
-    "Playtest shows 21 failures since the new stones (hunter off marker, climb reverses on rung 5)."
+    "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?"
   ],
   "latest": {
-    "path": "design/match-log/iter-03.png",
-    "caption": "Checker iter 03: your drawing left, game right"
+    "path": "design/match-log/iter-15.png",
+    "caption": "Checker iter 15: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "checker",
+      "time": "Oct 7, 8:40 PM",
+      "title": "Twelve passes on stones and HUD",
+      "bullets": [
+        "Flat HUD: thin plates, orange and navy pills",
+        "Belly seam gone, warm lava glow added",
+        "Next: stones still stack over the Frog"
+      ],
+      "images": [
+        {
+          "path": "design/match-log/iter-15.png",
+          "caption": "Now (iter 15)"
+        },
+        {
+          "path": "design/match-log/iter-15-beast.png",
+          "caption": "Jackal close-up"
+        },
+        {
+          "path": "design/match-log/iter-04.png",
+          "caption": "Before (iter 04)"
+        }
+      ]
+    },
     {
       "agent": "checker",
       "time": "Oct 7, 6:50 PM",
