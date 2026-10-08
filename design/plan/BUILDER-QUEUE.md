@@ -10,8 +10,18 @@ run failed.
 
 ## Now — the Cinder Jackal fight
 
-**Reset, Nick 2026-10-07: "reset all rules", "the goal is get to the concept as close as possible, any means necessary", "I want the builder to focus on aesthetic changes."**
-Every item from before this line is in `## Archive` at the bottom, and none of its instructions bind you, including the seat-colour glow, the old stone route and the old HUD material. The only references are `design/art/targets/TARGET.png` (the whole frame) and `TARGET-UI.png` (close-up of the cards and HUD). **Aesthetic work only:** change how things look, never rules, card numbers or balance. Shoot the rest frame with `state=3d beast=cinder_jackal` and pair it with `python3 tools/vs_target.py <shot>.png <pair>.png --full` (and `--hand` for cards). Meshy is open with no run cap; log what you spend.
+**The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
+
+- [ ] **Frog and its rock: TARGET's size and place.**
+      In the `--square` pair the frog is about 1.5x TARGET's size and sits higher, overlapping where TARGET's lowest slab goes; its pedestal is wider and flatter than TARGET's tall dark faceted block. Match TARGET: the frog's height, its position (centred, just above the hand), the pedestal's size, shape, faces and tone, and the HP bar under the frog. Move the camera, the hunter's rest spot or the frog's scale as needed; this is the look, keep the fight working and update tests that encode the old layout.
+      **Done when** the `--square` pair shows the frog and pedestal the same size and in the same place as TARGET's.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Stones: TARGET's slabs, shape and path 1:1.**
+      Look at the `--stones` pair. TARGET's six slabs are wide, thin, flat, irregular flagstones seen from slightly above, so their pale chipped top faces show, with a thin lighter side band and no dark ink line. Ours are thick boxy bricks seen nearly edge-on, with a dark outline. TARGET's path: the big bottom slab low on the floor left of the frog, the next one up and right over the lava line, then four smaller ones climbing to just under the sternum, overlapping the torso. Match each slab's shape, thickness, tilt, size, tones and position. If the procedural mesh cannot take TARGET's shapes, cut the six slabs out of TARGET.png and draw them as sprites, or model them.
+      **Done when** the `--stones` and `--square` pairs show no visible difference in the slabs.
+      Test: state=3d beast=cinder_jackal
+
 
 - [ ] 👀 **HUD and cards: TARGET's look, no glow.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and cards: TARGET's look, no glow.|details]]

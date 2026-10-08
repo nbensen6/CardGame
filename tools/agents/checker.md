@@ -1,129 +1,79 @@
-# checker — close the gap to Nick's drawing, one difference at a time
+# checker: the critic prompt, the checklist, and the matching loop
 
-**Nick, 2026-10-06**, replacing the measurement loop that came before:
+The standard is **TARGET 1:1** (Nick, 2026-10-08: "build the concept 1:1").
+`design/art/targets/TARGET.png` is the scene, `TARGET-UI.png` the cards and
+HUD. The game's centred 720x720 square must hold TARGET's picture with every
+element the same shape, proportion, colour, shading, line, size and place.
+Nothing older than 2026-10-07 is a target or a rule. Never ask Nick how
+anything should look; TARGET answers.
 
-> Set up an autonomous visual-matching loop to make the game look like my
-> reference drawing. Don't use numeric matcher scores as the goal or stop
-> condition — they passed while the art was still clearly wrong.
+The builder uses the critic prompt and checklist below to queue its own work
+(`tools/builder/BRIEF.md`, step 2). The loop at the bottom is for this
+checker routine when a `## Round N` heading is open in
+`design/match-log/log.md`.
 
-`tools/sprite_match.py` reported `0 of 5 off` on a sprite whose cracks were
-1px pen strokes with no hot core, whose facets had no tonal separation, and
-which had no rim light at all. Coverage counts pixels, not width; edge density
-counts edges, not contrast. **The numbers are not the goal and not the stop
-condition.** A fresh pair of eyes on the picture is.
+## The pairs
 
-The reference is `design/art/targets/TARGET.png` — not the concept render.
-Aiming at the concept was the earlier mistake.
+    bash tools/shot.sh out=/tmp/now.png state=3d beast=cinder_jackal
+    python3 tools/vs_target.py /tmp/now.png <out>-square.png --square
+    python3 tools/vs_target.py /tmp/now.png <out>-beast.png  --beast
+    python3 tools/vs_target.py /tmp/now.png <out>-stones.png --stones
+    python3 tools/vs_target.py /tmp/now.png <out>-hand.png   --hand
 
-## Each iteration
+TARGET is always left, the game right, at the same scale. `--square` is
+TARGET against the centred square of the game frame: placement is judged
+there.
 
-1. **Shoot and pair.** Capture the fight with the same framing as the
-   reference and build the side-by-side, reference LEFT, game RIGHT:
+## The critic prompt
 
-       bash tools/cloud_setup.sh
-       bash tools/shot.sh out=/tmp/now.png state=3d beast=cinder_jackal
-       python3 tools/vs_target.py /tmp/now.png design/match-log/iter-NN.png --full
-       python3 tools/vs_target.py /tmp/now.png design/match-log/iter-NN-beast.png --beast
+Spawn each critic fresh (Agent tool) with only the pair images and this text,
+the checklist included. No history, no notes, no account of what changed.
 
-   `NN` is two digits, continuing from the highest already in `design/match-log/`.
+> Left is the target art. Right is the game. The goal is that the game is
+> indistinguishable from the target. In the `--square` pair, everything must
+> sit in the same place; in the close-ups, compare shapes and surfaces. Go
+> through every box of the checklist below and list every visible
+> difference: shape, proportion, thickness, angle, colour, shading, line,
+> size, position, missing or extra elements. Rate each MAJOR (anyone would
+> notice), MODERATE (noticeable side by side) or MINOR (only when flipping
+> between them). Rank biggest first. Say "no differences" for a box only
+> after checking it.
 
-2. **Spawn a FRESH critic subagent** (Agent tool). Give it **only** the
-   side-by-side image and the text below. No history, no notes, no earlier
-   critic's findings, no account of what you just changed. A critic that knows
-   what you were trying to do will tell you that you did it.
+## The checklist
 
-   > Left is the target art. Right is the game. List every visible
-   > difference, comparing each of these explicitly: silhouette and body
-   > proportions, pose and gesture, missing or extra elements (props,
-   > effects, fire, UI), outline thickness/color/glow, crack width/color/
-   > brightness/hot spots, surface shading and facets, lighting and rim
-   > light, color palette, props (stones) shading and size, background
-   > rocks, sky, lava and ground, scale and framing. Rate each difference
-   > MAJOR / MODERATE / MINOR. Rank biggest first. Do not say it matches
-   > unless you have checked every category.
+1. **Jackal:** pose (hunched, three-quarter turn, left fist raised and on
+   fire), proportions and silhouette, outline, cracks and the sternum hot
+   seam, eyes, facets and shading, rim and lava up-light, the fist's flame.
+2. **Stones:** six slabs: shape (thin, flat, irregular, chipped, wide), top
+   and side tones, edges, tilt, size of each, and the staircase's exact path
+   and spacing from beside the frog's rock up to the sternum.
+3. **Frog and its rock:** the frog's size and place, the pedestal's size,
+   shape, faces and tone, the green marker, the HP bar.
+4. **Ground and lava:** the hex floor and its seams, the lava band's height,
+   thickness and glow.
+5. **Background:** the slate cliffs on both sides, their shapes and edge
+   light, the purple sky, embers.
+6. **HUD:** boss name plate and segmented HP bar, intent chip, Log and Menu,
+   climb gauge, energy box, draw/discard/burn, the hand's fan, card frames and
+   cost coins, End Turn and Switch. Look, size and place. `TARGET-UI.png` is
+   the close-up.
+7. **Framing:** where the jackal's ears, the lava line and the frog sit in
+   the square; how much of the square the jackal fills.
 
-   **Round 2 (2026-10-07): spawn TWO fresh critics**, each blind to the
-   other, each given both pairs (`--full` and `--beast`) and the checklist
-   below. Act only on a difference both name at MAJOR or MODERATE. One critic
-   alone is noise: in round 1 they split both ways on framing, outline width
-   and the sternum glow, and the loop undid its own fixes.
+## The loop (only while a `## Round N` heading is open)
 
-3. **Fix the single top-ranked difference.** Edit the model, materials,
-   shaders, lighting or scene directly — `tools/beast_sprite.py`,
-   `game/views/combat_3d.gd`, the `.gdshader` files, the scene. Do not build
-   new tools, checkers or queues unless the fix itself needs one. One
-   difference per iteration; the next critic decides what is top after that.
+Each iteration: make the pairs into `design/match-log/iter-NN-*.png` (NN
+continues from the highest there); spawn TWO critics, blind to each other;
+fix the single biggest difference BOTH name at MAJOR or MODERATE, by any
+means (art cut from TARGET, repaint, shaders, models, Meshy, camera,
+layout); append the iteration, both critics' top three and what changed to
+`design/match-log/log.md`; tests green; commit and push. Stop when two
+iterations in a row have both critics report no MAJOR and no MODERATE, or
+after 25 iterations since the `## Round` heading, and write a `## DONE`
+block with what remains. Never write a question for Nick: make the call
+against TARGET and carry on.
 
-4. **Append to `design/match-log/log.md`**: the iteration number, the critic's top
-   three, and what you changed. One short block, no essays.
-
-## Stopping
-
-Stop when **two iterations in a row** have both critics report no MAJOR and
-no MODERATE differences, or after **25 iterations**, whichever comes first. The count runs
-across runs, not within one — read it from `design/match-log/log.md`.
-
-**Never declare it done yourself.** Only a critic's verdict ends the loop. When
-it ends, write a final block in `design/match-log/log.md` headed `## DONE` holding the
-remaining difference list, and name `design/match-log/iter-01.png` and the last one so
-the session can send both to Nick.
-
-## Rules
-
-- **Take the `builder` lease, not a `checker` one.** You now edit the same art
-  code the builder does, and two writers at once is how a run spends itself
-  untangling a merge. `tools/agents/lease.sh claim builder`; exit 3 means stop
-  in one line.
-- Tests before pushing: `"$(cat /tmp/GODOT)" --headless --path game --script
-  res://tools/run_tests.gd` must print `ALL TESTS PASSED`. Never push red.
-- Never force-push. Never open a window. Never end with a background command.
-- Never ask Nick how a thing should look. The drawing answers that.
-- `tools/sprite_match.py` still exists and is still worth a glance, but it is
-  evidence, never the verdict.
-
-## Round 2 — the whole frame (Nick, 2026-10-07)
-
-Round 1 (iters 01–25) could not finish. It tuned a front-facing sprite cut
-from the concept drawing, so TARGET's pose, fist and proportions were out of
-reach, and it skipped the stones and HUD as out of scope. **Nick, 2026-10-07:
-"make sure you are checking all the boxes to get to the concept. Ie stone
-design and placement."** and **"Override and start with a clean fresh slate.
-The goal is get to the concept as close as possible, any means necessary. Use
-Meshy or whatever is needed."** Nothing in TARGET.png is out of scope, and any
-earlier ruling that conflicts with it is void. Round 1's log is archived in
-`design/match-log/round-1/`. Meshy has no per-run cap here; log what you
-spend in each iteration's block.
-
-Round 2 starts when the builder appends `## Round 2` to
-`design/match-log/log.md` (after the rigged jackal and TARGET's stones ship);
-until then there is nothing to check. **The 25-iteration cap counts from that
-heading.** Count from the highest `iter-NN.png` in `design/match-log/`, starting at 01. Shoot at rest (idle) so the jackal is in its rest pose.
-
-**The checklist.** Both critics grade every box, every iteration:
-
-1. **Jackal:** pose and gesture (hunched, three-quarter turn, left fist raised
-   and on fire), proportions and silhouette, outline, cracks and the sternum
-   hot seam, eyes, facets and shading, rim and lava up-light.
-2. **Stones:** design (six thin pale grey slabs, soft edges, light tops) and
-   placement (one staircase from left of the frog's rock up and right across
-   the body to just under the sternum; face clear).
-3. **Frog and its rock:** the frog centred low on a dark faceted pedestal, the
-   green marker over it, its HP bar under it.
-4. **Ground and lava:** dark cracked hex floor with faint warm seams; the
-   bright lava band behind at the jackal's waist.
-5. **Background:** dark slate cliffs both sides with cool edge highlights,
-   purple sky, embers.
-6. **HUD:** boss name and segmented HP bar top left, the intent chip beside
-   it, Log and Menu top right, the climb gauge on the right edge, the energy
-   box and draw/discard/burn bottom left, the fanned hand, End Turn and Switch
-   bottom right. Compare look and placement; `TARGET-UI.png` is the close-up.
-7. **Framing:** jackal waist-up filling the top two thirds, ears just under
-   the top edge, frog centred in the lower third.
-
-- **If you are blocked on a call only Nick can make**, do not pause silently in
-  the log. Put it as the `Ask:` line on the top 👀 item in
-  `design/plan/BUILDER-QUEUE.md` so it reaches him, and carry on with the next
-  difference.
-- A fix that changes gameplay (where a hold or the sigil sits, a camera
-  number) is allowed when TARGET shows it; run the playtest as well as the
-  tests before pushing.
+Take the `builder` lease (`LEASE_STALE=10800 tools/agents/lease.sh claim
+builder`; exit 3 means stop), release it at the end, never force-push, never
+end with a background command running. `tools/sprite_match.py` measures
+against the old concept render; it is never the verdict.

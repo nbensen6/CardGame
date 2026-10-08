@@ -8,7 +8,7 @@ changed and why".
 Do **not** generate an asset in a single pass. Work on one asset at a time,
 start to finish.
 
-## The loop (max 4 passes per asset)
+## The loop (max 4 passes per asset; no cap for anything in TARGET.png, which repeats until it matches 1:1, Nick 2026-10-08)
 
 1. **Build / revise** — edit the asset's script in `tools/blender/`.
 2. **Capture** — `tools\blender\look.cmd <asset> <pass>`. Six views into

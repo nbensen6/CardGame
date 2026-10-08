@@ -8,6 +8,12 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png            whole frame
     python tools/vs_target.py shot.png out.png --beast    just the beast
     python tools/vs_target.py shot.png out.png --hand     just the hand
+    python tools/vs_target.py shot.png out.png --square   TARGET vs the centred square of the shot
+    python tools/vs_target.py shot.png out.png --stones   just the staircase of slabs
+
+`--square` is the 1:1 test (Nick, 2026-10-08): TARGET.png is square, the game
+is 16:9, so the game's centred 720x720 square must hold TARGET's picture with
+everything in the same place. What lies outside that square is extra scene.
 
 Both halves are scaled so the beast is the same height in each, which is the
 only way an outline weight or a crack width can be compared at all.
@@ -26,6 +32,10 @@ REGIONS = {
     "--full": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.0, 0.0, 1.0, 1.0)},
     "--beast": {"target": (0.22, 0.05, 0.85, 0.58), "shot": (0.26, 0.0, 0.76, 0.60)},
     "--hand": {"target": (0.12, 0.79, 0.88, 1.0), "shot": (0.12, 0.68, 0.80, 1.0)},
+    # the centred square of a 1280x720 shot: x 280..1000
+    "--square": {"target": (0.0, 0.0, 1.0, 1.0), "shot": (0.21875, 0.0, 0.78125, 1.0)},
+    # the slab staircase, from beside the frog's rock up to the sternum
+    "--stones": {"target": (0.25, 0.33, 0.66, 0.60), "shot": (0.31, 0.33, 0.62, 0.66)},
 }
 
 

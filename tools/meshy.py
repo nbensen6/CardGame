@@ -1,7 +1,7 @@
 """Minimal Meshy API client. Reads MESHY_API_KEY from the meshy MCP entry in
 ~/.claude.json at run time; never prints it.
 
-    python meshy.py balance                      (spend is capped per day: MESHY_DAILY_CAP, default 8 tasks)
+    python meshy.py balance                      (spend is capped per day: MESHY_DAILY_CAP, default 40 tasks)
     python meshy.py preview "<prompt>"          -> prints task id
     python meshy.py refine <preview_id> ["<texture prompt>"]
     python meshy.py get <id>                     -> status, progress
@@ -13,7 +13,7 @@ import datetime, json, os, sys, urllib.request
 # refuses. A preview is ~20 credits, a refine ~10 (2026-09-22: three previews
 # plus two refines cost ~100). The builder lane runs unattended, so the cap is
 # what stands between a bad loop and Nick's monthly allowance.
-DAILY_CAP = int(os.environ.get("MESHY_DAILY_CAP", "8"))   # tasks per day
+DAILY_CAP = int(os.environ.get("MESHY_DAILY_CAP", "40"))   # tasks per day (raised from 8, Nick 2026-10-08: "use Meshy or whatever is needed")
 LEDGER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "design", "progress", "meshy-ledger.md")
 
 def spent_today():

@@ -49,8 +49,10 @@ These are assumptions this document currently makes. Flag them; don't silently c
    if a larger asset store and hiring pool matter more. *Pick one before writing gameplay code.*
 2. **Monetization: premium on both PC and mobile.** A free-to-play mobile economy would reshape
    progression/pacing and should be decided *before* building, not bolted on later.
-3. **Theme/setting/art style:** undecided. Use neutral placeholder art and a generic
-   fantasy-ish theme until the human decides. Do not invest in final art during prototyping.
+3. **Theme/setting/art style: decided** (Nick, 2026-10-07/08). The look is
+   `design/art/targets/TARGET.png` (scene) and `TARGET-UI.png` (cards and HUD), and
+   the goal is to match them 1:1, by any means, including Meshy. This is final art,
+   not placeholder; invest in it.
 4. **Netcode hosting model:** start with a Godot **authoritative host/server** (one player hosts,
    or a headless server build). Confirm whether launch is online co-op, LAN, or both.
 
@@ -161,7 +163,8 @@ PC first, where the audience is proven).
 
 Every 3D asset goes through the scored refinement loop in
 **`design/guide/asset-loop.md`** — build, capture, look, score, fix the two worst
-things, repeat, max four passes. Do not generate an asset in one pass and call
+things, repeat (for anything in TARGET.png, no pass cap: repeat until it
+matches TARGET 1:1, Nick 2026-10-08). Do not generate an asset in one pass and call
 it done.
 
 The step that matters is *look*: render it and open the images. Eleven assets in
