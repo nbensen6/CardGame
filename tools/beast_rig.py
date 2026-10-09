@@ -65,6 +65,8 @@ CRACK_SYNTH = True
 KEEP_DARK = 70
 # ...but not within this many px of a stone's own pixels (its dark underline).
 KEEP_DARK_OFF = 3
+# TARGET's own pixels kept in a stone's outer px and the hole round it (0: off).
+STONE_EDGE_KEEP = 3
 # A pixel this far off its 5x5 median, alone in its 7x7 window (at most
 # DESPECK_PX such), is a speck (0: off).
 DESPECK = 60
@@ -313,6 +315,16 @@ def paint_hidden(T, m, line, walls):
                 out[dark] = T[dark]
         else:
             out = carry_seam(out, hole)
+        if STONE_EDGE_KEEP:
+            # 2026-10-09 run 15: the fight's slabs land within ~1-2 px of
+            # TARGET's, so a stone's rebuilt rim showed beside each slab as
+            # specks, a red smear right of slab 2 and a dark band on slab 1's
+            # top (grader). TARGET's own pixels stay in the hole's outer
+            # ring and the stone's outer STONE_EDGE_KEEP px: where the slab
+            # falls short, TARGET's own stone edge and rock show, as TARGET.
+            core = ndi.binary_erosion(raw_stone, iterations=STONE_EDGE_KEEP)
+            ring = hole & ~core & ~band
+            out[ring] = T[ring]
         # The band's stone pixels: the line goes back over them below.
         # Only the stone's own pixels: the grown ring poked out under a
         # slab's edge as a cream speck beside TARGET's line (queue, "Inner

@@ -32,11 +32,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
-- [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 15 R1 FAIL ("no visible change; belly web dim and thin, seam narrows below the fork, red glow right of slab 2"). Run 15 removed the dark dashes under slab 2 (a stone's own underline kept by KEEP_DARK); 32-px blocks on --chest now differ from TARGET only on slab edges (slabs ~1-3 px off) and one block at slab 1's top edge. FIX left: slab 1 ~2 px high/low against TARGET's top edge; the rest is TARGET's own pixels.
-      Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
-      **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
-      Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
+- [ ] 👀 **Cracks: wide hot cores and a long sternum seam.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Cracks: wide hot cores and a long sternum seam.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]] ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] 👀 **Fist fire: compact curling blaze wrapped on the fist.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fist fire: compact curling blaze wrapped on the fist.|details]]

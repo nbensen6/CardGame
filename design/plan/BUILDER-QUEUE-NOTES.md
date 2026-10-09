@@ -2229,6 +2229,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks12-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks12-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 12:04 EDT, builder (run 15, second pass). PASS.
+
+- **Registration first.** The fist item's fix (the drawing turned square on to the camera, DRAWN_ZOOM 1.008) put every chest patch within ~0.2 px of TARGET: chest mean abs error 5.75 -> 4.56.
+- **STONE_EDGE_KEEP 3** (beast_rig.py): TARGET's own pixels stay in each stone's outer 3 px and the ring round it; only the stone's core is rebuilt. Where the fight's slab falls a px short, TARGET's own stone edge and rock show. Chest error 4.56 -> 3.95.
+- **Grader:** R2 FAIL (before the edge keep: smear right of slab 2, seam, belly), R3 PASS (minor, --chest only: crack right of slab 2 a little soft, edges a touch soft, seam maybe 1-2 px narrower). VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-run15-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.
