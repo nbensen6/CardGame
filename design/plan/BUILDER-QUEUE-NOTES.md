@@ -2146,3 +2146,11 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (round puffs, pale), R2 FAIL (blob, airbrushed), R3 FAIL (colour right; dark smoky halo), R4 FAIL (soft dome, no tongues). Every round: closer than before, no penalties. Final: VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-08-fistfire2-before.png|420]] ![[agents/frames/builder/2026-10-08-fistfire2-after.png|420]]
 - Meshy: 0 credits.
+
+## Stray yellow speck on the jackal's chest.
+
+2026-10-08 23:20 EDT, builder. Passed.
+
+- The speck was the weak-point sigil (glow mesh plus an omni light) at the Height 5 climb point lifted 1.7 hunter heights. TARGET draws no mark, so a drawn beast hides the sigil's children; the node stays as the strike flash's anchor.
+- Grader: VERDICT: PASS.
+- Meshy: 0 credits.

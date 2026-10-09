@@ -125,10 +125,11 @@ run failed.
       **Done when** the `--square` and `--hand` pairs show every HUD element in TARGET's place.
       Test: state=3d beast=cinder_jackal ^hud-and-climb-gauge-inside-the-centred-s
 
-- [ ] **Stray yellow speck on the jackal's chest.**
-      A 4-px yellow dot sits right of the sternum (square ~x369, y232) in front of the jackal; it is not the jackal's art, not the embers or ledge rings (it stays with the jackal hidden and the embers off). TARGET has nothing there.
-      **Done when** the `--beast` pair shows no speck on the chest.
-      Test: state=3d beast=cinder_jackal ^stray-yellow-speck-on-the-jackal-s-chest
+- [ ] 👀 **Stray yellow speck on the jackal's chest.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stray yellow speck on the jackal's chest.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]] ^stray-yellow-speck-on-the-jackal-s-chest
 
 ## Waiting on Nick
 
