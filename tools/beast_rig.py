@@ -224,6 +224,7 @@ def paint_hidden(T, m, line, walls):
         out = cv2.inpaint(src, hole.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA).astype(float)
         keep = ~hole
         out[keep] = T[keep]
+        out = carry_seam(out, hole)
         # The band's stone pixels: the line goes back over them below.
         out[stone & band] = LINE
         return _finish_body(out, T, m, line, walls, stone)
@@ -311,6 +312,30 @@ def paint_hidden(T, m, line, walls):
         patch[hard] = np.clip(filled[hard], 0, 255).astype(np.uint8)
     out = patch.astype(float)
     return _finish_body(out, T, m, line, walls, stone)
+
+
+# TARGET's sternum seam runs as one yellow line from the Y to the top stone
+# (x 504-513, down to y 363) and the stone hides where it goes next; below
+# the stone the channel is orange again (y 387+). The inpaint smeared it
+# into an orange haze wherever the fight's slab sits a few px off TARGET's
+# (grader, run 5: "a diffuse orange smear behind the top stone"). Under the
+# stone, and only there, the seam carries on: yellow into orange.
+SEAM_TOP, SEAM_BOT = (508.5, 356), (508.5, 392)
+SEAM_W = 8.0
+SEAM_HOT = np.array([252, 196, 40], float)
+SEAM_END = np.array([236, 96, 14], float)
+
+
+def carry_seam(out, hole):
+    H, W = hole.shape
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    (x0, y0), (_, y1) = SEAM_TOP, SEAM_BOT
+    t = np.clip((yy - y0) / (y1 - y0), 0, 1)
+    d = np.abs(xx - x0)
+    a = np.clip((SEAM_W / 2 + 0.5 - d), 0, 1) * (yy >= y0) * (yy <= y1)
+    a = ndi.gaussian_filter(a, 0.6) * hole
+    col = SEAM_HOT[None, None] * (1 - t[..., None] ** 1.5) + SEAM_END[None, None] * t[..., None] ** 1.5
+    return out * (1 - a[..., None]) + col * a[..., None]
 
 
 def _finish_body(out, T, m, line, walls, stone):
@@ -428,6 +453,28 @@ def fire_frames(L):
         rgb = np.dstack([pre[k] / np.maximum(A, 1e-3) for k in range(3)])
         out.append(np.dstack([np.clip(rgb, 0, 255), A * 255]))
     return out
+
+
+GAP_MIN = 200     # TARGET px; smaller enclosed specks are line noise
+
+
+def enclosed_gaps(m):
+    """Background pixels the silhouette closes all round (the lava cut
+    counts as a side): the gaps between limbs."""
+    outside = ~ndi.binary_dilation(m, iterations=1)
+    outside[CUT:] = False
+    lab, n = ndi.label(outside)
+    H, W = m.shape
+    gap = np.zeros_like(m)
+    for i, sl in enumerate(ndi.find_objects(lab), start=1):
+        r = lab[sl] == i
+        if r.sum() < GAP_MIN:
+            continue
+        if sl[0].start == 0 or sl[1].start == 0 or sl[1].stop == W:
+            continue
+        gap[sl] |= r
+    # Up to the line, so no sliver of sky between gap and outline.
+    return ndi.binary_dilation(gap, iterations=2) & ~m | gap
 
 
 def labels(m):
@@ -551,6 +598,12 @@ def build():
     fire_rgb, fire_a = fire_layer(T, m)
     lab = labels(m)
     alpha, own = layer_alpha(lab, m)
+    # TARGET's enclosed gaps (between the torso and the right arm) show
+    # near-black cliff; the fight's purple sky showed through them instead
+    # (critics, "Gaps between the jackal's limbs"). The torso layer carries
+    # TARGET's own pixels there, opaque, behind the limbs that frame them.
+    gap = enclosed_gaps(m)
+    alpha["torso"] = alpha["torso"] | gap
 
     layers = {}
     for name in ORDER:

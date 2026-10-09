@@ -2105,8 +2105,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Baked crack glow off** (CRACK_GLOW 0, HOT_GLOW 0): it softened every crack into a halo; with the sharper path TARGET's own pixels match. Chest error 12.6 -> 9.5, hot cores 6.1%/6.1%, hot colour (251,204,44)/(252,198,51).
 - **Stone smears.** Pale unsaturated pixels within 6 px of a stone hole now join the hole (they smeared cream under the seam), and a stone's grey ends inside the rim are filled from rock with the line and sky masked dark, the line redrawn over the band.
 - **Tried and reverted:** `crack_boost` (each crack widened 1 TARGET px with its brightest colour, middles heated to (255,196,70), a painted seam from the Y to the top stone). Chest error 15.1 and it read as orange cartoon outlines, spreading onto the muzzle lines. Not TARGET.
-- **Grader:** R1 FAIL ("no visible change at frame scale"; again asks for 2-3x wider cracks with yellow-white cores). Final: VERDICT: FAIL.
-- Frames: ![[agents/frames/builder/2026-10-09-cracks5-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks5-after.png|420]]
+- **Gap between torso and right arm:** the torso layer now carries TARGET's own dark cliff pixels in the gap the silhouette closes (`enclosed_gaps`), instead of the fight's purple sky.
+- **Seam under the top stone:** `carry_seam` paints the Y's stem on down inside the top stone's hole only (yellow into orange, x 508, y 356-392), so where the fight's slab sits a few px low the seam meets it as a line, not an inpainted haze.
+- **Grader:** R1 FAIL ("no visible change at frame scale"; 2-3x wider cracks with yellow-white cores), R2 FAIL (same, plus "seam a diffuse smear behind the top stone"), R3 FAIL (Y brighter; still thinner redder limb cracks). A registered close-up of the right forearm shows the same cracks as TARGET; the visible differences there are sky, cliff and lava bars. Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks5-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks5c-after.png|420]]
 - Meshy: 0 credits.
 
 ## Fist fire: compact curling blaze wrapped on the fist.

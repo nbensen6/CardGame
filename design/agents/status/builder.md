@@ -15,9 +15,9 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-08 21:25 EDT
 
-- **Did:** sharpened the jackal to TARGET's edge crispness and cleared pale stone smears round the slabs.
-- **Worked?** No for the grader, yes by pixels: chest error 12.6 to 9.5, sharpness 4.7 to 8.5 (TARGET 8.4). VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-09-cracks5-before.png]] then ![[frames/builder/2026-10-09-cracks5-after.png]]
+- **Did:** sharpened the jackal to TARGET's crispness, cleared stone smears, carried the sternum seam to the stone.
+- **Worked?** No for the grader, yes by pixels: chest error 12.6 to 9.5, sharpness 4.7 to 8.5 (TARGET 8.4); grader still asks for wider cracks. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-09-cracks5-before.png]] then ![[frames/builder/2026-10-09-cracks5c-after.png]]
 - **Ask:** nothing
 - **Found:** a fixed ember speck sits on the jackal's chest right of the sternum in the rest shot.
 - **Found:** widening the cracks as graders ask (tried this run) visibly departs from TARGET's own pixels.
