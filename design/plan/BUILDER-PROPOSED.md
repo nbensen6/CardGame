@@ -236,3 +236,5 @@ appends here, never to the queue.
 - (2026-10-09 run 8) A red-edged slab stands on the floor at the 16:9 frame's right edge, outside the centred square.
 
 - 2026-10-09 builder run 9: graders on Cracks, Fist fire and Cliffs name differences (softer, paler, hazier) that registered pixel measurements on the same pairs do not show (band colours within ~6 levels, sharpness equal or higher). A grader input that adds a registered difference map, or a 2x close-up pair for each item, may let these items close.
+
+- 2026-10-09 builder: a control grade (TARGET.png pasted into the frame's centred square, graded with the Cracks item's text and pairs) passed, while the real frame, ~4 levels off TARGET in the chest, failed ten runs running as "half-width cracks". The item's critic sentence may prime the grader on near-identical pixels; consider giving the grader a registered difference map, or dropping the critics' words from what it reads.

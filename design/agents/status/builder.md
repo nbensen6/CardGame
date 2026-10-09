@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T02:46
-working_on: "Cliffs: dark slate closing in, not blue and far back."
+updated: 2026-10-09T04:23
+working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
 # builder
@@ -13,15 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 04:00 EDT
+2026-10-09 04:23 EDT
 
-- **Did:** rebuilt the body under the stones, cleaned the fist's flame and the backdrop round it.
-- **Worked?** No: cracks VERDICT: FAIL; fist fire VERDICT: FAIL (closer, no penalties); cliffs VERDICT: FAIL. Registered pixels match TARGET in each.
-- **Look at:** ![[frames/builder/2026-10-09-fist6-before.png]] then ![[frames/builder/2026-10-09-fist6-after.png]]
+- **Did:** put the slabs on TARGET's to a third of a pixel and took the jackal's colours closer.
+- **Worked?** No: VERDICT: FAIL (three rounds, "no visible change"; asks for 2x wider cracks the registered pixels do not support).
+- **Look at:** ![[frames/builder/2026-10-09-cracks10-before.png]] then ![[frames/builder/2026-10-09-cracks10-after.png]]
 - **Ask:** nothing
-- **Found:** TARGET's upper slabs are ~10-15% larger than the game's (queued).
-- **Found:** the fist and its flame sit ~1.5 screen px right/down of TARGET's, a static offset.
-- **Found:** graders on cracks, fist and cliffs keep naming differences the registered pixels do not show.
+- **Found:** a control frame with TARGET pasted in PASSes this item's grade; the real frame, ~4 levels off, FAILs as "half-width cracks".
+- **Found:** jagged bright outline slivers beside the stones on the inner arms (--chest x~700, x~1250).
+- **Found:** fist and left arm still sit ~0.8 px right/down of TARGET's.
 
 ## Notes
 
@@ -30,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 04:23 EDT — builder: cracks run 10: slabs re-registered (<0.35 px), tone fix to 120, Y grow and hot lift off; control grade PASS on TARGET pasted, real frame FAIL x3; tests green, pushed.
 
 - 2026-10-09 00:27 EDT — builder: sigil hidden on the drawn jackal (speck PASS); stones re-registered; fist flame haze; floor seams dim on dark hex slabs; TARGET backdrop (tools/backdrop_cut.py) replaces 3D cliffs; TARGET card frame (tools/cardframe_target.py), hand centred; tests green, pushed.
 

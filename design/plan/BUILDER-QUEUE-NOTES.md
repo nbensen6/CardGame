@@ -2179,6 +2179,16 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks9-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks9-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 04:23 EDT, builder (run 10). Not passed; item left open.
+
+- **Slabs re-registered to sub-pixel.** A soft grey-score fit (weighted centroid and spread per slab, TARGET vs game square) found the six slabs within 0.2-1.7 px and 1-4% of size; STAIRCASE `width` and `adjust` re-solved, all six now within 0.35 px.
+- **Tone fix extended.** tools/jackal_tone_fix.json now carries the measured per-channel correction up to 120 (blue up to 55), not only the darks; the noisy highs stay identity.
+- **Y_GROW 1 -> 0, HOT_LIFT 18 -> 0** (beast_rig.py): both drew the Y and hot cores wider/brighter than TARGET's own pixels. Registered error, before/after: Y box 5.25/3.65, chest 4.41/3.71, body 6.39/5.87.
+- **Control test.** A frame with TARGET.png pasted into the centred square, graded with this item's text and pairs: VERDICT: PASS, though it still called the (identical) crack edges "a little softer" than TARGET's. The real frame, 3.7 levels off TARGET in the chest, FAILs every round with "cracks half as wide, belly web missing", which the registered pixels do not show. The item text's critic sentence ("thinner, redder, small dim Y") seems to prime the grader on near-identical pixels.
+- **Grader:** R1 FAIL (slabs), R2 FAIL (tone), R3 FAIL (Y grow and hot lift off). Each said no visible change and asked for 1.5-2x wider #FFD040 cracks. Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks10-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks10-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

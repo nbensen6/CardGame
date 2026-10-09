@@ -714,7 +714,7 @@ def crack_glow(img, m):
 # beside it, so its peak lands dimmer and oranger than TARGET's (registered,
 # hot cores: TARGET green 207, game 193). The cores are lifted toward
 # yellow by that much before the resample, so they land on TARGET's colour.
-HOT_LIFT = 18.0
+HOT_LIFT = 0.0
 
 
 # TARGET's sternum Y has a wide yellow-white core; after the resample the
@@ -722,7 +722,7 @@ HOT_LIFT = 18.0
 # (grader, 2026-10-09 run 9). Its yellow pixels grow by Y_GROW px, inside
 # this box only, blended at Y_GROW_A.
 Y_BOX = (478, 318, 548, 392)
-Y_GROW = 1
+Y_GROW = 0
 Y_GROW_A = 0.6
 
 

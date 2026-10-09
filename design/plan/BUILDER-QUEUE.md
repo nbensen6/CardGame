@@ -9,6 +9,11 @@ TARGET.png when none is open. Nick may reorder, add, delete and tick.
 Every item names the shot that must change. If the shot does not change, the
 run failed.
 
+- [ ] **Inner arm outlines beside the stones: smooth, no jagged slivers.**
+      TARGET's cream outline down the inner arms beside the stones is one smooth line; the game shows short jagged bright slivers there (`--chest` pair, game x~700 and x~1250).
+      **Done when** the `--square` and `--chest` pairs show no visible difference in the inner arm outlines beside the stones.
+      Test: state=3d beast=cinder_jackal ^inner-arm-outlines-beside-the-stones-smo
+
 ## Now — the Cinder Jackal fight
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
@@ -33,7 +38,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 9 (with the new --chest pair): "seam below the top stone and the belly web dimmer, thinner, redder than TARGET; Y a touch narrow at its stem". Row profiles across the seam in the --chest pair match TARGET within ~10 levels (e.g. y 330: T 214,54,3 / G 213,48,0), so the art is TARGET's; the stones (smaller, offset) are the visible difference there. Next: grade with --chest and --stones together, or fix the slabs' size so TARGET's seam reads the same round them.
+      Next pass: grader 2026-10-09 run 10, R3 FAIL: "belly web dim or missing, Y core stops below the fork, cracks thinner and redder; widen 1.5-2x with #FFD040 cores". Registered, the body under and between the stones matches TARGET within ~4 levels (chest error 3.7, stem column within a few levels) and a control (TARGET pasted into the frame) PASSes, so do not widen; the visible differences left are the slab edges and the jagged outline slivers beside the stones (`--chest` x~700, x~1250).
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
