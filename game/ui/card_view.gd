@@ -352,7 +352,9 @@ func _layer(node: Control, l: float, t: float, r: float, b: float,
 	node.offset_top = dt
 	node.offset_right = dr
 	node.offset_bottom = db
-	if _face_host != null:
+	if node.get_parent() != null:
+		pass   # placed where its caller already put it (the A1 window and body)
+	elif _face_host != null:
 		_face_host.add_child(node)
 	else:
 		add_child(node)

@@ -2583,3 +2583,21 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 PASS (minor: the band's edge is straight where TARGET's is soft). VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-gaugeright-before.png|420]] ![[agents/frames/builder/2026-10-09-gaugeright-after.png|420]]
 - Meshy: 0 credits.
+
+## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
+
+2026-10-09 13:45 EDT, builder (run 16). Not passed; item left open.
+
+- Tried a 0.15 unsharp pass on a CanvasLayer under the HUD (screen texture) and Lanczos mips on the slab sprites. R1 FAIL (no visible change), R2 FAIL (slabs "grainy, stair-stepped"). Both reverted.
+- Measured: the game's square at 720 has the edge energy of TARGET resampled to 720 (Laplacian beast 34.9 vs 35.4, stones 33.7 vs 34.3); outline profiles outward from the rim match within ~10 levels. A 1820x1024 shot (`size=1820x1024`, the square then 1024 = TARGET's own pixels) is still ~20% softer on fine detail (25.1 vs 30.9 beast), so the drawn rig's downsample to the 720 screen (RIG_SCREEN_SCALE) is the place to work if this continues.
+- Fixed on the way: card_view `_layer` no longer re-adds a node that already has a parent (the A1 window rect logged "already has a parent" for every card).
+- Meshy: 0 credits.
+
+## Hand fan: spread no wider than TARGET's.
+
+2026-10-09 13:45 EDT, builder (run 16). PASS; item marked 👀.
+
+- Registered the cost-disc centroids on the --square pair: the fan sat 1.3-2.4 pair px right with the spacing already within ~1 px, so the "spread" was an offset. HAND_SQUARE_CX 0.5042 -> 0.5014; discs now within 0.7 pair px of TARGET's. (The --hand close-up's mapping read the same discs ~2 px apart; the square is the 1:1 test.)
+- Grader: R1 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-fan-before.png|420]] ![[agents/frames/builder/2026-10-09-fan-after.png|420]]
+- Meshy: 0 credits.

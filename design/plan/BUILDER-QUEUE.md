@@ -14,14 +14,16 @@ run failed.
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
 - [ ] **Scene lines soft: TARGET's crisp outline, cracks and slab edges.**
+      Next pass: grader 2026-10-09 run 16 R2 FAIL: slabs "grainy, edges stair-stepped", outline halo "wider", cracks softer. Tried and reverted: a 0.15 unsharp pass under the HUD and Lanczos mips on the slab sprites (graders saw grain, no gain). Measured: at 720 the game's square has TARGET-resampled-to-720's edge energy (Laplacian 34.9 vs 35.4 beast, 33.7 vs 34.3 stones), and outline profiles outward from the rim match within ~10 levels; the pairs set TARGET's 1024 px against the game's 720, so TARGET keeps detail a 720 frame cannot carry. FIX: render the drawn rig and slabs from higher-res cuts (the rig at RIG_SCREEN_SCALE for the window's real height) and judge on a 1820x1024 shot (`size=1820x1024`, square 1024 = TARGET's own pixels).
       Both critics, MODERATE (2026-10-09): TARGET's painted lines are crisp (the jackal's cream outline, cracks, ear tips, the slab edges and chips, cliff edge light, card art and text); the game's read smeared, as if resampled, with a wider glow halo round the outline.
       **Done when** the `--square`, `--beast` and `--stones` pairs show no visible difference in line sharpness.
       Test: state=3d beast=cinder_jackal ^scene-lines-soft-target-s-crisp-outline
 
-- [ ] **Hand fan: spread no wider than TARGET's.**
-      One critic, MODERATE (2026-10-09): TARGET's cost coins sit at square x 120/205/293/382/469 (--square pair scale), the game's ~122/208/297/388/474, the gap growing to the right so Tongue Flick reaches further toward End Turn.
-      **Done when** the `--square` and `--hand` pairs show no visible difference in the fan's spread.
-      Test: state=3d beast=cinder_jackal ^hand-fan-spread-no-wider-than-target-s
+- [ ] 👀 **Hand fan: spread no wider than TARGET's.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hand fan: spread no wider than TARGET's.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-fan-after.png|420]] ^hand-fan-spread-no-wider-than-target-s
 
 - [ ] **Intent chip: "Attack 7" plain, not underlined.**
       Both critics, MINOR (2026-10-09): the game's intent chip text reads underlined or heavier; TARGET's "Attack 7" is plain.

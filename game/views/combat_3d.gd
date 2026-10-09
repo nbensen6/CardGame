@@ -9581,7 +9581,7 @@ func _beast_shake() -> void:
 ## the only thing you scan a fanned hand for.
 const FAN_OVERLAP := 0.77     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
 ## Where TARGET centres the hand, as a fraction of the centred square's width.
-const HAND_SQUARE_CX := 0.5042   # TARGET's cost discs registered per card on the --hand pair (builder 2026-10-09 run 16)
+const HAND_SQUARE_CX := 0.5014   # TARGET's cost discs registered per card on the --square pair, within 0.7 px (builder 2026-10-09 run 16)
 const FAN_TILT := 0.085       # radians per card away from centre: TARGET's tops measure -9.9/-5.1/0/5.4/9.7 deg (run 14)
 const FAN_DROP := 9.8        # px each card sinks per step from centre, making the arc
 ## Px each card beyond the inner pair is drawn back toward the centre: TARGET's
