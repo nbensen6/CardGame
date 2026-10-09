@@ -161,7 +161,7 @@ const RIG_SHARPEN := 0.0
 ## Unsharp mask after the footprint filter, at screen-pixel reach (see
 ## drawn_sprite.gdshader screen_sharpen): the box footprint is softer than
 ## TARGET's own resample.
-const RIG_SCREEN_SHARPEN := 0.0
+const RIG_SCREEN_SHARPEN := 0.15
 ## The footprint as a Lanczos-2 kernel, not a box (drawn_sprite.gdshader
 ## footprint_lanczos): TARGET's square is a Lanczos resample.
 const RIG_LANCZOS := true

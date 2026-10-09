@@ -30,9 +30,9 @@ SCALE = 1  # TARGET's own pixels: the game draws them at ~0.7x, so no upsample
 # Each pass is per channel polynomial coefficients (highest power first) of
 # shot = f(drawn) on 0..255, fitted on the shot after the passes before it;
 # the cut undoes them last pass first.
-SHARPEN = [100, 100, 80, 80, 45, 40]  # per slab, lowest first
+SHARPEN = [60, 60, 60, 60, 60, 60]  # per slab, lowest first
 SHARPEN_RADIUS = 1.0
-ALPHA_IN = 4
+ALPHA_IN = 3
 ALPHA_IN_DARK = 110  # ... where the slab's background is darker than this
 MATTE = True
 MATTE_IN = 3     # 4x px inside the opaque slab its colour is read from
@@ -43,6 +43,9 @@ LIP = 2          # TARGET px of dark grey underside lip the slab grows into
 LIP_MIN = 70     # its darkest level
 EDGE_CLEAN = 6   # 4x px: the edge band whose warm pixels are cleaned
 EDGE_SAT = 28    # grey slab pixels stay under this max-min spread
+# The fight draws the cuts through drawn_sprite.gdshader (combat_3d
+# STAIR_SLAB_DRAWN), whose colour table already undoes the Environment.
+DRAWN = True
 SCREEN_COMP = [
     [(1.1275, -11.864), (1.16293, -17.915), (1.21524, -26.145)],
     [(-0.0044, 2.34034, -96.72835), (-0.00373, 2.09371, -75.0884), (-0.00336, 1.93158, -59.15251)],
@@ -160,7 +163,8 @@ def main():
         warm = ~core & (sat > EDGE_SAT)
         _, (cy, cx) = nd.distance_transform_edt(~(core & (sat <= EDGE_SAT)), return_indices=True)
         rgb[warm] = rgb[cy[warm], cx[warm]]
-        rgb = undo_screen(rgb)
+        if not DRAWN:
+            rgb = undo_screen(rgb)
         img = np.dstack([np.clip(np.round(rgb), 0, 255), alpha * 255]).astype(np.uint8)
         im = Image.fromarray(img, "RGBA")
         im = im.resize((crop.width * SCALE, crop.height * SCALE), Image.LANCZOS)

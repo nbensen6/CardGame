@@ -47,6 +47,12 @@ uniform bool footprint = false;
 // and the cracks' cores lower, a glow one pixel past the outline ("Scene
 // lines soft", builder 2026-10-09 run 18).
 uniform bool footprint_lanczos = false;
+// Keep the Lanczos kernel at the silhouette too. Off for the rig: through its
+// premultiplied viewport the negative lobes rang a dark fringe there. On for
+// a plain cut (the stair slabs), whose colour is bled past its edge.
+uniform bool lanczos_edges = false;
+// Face the camera (a Sprite3D's billboard does not reach a material_override).
+uniform bool billboard = false;
 uniform float screen_sharpen = 0.0;
 uniform float screen_sharpen_px = 1.0;
 // TARGET's lava cracks read as wide channels with yellow-hot cores; through
@@ -139,6 +145,14 @@ vec3 cal_cell(vec2 uv) {
 	return LUT3_E0 + (LUT3_EMAX - LUT3_E0) * pow(u, vec3(LUT3_GAMMA));
 }
 
+void vertex() {
+	if (billboard) {
+		MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
+		MODELVIEW_MATRIX = MODELVIEW_MATRIX * mat4(vec4(length(MODEL_MATRIX[0].xyz), 0.0, 0.0, 0.0), vec4(0.0, length(MODEL_MATRIX[1].xyz), 0.0, 0.0), vec4(0.0, 0.0, length(MODEL_MATRIX[2].xyz), 0.0), vec4(0.0, 0.0, 0.0, 1.0));
+		MODELVIEW_NORMAL_MATRIX = mat3(MODELVIEW_MATRIX);
+	}
+}
+
 void fragment() {
 	if (calibrate && cal_grid >= 0) {
 		ALBEDO = cal_cell(UV);
@@ -176,7 +190,9 @@ void fragment() {
 				// At the silhouette the negative lobes rang a dark fringe
 				// over the backdrop (the shoulder by the fist, run 18): the
 				// box there.
-				t = mix(box, t, step(0.999, min(t.a, box.a)));
+				if (!lanczos_edges) {
+					t = mix(box, t, step(0.999, min(t.a, box.a)));
+				}
 			} else {
 				t = box;
 			}

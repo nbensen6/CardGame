@@ -2613,6 +2613,8 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Fixed on the way: card_view `_layer` no longer re-adds a node that already has a parent (the A1 window rect logged "already has a parent" for every card).
 - Meshy: 0 credits.
 
+- 2026-10-09 16:05 EDT, later in run 18: the backdrop through the Lanczos footprint too (BACKDROP_LANCZOS, screen sharpen 0.4 in place of the 0.25 unsharp): cliffs error 2.23 -> 2.14, detail ~0.96. Rig RIG_SCREEN_SHARPEN 0.15 on the Lanczos footprint: head/chest error 2.9/3.1 -> 2.6/2.8, detail 0.96/0.98. Grader R4 FAIL: names card text and art first now, then cracks, slab stair-steps. VERDICT: FAIL.
+
 ## Hand fan: spread no wider than TARGET's.
 
 2026-10-09 13:45 EDT, builder (run 16). PASS; item marked 👀.
@@ -2665,4 +2667,5 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Tried and dropped: nearest filtering on the slab sprites (error 3.5 -> 5.0 levels), more unsharp (error up), an opaque dark contour under each slab (already drawn by the rig; no change).
 - Grader R1 FAIL (no change: the fix had not reached the frame), R2 FAIL (undersides light: matte took the lip as half-transparent), R3 FAIL (specks MET; middle slab's lower edge soft). VERDICT: FAIL.
 - Meshy: 0 credits.
+- 2026-10-09 16:05 EDT, later in run 18: the slab cuts are drawn through drawn_sprite.gdshader now (STAIR_SLAB_DRAWN): TARGET's 1024 px, its colour table in place of SCREEN_COMP, a Lanczos-2 footprint at the screen (lanczos_edges, billboard in the shader). Slab error vs TARGET 3.6 -> 2.6 levels, detail 0.95-0.99, warm 12 -> 5. Grader R4 FAIL: specks MET, middle slab's lower edge pale and stair-stepped.
 

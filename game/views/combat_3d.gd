@@ -4000,6 +4000,11 @@ const BACKDROP_DEPTH := 1.12
 const BACKDROP_REST_CLIMB := 0.15
 ## The backdrop's unsharp mask (drawn_sprite.gdshader screen_sharpen).
 const BACKDROP_SHARPEN := 0.25
+## Its footprint as Lanczos-2 instead of one linear tap and the unsharp mask.
+const BACKDROP_LANCZOS := true
+## Then an unsharp mask at screen-pixel reach: the half-pixel taps' own
+## bilinear blur left the cliffs' fine detail under TARGET's.
+const BACKDROP_SCREEN_SHARPEN := 0.4
 const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
 var _backdrop: MeshInstance3D = null
 ## TARGET's floor on the ground (tools/floor_cut.py, drawn_floor.gdshader):
@@ -4040,6 +4045,14 @@ func _add_backdrop(beast_id: String) -> void:
 	# The cliffs' edge light read soft beside TARGET's (queue "Scene lines
 	# soft", 2026-10-09): their fine detail measured ~0.92 of TARGET's.
 	mat.set_shader_parameter("sharpen", BACKDROP_SHARPEN)
+	if BACKDROP_LANCZOS:
+		# Brought to the screen with the Lanczos footprint, as TARGET is
+		# brought to the square (the slabs and the rig do the same).
+		mat.set_shader_parameter("sharpen", 0.0)
+		mat.set_shader_parameter("footprint", true)
+		mat.set_shader_parameter("footprint_lanczos", true)
+		mat.set_shader_parameter("lanczos_edges", true)
+		mat.set_shader_parameter("screen_sharpen", BACKDROP_SCREEN_SHARPEN)
 	mat.render_priority = -3
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE
@@ -7843,6 +7856,9 @@ const STAIR_SLAB_TOP := 0.35
 ## The picture's width over the slab's top width (2 r): the cut-out carries
 ## the slab's chipped ends and a few pixels of feather.
 const STAIR_SLAB_SPAN := 1.0
+## Draw the slab cuts through drawn_sprite.gdshader (true) or as a plain
+## unshaded sprite of a pre-shrunk copy (false).
+const STAIR_SLAB_DRAWN := true
 
 
 ## Slab `k`'s picture as a camera-facing sprite, `r` its half-width, mirrored
@@ -7857,7 +7873,7 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 	# mips read soft beside TARGET's crisp slab edges (queue "Scene lines
 	# soft", 2026-10-09), and no mips stair-stepped them (run 16).
 	var shrink := stair_slab_shrink()
-	var pic := _stair_slab_scaled(tex, shrink)
+	var pic := tex if STAIR_SLAB_DRAWN else _stair_slab_scaled(tex, shrink)
 	sp.texture = pic
 	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sp.shaded = false
@@ -7865,7 +7881,22 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 	sp.transparent = true
 	sp.flip_h = side > 0.0
 	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR if pic != tex else BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	if pic == tex:
+	if STAIR_SLAB_DRAWN:
+		# TARGET's own 1024 px through the jackal's shader: its colour table
+		# undoes the fight's Environment, and its Lanczos footprint brings
+		# the cut to the screen the way vs_target brings TARGET to the
+		# square, wherever the slab lands on the pixel grid. Through the
+		# sprite's linear filter the slab edges were one blended step softer
+		# than TARGET's (queue "Warm specks", builder run 18).
+		var mat := ShaderMaterial.new()
+		mat.shader = DRAWN_SPRITE
+		mat.set_shader_parameter("tex", tex)
+		mat.set_shader_parameter("footprint", true)
+		mat.set_shader_parameter("footprint_lanczos", true)
+		mat.set_shader_parameter("lanczos_edges", true)
+		mat.set_shader_parameter("billboard", true)
+		sp.material_override = mat
+	elif pic == tex:
 		sp.texture = CardView._a1_mip(tex)
 	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(pic.get_width())
 	sp.offset = Vector2(0.0, -float(pic.get_height()) * (0.5 - STAIR_SLAB_TOP))
