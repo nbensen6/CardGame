@@ -151,12 +151,12 @@ run failed.
 - [ ] **Frog: TARGET's clean cel line, not a heavy pixelated outline.**
       In the `--frog` close-up TARGET's Frog has thin clean dark lines and soft light-green shading; the game's has a heavy black, stair-stepped outline and darker green.
       **Done when** the `--frog` pair shows no visible difference in the Frog.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^frog-target-s-clean-cel-line-not-a-heavy
 
 - [ ] **HP bar under the Frog: TARGET's size and weight.**
       TARGET's 42/42 bar is a little smaller with a lighter rim and thinner numerals; the game's is larger and bolder (`--frog` pair).
       **Done when** the `--frog` pair shows no visible difference in the HP bar.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^hp-bar-under-the-frog-target-s-size-and-
 
 ## Waiting on Nick
 
