@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T17:29
+updated: 2026-10-09T18:23
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,14 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 17:29 EDT
+2026-10-09 18:23 EDT
 
-- **Did:** cleaned slab edges and specks under the middle slab; sharpened slabs, jackal and cliffs to TARGET's detail.
-- **Worked?** Partly: slab undersides VERDICT: PASS; scene sharpness VERDICT: FAIL ("no visible change"; detail now 0.97-1.05 of TARGET's).
-- **Look at:** ![[frames/builder/2026-10-09-sliplip-before.png]] then ![[frames/builder/2026-10-09-sliplip-after.png]]
+- **Did:** slab cuts filtered premultiplied, so their dark stepped rim is gone; scene sharpness still fails grading.
+- **Worked?** No: VERDICT: FAIL ("no visible change"); edges measure within ~5 levels of TARGET-at-720.
+- **Look at:** ![[frames/builder/2026-10-09-crisp-before.png]] then ![[frames/builder/2026-10-09-crisp-after.png]]
 - **Ask:** nothing
-- **Found:** slab 2's left end sits about 1 px left of TARGET's.
-- **Found:** drawn_sprite.gdshader clamps colour to alpha for the straight-alpha slab cuts, a stepped dark rim on the slab diagonals.
+- **Found:** the grader names softness the edge profiles do not show; this item may need a non-blur cause.
 
 ## Notes
 

@@ -27,6 +27,20 @@ uniform bool cal_flip = false;
 // A rigged drawing (views/drawn_rig.gd) reaches here through a SubViewport,
 // whose transparent target holds colour premultiplied by alpha.
 uniform bool premul = false;
+// A straight-alpha cut (the stair slabs): the footprint's taps are
+// premultiplied before they are summed and divided back after, so a texel
+// at alpha 0 adds no colour and a part-covered edge pixel keeps the slab's
+// own grey. Filtered straight, the edge pixels had to be clamped to alpha
+// (rgb <= a), which drew a dark stepped rim round every slab ("Scene lines
+// soft", builder run 20).
+uniform bool premul_taps = false;
+// The cut's edge alpha raised to this power after filtering (1 = as cut).
+uniform float edge_pow = 1.0;
+vec4 ftap(sampler2D s, vec2 uv) {
+	vec4 c = textureLod(s, uv, 0.0);
+	if (premul_taps) c.rgb *= c.a;
+	return c;
+}
 // TARGET's warm glow outside the line, grown from the figure's alpha so it
 // follows the parts as they move. 0 = none (a PNG that carries its own).
 uniform float halo = 0.0;
@@ -169,7 +183,7 @@ void fragment() {
 			vec4 box = vec4(0.0);
 			for (int i = -1; i <= 1; i++) {
 				for (int j = -1; j <= 1; j++) {
-					box += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
+					box += ftap(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0));
 				}
 			}
 			box /= 9.0;
@@ -181,7 +195,7 @@ void fragment() {
 					for (int j = -3; j <= 3; j++) {
 						float w = lw[abs(i)] * lw[abs(j)];
 						if (w == 0.0) continue;
-						t += w * textureLod(tex, UV + dx * (float(i) * 0.5) + dy * (float(j) * 0.5), 0.0);
+						t += w * ftap(tex, UV + dx * (float(i) * 0.5) + dy * (float(j) * 0.5));
 						wsum += w;
 					}
 				}
@@ -200,8 +214,8 @@ void fragment() {
 				// The box footprint is softer than the Lanczos resample TARGET
 				// is measured at: a small unsharp mask at screen-pixel reach
 				// puts the thin cracks' peaks back.
-				vec4 w = (textureLod(tex, UV + dx * screen_sharpen_px, 0.0) + textureLod(tex, UV - dx * screen_sharpen_px, 0.0)
-					+ textureLod(tex, UV + dy * screen_sharpen_px, 0.0) + textureLod(tex, UV - dy * screen_sharpen_px, 0.0)) * 0.25;
+				vec4 w = (ftap(tex, UV + dx * screen_sharpen_px) + ftap(tex, UV - dx * screen_sharpen_px)
+					+ ftap(tex, UV + dy * screen_sharpen_px) + ftap(tex, UV - dy * screen_sharpen_px)) * 0.25;
 				vec4 sh = t + (t - w) * screen_sharpen;
 				// Only inside solid rock: at the silhouette it would ring.
 				float solid = step(0.999, min(t.a, w.a));
@@ -283,8 +297,11 @@ void fragment() {
 				t.rgb = mix(t.rgb, crack_core * t.a, gl);
 			}
 		}
-		if (premul && t.a > 0.0) {
+		if ((premul || (premul_taps && footprint)) && t.a > 0.0) {
 			t.rgb /= t.a;
+		}
+		if (edge_pow != 1.0) {
+			t.a = pow(t.a, edge_pow);
 		}
 		if (halo > 0.0 && t.a < 1.0) {
 			float g = glow_at(UV) * halo * (1.0 - t.a);

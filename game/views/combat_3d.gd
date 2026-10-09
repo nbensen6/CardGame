@@ -7866,6 +7866,11 @@ const STAIR_SLAB_SPAN := 1.0
 ## Draw the slab cuts through drawn_sprite.gdshader (true) or as a plain
 ## unshaded sprite of a pre-shrunk copy (false).
 const STAIR_SLAB_DRAWN := true
+## Filter the cut premultiplied (drawn_sprite premul_taps).
+const STAIR_SLAB_PREMUL := true
+## Edge alpha power after the filter: filtered premultiplied, the slab came
+## out about half a pixel fat (first ring out ~9 levels bright).
+const STAIR_SLAB_EDGE_POW := 2.0
 ## Each slab's sub-pixel landing against TARGET, in screen px at the rest
 ## view (x right, y down): registered on the --square pair, builder run 18
 ## (the middle slabs sat half a pixel low and their lower edges read fat).
@@ -7906,6 +7911,9 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 		mat.set_shader_parameter("footprint", true)
 		mat.set_shader_parameter("footprint_lanczos", true)
 		mat.set_shader_parameter("lanczos_edges", true)
+		# Filtered premultiplied: no dark rim at the cut's edge (run 20).
+		mat.set_shader_parameter("premul_taps", STAIR_SLAB_PREMUL)
+		mat.set_shader_parameter("edge_pow", STAIR_SLAB_EDGE_POW)
 		mat.set_shader_parameter("billboard", true)
 		sp.material_override = mat
 	elif pic == tex:

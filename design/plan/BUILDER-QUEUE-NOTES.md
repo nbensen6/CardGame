@@ -2586,6 +2586,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
 
+2026-10-09 18:23 EDT, builder (run 20). Not passed; item left open.
+
+- drawn_sprite.gdshader `premul_taps`: the stair slabs' footprint taps are premultiplied before the Lanczos sum and divided back after, in place of clamping rgb to alpha (which drew a dark stepped rim round every slab). `edge_pow` 2.0 on the slabs pulls the edge back in (premultiplied alone left the first ring out +9 levels: slab half a pixel fat).
+- Slab edge rings vs TARGET-at-720 (signed/abs, -1 in, +1 out): before -1 +3.5/9.4, +1 +3.6/8.8 (the dark rim cancelling a fat edge); after -1 +4.0/10.6, +1 +5.1/9.2; band error 8.01 -> 8.13, stones 2.95 -> 2.94. No dark rim at 4-6x zoom.
+- Tried and dropped: cut_slabs ALPHA_IN 5/7 (red specks inside the edge over the cracks), MATTE_POW 1.6, EDGE_RAMP 3.0/2.0 (no measurable change).
+- Measured the rest: rig and backdrop screen sharpen off and the Lanczos footprints off change nothing a zoom can see; the cliff diagonal's row profiles match TARGET-at-720 within ~5 levels (edge pixel 7 darker, bright side 4 brighter). Edge gradient p95/p99 vs TARGET: stones 1.02/0.97, head 1.00/0.99, chest 1.01/1.00, cliffs 1.03/0.96.
+- Grader R1, R2 FAIL, "no visible change" (1304 px moved > 8 levels, all on slab rims). VERDICT: FAIL.
+- Meshy: 0 credits.
+
 2026-10-09 17:36 EDT, builder (run 19). Not passed; item left open.
 
 - Slab cut unsharp per slab (SHARPEN 85,120,80,75,70,75 now that REBLEED keeps the edge from ringing): slab detail vs TARGET 0.89-0.97 -> 0.97-1.02, error 4.16 -> 4.26.
