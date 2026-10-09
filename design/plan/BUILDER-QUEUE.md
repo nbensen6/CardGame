@@ -57,7 +57,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
-      Next pass: grader R7 (2026-10-09 run 8): text size and no pips MET; still: trim reads plain grey-olive (wants TARGET's light gold-green edge with a beaded inner line), Leap/Scramble art soft and the Scramble panel's lower edge jagged, golem drawn larger than TARGET's. FIX: a crisper art source (Meshy image pass or a 2x cut), an anti-aliased art edge, the art window ~10% narrower like TARGET's, a brighter trim line.
+      Next pass: grader R8 (2026-10-09 run 8): text and no pips MET; trim still reads plain (wants a visibly beaded light gold-green inner line), Leap art paler at the top than TARGET's blue sky (the cut's badge inpaint smeared the top-left), hand placement claims contradict the measured 2x crop (middle top y 559 vs 560). FIX: a bolder beaded trim line, re-cut Leap without the top-left smear (or a Meshy image pass at TARGET's framing).
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
       **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
       Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
