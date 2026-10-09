@@ -2247,6 +2247,19 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (no visible change at frame scale, haze, soft curls), R2 FAIL (closer: column and rim gone; interior flatter, wider glow), R3 FAIL (closer; curl strokes soft, haze past the edge). No penalties after R1. VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-fist6-before.png|420]] ![[agents/frames/builder/2026-10-09-fist6-after.png|420]]
 - Meshy: 0 credits.
+2026-10-09 08:53 EDT, builder (run 13). Not passed; item left open. (The cracks item above it was left as is: twelve runs, registered within a few levels of TARGET.)
+
+- **Grain without blur.** The flame's bilateral (11/40) took TARGET's grain out but softened the curls (Laplacian in the flame, square px: TARGET 15.1, game 11.8). Now `FIRE_DENOISE` "nlm" (cv2 NL-means, h 6): 13.4, no sparkle. NL-means alone drew contour bands round the fist (an 8-bit gradient the colour path steepens ~4x), so `FIRE_DITHER` 1.0 (seeded) breaks them up; `FIRE_INK` stays 0 (0.7 on the NL-means output drew striations).
+- **Fire skips the tone fix** (`FIRE_TONE_FIX` False): jackal_tone_fix.json's blue curve, measured on rock, steps 2x and then flattens across 49-70, the flame's yellow, and drew contour lines through the core.
+- **Pinholes and the fist seam.** The key failed on the flame's grain and under the fist's soft line: the rest composite's alpha dipped to ~0.85 in single pixels there. `FIRE_UNDER_FIST` (12 canvas px) fills the flame solid under the fist, and pinholes inside the flame are filled too, with the nearest solid colour.
+- **Frame 0 unwarped.** fire_frames subtracts each wave's own value at phase 0, so the rest frame is TARGET's flame unmoved and unresampled (no change measured on screen; kept as correct).
+- `FIRE_EDGE_PX` 3 -> 1.5 (edge pixels taking the nearest flame colour).
+- **Tried, reverted:** a bone nudge on fore_l / arm_l / fire to cure the ~1 px fist offset (flame error 13.4 -> 7.2, but the torso's copy of the arm's line peeked out as a cream spike and doubled outline: the offset is a local warp of ~0.5-1 px, not a bone offset; the whole body fits an affine within 0.07 px); a median denoise (grain back); a green lift in the core (`FIRE_LIFT_G`, no change on screen); a 3D LUT recalibrated to EMAX 4 with EMIT_CAP 4 (every colour off, body error 5 -> 31); `use_hdr_2d` on the rig viewport (bands a little less, but it changes the colour space on Forward+); halo 0 and screen sharpen 0 as diagnostics (neither is the pale band).
+- **Measured.** Core row (square y 180, x 136-157), T/G green: 201/197, 219/206, 229/211, 235/219, 236/224. Green with red >= 250 and blue < 70 tops out at 234 in the game, 244 in TARGET.
+- **Grader:** R1 FAIL (NL-means banding: a penalty-borderline), R2 FAIL (closer, curls a little crisper), R3 FAIL (no penalties; flame "almost matches" on --square and --beast; core paler, curls soft, haze). VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-fist7-before.png|420]] ![[agents/frames/builder/2026-10-09-fist7-after.png|420]]
+- Meshy: 0 credits.
+
 ## Stray yellow speck on the jackal's chest.
 
 2026-10-08 23:20 EDT, builder. Passed.

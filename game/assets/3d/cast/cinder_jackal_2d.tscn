@@ -478,7 +478,7 @@ z_index = 4
 z_as_relative = false
 texture = ExtResource("fire")
 centered = false
-position = Vector2(-352, -591)
+position = Vector2(-353, -591)
 hframes = 8
 
 [node name="hold_0" type="Marker2D" parent="Rig/Root/torso"]

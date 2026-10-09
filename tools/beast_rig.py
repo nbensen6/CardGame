@@ -142,13 +142,33 @@ FIRE_LEAN = 0.32
 FIRE_RAW = True
 # Edge-keeping smooth of the flame's colours (see build()).
 FIRE_SMOOTH = True
+# "nlm": non-local means instead of the bilateral (builder 2026-10-09 run
+# 13): the bilateral at 11/40 took the grain out but blurred the curl
+# strokes (Laplacian in the flame 11.8 against TARGET's 15.1); NL-means
+# averages like patches along each tongue, so the grain goes and the strokes
+# stay.
+FIRE_DENOISE = "nlm"
+FIRE_NLM_H = 6
+FIRE_MEDIAN = 5          # canvas px; "median": a median takes the grain and keeps the strokes' edges
+# The colour path loses ~10-20 green in the flame's lemon core where red
+# clips (registered: TARGET (255,237,52) drew (255,224,56)); green above
+# FIRE_LIFT_FROM is lifted by up to FIRE_LIFT_G before it.
+FIRE_LIFT_FROM = 170.0
+FIRE_LIFT_G = 0.0   # 16 tried: no change on screen, the core is at the scene's gamut edge
+FIRE_EDGE_PX = 1.5
+FIRE_UNDER_FIST = 12.0   # canvas px
+FIRE_TONE_FIX = False
+# The colour path steepens the flame's yellows ~4x, so a smooth 8-bit
+# gradient shows its 1-level steps as bands; a +-FIRE_DITHER level
+# deterministic dither after the smooth breaks them up.
+FIRE_DITHER = 1.0
 FIRE_SMOOTH_D = 11
 FIRE_SMOOTH_SC = 40.0
 FIRE_SMOOTH_SS = 5.0
 # Unsharp on the smoothed flame (canvas px sigma, gain): TARGET's curl
 # strokes read inked; after the resample the game's read soft (grader R3).
 FIRE_INK_SIG = 2.5
-FIRE_INK = 0.0   # 0.8 tried 2026-10-09: brought the grain back
+FIRE_INK = 0.0   # 0.7 on the NL-means output (run 13) drew contour striations round the fist; 0.8 on the bilateral (run 9) brought the grain back
 FIRE_SHELL_PX = 0.0       # canvas px (2x TARGET) of the flame's outer shell
 FIRE_SHELL_R = (110.0, 165.0)   # red: fully faded .. fully kept
 FIRE_HAZE = 0.92        # 0.92 until the backdrop (tools/backdrop_cut.py) carried TARGET's glow itself
@@ -532,8 +552,14 @@ def fire_frames(L):
     for f in range(FIRE_FRAMES):
         ph = 2.0 * math.pi * f / FIRE_FRAMES
         # sin(k*y + ph) with ph growing travels toward -y: the wave climbs.
-        dx = FIRE_SWAY * SCALE * up * np.sin(2 * math.pi * yy / lam + ph + xx / (90.0 * SCALE))
-        dy = FIRE_LIFT * SCALE * up * (0.5 + 0.5 * np.sin(2 * math.pi * xx / (55.0 * SCALE) - ph))
+        # Each wave less its own value at ph 0, so frame 0 (the one the rest
+        # pose shows) is TARGET's flame unmoved (builder 2026-10-09 run 13:
+        # the old frame 0 stood ~1.75 screen px right of and 1 px below
+        # TARGET's, its tongues bilinear-resampled soft).
+        ax = 2 * math.pi * yy / lam + xx / (90.0 * SCALE)
+        ay = 2 * math.pi * xx / (55.0 * SCALE)
+        dx = FIRE_SWAY * SCALE * up * (np.sin(ax + ph) - np.sin(ax))
+        dy = FIRE_LIFT * SCALE * up * 0.5 * (np.sin(ay - ph) - np.sin(ay))
         coords = [yy + dy, xx + dx]
         pre = [ndi.map_coordinates(L[..., k] * L[..., 3] / 255.0, coords, order=1, mode="constant")
                for k in range(3)]
@@ -889,7 +915,11 @@ def build():
                 rgb, a = sink_target(rgb, a, crop_box(T))
             else:
                 rgb, a = sink(rgb), sink(a)
-        layers[name] = tone_fix(upscale(rgb, a))
+        # The fire skips the tone fix (builder 2026-10-09 run 13): its blue
+        # curve (measured on the rock) steps 2x then flattens between 49 and
+        # 70, which is the flame's yellow, and drew contour lines round the
+        # fist through the yellow core.
+        layers[name] = upscale(rgb, a) if (name == "fire" and not FIRE_TONE_FIX) else tone_fix(upscale(rgb, a))
         if name == "fire" and FIRE_SMOOTH:
             # TARGET's flame carries a fine grain that the fight's colour
             # path (the LUT inverting ACES's shoulder) blows up ~4x in the
@@ -897,8 +927,15 @@ def build():
             # (builder, 2026-10-09 run 9). An edge-keeping smooth inside the
             # flame takes the grain out and keeps the tongues' edges.
             L = layers[name]
-            sm = cv2.bilateralFilter(L[..., :3].astype(np.float32), FIRE_SMOOTH_D,
-                                     FIRE_SMOOTH_SC, FIRE_SMOOTH_SS).astype(float)
+            if FIRE_DENOISE == "median":
+                u8 = np.clip(L[..., :3], 0, 255).astype(np.uint8)
+                sm = cv2.medianBlur(u8, FIRE_MEDIAN).astype(float)
+            elif FIRE_DENOISE == "nlm":
+                u8 = np.clip(L[..., :3], 0, 255).astype(np.uint8)
+                sm = cv2.fastNlMeansDenoisingColored(u8, None, FIRE_NLM_H, FIRE_NLM_H, 7, 21).astype(float)
+            else:
+                sm = cv2.bilateralFilter(L[..., :3].astype(np.float32), FIRE_SMOOTH_D,
+                                         FIRE_SMOOTH_SC, FIRE_SMOOTH_SS).astype(float)
             L = L.copy()
             if FIRE_INK:
                 bl = np.dstack([ndi.gaussian_filter(sm[..., k], FIRE_INK_SIG) for k in range(3)])
@@ -909,8 +946,14 @@ def build():
             # pixel takes the colour of the nearest solid flame pixel.
             solid = L[..., 3] >= 250
             dd, (iy, ix) = ndi.distance_transform_edt(~solid, return_indices=True)
-            edge = (L[..., 3] > 0) & ~solid & (dd <= 3) & (L[..., 3] > 128)
+            edge = (L[..., 3] > 0) & ~solid & (dd <= FIRE_EDGE_PX) & (L[..., 3] > 128)
             L[edge, :3] = L[iy[edge], ix[edge], :3]
+            if FIRE_DITHER:
+                rng = np.random.default_rng(7)
+                L[..., :3] = np.clip(L[..., :3] + rng.uniform(-FIRE_DITHER, FIRE_DITHER, L[..., :3].shape), 0, 255)
+            if FIRE_LIFT_G:
+                g = L[..., 1]
+                L[..., 1] = np.clip(g + FIRE_LIFT_G * np.clip((g - FIRE_LIFT_FROM) / (240.0 - FIRE_LIFT_FROM), 0, 1), 0, 255)
             # The key kept TARGET's dark red glow as an outer shell with a
             # hard edge; over the backdrop it drew a contour line a few px
             # out from the tongues. In that shell, the darker the red, the
@@ -924,6 +967,27 @@ def build():
             fade = np.maximum(fade, np.clip(out_d / max(FIRE_SHELL_PX, 1e-3), 0, 1) ** 2)
             L[..., 3] = np.where(shell, L[..., 3] * fade, L[..., 3])
             layers[name] = L
+
+    # Under the fist's soft outer line the flame's key dropped to a hole
+    # (the cream line fails it) and both layers there were part-transparent:
+    # the composite's alpha dipped to ~0.87 along the fist's edge and the
+    # billboard's halo drew pale cream striations into the yellow core
+    # (builder 2026-10-09 run 13). The flame is solid wherever the fist
+    # covers it, so fill it there with the nearest solid flame colour.
+    if "fire" in layers and FIRE_UNDER_FIST:
+        L = layers["fire"].copy()
+        cover = np.zeros(L.shape[:2], bool)
+        for part in ("fore_l", "arm_l"):
+            if part in layers:
+                cover |= layers[part][..., 3] > 0
+        solid = L[..., 3] >= 250
+        dd, (iy, ix) = ndi.distance_transform_edt(~solid, return_indices=True)
+        # and pinholes inside the flame, where the key failed on its grain
+        holes = ndi.binary_fill_holes(ndi.binary_closing(solid, iterations=2)) & ~solid
+        fill = (cover & ~solid & (dd <= FIRE_UNDER_FIST)) | holes
+        L[fill, :3] = L[iy[fill], ix[fill], :3]
+        L[fill, 3] = 255
+        layers["fire"] = L
 
     # The rest frame: every layer over the last, as the rig draws it.
     H, W = layers["torso"].shape[:2]

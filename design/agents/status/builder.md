@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T07:20
-working_on: "Cracks: wide hot cores and a long sternum seam."
+updated: 2026-10-09T08:53
+working_on: "Fist fire: compact curling blaze wrapped on the fist."
 ---
 
 # builder
@@ -13,13 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 07:20 EDT
+2026-10-09 08:53 EDT
 
-- **Did:** removed a stray orange crack fleck between the second and third chest slabs.
-- **Worked?** Partly: the fleck is gone, every crack measures within a few levels of TARGET; VERDICT: FAIL (grader again asks for wider cracks than TARGET's).
-- **Look at:** ![[frames/builder/2026-10-09-cracks12-before.png]] then ![[frames/builder/2026-10-09-cracks12-after.png]]
+- **Did:** cleaned the fist's flame: grain out without blurring the curls, no contour bands, no pinholes under the fist.
+- **Worked?** Partly: flame matches on the square and beast pairs, close-up still paler and softer; VERDICT: FAIL.
+- **Look at:** ![[frames/builder/2026-10-09-fist7-before.png]] then ![[frames/builder/2026-10-09-fist7-after.png]]
 - **Ask:** nothing
-- **Found:** the cracks item has failed twelve runs on asks the registered pixels contradict; it holds the queue's top slot.
+- **Found:** the scene's colour path cannot draw TARGET's brightest lemon yellows and creams (green tops at ~234 against 244).
+- **Found:** skipped the cracks item at the top: twelve failed runs, its pixels already within a few levels of TARGET.
 
 ## Notes
 
