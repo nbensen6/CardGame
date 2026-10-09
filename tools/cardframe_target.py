@@ -32,7 +32,7 @@ DARK_LINE = (18, 20, 16)
 BAND = (55, 52, 62)
 BODY = (36, 39, 31)
 BAND_BOTTOM = 0.132      # of H: where the name band ends and the art starts
-ART_BOTTOM = 0.63        # of H: where the art ends and the rules box starts
+ART_BOTTOM = 0.588        # of H: where the art ends and the rules box starts
 OUTER = 5                # cream line, px
 GREEN_W = 11             # green band, px
 INNER = 3                # dark line inside it, px
@@ -49,11 +49,14 @@ def rounded(draw, inset, fill):
 # dull-gold line with a green-grey line inside it, then a dark keyline round
 # the art window. The name band covers the band along the top, so the top
 # edge reads as the cream line alone, as in TARGET.
-EDGE = [((14, 10, 6), 3), ((226, 228, 170), 10), ((14, 16, 18), 26),
-        ((168, 190, 120), 9), ((118, 140, 102), 7), ((74, 98, 80), 5), ((16, 22, 18), 3)]
+EDGE = [((14, 10, 6), 3), ((226, 228, 170), 9), ((14, 16, 18), 21),
+        ((168, 190, 120), 9), ((118, 140, 102), 5), ((16, 22, 18), 3)]
 # The beads: TARGET's inner gold line is dotted, bright yellow beads with
 # darker olive-gold gaps (the "trim" seen at 720 down every card's sides).
 BEAD = (232, 224, 150)   # the beads: yellow-cream dots on TARGET's green inner line
+BAND_DASH = (58, 92, 56)   # faint green dashes inside the dark band
+BAND_DASH_W = 4
+BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
 BEAD_W = 9               # px across: the gold line's width
 BEAD_ON, BEAD_PERIOD = 9, 14   # px along: bead length, bead period
 CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its apex
@@ -81,6 +84,13 @@ def build():
         rows = np.nonzero(on)[0]
         rows = rows[(rows > RADIUS) & (rows < H - RADIUS)]
         a[rows, x, :3] = BEAD
+    # and TARGET's fainter green dashes down the middle of the dark band
+    m0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] // 2 - BAND_DASH_W // 2
+    dash = (np.arange(H) % BAND_DASH_PERIOD) < BAND_DASH_ON
+    rows = np.nonzero(dash)[0]
+    rows = rows[(rows > RADIUS) & (rows < H - RADIUS)]
+    for x in list(range(m0, m0 + BAND_DASH_W)) + list(range(W - m0 - BAND_DASH_W, W - m0)):
+        a[rows, x, :3] = BAND_DASH
     onx = (np.arange(W) % BEAD_PERIOD) < BEAD_ON
     for y in range(H - hi, H - lo):
         cols = np.nonzero(onx)[0]

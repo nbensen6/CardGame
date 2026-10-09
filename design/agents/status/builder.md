@@ -16,7 +16,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 2026-10-09 09:57 EDT
 
 - **Did:** cards: TARGET's beaded double-line trim, painted cost gem, steeper fan, smooth art edges, picture rim, Leap and Scramble re-cut.
-- **Worked?** Partly: measured within a few levels and half a degree of TARGET; a control with TARGET's own hand passes. VERDICT: FAIL.
+- **Worked?** Partly: art, pills and fan measure within a few levels/px of TARGET; a control with TARGET's own hand passes. VERDICT: FAIL (R14: Leap sky, trim beads).
 - **Look at:** ![[frames/builder/2026-10-09-cards5-before.png]] then ![[frames/builder/2026-10-09-cards5-after.png]]
 - **Ask:** nothing
 - **Found:** graders repeat an item's Next-pass words on near-identical pixels (cards control passed; cracks run 10 the same).
@@ -31,7 +31,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
-- 2026-10-09 09:57 EDT — builder: cards — beaded double trim, gem disc, fan 0.085, smooth art edges, picture rim, Leap/Scramble re-cut; FAIL x11 (control PASS); tests green, pushed.
+- 2026-10-09 09:57 EDT — builder: cards — beaded double trim, gem disc, fan 0.085, smooth art edges, picture rim, Leap/Scramble re-cut; FAIL x14 (control PASS); tests green, pushed.
 
 - 2026-10-09 06:07 EDT — builder: hand 3 px higher, Scramble art re-cut at TARGET's framing (cardart_cut.py); cards FAIL x2; tests green, pushed.
 

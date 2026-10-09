@@ -23,14 +23,14 @@ OUT = ROOT / "game/assets/cardart"
 
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,
 # window width in TARGET px when the card's window is not WIN_W])
-CARDS = {"scramble": (648.9, 886.9, 5.0, 129.0), "leap": (375.3, 886.4, -5.0, 127.0)}
+CARDS = {"scramble": (649.6, 882.6, 5.0, 132.3), "leap": (376.1, 882.0, -5.0, 132.3)}
 # Shipped from this cut: scramble only (window error 35.9 -> 30.1 on the
 # --hand square). Leap's cut registered worse (24.2 -> 34.4) and the older
 # reflected cut stays; run with a name to cut one card.
 SATURATE = {"leap": 1.2}
 EDGE_FIX = {"leap"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
 WIN_W = 122.0                      # TARGET px: the window inside the gold line (run 14: the frame now trims a 2 px bleed)
-ASPECT = (0.822 * 690) / (0.498 * 984)   # card_view.A1_ART (run 14: the art starts inside the trim)
+ASPECT = (0.856 * 690) / (0.456 * 984)   # card_view.A1_ART (run 14: the art starts inside the trim)
 SCALE = 1.4                        # output px per TARGET px: ~2x the window on screen, so the card's mip 1 lands 1:1 and the art stays as crisp as TARGET's (run 14)
 
 

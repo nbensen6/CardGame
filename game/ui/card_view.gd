@@ -503,7 +503,7 @@ func _build_face(data: Dictionary) -> void:
 		if SHIP_A1:
 			# inside the A1 art window, clear of the title plate
 			# TARGET draws the glyph big: ~0.7 of the card's width (2026-10-09).
-			_layer(art, 0.15, 0.13, 0.85, 0.50)
+			_layer(art, 0.15, 0.12, 0.85, 0.465)   # clear of the pill, which sits higher now (run 14)
 		else:
 			_layer(art, 0.18, 0.12, 0.82, 0.52)
 		_build_upper(data)
@@ -647,9 +647,9 @@ const A1_PATCH := [130, 130, 80, 80]   # left, top, right, bottom
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.089, 0.132, 0.911 - 0.089, 0.63 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
-const A1_TYPE := Rect2(0.112, 0.60, 0.900 - 0.112, 0.66 - 0.60)
-const A1_TEXT := Rect2(0.08, 0.665, 0.92 - 0.08, 0.95 - 0.665)
+const A1_ART := Rect2(0.072, 0.132, 0.928 - 0.072, 0.588 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
+const A1_TYPE := Rect2(0.112, 0.558, 0.900 - 0.112, 0.618 - 0.558)   # TARGET's pill sits ~5 px higher at hand size (run 14)
+const A1_TEXT := Rect2(0.08, 0.623, 0.92 - 0.08, 0.95 - 0.623)
 
 ## TARGET's card edge: a thin dull-gold line, the same on every seat.
 const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
