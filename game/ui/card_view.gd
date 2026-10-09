@@ -44,7 +44,10 @@ const KEYWORD_COLOR := "f0b45a"
 ## sentence on the phone layout with nowhere left to shrink to (found by the
 ## fixer lane, design/progress/bugs.md 2026-09-09 Pass A).
 const BOX_DESKTOP_BIG := Vector2(191, 268)
-const BOX_DESKTOP_NORMAL := Vector2(162, 228)
+## 264 tall, not 228 (builder 2026-10-09): TARGET's hand cards run off the
+## bottom of the frame. The A1 face keeps its 228-tall layout (A1_ASPECT) and
+## the extra height is body under the rules, hidden by the fan's tuck.
+const BOX_DESKTOP_NORMAL := Vector2(162, 264)
 const BOX_HANDHELD_BIG := Vector2(161, 226)
 const BOX_HANDHELD_NORMAL := Vector2(135, 190)
 
@@ -487,7 +490,10 @@ func _build_face(data: Dictionary) -> void:
 	if win != null:
 		art.texture = win
 	elif id != "" and ResourceLoader.exists(own):
-		art.texture = load(own)
+		# Mipmapped: a 620 px painting drawn ~90 px wide skipped texels and
+		# read paler and grainier than TARGET's own art (2026-10-09).
+		art.texture = _a1_mip(load(own))
+		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	elif ICONS.has(String(data.get("icon", ""))):
 		# No painting yet: the shared icon, small and centred, so the card is
 		# still legible while 187 of these are waiting to be drawn.
@@ -496,7 +502,8 @@ func _build_face(data: Dictionary) -> void:
 		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		if SHIP_A1:
 			# inside the A1 art window, clear of the title plate
-			_layer(art, 0.20, 0.18, 0.80, 0.53)
+			# TARGET draws the glyph big: ~0.7 of the card's width (2026-10-09).
+			_layer(art, 0.15, 0.13, 0.85, 0.50)
 		else:
 			_layer(art, 0.18, 0.12, 0.82, 0.52)
 		_build_upper(data)
@@ -640,7 +647,7 @@ const A1_PATCH := [130, 130, 60, 60]   # left, top, right, bottom
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.028, 0.132, 0.972 - 0.028, 0.63 - 0.132)
+const A1_ART := Rect2(0.021, 0.132, 0.979 - 0.021, 0.63 - 0.132)   # TARGET's art runs out to the trim (2026-10-09)
 const A1_TYPE := Rect2(0.112, 0.60, 0.900 - 0.112, 0.66 - 0.60)
 const A1_TEXT := Rect2(0.08, 0.665, 0.92 - 0.08, 0.95 - 0.665)
 
@@ -649,14 +656,14 @@ const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
 ## How dark the A1 stone is drawn: TARGET's card frame is near-black.
 const A1_STONE_SHADE := Color(1, 1, 1)
 ## TARGET's cost disc: green, a darker rim, a lighter cap.
-const COST_DISC_FILL := Color(0.16, 0.58, 0.24)
+const COST_DISC_FILL := Color(0.19, 0.64, 0.33)   # TARGET's gem face, sampled (48,162,85)
 const COST_DISC_EDGE := Color(0.06, 0.26, 0.10)
 const COST_DISC_CAP := Color(0.42, 0.80, 0.42, 0.55)
 ## The disc's diameter as a fraction of the card's width, and its centre as
 ## fractions of the card: TARGET's disc is about a third of the card across
 ## and its centre sits on the frame's top-left corner.
-const COST_DISC_D := 0.27
-const COST_DISC_C := Vector2(0.08, 0.045)
+const COST_DISC_D := 0.28
+const COST_DISC_C := Vector2(0.08, 0.075)   # TARGET's gem centre ~13 px under the card top in the 720 square (2026-10-09)
 
 
 ## TARGET's type pill: pale grey, a darker edge.
@@ -666,14 +673,17 @@ const TYPE_PILL_EDGE := Color(0.35, 0.35, 0.38)
 
 ## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
 static func a1_type_pill(ty: Rect2) -> Rect2:
-	var pw := ty.size.x * 0.44
-	var ph := maxf(ty.size.y * 0.86, 10.0)
+	# TARGET's pill: ~46x11 px on a 92 px card in the 720 square (builder
+	# 2026-10-09), half the card's width and a fat bevelled lozenge.
+	var pw := ty.size.x * 0.56
+	var ph := maxf(ty.size.y * 1.22, 10.0)
 	return Rect2(ty.get_center().x - pw * 0.5, ty.get_center().y - ph * 0.5, pw, ph)
 
 
 ## The cost disc's rect in px of a card w x h. Static so a test can pin it.
 static func a1_cost_disc(w: float, h: float) -> Rect2:
 	var d := COST_DISC_D * w
+	h = a1_h(w, h)
 	return Rect2(COST_DISC_C.x * w - d * 0.5, COST_DISC_C.y * h - d * 0.5, d, d)
 
 
@@ -706,13 +716,23 @@ static func seat_glow(playable: bool, character: String) -> Color:
 
 
 ## A normalised box in px of a card w x h.
+## The A1 face's own height for its width: every piece is laid out on this,
+## so a taller card only grows its body at the bottom.
+const A1_ASPECT := 228.0 / 162.0
+
+
+static func a1_h(w: float, h: float) -> float:
+	return minf(h, w * A1_ASPECT)
+
+
 static func a1_box(r: Rect2, w: float, h: float) -> Rect2:
+	h = a1_h(w, h)
 	return Rect2(r.position.x * w, r.position.y * h, r.size.x * w, r.size.y * h)
 
 
 ## The socket's centre and radius in px of a card w x h.
 static func a1_socket(w: float, h: float) -> Vector3:
-	return Vector3(A1_SOCKET.x * w, A1_SOCKET.y * h, A1_SOCKET.z * w)
+	return Vector3(A1_SOCKET.x * w, A1_SOCKET.y * a1_h(w, h), A1_SOCKET.z * w)
 
 
 ## The cost's font size: the number shrinks to the disc, never the disc to the
@@ -723,9 +743,33 @@ static func a1_cost_font_size(radius: float) -> int:
 
 
 ## The stone or glow layer, as a nine-patch drawn at source size and scaled.
+## The frame patches with mipmaps, built once: drawn at ~0.15 of their source
+## size, the thin edge lines skipped texels and read as dashes (grader,
+## 2026-10-09). *.import is not in git, so this is built here.
+static var _a1_mipped := {}
+
+
+static func _a1_mip(tex: Texture2D) -> Texture2D:
+	if tex == null or tex.has_mipmaps():
+		return tex
+	if _a1_mipped.has(tex):
+		return _a1_mipped[tex]
+	var img := tex.get_image()
+	if img == null:
+		return tex
+	if img.is_compressed():
+		img.decompress()
+	img.generate_mipmaps()
+	var out := ImageTexture.create_from_image(img)
+	_a1_mipped[tex] = out
+	return out
+
+
 func _a1_patch(tex: Texture2D) -> NinePatchRect:
 	var np := NinePatchRect.new()
-	np.texture = tex
+	np.texture = _a1_mip(tex)
+	np.set_meta("a1_src", tex)   # which patch this is, under its mipmapped copy
+	np.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	np.patch_margin_left = A1_PATCH[0]
 	np.patch_margin_top = A1_PATCH[1]
 	np.patch_margin_right = A1_PATCH[2]
@@ -747,6 +791,17 @@ func _a1_fit(np: NinePatchRect) -> void:
 	np.position = Vector2.ZERO
 	np.scale = fit[0]
 	np.size = fit[1]
+
+
+## TARGET's gold line sits a few px INSIDE a dark border, not on the card's
+## outer edge (builder 2026-10-09): pull the rim patch in by A1_RIM_INSET.
+const A1_RIM_INSET := 4.0
+
+
+func _a1_inset(np: Control) -> void:
+	var k := np.scale.x if np.scale.x > 0.0 else 1.0
+	np.position = Vector2(A1_RIM_INSET, A1_RIM_INSET)
+	np.size = np.size - Vector2(A1_RIM_INSET, A1_RIM_INSET) * 2.0 / k
 
 
 func _build_a1() -> void:
@@ -782,9 +837,11 @@ func _build_a1() -> void:
 	glow.material = add
 	# TARGET's frame edge is a thin dull-gold line, not a seat-coloured glow.
 	glow.self_modulate = A1_RIM
+	_a1_inset(glow)
 	resized.connect(func() -> void:
 		_a1_fit(base)
-		_a1_fit(glow))
+		_a1_fit(glow)
+		_a1_inset(glow))
 
 	# 4 - the name, starting clear of the socket.
 	var tr := a1_box(A1_TITLE, w, h)
@@ -811,11 +868,18 @@ func _build_a1() -> void:
 		psb.bg_color = TYPE_PILL_FILL
 		psb.border_color = TYPE_PILL_EDGE
 		psb.set_border_width_all(1)
+		# TARGET's lozenge is bevelled: a lit top edge, a dark lower lip.
+		psb.border_width_top = 2
+		psb.border_width_bottom = 2
+		psb.border_color = TYPE_PILL_EDGE
+		psb.shadow_color = Color(0, 0, 0, 0.45)
+		psb.shadow_size = 2
+		psb.shadow_offset = Vector2(0, 1)
 		psb.set_corner_radius_all(int(ceil(pr.size.y * 0.5)))
 		psb.anti_aliasing = true
 		pill.add_theme_stylebox_override("panel", psb)
 		_place(pill, pr)
-		var tl := _label(kind.capitalize(), 9)
+		var tl := _label(kind.capitalize(), 10)
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		tl.add_theme_color_override("font_color", Color(0.16, 0.15, 0.15))
@@ -825,7 +889,8 @@ func _build_a1() -> void:
 
 	# 6 - the rules, wrapped inside the text box.
 	var xr := a1_box(A1_TEXT, w, h)
-	_rules = _rich_body(_data, 14, int(xr.size.y) - 6)
+	# 15, not 14: TARGET's rules run ~6% wider (2026-10-09).
+	_rules = _rich_body(_data, 15, int(xr.size.y) - 6)
 	_rules.text = "[center]" + _rules.text + "[/center]"
 	_place(_rules, xr.grow_individual(-4.0, -4.0, -4.0, -2.0))
 	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -853,7 +918,7 @@ func _build_a1() -> void:
 		csb.set_corner_radius_all(int(ceil(so.z * 0.8)))
 		cap.add_theme_stylebox_override("panel", csb)
 		_place(cap, Rect2(dr.position + Vector2(d * 0.16, d * 0.1), Vector2(d * 0.68, d * 0.42)))
-		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.85))
+		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.72))
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		cl.add_theme_color_override("font_color", Color(1, 1, 1))

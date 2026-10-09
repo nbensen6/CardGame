@@ -22184,12 +22184,12 @@ func _test_cost_gems_back_on_a_redesigned_border() -> void:
 	# Nick, 2026-10-05: A1 replaced the shader border; the cost now sits in
 	# the frame's own socket rather than on a hung gem.
 	var fr = cv._frame_rect
-	_expect(fr is NinePatchRect and fr.texture == CardView.A1_BASE,
+	_expect(fr is NinePatchRect and fr.get_meta("a1_src", null) == CardView.A1_BASE,
 		"the border is the A1 stone nine-patch")
 	var glows := 0
 	var costs := 0
 	for c in cv.get_children():
-		if c is NinePatchRect and c.texture == CardView.A1_GLOW:
+		if c is NinePatchRect and c.get_meta("a1_src", null) == CardView.A1_GLOW:
 			glows += 1
 			# TARGET (queue, "HUD and cards: TARGET's look, no glow"): one
 			# dull-gold edge on every seat, no seat-coloured glow.

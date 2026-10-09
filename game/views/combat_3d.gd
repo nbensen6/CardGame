@@ -9377,7 +9377,7 @@ func _beast_shake() -> void:
 const FAN_OVERLAP := 0.77     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
 ## Where TARGET centres the hand, as a fraction of the centred square's width.
 const HAND_SQUARE_CX := 0.497   # TARGET's middle card centred at x 351 of 720 (builder 2026-10-09)
-const FAN_TILT := 0.085       # radians per card away from centre
+const FAN_TILT := 0.072       # radians per card away from centre
 const FAN_DROP := 10.5        # px each card sinks per step from centre, making the arc
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
 ## Enough to clear the screen edge. The fan deliberately lets the bottom of a
@@ -9404,7 +9404,7 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## bottom edge where TARGET's sit.
 ## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
 ## `--square` pair, leaving the Frog's pedestal column showing above them.
-const HAND_REST_LIFT := 61.0   # TARGET's middle card top at y 560 of the 720 square (builder 2026-10-09)
+const HAND_REST_LIFT := 78.0   # TARGET's middle card top at y 560 of the 720 square (builder 2026-10-09)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that

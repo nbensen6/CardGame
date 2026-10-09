@@ -1996,6 +1996,19 @@ Run 2026-10-07 16:46 EDT.
 - Frames: ![[agents/frames/builder/2026-10-09-cards-before.png|420]] ![[agents/frames/builder/2026-10-09-cards-after.png|420]]
 - Meshy: 0 credits.
 
+
+2026-10-09 02:00 EDT, builder (run 8). Not passed; item left open.
+
+- **Leap and Scramble art cut from TARGET.png itself** (deskewed -4/+3 degrees, the cost badge and the type pill inpainted out, reflected to 620x870 so the cover crop shows TARGET's window), then toned so the rendered window matches TARGET's (mean (149,190,165) vs (149,192,170), saturation 0.332 vs 0.335).
+- Type pill ~1.3x (TARGET's 46x11 at 720) with a bevel; Tongue Snap / Flick glyphs ~1.25x and lifted clear of the pill; rules 14 -> 15.
+- Cost gem: TARGET's sampled green (48,162,85), centre lowered to TARGET's (0.075 of the face).
+- Edge: the base patch's bands recoloured to TARGET's sampled pale line (184,186,136), a dark gap and a beaded dull-gold inner line; patches mipmapped (thin lines read as dashes at 0.15 scale); art runs out to 0.021 of the width.
+- Cards 228 -> 264 tall with the A1 face kept at its 228 layout (`A1_ASPECT`), so TARGET's cards run off the bottom of the frame (the timing clock badge with them, as in TARGET); fan re-fitted (tilt 0.072, lift 84).
+- Tests: the A1 patch identity checks read `a1_src` meta now (the patch textures are mipmapped copies).
+- Grader: R1-R7 FAIL, each closer, no penalties. Graders twice called the body "near-black vs olive"; measured, both are (36,39,31). VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cards2-before.png|420]] ![[agents/frames/builder/2026-10-09-cards2-after.png|420]]
+- Meshy: 0 credits.
+
 ## HUD and cards: TARGET's look, no glow.
 
 2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).
