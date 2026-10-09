@@ -954,8 +954,8 @@ const GAUGE_FACE := Color(0.06, 0.055, 0.07, 0.64)
 ## ...and its border a soft grey, dimmer than the other flat panels' edge.
 const GAUGE_EDGE := Color(0.36, 0.34, 0.38, 0.6)
 ## The intent chip: a dark red-brown face, a thin red edge while it swings.
-const INTENT_FACE := Color(0.20, 0.07, 0.07, 0.88)
-const INTENT_EDGE_HOSTILE := Color(0.78, 0.24, 0.20)
+const INTENT_FACE := Color(0.10, 0.03, 0.09, 0.9)   # TARGET's chip face reads (33,12,28) over the sky (run 16)
+const INTENT_EDGE_HOSTILE := Color(0.58, 0.24, 0.32)   # TARGET's edge (93,45,60) on the 1 px line (run 16)
 const INTENT_EDGE_CALM := Color(0.45, 0.45, 0.45)
 
 
@@ -2697,7 +2697,9 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	# red while the beast is swinging.
 	# Small, beside the beast's bar (Nick, 2026-09-30 11:44): no "Next:", the
 	# icon at text size, a thin rim.
-	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
+	# TARGET's chip reads "Attack 7" plain, no underline (builder 2026-10-09
+	# run 16); the chip itself is still what a tap asks about.
+	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt.replace("[u]", "").replace("[/u]", ""), hostile)
 	# The A1 stone, its glow red while the beast is swinging (Nick, 2026-10-05).
 	# Tight padding: scaled into TARGET's chip box, the words then come out at
 	# TARGET's size (builder 2026-10-09).

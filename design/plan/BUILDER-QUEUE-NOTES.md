@@ -2601,3 +2601,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 PASS. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-fan-before.png|420]] ![[agents/frames/builder/2026-10-09-fan-after.png|420]]
 - Meshy: 0 credits.
+
+## Intent chip: "Attack 7" plain, not underlined.
+
+2026-10-09 13:47 EDT, builder (run 16). PASS; item marked 👀.
+
+- combat_3d `_set_intent` strips the [u] from the chip's text (intent_text_for keeps it, so its tests stand); the chip is still what a tap asks about.
+- Chip face (0.10,0.03,0.09,0.9) and hostile edge (0.58,0.24,0.32): sampled on the --square pair the face reads (35,12,29) against TARGET's (33,12,28), the edge (91,36,53) against (93,45,60).
+- Grader: R1 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-intent-before.png|420]] ![[agents/frames/builder/2026-10-09-intent-after.png|420]]
+- Meshy: 0 credits.

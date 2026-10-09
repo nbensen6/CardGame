@@ -25,10 +25,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-fan-after.png|420]] ^hand-fan-spread-no-wider-than-target-s
 
-- [ ] **Intent chip: "Attack 7" plain, not underlined.**
-      Both critics, MINOR (2026-10-09): the game's intent chip text reads underlined or heavier; TARGET's "Attack 7" is plain.
-      **Done when** the `--square` pair shows no visible difference in the intent chip.
-      Test: state=3d beast=cinder_jackal ^intent-chip-attack-7-plain-not-underline
+- [ ] 👀 **Intent chip: "Attack 7" plain, not underlined.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Intent chip: "Attack 7" plain, not underlined.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-intent-after.png|420]] ^intent-chip-attack-7-plain-not-underline
 
 - [ ] 👀 **Frog and its rock: TARGET's size and place.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Frog and its rock: TARGET's size and place.|details]]

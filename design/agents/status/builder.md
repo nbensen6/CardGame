@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T13:30
-working_on: "Right of and under the climb gauge: lava and floor, not a dark box."
+updated: 2026-10-09T13:47
+working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
 # builder
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 13:30 EDT
+2026-10-09 13:47 EDT
 
-- **Did:** cards registered to TARGET (side band, fan, pills, crisp art); TARGET's picture frame down the square's sides.
-- **Worked?** Yes: cards PASS after five rounds, gauge right strip PASS first round. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-cards6-after.png]], ![[frames/builder/2026-10-09-gaugeright-after.png]]
+- **Did:** cards, gauge-side frame, fan offset and intent chip matched to TARGET; queued a matched check.
+- **Worked?** Partly: cards, gauge right strip, fan, intent chip PASS; scene softness FAIL (720 vs TARGET's 1024 pixels). VERDICT: PASS (intent chip, last item)
+- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-intent-after.png]]
 - **Ask:** nothing
-- **Found:** graders read a box-filtered mip as "pale haze" even when the colours match; other painted art may need the Lanczos mip chain too.
-- **Found:** TARGET's Tongue Snap glyph strokes are a little thicker and lighter than the icon's.
+- **Found:** graders read a box-filtered mip as "pale haze" even when colours match; Lanczos mips fixed the card art.
+- **Found:** the --hand close-up and the --square pair disagree by ~2 px on the fan's x; the square was taken as the test.
 
 ## Notes
 
