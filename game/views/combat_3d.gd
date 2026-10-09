@@ -4012,7 +4012,16 @@ const BACKDROP_LANCZOS := true
 ## Then an unsharp mask at screen-pixel reach: the half-pixel taps' own
 ## bilinear blur left the cliffs' fine detail under TARGET's.
 const BACKDROP_SCREEN_SHARPEN := 0.7
+## At a 1024-row square the backdrop is drawn about 1:1 with one linear tap
+## (drawn_sprite.gdshader fp_texels); this light mask holds its cliffs at
+## TARGET's native detail there (0.3 overshot to 1.29).
+const BACKDROP_NATIVE_SHARPEN := 0.08
 const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
+## A cut drawn about 1:1 (a window whose square is TARGET's own 1024 rows)
+## takes one linear tap, not the Lanczos footprint, and this unsharp mask on
+## it (drawn_sprite.gdshader native_sharpen): the slabs and the Frog then
+## carry TARGET's native detail ("Scene lines soft", builder run 21).
+const DRAWN_NATIVE_SHARPEN := 0.3
 var _backdrop: MeshInstance3D = null
 ## TARGET's floor on the ground (tools/floor_cut.py, drawn_floor.gdshader):
 ## builder 2026-10-09, Floor item. The procedural hex slabs went eleven grader
@@ -4060,6 +4069,7 @@ func _add_backdrop(beast_id: String) -> void:
 		mat.set_shader_parameter("footprint_lanczos", true)
 		mat.set_shader_parameter("lanczos_edges", true)
 		mat.set_shader_parameter("screen_sharpen", BACKDROP_SCREEN_SHARPEN)
+		mat.set_shader_parameter("native_sharpen", BACKDROP_NATIVE_SHARPEN)
 	mat.render_priority = -3
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE
@@ -4093,6 +4103,7 @@ func _add_frog_art(beast_id: String) -> void:
 	mat.shader = DRAWN_SPRITE
 	mat.set_shader_parameter("tex", tex)
 	mat.set_shader_parameter("footprint", true)
+	mat.set_shader_parameter("native_sharpen", DRAWN_NATIVE_SHARPEN)
 	mat.render_priority = 1
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE
@@ -7914,6 +7925,7 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 		# Filtered premultiplied: no dark rim at the cut's edge (run 20).
 		mat.set_shader_parameter("premul_taps", STAIR_SLAB_PREMUL)
 		mat.set_shader_parameter("edge_pow", STAIR_SLAB_EDGE_POW)
+		mat.set_shader_parameter("native_sharpen", DRAWN_NATIVE_SHARPEN)
 		mat.set_shader_parameter("billboard", true)
 		sp.material_override = mat
 	elif pic == tex:

@@ -60,7 +60,7 @@ func _ready() -> void:
 		mat.set_shader_parameter("sharpen", RIG_SHARPEN)
 		mat.set_shader_parameter("footprint", RIG_SUPERSAMPLE > 1.0)
 		mat.set_shader_parameter("footprint_lanczos", RIG_LANCZOS)
-		mat.set_shader_parameter("screen_sharpen", RIG_SCREEN_SHARPEN)
+		mat.set_shader_parameter("screen_sharpen", rig_screen_sharpen())
 		mat.set_shader_parameter("screen_sharpen_px", RIG_SCREEN_SHARPEN_PX)
 		mat.set_shader_parameter("crack_grow", RIG_CRACK_GROW)
 		mat.set_shader_parameter("crack_heat", RIG_CRACK_HEAT)
@@ -165,6 +165,23 @@ const RIG_SCREEN_SHARPEN := 0.22
 ## The footprint as a Lanczos-2 kernel, not a box (drawn_sprite.gdshader
 ## footprint_lanczos): TARGET's square is a Lanczos resample.
 const RIG_LANCZOS := true
+## The same unsharp mask when the square is TARGET's own 1024 rows: the
+## viewport is then only 2x the screen (2.857x at 720), its parts' 2x canvas
+## blur no longer shrinks away and the line read ~8% under TARGET's native
+## detail ("Scene lines soft", builder run 21: 0.5 measures 1.01).
+const RIG_SCREEN_SHARPEN_1024 := 0.5
+
+
+## RIG_SCREEN_SHARPEN at a 720-row window, RIG_SCREEN_SHARPEN_1024 at 1024
+## and taller, straight between.
+func rig_screen_sharpen() -> float:
+	# Real pixels: under the canvas_items stretch the visible rect stays
+	# in the 720-row design units while the 3D pass draws at the window's.
+	var h := 720.0
+	if is_inside_tree():
+		h = maxf(float(get_window().size.y), 1.0)
+	var f := clampf((h - 720.0) / (1024.0 - 720.0), 0.0, 1.0)
+	return lerpf(RIG_SCREEN_SHARPEN, RIG_SCREEN_SHARPEN_1024, f)
 const RIG_SCREEN_SHARPEN_PX := 1.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.
@@ -316,6 +333,11 @@ func _process(_dt: float) -> void:
 			var sc := body.global_transform.basis.get_scale()
 			body.global_transform = Transform3D(gb.scaled(sc), body.global_transform.origin)
 	_update_fire_overlay()
+	# The window can change height after the rig is built (the harness sizes
+	# it after _ready): the line's unsharp mask follows it.
+	var bm := (get_node_or_null("Body") as GeometryInstance3D)
+	if bm != null and bm.material_override is ShaderMaterial:
+		(bm.material_override as ShaderMaterial).set_shader_parameter("screen_sharpen", rig_screen_sharpen())
 	for c in _holds:
 		var m: Node2D = _holds[c]
 		(c as Node3D).position = canvas_to_local(m.global_position, pixel_size, floor_px, mid_px) \

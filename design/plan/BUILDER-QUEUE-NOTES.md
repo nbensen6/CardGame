@@ -2586,6 +2586,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
 
+2026-10-09 19:28 EDT, builder (run 21). Not passed; item left open.
+
+- drawn_sprite.gdshader EMIT_CAP 2.2 -> 8.0: the fight's glow is off, so the cap only clipped blue and green off the cream outline (brightest jackal pixels -1/-6.5/-9.9 vs TARGET-at-720, now -1.9/-2/-3). At 720 nothing else moves (max 10 levels inside the square).
+- At a 1024-row square (1820x1024, the square = TARGET's own pixels) the 1024 cuts drew through half-pixel Lanczos taps at 1:1, a blur: now one linear tap when a screen pixel covers <= 1.08 texels, plus a light unsharp (native_sharpen: slabs and Frog 0.3, backdrop 0.08). The rig's screen sharpen ramps 0.22 at 720 rows to 0.5 at 1024 (read from the window's real pixels, not the 720-unit visible rect). Detail vs TARGET native: beast 0.92 -> 1.02, stones 0.89 -> 1.01, cliffs 1.06/0.98 -> 1.06/0.99, floor 0.89 -> 0.98, frog 0.80 -> 0.96. 720 frame unchanged (0 px > 8 levels).
+- Outline halo at 1024: rings 2-8 px outside the cream line within +-1 level of TARGET (signed), so no wider glow to remove.
+- vs_target --stones shot box 0.5891 -> 0.59 (it was off the --square mapping by a pixel; now a TARGET frame gives pixel-identical halves).
+- Grader R1 (720) FAIL, "no visible change"; R2 (720 + 1024 pairs) FAIL, same wording. Control: a frame with TARGET-at-720 pasted into the square (ear, chest, beast halves pixel-identical): grader FAIL, MODERATE, "game side softer, sky grain lost". VERDICT: FAIL.
+- Meshy: 0 credits.
+
 2026-10-09 18:23 EDT, builder (run 20). Not passed; item left open.
 
 - drawn_sprite.gdshader `premul_taps`: the stair slabs' footprint taps are premultiplied before the Lanczos sum and divided back after, in place of clamping rgb to alpha (which drew a dark stepped rim round every slab). `edge_pow` 2.0 on the slabs pulls the edge back in (premultiplied alone left the first ring out +9 levels: slab half a pixel fat).
@@ -2716,3 +2725,6 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader R1 FAIL (glow still narrow, floor round the box lighter; --hand cut leaves the box out). VERDICT: FAIL.
 - Meshy: 0 credits.
 
+## Top bar: TARGET's boss name, HP segments and Log / Menu.
+
+2026-10-09 19:28 EDT, builder (run 21): queued from a 3x zoom of the top bar while measuring the sharpness item (top-bar error 8.3 levels, the scene's 1.5-2.9).

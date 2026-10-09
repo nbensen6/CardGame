@@ -46,7 +46,7 @@ REGIONS = {
     # shot box is the target box mapped through the --square test (x 280 +
     # 0.703 t, y 0.703 t), so the close-up zooms the same place 1:1 (builder
     # 2026-10-08; the older box was fitted to the beast, not to the square).
-    "--stones": {"target": (0.25, 0.33, 0.66, 0.60), "shot": (0.3594, 0.33, 0.5891, 0.60)},
+    "--stones": {"target": (0.25, 0.33, 0.66, 0.60), "shot": (0.359375, 0.33, 0.59, 0.60)},
     # the raised fist and its flame, top left of the square (builder
     # 2026-10-09: --beast cuts the flame off at its left edge)
     "--fist": {"target": (0.06, 0.04, 0.38, 0.36), "shot": (0.2525, 0.04, 0.4325, 0.36)},

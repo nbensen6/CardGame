@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T18:23
+updated: 2026-10-09T19:28
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 18:23 EDT
+2026-10-09 19:28 EDT
 
-- **Did:** slab cuts filtered premultiplied, so their dark stepped rim is gone; scene sharpness still fails grading.
-- **Worked?** No: VERDICT: FAIL ("no visible change"); edges measure within ~5 levels of TARGET-at-720.
-- **Look at:** ![[frames/builder/2026-10-09-crisp-before.png]] then ![[frames/builder/2026-10-09-crisp-after.png]]
+- **Did:** cream outline's true colour restored; native-resolution scene now matches TARGET's own pixel detail.
+- **Worked?** No: VERDICT: FAIL ("no visible change"); a control frame with TARGET itself in the square also got FAIL, so the grader cannot pass this item.
+- **Look at:** ![[frames/builder/2026-10-09-sharp21-before.png]] then ![[frames/builder/2026-10-09-sharp21-after.png]]
 - **Ask:** nothing
-- **Found:** the grader names softness the edge profiles do not show; this item may need a non-blur cause.
+- **Found:** the top bar (boss name, HP segments through "70/70", Log / Menu panel) differs from TARGET; queued.
 
 ## Notes
 

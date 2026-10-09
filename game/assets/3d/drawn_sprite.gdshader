@@ -68,6 +68,8 @@ uniform bool lanczos_edges = false;
 // Face the camera (a Sprite3D's billboard does not reach a material_override).
 uniform bool billboard = false;
 uniform float screen_sharpen = 0.0;
+// The unsharp mask when the cut is drawn about 1:1 (see fp_texels).
+uniform float native_sharpen = 0.0;
 uniform float screen_sharpen_px = 1.0;
 // TARGET's lava cracks read as wide channels with yellow-hot cores; through
 // the resamples they thin to lines. crack_grow spreads each crack's colour
@@ -116,7 +118,7 @@ float glow_at(vec2 uv) {
 
 // Emission for a texel the screen should show as `want` (sRGB 0..1):
 // trilinear in the measured table, then the table's curve back to linear.
-const float EMIT_CAP = 2.2;
+const float EMIT_CAP = 8.0;
 vec3 emit3(vec3 want) {
 	vec3 f = clamp(want, 0.0, 1.0) * float(LUT3_N - 1);
 	ivec3 lo = ivec3(floor(f));
@@ -137,7 +139,11 @@ vec3 emit3(vec3 want) {
 	// The table was measured with the scene's bloom off, so it reaches for
 	// emission past what the eye needs where only bloom could add the rest
 	// (the cream outline, near-white). Capped, the line glows a little, as
-	// TARGET's does, instead of fogging the whole figure. The whole colour
+	// TARGET's does, instead of fogging the whole figure. The fight's glow
+	// is off now (combat_3d.tscn glow_enabled false), so the old cap of 2.2
+	// only clipped the cream outline's blue and green: the line read 6-10
+	// levels yellower than TARGET's pale cream, a gold haze the graders
+	// called a soft line ("Scene lines soft", builder run 21). The whole colour
 	// scales, not one channel: clipping red alone turned the yellow-hot
 	// cores cream.
 	float top = max(e.r, max(e.g, e.b));
@@ -176,7 +182,12 @@ void fragment() {
 		ALPHA = 1.0;
 	} else {
 		vec4 t;
-		if (footprint) {
+		// Texels under one screen pixel. At or under one (a 1024 cut on a
+		// window whose square is 1024 or more) the half-pixel Lanczos taps
+		// only blur: the plain linear tap shows TARGET's own pixels.
+		vec2 tsz = vec2(textureSize(tex, 0));
+		float fp_texels = max(length(dFdx(UV) * tsz), length(dFdy(UV) * tsz));
+		if (footprint && fp_texels > 1.08) {
 			vec2 dx = dFdx(UV);
 			vec2 dy = dFdy(UV);
 			t = vec4(0.0);
@@ -218,6 +229,19 @@ void fragment() {
 					+ ftap(tex, UV + dy * screen_sharpen_px) + ftap(tex, UV - dy * screen_sharpen_px)) * 0.25;
 				vec4 sh = t + (t - w) * screen_sharpen;
 				// Only inside solid rock: at the silhouette it would ring.
+				float solid = step(0.999, min(t.a, w.a));
+				t = mix(t, clamp(sh, vec4(0.0), vec4(1.0)), solid);
+			}
+		} else if (footprint) {
+			t = ftap(tex, UV);
+			if (native_sharpen > 0.0) {
+				// The one linear tap lands between texels and blurs by up to
+				// half a texel: a light unsharp mask at one screen pixel puts
+				// the cut's own edge contrast back.
+				vec2 dx = dFdx(UV);
+				vec2 dy = dFdy(UV);
+				vec4 w = (ftap(tex, UV + dx) + ftap(tex, UV - dx) + ftap(tex, UV + dy) + ftap(tex, UV - dy)) * 0.25;
+				vec4 sh = t + (t - w) * native_sharpen;
 				float solid = step(0.999, min(t.a, w.a));
 				t = mix(t, clamp(sh, vec4(0.0), vec4(1.0)), solid);
 			}

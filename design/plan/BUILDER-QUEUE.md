@@ -28,7 +28,7 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       ![[agents/frames/builder/2026-10-09-handfloor-after.png|420]] ^warm-floor-showing-beside-the-last-card
 
 - [ ] **Scene lines soft: TARGET's crisp outline, cracks and slab edges.**
-      Next pass: grader 2026-10-09 run 20 R1-R2 FAIL, "no visible change": names slab edges smeared and facets muddy, the outline's wider halo, crack tips, cliff rims. Run 20 filtered the slab cuts premultiplied (no clamp, no dark stepped rim; edge alpha^2 keeps them from going fat). Measured: row profiles across the cliff and slab edges match TARGET-at-720 within ~5 levels, edge gradient p95/p99 0.96-1.02 of TARGET's on slabs, head, chest, cliffs. FIX: the remaining gap is not measurable as blur; next try a 1820x1024 shot (square = TARGET's own pixels) to find any detail the 720 path loses, else look for a colour-not-sharpness cause (halo tint, crack bloom) the grader reads as softness.
+      Next pass: run 21 control: the grader was given a frame whose square IS TARGET-at-720 (ear, chest, beast pair halves pixel-identical) and still said FAIL, MODERATE, "game side softer, sky grain lost", so this grader cannot pass this item by any change to the game. Measured after run 21: 720 square detail 0.97-1.08 of TARGET-at-720, 1820x1024 square 0.96-1.06 of TARGET's own pixels, no halo past the outline (rings 2-8 px out within 1 level). FIX: none left to build on sharpness; next run take the next open item and re-check this one only in the Matched check.
       Both critics, MODERATE (2026-10-09): TARGET's painted lines are crisp (the jackal's cream outline, cracks, ear tips, the slab edges and chips, cliff edge light, card art and text); the game's read smeared, as if resampled, with a wider glow halo round the outline.
       **Done when** the `--square`, `--beast` and `--stones` pairs show no visible difference in line sharpness.
       Test: state=3d beast=cinder_jackal ^scene-lines-soft-target-s-crisp-outline
@@ -256,6 +256,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       TARGET's energy box sits in a wide soft orange glow over near-black floor; the game's box has only a thin rim glow and purple-grey floor slabs show round it and above it.
       **Done when** the `--square` and `--hand` pairs show no visible difference round the energy box.
       Test: state=3d beast=cinder_jackal ^energy-box-target-s-orange-glow-on-near-
+
+- [ ] **Top bar: TARGET's boss name, HP segments and Log / Menu.**
+      TARGET: "The Cinder Jackal" in a larger, paler type; the HP bar starts further right with its "70/70" inside one segment, no divider through the text; "Log ▸" and "Menu" larger, straight on the backdrop. Game: smaller name, bar starts ~20 px left with two dividers running through "70/70", and Log / Menu sit on a dark panel (found by builder run 21, 2026-10-09).
+      **Done when** the --square pair and a zoom of the top bar show no visible difference in the boss bar and Log / Menu.
+      Test: state=3d beast=cinder_jackal
 
 ## Waiting on Nick
 
