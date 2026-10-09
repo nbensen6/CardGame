@@ -2551,3 +2551,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (pip ghosts, doubled bottom border, flat upper fill), R2 PASS (minor: band's lower edge a touch hard, seams a touch faint, panel top ~3 px low). VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]] ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]]
 - Meshy: 0 credits.
+
+## Right of and under the climb gauge: lava and floor, not a dark box.
+
+2026-10-09 12:24 EDT, builder (run 15). Not passed; item left open.
+
+- **Under the panel's foot:** gauge_unblend.py's border ring now reaches TARGET row 742 (the panel's bottom border and shadow) and its bottom rows mirror TARGET's floor from below instead of repeating one row (vertical streaks), which floor_cut's CARDS_ROW mirror also copied into a dark band lower down. Below-gauge mean abs error 4.41 -> 3.92.
+- **Right strip:** square x708-720 is TARGET.png's own dark frame (TARGET x>1000), not scene; backdrop_cut carries the last real column over it, so the game shows lava there where TARGET dims it. Left as is this run.
+- Grader: R1 FAIL (right strip; seam above End Turn, in both frames), under-panel MET. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ![[agents/frames/builder/2026-10-09-undergauge-after.png|420]]
+- Meshy: 0 credits.

@@ -25,7 +25,7 @@ ALPHA = 0.64
 PANEL = (917, 313, 1003, 722)
 # Its outer edge with the border line (x0, y0, x1, y1): the line is TARGET's
 # own panel, not scene; the fight draws its own.
-OUTER = (910, 306, 1010, 730)
+OUTER = (910, 306, 1010, 742)
 # The gauge's marks: (x0, y0, x1, y1) boxes, and the sigil's disc.
 MARKS = [
     (950, 311, 970, 727),    # the rail
@@ -107,7 +107,9 @@ def unblend(T: np.ndarray) -> np.ndarray:
         if y < y0:
             out[y, ox0:ox1] = out[y0, ox0:ox1]
         elif y >= y1:
-            out[y, ox0:ox1] = out[y1 - 1, ox0:ox1]
+            # TARGET's floor just below the panel, mirrored up: one row
+            # repeated drew vertical streaks under the gauge (run 15).
+            out[y, ox0:ox1] = out[min(out.shape[0] - 1, 2 * oy1 - 1 - y), ox0:ox1]
     for x in range(ox0, x0):
         out[oy0:oy1, x] = out[oy0:oy1, ox0 - 1]
     for x in range(x1, ox1):

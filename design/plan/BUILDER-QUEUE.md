@@ -202,6 +202,7 @@ run failed.
       ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ^climb-gauge-panel-see-through-the-lava-s
 
 - [ ] **Right of and under the climb gauge: lava and floor, not a dark box.**
+      Next pass: grader 2026-10-09 run 15 R1 FAIL: under the panel's foot MET (the streaks and dark blocks there were TARGET's panel border rows carried down; now TARGET's floor below it mirrored up); right strip NOT MET. Measured: square x708-720 is TARGET.png's own dark picture frame (x>1000 in TARGET px), dark over the sky (14,11,24) and dimming the lava to (82,29,16), where the game carries the lava on at (183,50,0); and a dark seam above End Turn (square y~597-605) is in both frames. FIX: decide whether the square's right 12 px carry TARGET's frame (dim the backdrop and floor columns there to TARGET's), then the seam.
       Between the gauge panel and the square's right edge (square ~x707-720, y215-420) and under the panel's foot (~x645-720, y510-600) the game shows a flat dark strip and block; TARGET shows its lava band, glow and floor carrying on there.
       **Done when** the `--square` pair shows no visible difference right of and below the climb gauge.
       Test: state=3d beast=cinder_jackal ^right-of-and-under-the-climb-gauge-lava
