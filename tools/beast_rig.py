@@ -639,12 +639,14 @@ CRACK_GLOW = 0.0           # strength of the narrow spill
 CRACK_GLOW_SIGMA = 1.6     # TARGET px
 HOT_GLOW = 0.0             # the yellow cores' wider glow
 HOT_GLOW_SIGMA = 4.0
+GLOW_TOP = 335   # TARGET row; above it (head, chin) no glow is added
 
 
 
 def crack_glow(img, m):
     rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
     inner = m & ~rim
+    inner[:GLOW_TOP] = False   # the head and chin stay as drawn
     mx, mn = img.max(2), img.min(2)
     sat = (mx - mn) / np.maximum(mx, 1)
     crack = inner & (img[..., 0] > 150) & (sat > 0.6) & (img[..., 2] < 110)
