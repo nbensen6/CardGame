@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 12:51 PM ET",
-  "last_commit": "5862260",
+  "updated": "Fri Oct 9, 2:51 PM ET",
+  "last_commit": "e337a4c",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 12:26 PM",
+      "value": "Idle: last run ended 2:43 PM",
       "state": "idle"
     },
     {
@@ -25,13 +25,118 @@
   ],
   "needs_you": [
     "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?",
-    "The grader failed the cards 14 times, but passes your own hand. Look and call them done?"
+    "Scene sharpness failed the grader six times, though measurements match. Look and call it close enough, or keep pushing?"
   ],
   "latest": {
     "path": "design/match-log/iter-25.png",
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 2:43 PM",
+      "title": "Sharper jackal outline and cliffs",
+      "bullets": [
+        "Jackal's glow edge copied from your drawing",
+        "Cliffs and body detail sharpened up",
+        "Grader still sees it as soft"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-lines-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-lines-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:50 PM",
+      "title": "Stepping stones drawn crisper",
+      "bullets": [
+        "Stones keep detail at smaller size",
+        "Scene softness still not solved"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-slabmip-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:47 PM",
+      "title": "Attack 7 label no longer underlined",
+      "bullets": [
+        "Boss attack label now plain text",
+        "Colours match your drawing",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-intent-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-intent-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:45 PM",
+      "title": "Hand fan matches your drawing",
+      "bullets": [
+        "Cards spread no wider than drawing",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fan-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:34 PM",
+      "title": "Picture frame down the sides",
+      "bullets": [
+        "Your drawing's frame edges added both sides",
+        "Right strip of climb gauge passed"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-gaugeright-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:31 PM",
+      "title": "Cards finally pass the grader",
+      "bullets": [
+        "Cards wider, fan pulled in closer",
+        "Steel cost pills and cleaner art",
+        "Grader passed after many tries"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards6-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards6-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 12:25 PM",
