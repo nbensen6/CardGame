@@ -29,9 +29,9 @@ render_mode cull_back, unshaded;
 // Checker iter 18 (2026-10-07), measured on the TARGET pair: TARGET's lit
 // cliff facets reach ~(47,48,63) on screen, ours topped out at ~(21,19,30),
 // so the planes did not separate. Only the lit tone is lifted, cooler.
-uniform vec4 lit_color : source_color = vec4(0.265, 0.265, 0.31, 1.0);
-uniform vec4 side_color : source_color = vec4(0.12, 0.118, 0.135, 1.0);
-uniform vec4 shade_color : source_color = vec4(0.055, 0.054, 0.062, 1.0);
+uniform vec4 lit_color : source_color = vec4(0.21, 0.215, 0.24, 1.0);
+uniform vec4 side_color : source_color = vec4(0.05, 0.055, 0.075, 1.0);
+uniform vec4 shade_color : source_color = vec4(0.014, 0.018, 0.032, 1.0);
 // The direction the cliffs' light comes from, in world space (towards the
 // light). Upper-left from the rest camera, like the picture.
 uniform vec3 key_dir = vec3(-0.45, 0.75, 0.35);

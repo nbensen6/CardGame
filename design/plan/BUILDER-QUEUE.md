@@ -51,6 +51,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
+      Next pass: grader R10 (2026-10-09 run 7): "blurred, near-black, no facet highlights; right cliff a boxy slab". The cliffs are now TARGET's own pixels on a backdrop (tools/backdrop_cut.py), registered error ~2.5 levels against 30 before, edge Laplacian ~0.78x TARGET's; graders mostly judge the 16:9 extension outside the square and the fill where TARGET's climb gauge stood. Next: sharpen the backdrop to TARGET's edge energy, and make the out-of-square extension read as faceted slate.
       Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
       **Done when** the `--square` pair shows no visible difference in the cliffs.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
