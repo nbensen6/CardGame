@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R3 (2026-10-09 run 5): still calls limb and torso cracks thinner and redder with no yellow cores, and the seam short; a registered close-up of the right forearm shows TARGET's own cracks unchanged, and the only visible differences there are the purple sky, the cliff and the hard red lava bars round the body, so fix those surroundings (items below) and re-grade before touching the cracks again.
+      Next pass: grader R4 (2026-10-09 run 5): limb, shoulder and thigh cracks thinner and redder, Y and seam narrower; it asks for 2x width with #FFD040 cores, which the registered pixels contradict (the right forearm is TARGET's own cracks unchanged) and which a widen-and-heat pass this run turned into cartoon outlines; next, fix the lava strip's red bars round the body and the purple sky left of the torso, then re-grade.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum

@@ -548,6 +548,26 @@ def to_canvas(p):
     return ((p[0] - BOX[0]) * SCALE, (p[1] - BOX[1]) * SCALE)
 
 
+# Under the cut TARGET shows its lava line: a bright yellow-orange edge
+# with blobs of lava, then the dark floor. The repeated last row drew a band
+# of vertical streaks there instead ("hard red bars" at the feet), now that
+# the fight's lava line sits at TARGET's height and no longer hides it. So
+# the sink rows are TARGET's own rows under the body, faded out sideways
+# where the body ends.
+SINK_TARGET = True
+SINK_FEATHER = 5.0     # TARGET px
+
+
+def sink_target(rgb, a, T2):
+    k = CUT - BOX[1]
+    rgb, a = rgb.copy(), a.copy()
+    row = ndi.gaussian_filter1d((a[k - 1] > 0.5).astype(float), SINK_FEATHER)
+    row = np.minimum(row * 2.0, 1.0) * (a[k - 1] > 0.0)
+    rgb[k:] = T2[k:k + rgb.shape[0] - k]
+    a[k:] = np.minimum(a[k - 1], row)[None, :]
+    return rgb, a
+
+
 def sink(arr):
     """Repeat the row above the lava under it, so the floor hides the cut."""
     k = CUT - BOX[1]
@@ -613,7 +633,10 @@ def build():
             rgb, a = underlay_line(body, alpha[name], own[name], m), alpha[name].astype(float)
         rgb, a = crop_box(rgb).copy(), crop_box(a).copy()
         if name in ("torso", "fore_r"):
-            rgb, a = sink(rgb), sink(a)
+            if SINK_TARGET:
+                rgb, a = sink_target(rgb, a, crop_box(T))
+            else:
+                rgb, a = sink(rgb), sink(a)
         layers[name] = upscale(rgb, a)
 
     # The rest frame: every layer over the last, as the rig draws it.
