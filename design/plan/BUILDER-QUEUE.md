@@ -123,10 +123,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-run15-after.png|420]] ^gaps-between-the-jackal-s-limbs-near-bla
 
-- [ ] **Jackal's feet in the lava: no red bars or white specks.**
-      Where the legs meet the lava TARGET's glow fades softly; the game shows hard red bars and white specks at the cut.
-      **Done when** the `--beast` pair shows no visible difference where the legs meet the lava.
-      Test: state=3d beast=cinder_jackal ^jackal-s-feet-in-the-lava-no-red-bars-or
+- [ ] 👀 **Jackal's feet in the lava: no red bars or white specks.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Jackal's feet in the lava: no red bars or white specks.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-feet3-after.png|420]] ^jackal-s-feet-in-the-lava-no-red-bars-or
 
 - [ ] 👀 **HUD and climb gauge inside the centred square.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and climb gauge inside the centred square.|details]]

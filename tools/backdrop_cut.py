@@ -33,6 +33,8 @@ OUT = ROOT / "game/assets/3d/cast/cinder_jackal_backdrop.png"
 CUT = rig.CUT          # TARGET's lava line
 FADE = 18              # rows past the cut: TARGET's bright lava band runs to ~546 (2026-10-09)
 LAVA_ROWS = (515, None)   # TARGET rows of the lava band and its glow
+FIG_LAVA = True           # the band carried across the figure's hole as well
+KEEP_TARGET = [(796, 505, 836, CUT + FADE)]   # TARGET px kept as is behind the fist's foot
 DARK_INV = ([0, 1, 3, 7, 13, 19, 24, 30, 255], [0, 9.3, 10, 12, 15, 20, 25, 30, 255])
 FADE_LEN = 6           # the last rows, fading out
 SIDE_FEATHER = 28      # TARGET px at the left and right edges
@@ -190,9 +192,12 @@ def build():
     gx0, gy0, gx1, gy1 = GAUGE
     T = T.copy()
     shade = np.zeros(T.shape[:2])
-    shade[gy0 - 4:GAUGE_GLOW, gx0 - 2:gx1 + 2] = 1.0
+    shade[gy0 - 4:GAUGE_GLOW, gx0 + 3:gx1 - 3] = 1.0   # inside the panel's border (run 15)
+    rect = shade > 0
     shade = ndi.gaussian_filter(shade, 5.0) * shade.max()
-    shade = np.clip(shade * 1.6, 0, 1)[..., None]
+    # Inside the panel only: its blur spilled ~10 px left of the gauge as a
+    # dark band over TARGET's lava glow (grader run 15, "feet in the lava").
+    shade = np.where(rect, np.clip(shade * 1.6, 0, 1), 0.0)[..., None]
     T = T * (1 - shade) + np.array(GAUGE_SHADE) * shade
     other[GAUGE_GLOW:gy1, gx0 - 2:gx1 + 2] = True
     for (x0, y0, x1, y1) in rig.STONES + HUD + EXTRA:
@@ -218,11 +223,18 @@ def build():
     # is carried across the hole from its clean ends, so the yellow line runs
     # on unbroken behind the fight's slab (grader 2026-10-09: "a dark blot and
     # an orange smear" from the inpaint there).
+    # The figure's own hole too (run 15): where a leg meets the lava, its
+    # fill was dark cliff and showed as a dark wedge beside the right foot
+    # in the band (grader, "Jackal's feet in the lava").
     for y in range(LAVA_ROWS[0], rows):
-        hole = other[y] & ~fig[y]
+        hole = (other[y] | fig[y]) if FIG_LAVA else (other[y] & ~fig[y])
         if not hole.any():
             continue
         good = ~(other[y] | fig[y])
+        # Not TARGET's dark side frame: carried in, it faded the band to
+        # navy ~30 px before the climb gauge (grader run 15).
+        good[:SIDE_BORDER[0]] = False
+        good[SIDE_BORDER[1]:] = False
         xs_good = np.nonzero(good)[0]
         if len(xs_good) < 2:
             continue
@@ -254,6 +266,15 @@ def build():
             src[:, x0:x1] = clean[y0:y1, x0 - w:x0][:, ::-1]
         out[y0:y1, x0:x1] = src[:, x0:x1]
         clean[y0:y1, x0:x1] = src[:, x0:x1]
+    # Behind the right fist where it sinks into the lava, TARGET's own
+    # pixels (its line included): the fist's cut-out edge there steps at
+    # TARGET's pixel grid, and over a lava fill the steps read as an aliased
+    # edge (grader run 15). Over TARGET's own pixels the steps vanish.
+    for (x0, y0, x1, y1) in KEEP_TARGET:
+        keep = np.zeros_like(fig)
+        keep[y0:y1, x0:x1] = True
+        keep &= ~other
+        out[keep] = img[keep]
     if FIST_REBUILD:
         out = fist_backdrop(out, img.astype(float), fig, wide, fire_a[:rows], m[:rows])
     lo, hi = SIDE_BORDER

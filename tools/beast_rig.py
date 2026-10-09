@@ -65,6 +65,11 @@ CRACK_SYNTH = True
 KEEP_DARK = 70
 # ...but not within this many px of a stone's own pixels (its dark underline).
 KEEP_DARK_OFF = 3
+# A pixel this far off its 5x5 median, alone in its 7x7 window (at most
+# DESPECK_PX such), is a speck (0: off).
+DESPECK = 60
+DESPECK_PX = 6
+DESPECK_FROM = 505   # TARGET row
 # 0 since 2026-10-08: the fight draws the jackal at TARGET's place, its cut
 # on TARGET's lava line, so TARGET's own glow rows show and the ramp only
 # hazed the hips orange (grader, "Cracks: wide hot cores").
@@ -86,7 +91,7 @@ HEIGHT = 1.90      # world height floor-to-ear-tip before _fit_height
 # fades it, these walls close the silhouette (picked on a 1:1 grid).
 WALLS = [
     [(470, 428), (455, 470), (425, 505), (418, 536)],   # left flank, behind stones
-    [(806, 500), (808, 536)],                          # right fist into the lava
+    [(807, 500), (812, 536)],                          # right fist into the lava (run 15: on TARGET's line as it slants out)
     [(628, 372), (605, 416)],                          # right flank, behind a stone
     [(626, 495), (641, 536)],                          # torso / right-arm gap
     [(683, 500), (686, 536)],
@@ -873,6 +878,27 @@ def crack_widen(img, m):
 TONE_FIX = ROOT / "tools/jackal_tone_fix.json"
 
 
+def despeck(L):
+    """Lone specks the fills and pockets left on the solid body (a bright
+    dot on the left shin at the lava, grader run 15, "feet in the lava"):
+    a pixel far off its 5x5 median with at most DESPECK_PX such pixels in
+    its 7x7 window takes the median, with its near neighbours. TARGET's
+    cracks are long runs of such pixels and stay."""
+    L = L.copy()
+    rgb = L[..., :3]
+    med = np.stack([ndi.median_filter(rgb[..., c], size=5) for c in range(3)], -1)
+    dev = np.abs(rgb - med).max(2)
+    strong = (dev > DESPECK) & (L[..., 3] > 200)
+    dens = ndi.uniform_filter(strong.astype(float), 7) * 49
+    speck = strong & (dens <= DESPECK_PX)
+    # Only by the lava, where the sink rows and pockets are rebuilt: higher
+    # up the same test takes the ear tips and eye glints, TARGET's own.
+    speck[:(DESPECK_FROM - BOX[1]) * SCALE] = False
+    fix = ndi.binary_dilation(speck, iterations=1) & (dev > DESPECK / 2) & (L[..., 3] > 200)
+    L[fix, :3] = med[fix]
+    return L
+
+
 def tone_fix(L):
     if not TONE_FIX.exists():
         return L
@@ -924,6 +950,8 @@ def build():
         # 70, which is the flame's yellow, and drew contour lines round the
         # fist through the yellow core.
         layers[name] = upscale(rgb, a) if (name == "fire" and not FIRE_TONE_FIX) else tone_fix(upscale(rgb, a))
+        if name != "fire" and DESPECK:
+            layers[name] = despeck(layers[name])
         if name == "fire" and FIRE_SMOOTH:
             # TARGET's flame carries a fine grain that the fight's colour
             # path (the LUT inverting ACES's shoulder) blows up ~4x in the

@@ -2476,3 +2476,16 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: PASS (minor only).
 - Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
 - Meshy: 0 credits.
+
+## Jackal's feet in the lava: no red bars or white specks.
+
+2026-10-09 11:39 EDT, builder (run 15). PASS.
+
+- The red bars and floor grid were already gone (backdrop and floor work of 2026-10-09); R1 named what was left: a dark wedge beside the right foot and a pale speck on the left shin.
+- **Dark wedge:** the backdrop's figure hole was inpainted from the cliff, so beside the right fist it showed dark rock in the lava band. backdrop_cut.py `FIG_LAVA`: the band rows are carried across the figure's hole too.
+- **Pale speck:** a lone bright/dark pair from the torso layer's rebuilt rows at the cut. beast_rig.py `despeck` (DESPECK 60, DESPECK_PX 6, rows from 505 only: higher up the same test took the ear tips).
+- **Aliased right-fist edge:** WALLS[1] now follows TARGET's line as it slants out ((807,500)-(812,536)); backdrop_cut.py `KEEP_TARGET` keeps TARGET's own pixels behind the fist's foot, so the cut-out's pixel steps sit over TARGET's own line.
+- **Band dark before the climb gauge:** the lava rows interpolated from TARGET's dark side frame, and the gauge shade's blur spilled ~10 px left of the panel. Side frame left out of the interpolation; the shade kept inside the panel's border.
+- Grader: R1 FAIL (wedge, speck), R2 FAIL (band, notch), R3 FAIL (aliased edge, fade before gauge), R4 PASS. VERDICT: PASS (minor: lower edge a touch soft, glow stops a touch early at the gauge).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
+- Meshy: 0 credits.
