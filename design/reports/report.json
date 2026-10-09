@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 2:53 AM ET",
-  "last_commit": "c26747d",
+  "updated": "Fri Oct 9, 4:52 AM ET",
+  "last_commit": "fe518ba",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; 5 passed, 3 closer",
+      "value": "Idle; cracks, fire, cliffs still open",
       "state": "idle"
     },
     {
@@ -24,13 +24,86 @@
     }
   ],
   "needs_you": [
-    "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?"
+    "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?",
+    "The grader keeps failing the chest cracks though they measure like yours. Look and call them done?"
   ],
   "latest": {
     "path": "design/match-log/iter-25.png",
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:24 AM",
+      "title": "Chest stones lined up exactly",
+      "bullets": [
+        "Stones now sit on your slabs exactly",
+        "Jackal colours moved closer to yours",
+        "Grader still fails it; cracks next"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks10-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks10-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:00 AM",
+      "title": "Smears around the fist cleaned",
+      "bullets": [
+        "Dark column above the fist removed",
+        "Cream wisp by the ear gone",
+        "Left cliff still a bit hazy"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cliffs13-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:51 AM",
+      "title": "Smoother flame on the fist",
+      "bullets": [
+        "Sparkly noise in the flame smoothed",
+        "Dark rim round the flames gone",
+        "Curls still softer than yours"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fist6-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fist6-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:23 AM",
+      "title": "Cracks rebuilt under the stones",
+      "bullets": [
+        "Cracked rock now fills behind stones",
+        "Jackal drawn a touch sharper",
+        "Grader says cracks still too thin"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks9-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 2:46 AM",
