@@ -2265,3 +2265,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (blot and smear by the bottom stone), R2 PASS. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-lavaband-before.png|420]] ![[agents/frames/builder/2026-10-09-lavaband-after.png|420]]
 - Meshy: 0 credits.
+
+## Frog's pedestal: TARGET's dark plinth, no bright orange edge.
+
+2026-10-09 03:10 EDT, builder (run 8). PASSED.
+
+- TARGET's own pedestal is painted in the projected floor (tools/floor_cut.py keeps it); at the rest view the Frog's 3D rock hides and the drawn plinth shows, and once the lens climbs off the rest view (climb_t > BACKDROP_REST_CLIMB) the 3D rock stands there again (combat_3d._place_backdrop).
+- The Frog and its HP bar are cut out by their own pixels (green body + outline, red bar), not a rectangle, so the fill does not smear the plinth; TARGET's soft shadow under the Frog painted back.
+- The colour table crushed TARGET's darkest values (inputs 0-8 drew 0, 10 drew 3, measured on the rendered floor), so the plinth's navy side faces went black; floor_cut pre-maps each channel through the inverse (`DARK_INV`). Side faces now (0,0,9)-(0,1,9) against TARGET's (0,1,9)-(1,2,10).
+- New `--frog` close-up in tools/vs_target.py.
+- Grader: R1 FAIL (judged at the downscaled --floor pair), R2 FAIL (black side faces), R3 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-pedestal2-before.png|420]] ![[agents/frames/builder/2026-10-09-pedestal2-after.png|420]]
+- Meshy: 0 credits.

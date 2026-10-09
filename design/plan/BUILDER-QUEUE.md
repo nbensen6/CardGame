@@ -142,9 +142,20 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-lavaband-after.png|420]] ^lava-line-target-s-bright-yellow-band-acr
 
-- [ ] **Frog's pedestal: TARGET's dark plinth, no bright orange edge.**
-      TARGET's pedestal is a darker hex plinth with a dim warm rim; the game's top reads lighter and its right edge burns bright orange (the `--floor` pair shows both; TARGET's own pedestal is now painted under the game's).
-      **Done when** the `--square` and `--floor` pairs show no visible difference in the pedestal.
+- [ ] 👀 **Frog's pedestal: TARGET's dark plinth, no bright orange edge.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Frog's pedestal: TARGET's dark plinth, no bright orange edge.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-pedestal2-after.png|420]] ^frog-s-pedestal-target-s-dark-plinth-no
+
+- [ ] **Frog: TARGET's clean cel line, not a heavy pixelated outline.**
+      In the `--frog` close-up TARGET's Frog has thin clean dark lines and soft light-green shading; the game's has a heavy black, stair-stepped outline and darker green.
+      **Done when** the `--frog` pair shows no visible difference in the Frog.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **HP bar under the Frog: TARGET's size and weight.**
+      TARGET's 42/42 bar is a little smaller with a lighter rim and thinner numerals; the game's is larger and bolder (`--frog` pair).
+      **Done when** the `--frog` pair shows no visible difference in the HP bar.
       Test: state=3d beast=cinder_jackal
 
 ## Waiting on Nick

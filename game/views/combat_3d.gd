@@ -4061,6 +4061,14 @@ func _place_backdrop() -> void:
 	if _backdrop == null or _cam == null or _beast == null:
 		return
 	# The rest frame's climb_t is ~0.11 (the hunter waits on its rock).
+	# The Frog's rock: TARGET's own pedestal is painted in the projected floor
+	# (tools/floor_cut.py keeps it), so from the rest view the 3D one hides and
+	# the drawn plinth shows; once the lens climbs off the rest view the
+	# painted one lies flat, and the 3D rock stands there instead (builder
+	# 2026-10-09, "Frog's pedestal").
+	if _floor_art != null and _rest_rocks.size() > 0 and _rest_rocks[0] is Node3D \
+			and is_instance_valid(_rest_rocks[0]):
+		(_rest_rocks[0] as Node3D).visible = _climb_t > BACKDROP_REST_CLIMB
 	if _climb_t > BACKDROP_REST_CLIMB or _shake > 0.001:
 		return
 	var vs := get_viewport().get_visible_rect().size
