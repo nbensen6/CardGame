@@ -616,6 +616,10 @@ const DRAWN_GAP_PER_HEIGHT := 1.21
 ## right for everything else (builder 2026-10-08, "Cracks: wide hot cores";
 ## with the gap and pitch below, the jackal drew 27 px right of TARGET's).
 const DRAWN_SHIFT_PX := {"cinder_jackal": Vector2(-83.2, 43.0)}
+## A drawn beast's zoom about a rig-canvas pivot, after the height fit
+## (builder 2026-10-09, "Cracks": registered on TARGET's square the fit drew
+## the jackal 0.5% small, its fist and forearm ~2 px off TARGET's lines).
+const DRAWN_ZOOM := {"cinder_jackal": [1.005, Vector2(867, 631)]}
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -3109,6 +3113,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	if _beast.has_method("shift_view"):   # a rigged drawing (views/drawn_rig.gd)
 		_beast.call("shift_view", DRAWN_SHIFT_PX.get(key, Vector2.ZERO))
 	_beast_scale = _fit_height(_beast, want)
+	if _beast.has_method("zoom_view") and DRAWN_ZOOM.has(key):
+		_beast.call("zoom_view", float(DRAWN_ZOOM[key][0]), DRAWN_ZOOM[key][1])
 	_beast_box = _merged_aabb(_beast)
 	if _beast.has_method("trim_box"):   # a rigged drawing (views/drawn_rig.gd)
 		_beast_box = _beast.call("trim_box", _beast_box)

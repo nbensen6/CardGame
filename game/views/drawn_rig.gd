@@ -100,6 +100,34 @@ func shift_view(px: Vector2) -> void:
 			(c as Node3D).position += d
 
 
+## Grow the drawing by `z` about the rig-canvas point `pivot` (x right, y
+## down, canvas pixels), holds untouched: the fight's height fit lands the
+## figure a hair small of TARGET (2026-10-09, registered on the square:
+## 0.5% under, ~2 px at the fist and the right forearm, every line and crack
+## doubled against TARGET's), and a zoom about the chest closes it without
+## moving the slabs registered on it.
+var view_zoom := 1.0
+
+
+func zoom_view(z: float, pivot: Vector2) -> void:
+	var body := get_node_or_null("Body") as Sprite3D
+	if body == null or is_equal_approx(z, view_zoom):
+		return
+	var tex_w := float(body.texture.get_width()) if body.texture != null else 0.0
+	var canvas_w := tex_w
+	var rig := get_node_or_null("Rig") as SubViewport
+	if rig != null and rig.size_2d_override.x > 0:
+		canvas_w = float(rig.size_2d_override.x)
+	var ps := body.pixel_size * (tex_w / canvas_w if canvas_w > 0.0 else 1.0)   # world per canvas px
+	var size := Vector2(canvas_w, float(rig.size_2d_override.y if rig != null and rig.size_2d_override.y > 0 else body.texture.get_height()))
+	var off := (pivot - size * 0.5) * ps
+	var f := z / view_zoom
+	body.pixel_size *= f
+	# keep the pivot where it was: the body's centre moves away from it
+	body.position -= Vector3(off.x, -off.y, 0.0) * view_zoom * (f - 1.0)
+	view_zoom = z
+
+
 ## Give a part's texture mipmaps (a copy; the imported one stays as it is).
 static func _mipmap(sp: Sprite2D) -> void:
 	if sp.texture == null or sp.texture.has_mipmaps():
