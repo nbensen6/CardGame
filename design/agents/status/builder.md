@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T05:41
+updated: 2026-10-09T07:20
 working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
@@ -13,15 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 06:07 EDT
+2026-10-09 07:20 EDT
 
-- **Did:** cleaned outline slivers and belly darks, drew TARGET's Frog at rest, matched its HP bar and floor.
-- **Worked?** Partly: inner-arm outlines, Frog, HP bar, pedestal floor, slab smear VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"); cards VERDICT: FAIL (trim, Leap sky, fan tilt).
-- **Look at:** ![[frames/builder/2026-10-09-frogcel-before.png]] then ![[frames/builder/2026-10-09-cards4-after.png]]
+- **Did:** removed a stray orange crack fleck between the second and third chest slabs.
+- **Worked?** Partly: the fleck is gone, every crack measures within a few levels of TARGET; VERDICT: FAIL (grader again asks for wider cracks than TARGET's).
+- **Look at:** ![[frames/builder/2026-10-09-cracks12-before.png]] then ![[frames/builder/2026-10-09-cracks12-after.png]]
 - **Ask:** nothing
-- **Found:** the game's body reads a little softer than TARGET's at close-up (resample), the last visible gap on the cracks.
-- **Found:** an orange glow smear on the floor just left of the climb gauge at the lava line (queued).
-- **Found:** the second hunter's red-edged rock shows at the frame's far right, outside the square.
+- **Found:** the cracks item has failed twelve runs on asks the registered pixels contradict; it holds the queue's top slot.
 
 ## Notes
 

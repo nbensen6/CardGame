@@ -61,6 +61,8 @@ TIGHT = True
 TIGHT_GROW = 3
 # 2026-10-09: the holes are rebuilt by tools/crack_synth.py, not inpainted.
 CRACK_SYNTH = True
+# TARGET's own dark rock in a stone's grown ring is kept, not rebuilt (max channel below this).
+KEEP_DARK = 70
 # 0 since 2026-10-08: the fight draws the jackal at TARGET's place, its cut
 # on TARGET's lava line, so TARGET's own glow rows show and the ramp only
 # hazed the hips orange (grader, "Cracks: wide hot cores").
@@ -252,8 +254,34 @@ def paint_hidden(T, m, line, walls):
             # fight's slab sits a few px off TARGET's, the body round it
             # reads as TARGET's cracked rock, the sternum seam included.
             inner = hole & ~rim
+            inp = out.copy()
             syn, *_ = crack_synth.fill(T, inner, m, ~rim)
             out[inner] = syn[inner]
+            if KEEP_DARK:
+                # The grown rings of two neighbouring stones also covered
+                # TARGET's own dark rock in the narrow gap between them; where
+                # the fight's slab sits a px off TARGET's, the synth crack
+                # drawn there showed as an orange fleck and a red smear
+                # (grader, run 11). In such a gap no crack is drawn and
+                # TARGET's own dark pixels stay.
+                # Each stone pixel belongs to the nearest STONES rect, by
+                # distance to the rect (two slabs' pixels touch where their
+                # gap narrows, so a label would merge them).
+                ys, xs = np.nonzero(raw_stone)
+                R = np.array(STONES, float)
+                dx = np.maximum(np.maximum(R[None, :, 0] - xs[:, None], xs[:, None] - R[None, :, 2]), 0)
+                dy = np.maximum(np.maximum(R[None, :, 1] - ys[:, None], ys[:, None] - R[None, :, 3]), 0)
+                own = np.argmin(np.hypot(dx, dy), 1)
+                cover = np.zeros(m.shape, np.int32)
+                for k in range(len(STONES)):
+                    sk = np.zeros(m.shape, bool)
+                    sk[ys[own == k], xs[own == k]] = True
+                    cover += ndi.binary_dilation(sk, iterations=TIGHT_GROW + 3)
+                gap = inner & ~raw_stone & (cover >= 2)
+                gap = ndi.binary_dilation(gap, iterations=1) & inner & ~raw_stone
+                out[gap] = inp[gap]
+                dark = gap & (mx < KEEP_DARK)
+                out[dark] = T[dark]
         else:
             out = carry_seam(out, hole)
         # The band's stone pixels: the line goes back over them below.

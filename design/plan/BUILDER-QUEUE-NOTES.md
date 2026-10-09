@@ -2206,6 +2206,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks11-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 07:20 EDT, builder (run 12). Not passed; item left open.
+
+- **Orange fleck between slabs 2 and 3.** TARGET's 5-row dark gap between those slabs (rows 413-417) fell inside both stones' grown rings, so crack_synth drew a crack there; where the fight's slab sits a px off TARGET's it showed as an orange "A". beast_rig.py `KEEP_DARK` (70): in a gap two stones' rings share (each stone pixel owned by its nearest STONES rect), no synth crack is drawn, the inpaint stays, and TARGET's own dark pixels are kept. The fleck is gone in the --chest pair.
+- **Measured (--chest pair, T/G):** chest error 17.32 -> 17.24 (mostly slab edges); hot pixels 26793/26704, mean (238,169,76)/(240,166,75); stem row maxima within 10 levels; belly under slab 4 hot 6.5%/7.0%; right of slab 2 mean (135,109,87)/(137,109,86).
+- **Grader:** R1 FAIL, same asks as runs 6-11 (wider #FFD040 cracks, longer seam, brighter belly web), each of which the measurements above contradict. Not widened. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks12-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks12-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

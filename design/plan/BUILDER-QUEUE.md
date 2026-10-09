@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 11, R2 FAIL: "frame unchanged from BEFORE; red smear inside the right outline by the second slab, dark notches left of the stem, belly web a bit dimmer". Registered: the belly's dark rock was crushed to black by the tone fix (fixed, belly error 8.2 -> 6.8); at 6x the right-outline and stem spots match TARGET. Remaining honest gap is the game's softer resample, not the cracks.
+      Next pass: grader 2026-10-09 run 12 R1 FAIL ("unchanged; seam short and dim, belly web dark, cracks thin and red, red smear right of slab 2, notches left of the stem"). Measured on the --chest pair, T/G: stem max per row within 10 levels; belly under slab 4 mean (94,29,13)/(96,29,11), hot 6.5%/7.0%; left of stem hot 34%/36%; right smear (135,109,87)/(137,109,86); pecs hot 14.8%/15.1%. Widening would move off TARGET's pixels; not done.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
