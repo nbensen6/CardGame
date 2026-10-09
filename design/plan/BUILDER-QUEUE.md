@@ -177,10 +177,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-pedwedge-after.png|420]] ^frog-s-pedestal-no-extra-dark-slab-at-it
 
-- [ ] **Floor left of the Frog: no brown smear under the lowest slab.**
-      In the `--frog` pair the game shows a faint brownish smear on the floor left of the Frog, under the lowest slab (game ~x1150-1200, y100-150); TARGET's floor there is plain dark slab.
-      **Done when** the `--frog` pair shows no visible difference on the floor under the lowest slab.
-      Test: state=3d beast=cinder_jackal ^floor-left-of-the-frog-no-brown-smear-un
+- [ ] 👀 **Floor left of the Frog: no brown smear under the lowest slab.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Floor left of the Frog: no brown smear under the lowest slab.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-slabsmear-after.png|420]] ^floor-left-of-the-frog-no-brown-smear-un
 
 ## Waiting on Nick
 

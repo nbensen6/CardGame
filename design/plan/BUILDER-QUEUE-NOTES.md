@@ -2376,3 +2376,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 VERDICT: PASS (minor: seam a touch steeper).
 - Frames: ![[agents/frames/builder/2026-10-09-pedwedge-before.png|420]] ![[agents/frames/builder/2026-10-09-pedwedge-after.png|420]]
 - Meshy: 0 credits.
+
+## Floor left of the Frog: no brown smear under the lowest slab.
+
+2026-10-09 05:53 EDT, builder (run 11). PASS.
+
+- tools/floor_cut.py: the lowest slab's hole is its own pixels (pale grey, filled, grown SLAB_GROW 2), not its box; inpainted with the lava band's rows masked to the floor's dark (the band's orange ran down as the smear), then past 4 px in it goes to the ring's own dark floor tone x SLAB_SHADE 0.85 (TARGET's shadow). The climb gauge's hole keeps the plain inpaint.
+- Tried first: plain tone over the slab's box (a dark rectangle round the fight's slab), Navier-Stokes inpaint (a stronger streak). Reverted.
+- **Grader:** R1 VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-slabsmear-before.png|420]] ![[agents/frames/builder/2026-10-09-slabsmear-after.png|420]]
+- Meshy: 0 credits.

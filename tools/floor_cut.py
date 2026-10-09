@@ -44,6 +44,8 @@ CARDS_ROW = 790           # TARGET row the hand starts at: below it, rows repeat
 CARRY = 40                # rows under it whose seams are carried on, not mirrored
 SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
+SLAB_GROW = 2
+SLAB_SHADE = 0.85   # the floor's tone under the lowest slab, its shadow
 SIDE_FEATHER = 40
 # Past the square's sides the 16:9 frame shows more floor: TARGET's slabs
 # mirrored outward (a seam against the 3D floor's bigger, redder tiles read as
@@ -59,7 +61,19 @@ def build() -> None:
     img = T[TOP:].copy()
     H, W = img.shape[:2]
     hole = np.zeros((H, W), bool)
-    for (x0, y0, x1, y1) in HOLES:
+    for i, (x0, y0, x1, y1) in enumerate(HOLES):
+        if i == 0:
+            # The lowest slab: its own pixels (pale grey, and its dark rim),
+            # not its box. The box's corners showed past the fight's slab as
+            # a dark rectangle once its fill went plain (grader 2026-10-09).
+            ya, yb = max(0, y0 - TOP), y1 - TOP
+            r = img[ya:yb, x0:x1].astype(int)
+            mx, mn = r.max(2), r.min(2)
+            g = (mx > 95) & ((mx - mn) < 0.3 * mx)
+            g = ndi.binary_fill_holes(ndi.binary_closing(g, iterations=3))
+            g = ndi.binary_dilation(g, iterations=SLAB_GROW)
+            hole[ya:yb, x0:x1] |= g
+            continue
         hole[max(0, y0 - TOP - GROW):max(0, y1 - TOP + GROW), max(0, x0 - GROW):x1 + GROW] = True
     # The Frog and its HP bar: only their own pixels (the green body and its
     # dark outline, the red bar and its rim), so the fill does not smear the
@@ -74,10 +88,31 @@ def build() -> None:
         m = ndi.binary_fill_holes(m)
         m = ndi.binary_dilation(m, iterations=4 if keyf == "frog" else 3)
         hole[y0 - TOP:y1 - TOP, x0:x1] |= m
-    bgr = np.ascontiguousarray(img[..., ::-1])
+    bgr = np.ascontiguousarray(img[..., ::-1]).copy()
+    plain = cv2.inpaint(bgr, hole.astype(np.uint8) * 255, 7, cv2.INPAINT_TELEA)[..., ::-1]
+    # The lowest slab's hole reaches up into the lava band: inpainted from it,
+    # its orange ran down under the fight's slab as a brown smear (grader
+    # 2026-10-09). The band's rows are masked to the floor's own dark first.
+    lava_rows = slice(0, max(0, LAVA_FOOT + 10 - TOP))
+    floor_dark = np.median(img[LAVA_FOOT + 20 - TOP:LAVA_FOOT + 60 - TOP, :356].reshape(-1, 3), axis=0)
+    bgr[lava_rows] = floor_dark[::-1].astype(np.uint8)
     fill = cv2.inpaint(bgr, hole.astype(np.uint8) * 255, 7, cv2.INPAINT_TELEA)[..., ::-1]
     out = img.astype(float)
-    out[hole] = fill[hole]
+    out[hole] = plain[hole]
+    # Under the lowest slab TARGET's floor is plain dark rock in the slab's
+    # shadow: past a few px in from its edge the hole goes to that tone, so
+    # no seam the inpaint drags in streaks out below the fight's slab.
+    x0, y0, x1, y1 = HOLES[0]
+    slab = np.zeros((H, W), bool)
+    slab[max(0, y0 - TOP - GROW):y1 - TOP + GROW, x0 - GROW:x1 + GROW] = True
+    slab &= hole
+    out[slab] = fill[slab]
+    k = np.clip(ndi.distance_transform_edt(slab) / 4.0, 0, 1)[..., None]
+    ring = ndi.binary_dilation(slab, iterations=10) & ~slab
+    ring[:LAVA_FOOT + 12 - TOP] = False
+    rp = img[ring].astype(float)
+    tone = np.median(rp[rp.sum(1) < np.percentile(rp.sum(1), 60)], axis=0)
+    out = out * (1 - k) + (tone * SLAB_SHADE) * k
     # TARGET's soft shadow under the Frog, sampled: (28,23,33) on the plinth.
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
     (sx, sy), (rx, ry) = SHADOW
