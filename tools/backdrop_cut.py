@@ -66,6 +66,103 @@ GAUGE_SHADE = (9.0, 12.0, 20.0)  # the right cliff's shadow tone, sampled
 HUD = [(424, 16, 532, 50), (10, 14, 418, 96), (862, 22, 998, 54)]   # the last two are mirrored over after
 
 
+# Round the raised fist (builder 2026-10-09, "Fist fire"): the figure fill and
+# the boss-bar rect were inpainted from TARGET's flame glow and showed as a
+# dark red blob with a streak rising above the flame's tip. Rebuilt as
+# TARGET's cool slate (the warm pixels kept out of the inpaint's source) plus
+# the flame's own glow, a blur of its alpha fitted to TARGET's ring round it.
+FIST_REBUILD = True
+FIST_AREA = (40, 14, 440, 360)     # TARGET px (x0, y0, x1, y1)
+FIST_RING = (6, 60)
+FIST_GLOW = 0.5                    # of the measured median lift (full read as a red band left of the flame)
+FIST_RATIO = False                 # local glow strength: made a cool band left of the flame
+FIST_RATIO_SIG = 10.0              # TARGET px the glow's local strength is spread over
+FIST_EDGE_SIG = 3.0                # TARGET px of the carried-in edge
+BAR_BOTTOM = 50                    # TARGET row: the boss bar panel's last + 1                # TARGET px outside the flame the fit reads
+
+
+def fist_backdrop(out, img, fig, wide, fire_a, m):
+    x0, y0, x1, y1 = FIST_AREA
+    H, W = out.shape[:2]
+    area = np.zeros((H, W), bool)
+    area[y0:y1, x0:x1] = True
+    flame = (fire_a > 0.5) & ~m
+    # what to replace: the figure fill and the HUD rects inside the area,
+    # never the figure (it draws over) beyond what the fill already took
+    hud = np.zeros((H, W), bool)
+    for (hx0, hy0, hx1, hy1) in HUD:
+        hud[hy0:hy1, hx0:hx1] = True
+    # Only what TARGET hides behind the figure and the flame: round them,
+    # TARGET's own glow pixels are the best backdrop there is.
+    repl = area & wide
+    # cool slate: warm pixels near the flame kept out of the source
+    r, g, b = img[..., 0], img[..., 1], img[..., 2]
+    warm = ((r - b) > 25) | ((r > 120) & (r > b + 10))
+    near = ndi.binary_dilation(flame | m, iterations=90) & area
+    src_mask = repl | (warm & near) | hud
+    src_mask &= area
+    bgr = np.ascontiguousarray(np.clip(img[..., ::-1], 0, 255).astype(np.uint8))
+    # whatever lies outside the area stays as source
+    cool = cv2.inpaint(bgr, src_mask.astype(np.uint8) * 255, 11, cv2.INPAINT_TELEA)[..., ::-1].astype(float)
+    # The boss-bar rect: TARGET's cliffs there are vertical slabs and its sky
+    # is smooth, so the cool picture just below is mirrored up over it.
+    for (hx0, hy0, hx1, hy1) in HUD[1:2]:
+        hx0, hx1 = max(hx0, x0), min(hx1, x1)
+        h = hy1 - hy0
+        cool[hy0:hy1, hx0:hx1] = cool[hy1:hy1 + h, hx0:hx1][::-1]
+    # the glow: TARGET's own warm lift over the cool slate, by distance
+    # from the flame (the median of each 2 px ring), so no rim overshoots
+    d = ndi.distance_transform_edt(~flame)
+    ring = area & ~m & ~hud & ~ndi.binary_dilation(m, iterations=6) & (d > 0) & (d < FIST_RING[1])
+    lift = img - cool
+    edges = np.arange(0, FIST_RING[1] + 2, 2.0)
+    prof = np.zeros((len(edges), 3))
+    for i, e in enumerate(edges):
+        k = ring & (d >= e) & (d < e + 2)
+        if k.sum() > 20:
+            prof[i] = np.clip(np.median(lift[k], axis=0), 0, None)
+    prof[-1] = 0
+    print("fist glow profile", np.round(prof[::5], 1).tolist())
+    glow = FIST_GLOW * np.dstack([np.interp(d, edges + 1, prof[:, c]) for c in range(3)])
+    # TARGET's glow is not even all round: bright yellow under the fist,
+    # dark between the left lobes. Each place takes the ratio of TARGET's
+    # own lift to the profile, read off the visible ring near it.
+    pl = glow.sum(2)
+    have = ring & (pl > 6)
+    ratio = np.where(have, lift.sum(2) / np.maximum(pl, 1e-3), 0)
+    ratio = np.clip(ratio, 0, 3)
+    num = ndi.gaussian_filter(ratio * have, FIST_RATIO_SIG)
+    den = ndi.gaussian_filter(have.astype(float), FIST_RATIO_SIG)
+    r = np.where(den > 1e-3, num / np.maximum(den, 1e-3), 1.0)
+    if FIST_RATIO:
+        glow = glow * r[..., None]
+    new = np.clip(cool + glow, 0, 255)
+    # Right at the edge of what is hidden, TARGET's own pixels carried in
+    # (a normalized blur of the visible ring), so the fill meets TARGET's
+    # glow at its own tone and no seam rings the flame.
+    valid = (area & ~repl).astype(float)
+    den = ndi.gaussian_filter(valid, FIST_EDGE_SIG)
+    ext = np.dstack([ndi.gaussian_filter(img[..., c] * valid, FIST_EDGE_SIG) for c in range(3)]) / np.maximum(den, 1e-4)[..., None]
+    w = np.clip(den / 0.25, 0, 1)[..., None]
+    new = new * (1 - w) + ext * w
+    # feathered into TARGET's own pixels at the edge of what is replaced,
+    # so no seam rings the flame
+    wt = np.clip(ndi.distance_transform_edt(repl) / 4.0, 0, 1)[..., None]
+    o = out * (1 - wt) + new * wt
+    # TARGET's boss bar panel ends at row 50: below it (to the HUD rect's
+    # 96) is TARGET's own scene, kept; the panel rows are that scene
+    # mirrored up (vertical slabs and smooth sky mirror cleanly).
+    bx0, by0, bx1, by1 = HUD[1]
+    bx0, bx1 = max(bx0, x0), min(bx1, x1)
+    by1 += GROW   # the HUD cut-out was grown by GROW rows too
+    keep = ~(m | ndi.binary_dilation(flame, iterations=3))[BAR_BOTTOM:by1, bx0:bx1]
+    blk = o[BAR_BOTTOM:by1, bx0:bx1]
+    blk[keep] = img[BAR_BOTTOM:by1, bx0:bx1][keep]
+    h = BAR_BOTTOM - by0
+    o[by0:BAR_BOTTOM, bx0:bx1] = o[BAR_BOTTOM:BAR_BOTTOM + h, bx0:bx1][::-1]
+    return o
+
+
 def build():
     T = np.asarray(Image.open(rig.TARGET).convert("RGB")).astype(float)
     m, line, walls = rig.silhouette(T)
@@ -149,6 +246,8 @@ def build():
             src[:, x0:x1] = clean[y0:y1, x0 - w:x0][:, ::-1]
         out[y0:y1, x0:x1] = src[:, x0:x1]
         clean[y0:y1, x0:x1] = src[:, x0:x1]
+    if FIST_REBUILD:
+        out = fist_backdrop(out, img.astype(float), fig, wide, fire_a[:rows], m[:rows])
     lo, hi = SIDE_BORDER
     out[:, :lo] = out[:, lo:lo + 1]
     out[:, hi:] = out[:, hi - 1:hi]

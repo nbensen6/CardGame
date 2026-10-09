@@ -136,7 +136,14 @@ FIRE_LEAN = 0.32
 # edge pushed it into a tall pale plume off the fist; TARGET's is a compact
 # orange-yellow blaze curling round the top and back of the fist.
 FIRE_RAW = True
-FIRE_HAZE = 0.0        # 0.92 until the backdrop (tools/backdrop_cut.py) carried TARGET's glow itself
+# Edge-keeping smooth of the flame's colours (see build()).
+FIRE_SMOOTH = True
+FIRE_SMOOTH_D = 11
+FIRE_SMOOTH_SC = 40.0
+FIRE_SMOOTH_SS = 5.0
+FIRE_SHELL_PX = 0.0       # canvas px (2x TARGET) of the flame's outer shell
+FIRE_SHELL_R = (110.0, 165.0)   # red: fully faded .. fully kept
+FIRE_HAZE = 0.92        # 0.92 until the backdrop (tools/backdrop_cut.py) carried TARGET's glow itself
 FIRE_HAZE_PX = 55.0    # TARGET px it fades over
 FIRE_MAX_A = 1.0       # 0.95 (under halo_from, no halo) tried 2026-10-09: no visible change, error up
 FIRE_HUG = 22
@@ -834,6 +841,37 @@ def build():
             else:
                 rgb, a = sink(rgb), sink(a)
         layers[name] = tone_fix(upscale(rgb, a))
+        if name == "fire" and FIRE_SMOOTH:
+            # TARGET's flame carries a fine grain that the fight's colour
+            # path (the LUT inverting ACES's shoulder) blows up ~4x in the
+            # bright yellows: the game's flame read as sparkly noise
+            # (builder, 2026-10-09 run 9). An edge-keeping smooth inside the
+            # flame takes the grain out and keeps the tongues' edges.
+            L = layers[name]
+            sm = cv2.bilateralFilter(L[..., :3].astype(np.float32), FIRE_SMOOTH_D,
+                                     FIRE_SMOOTH_SC, FIRE_SMOOTH_SS).astype(float)
+            L = L.copy()
+            L[..., :3] = np.where((L[..., 3:4] > 0), sm, L[..., :3])
+            # The flame's soft edge carried TARGET's dark glow colour, a dark
+            # rim round every tongue over the fight's backdrop: each edge
+            # pixel takes the colour of the nearest solid flame pixel.
+            solid = L[..., 3] >= 250
+            dd, (iy, ix) = ndi.distance_transform_edt(~solid, return_indices=True)
+            edge = (L[..., 3] > 0) & ~solid & (dd <= 3) & (L[..., 3] > 128)
+            L[edge, :3] = L[iy[edge], ix[edge], :3]
+            # The key kept TARGET's dark red glow as an outer shell with a
+            # hard edge; over the backdrop it drew a contour line a few px
+            # out from the tongues. In that shell, the darker the red, the
+            # more it fades into the backdrop (which carries TARGET's glow).
+            out_d = ndi.distance_transform_edt(L[..., 3] > 0)
+            if not FIRE_SHELL_PX:
+                out_d = out_d + 1e9
+            shell = (L[..., 3] > 0) & (out_d < FIRE_SHELL_PX)
+            red = L[..., 0]
+            fade = np.clip((red - FIRE_SHELL_R[0]) / (FIRE_SHELL_R[1] - FIRE_SHELL_R[0]), 0, 1) ** 1.5
+            fade = np.maximum(fade, np.clip(out_d / max(FIRE_SHELL_PX, 1e-3), 0, 1) ** 2)
+            L[..., 3] = np.where(shell, L[..., 3] * fade, L[..., 3])
+            layers[name] = L
 
     # The rest frame: every layer over the last, as the rig draws it.
     H, W = layers["torso"].shape[:2]
