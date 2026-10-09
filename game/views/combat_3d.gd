@@ -874,7 +874,11 @@ const HUD_STONE_LIFT := Color(1.0, 1.0, 1.0)
 const BEAST_GLOW := Color(1.0, 0.62, 0.16)
 ## TARGET.png's energy box: a gold hairline round a brown face (r2 iter 07).
 const ENERGY_GOLD := Color(1.0, 0.78, 0.34)
-const ENERGY_FACE := Color(0.42, 0.22, 0.07, 0.92)
+const ENERGY_FACE := Color(0.36, 0.18, 0.04, 1.0)
+const ENERGY_BORDER := 3
+const ENERGY_HALO := Color(1.0, 0.55, 0.12, 0.45)
+const ENERGY_HALO_SIZE := 10
+const ENERGY_PAD := 0.0
 ## TARGET.png's Switch: a navy pill under the amber End Turn.
 ## TARGET's Switch pill, sampled: (28,41,63) with a lighter slate rim.
 const SWITCH_FACE := Color(0.112, 0.165, 0.25, 1.0)
@@ -1106,8 +1110,11 @@ func _apply_sts_hud() -> void:
 	_end_btn.custom_minimum_size = Vector2(122, 45)
 	_end_btn.add_theme_font_size_override("font_size", 19)
 	# TARGET's energy box: a brown face, a warm gold border, the big number.
-	add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 12, 3,
-		Color(1.0, 0.70, 0.25, 0.22), 5), 2.0)
+	# Measured on the --square pair (builder run 18): TARGET's box is ~2 px
+	# smaller each side than the panel grown by 2 was, its gold line two
+	# pixels wide, and a soft orange glow runs ~10 px out over near-black.
+	add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 12, ENERGY_BORDER,
+		ENERGY_HALO, ENERGY_HALO_SIZE), ENERGY_PAD)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
 		var st = sw_st[state]
@@ -10322,7 +10329,9 @@ func _render_energy(p: Dictionary) -> void:
 	# in the seat colour, goes dark with the Energy like the number does.
 	var seat := _seat_tint_now()
 	_energy_orb.add_theme_stylebox_override("panel", a1_clear_style(style.content_margin_left,
-		style.content_margin_top, ENERGY_FACE if out > 0 else Color(0, 0, 0, 0), 10))
+		style.content_margin_top, Color(0, 0, 0, 0), 10))
+	# The face is the flat panel behind (add_flat_panel in _ready): a wash
+	# here sat over its gold line once the box shrank to TARGET's (run 18).
 	var glow := _energy_orb.get_node_or_null("A1/A1Glow") as CanvasItem
 	if glow != null:
 		glow.modulate = Color.WHITE if out > 0 else Color(0.3, 0.3, 0.3)

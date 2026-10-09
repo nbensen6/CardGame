@@ -2680,3 +2680,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-handfloor-before.png|420]] ![[agents/frames/builder/2026-10-09-handfloor-after.png|420]]
 - Meshy: 0 credits.
 
+## Energy box: TARGET's orange glow on near-black.
+
+2026-10-09 16:22 EDT, builder (run 18). Not passed; item left open.
+
+- Queued by this run (Found). The box was ~2 px bigger each side than TARGET's (the flat panel grown by 2 under the orb's own opaque wash), its gold line 1 px, its face (107,56,18) against TARGET's (91,45,10)-ish, its halo 5 px at 0.22.
+- Now: the orb's wash is clear (the flat panel is the face), ENERGY_FACE (0.36,0.18,0.04), border 3, pad 0, halo (1,0.55,0.12,0.45) size 10. Box edges within 1 px of TARGET's; region error 18.9 -> 10.5 levels.
+- Tried and dropped: TARGET's box and glow left in the floor art under the box (the floor's projection is ~3 px off there; a doubled gold edge).
+- Grader R1 FAIL (glow still narrow, floor round the box lighter; --hand cut leaves the box out). VERDICT: FAIL.
+- Meshy: 0 credits.
+

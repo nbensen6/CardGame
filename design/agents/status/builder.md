@@ -15,11 +15,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-09 16:13 EDT
 
-- **Did:** fixed the ear smudge, fist-glow seam and hand-gap floor; slabs, cliffs and jackal now Lanczos-resampled.
-- **Worked?** Partly: ear smudge, fist-glow seam, hand-gap floor VERDICT: PASS; scene sharpness and slab undersides VERDICT: FAIL (specks gone, edges still read soft).
+- **Did:** fixed ear smudge, fist-glow seam, hand-gap floor; Lanczos-resampled slabs, cliffs, jackal; resized energy box.
+- **Worked?** Partly: ear smudge, fist-glow seam, hand-gap floor VERDICT: PASS; scene sharpness, slab undersides and energy box VERDICT: FAIL (each closer by measure).
 - **Look at:** ![[frames/builder/2026-10-09-lines18-before.png]] then ![[frames/builder/2026-10-09-handfloor-after.png]]
 - **Ask:** nothing
-- **Found:** the energy box lacks TARGET's wide orange glow, and the floor above it reads purple-grey where TARGET is near-black.
+- **Found:** the energy box halo is cut at the square's left edge by something drawn over the frame there.
 - **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop carries the outline there, so a swing would show it.
 
 ## Notes
