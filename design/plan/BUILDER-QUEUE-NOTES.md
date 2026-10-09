@@ -2645,3 +2645,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-earsmudge-before.png|420]] ![[agents/frames/builder/2026-10-09-earsmudge-after.png|420]]
 - Meshy: 0 credits.
 
+## Faint dark streaks in the fist's glow, left of the neck.
+
+2026-10-09 15:42 EDT, builder (run 18). PASS; item marked 👀.
+
+- The seam: the rig's rim ring draws TARGET's glow pixels at falling alpha, and under it the backdrop held the figure fill (dark), so the two added up ~10 levels under TARGET along a curve. tools/backdrop_cut.py now keeps TARGET's pixels wherever the rig's rest composite is part-transparent (RIM_KEEP_RING), so at rest the two add up to TARGET.
+- The light fleck beside the shoulder: tools/beast_rig.py's flame-under-fist fill counted the arm's faint edge pixels (alpha < 10) as cover and put solid bright flame pixels 2 px outside the arm. Cover is now the parts' solid pixels (alpha >= 128).
+- Error vs TARGET-at-720: shoulder 2.41 -> 2.05, fist glow 2.76 -> 2.64.
+- Grader R1 FAIL (the fleck), R2 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-fistseam-before.png|420]] ![[agents/frames/builder/2026-10-09-fistseam-after.png|420]]
+- Meshy: 0 credits.
+

@@ -231,10 +231,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-earsmudge-after.png|420]] ^dark-smudge-on-the-sky-left-of-the-jackal
 
-- [ ] **Faint dark streaks in the fist's glow, left of the neck.**
-      TARGET's warm glow on the cliff face between the fist and the jackal's neck is smooth; the game shows faint mottled darker streaks and a thin dark seam running down through it.
-      **Done when** the `--square`, `--fist` and `--ear` pairs show no visible difference in that glow.
-      Test: state=3d beast=cinder_jackal ^faint-dark-streaks-in-the-fist-s-glow
+- [ ] 👀 **Faint dark streaks in the fist's glow, left of the neck.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Faint dark streaks in the fist's glow, left of the neck.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-fistseam-after.png|420]] ^faint-dark-streaks-in-the-fist-s-glow
 
 ## Waiting on Nick
 

@@ -1067,7 +1067,11 @@ def build():
         cover = np.zeros(L.shape[:2], bool)
         for part in ("fore_l", "arm_l"):
             if part in layers:
-                cover |= layers[part][..., 3] > 0
+                # solid parts only: their faint edge pixels (alpha < 10 a
+                # pixel or two past the outline) let the fill put bright flame
+                # pixels outside the arm, a light fleck left of the shoulder
+                # (builder run 18)
+                cover |= layers[part][..., 3] >= 128
         solid = L[..., 3] >= 250
         dd, (iy, ix) = ndi.distance_transform_edt(~solid, return_indices=True)
         # and pinholes inside the flame, where the key failed on its grain

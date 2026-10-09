@@ -85,6 +85,7 @@ FIST_RATIO = False                 # local glow strength: made a cool band left 
 FIST_RATIO_SIG = 10.0              # TARGET px the glow's local strength is spread over
 FIST_EDGE_SIG = 3.0                # TARGET px of the carried-in edge
 RIM_KEEP = 0                       # TARGET px past the drawn outline where TARGET's own pixels start, near the fire
+RIM_KEEP_RING = True               # and wherever the rig draws its rim ring part-transparent
 RIM_KEEP_FIRE = 60                 # TARGET px from the fire that holds for
 BAR_BOTTOM = 50                    # TARGET row: the boss bar panel's last + 1                # TARGET px outside the flame the fit reads
 
@@ -308,10 +309,17 @@ def build():
         bx0, by0 = rig.BOX[0], rig.BOX[1]
         rh, rw = rest.shape[0] // rig.SCALE, rest.shape[1] // rig.SCALE
         rest = rest[:rh * rig.SCALE, :rw * rig.SCALE].reshape(rh, rig.SCALE, rw, rig.SCALE).mean((1, 3))
-        cover = np.zeros(fig.shape, bool)
-        ry1, rx1 = min(by0 + rh, rows), min(bx0 + rw, cover.shape[1])
-        cover[by0:ry1, bx0:rx1] = rest[:ry1 - by0, :rx1 - bx0] > 0.9
+        ra = np.zeros(fig.shape)
+        ry1, rx1 = min(by0 + rh, rows), min(bx0 + rw, ra.shape[1])
+        ra[by0:ry1, bx0:rx1] = rest[:ry1 - by0, :rx1 - bx0]
+        cover = ra > 0.9
         drawn = cover
+        # Under the rig's see-through rim ring (TARGET's own glow pixels at
+        # falling alpha) the fill showed through darker: a faint seam in the
+        # fist's glow left of the neck (grader 2026-10-09). TARGET's pixels
+        # under it too, so at rest the two add back up to TARGET.
+        if RIM_KEEP_RING:
+            near_fire |= (ra > 0.02) & ~cover
         if RIM_KEEP > 0:
             drawn = ndi.binary_dilation(drawn, iterations=RIM_KEEP)
         keep = fig & ~drawn & near_fire & ~other

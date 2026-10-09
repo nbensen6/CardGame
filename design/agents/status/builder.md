@@ -15,11 +15,10 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-09 15:36 EDT
 
-- **Did:** removed the sky smudge by the left ear; slab cuts undo the 3D colour grade.
-- **Worked?** Partly: ear smudge VERDICT: PASS; scene sharpness VERDICT: FAIL (three rounds, "no visible change", slab tone measured 10 -> 3 levels).
-- **Look at:** ![[frames/builder/2026-10-09-earsmudge-before.png]] then ![[frames/builder/2026-10-09-earsmudge-after.png]]
+- **Did:** removed the ear smudge and the fist-glow seam; slab cuts undo the 3D colour grade.
+- **Worked?** Partly: ear smudge VERDICT: PASS; fist-glow seam VERDICT: PASS; scene sharpness VERDICT: FAIL (three rounds, "no visible change", slab tone measured 10 -> 3 levels).
+- **Look at:** ![[frames/builder/2026-10-09-earsmudge-before.png]] then ![[frames/builder/2026-10-09-earsmudge-after.png]] and ![[frames/builder/2026-10-09-fistseam-after.png]]
 - **Ask:** nothing
-- **Found:** faint dark streaks and a thin seam in the fist's glow left of the neck (queued).
 - **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop now carries TARGET's outline there, but a swing would show it.
 
 ## Notes
