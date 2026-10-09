@@ -2523,3 +2523,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (wedge, speck), R2 FAIL (band, notch), R3 FAIL (aliased edge, fade before gauge), R4 PASS. VERDICT: PASS (minor: lower edge a touch soft, glow stops a touch early at the gauge).
 - Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
 - Meshy: 0 credits.
+
+## Stones: TARGET's slab size round the body.
+
+2026-10-09 12:07 EDT, builder (run 15). PASS.
+
+- No slab change of its own: the cracks item's STONE_EDGE_KEEP (TARGET's own stone edges kept round each slab) and the square-on drawing closed it. Measured stone masks on the --square pair: all six slabs within 1-2 px of TARGET's extents.
+- Grader: VERDICT: PASS (minor: top slab's left end a touch thin, fourth slab a few px wider on --chest, faces a touch soft).
+- Frames: ![[agents/frames/builder/2026-10-09-run15-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]]
+- Meshy: 0 credits.

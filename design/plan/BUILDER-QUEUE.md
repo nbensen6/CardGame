@@ -165,10 +165,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-hpbar-after.png|420]] ^hp-bar-under-the-frog-target-s-size-and-
 
-- [ ] **Stones: TARGET's slab size round the body.**
-      In the `--beast` and `--chest` pairs TARGET's four upper slabs are larger and sit a few px lower than the game's (the second slab ~10% wider, the third and fourth ~10-15% larger); the cracked body round them shows where the game's slabs are smaller.
-      **Done when** the `--stones` and `--chest` pairs show no visible difference in the slabs' size and place.
-      Test: state=3d beast=cinder_jackal ^stones-target-s-slab-size-round-the-body
+- [ ] 👀 **Stones: TARGET's slab size round the body.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stones: TARGET's slab size round the body.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]] ^stones-target-s-slab-size-round-the-body
 
 - [ ] 👀 **Inner arm outlines beside the stones: smooth, no jagged slivers.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Inner arm outlines beside the stones: smooth, no jagged slivers.|details]]
