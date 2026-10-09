@@ -2345,3 +2345,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 VERDICT: PASS (minor: left inner outline a touch thinner beside the upper stones).
 - Frames: ![[agents/frames/builder/2026-10-09-cracks11-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]]
 - Meshy: 0 credits.
+
+## Frog: TARGET's clean cel line, not a heavy pixelated outline.
+
+2026-10-09 05:41 EDT, builder (run 11). PASS.
+
+- **TARGET's own Frog at rest.** New tools/frog_cut.py cuts TARGET's Frog (box 440,578-590,712: green and its pale highlights, filled, grown 3 px for its own dark line, feathered) with TARGET's marker triangle, to game/assets/3d/cast/frog_target.png. combat_3d `_place_frog_art` lays it over TARGET's box in the centred square at the Frog's depth (drawn_sprite.gdshader, footprint filter) while the lens is at rest and the Frog stands still (same home, holder and body place, rest scale; a turn on the spot is ignored); the 3D body and its pip hide meanwhile. Any hop, lunge, squash or climb hands straight back to the model (checked with fly=2: the model stands on the slab).
+- **Tone.** `frog_cut.py <rest shot>` folds the fight's measured response on the Frog's greens into tools/frog_tone_fix.json (quantile match, 0.8); the marker keeps its own colours.
+- Tried and reverted: cutting at screen scale and drawing it 1:1 without the footprint filter (registered error 3.8 -> 5.3, half-pixel misregistration).
+- Registered error over the Frog box (square px): before 26.8, after 3.1; offset 2.0/1.1 px -> 0.0/0.5.
+- **Grader:** R1 FAIL (spots fainter, highlight yellower, head bumps even: the inpainted head under the old marker), R2 PASS after the marker came with the cut and the tone fix. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-frogcel-before.png|420]] ![[agents/frames/builder/2026-10-09-frogcel-after.png|420]]
+- Meshy: 0 credits.

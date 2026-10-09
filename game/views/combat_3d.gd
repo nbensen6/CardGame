@@ -3997,6 +3997,17 @@ const DRAWN_FLOOR := preload("res://assets/3d/drawn_floor.gdshader")
 ## Just above the ground's top (y 0), under every hunter, rock and slab.
 const FLOOR_ART_LIFT := 0.04
 var _floor_art: MeshInstance3D = null
+## TARGET's own Frog (tools/frog_cut.py) over the 3D one while it stands on
+## its rock at the rest view: builder 2026-10-09, "Frog: TARGET's clean cel
+## line". The model's toon outline read heavy and stair-stepped; TARGET's is a
+## thin clean line. FROG_ART_BOX is the cut's box in TARGET px (x, y, w, h).
+const FROG_ART := {"cinder_jackal": "res://assets/3d/cast/frog_target.png"}
+const FROG_ART_BOX := Rect2(440.0, 578.0, 150.0, 134.0)
+var _frog_art: MeshInstance3D = null
+## The Frog's home and place when the drawn Frog first showed: any move off
+## them (a hop, a lunge, a knock-back, a squash) hands back to the model. Its
+## turn on the spot does not: TARGET's Frog always shows its back.
+var _frog_rest: Dictionary = {}
 
 
 func _add_backdrop(beast_id: String) -> void:
@@ -4029,6 +4040,85 @@ func _add_backdrop(beast_id: String) -> void:
 	if wall is Node3D:
 		(wall as Node3D).visible = false
 	_add_floor_art(beast_id)
+	_add_frog_art(beast_id)
+
+
+func _add_frog_art(beast_id: String) -> void:
+	if _frog_art != null:
+		_frog_art.queue_free()
+		_frog_art = null
+	_frog_rest = {}
+	if not FROG_ART.has(beast_id):
+		return
+	var tex := load(String(FROG_ART[beast_id])) as Texture2D
+	if tex == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = DRAWN_SPRITE
+	mat.set_shader_parameter("tex", tex)
+	mat.set_shader_parameter("footprint", true)
+	mat.render_priority = 1
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	_frog_art = MeshInstance3D.new()
+	_frog_art.name = "FrogArt"
+	_frog_art.mesh = q
+	_frog_art.material_override = mat
+	_frog_art.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_frog_art.visible = false
+	add_child(_frog_art)
+
+
+## The Frog hunter's slot entry, or {} when no Frog plays.
+func _frog_hunter() -> Dictionary:
+	for h in _hunters:
+		if String((h as Dictionary).get("cid", "")) == "frog":
+			return h
+	return {}
+
+
+## Shows TARGET's Frog over the square while the Frog stands still at the
+## rest view, the model otherwise. `rest` is whether the lens is at rest.
+func _place_frog_art(rest: bool, vs: Vector2, x0: float, side: float) -> void:
+	if _frog_art == null:
+		return
+	var h := _frog_hunter()
+	var body: Node3D = h.get("body") as Node3D if not h.is_empty() else null
+	var node: Node3D = h.get("node") as Node3D if not h.is_empty() else null
+	var show := rest and body != null and node != null and is_instance_valid(body) and is_instance_valid(node)
+	if show:
+		var i := _hunters.find(h)
+		show = not _tween_is_live(_climb_tw.get(i) as Tween)
+	if show:
+		if _frog_rest.is_empty():
+			_frog_rest = {"home": h["home"], "node": node.position, "pos": body.position}
+		show = (h["home"] as Vector3).is_equal_approx(_frog_rest["home"]) \
+				and node.position.distance_to(_frog_rest["node"]) < 0.002 \
+				and body.position.distance_to(_frog_rest["pos"]) < 0.002 \
+				and body.scale.is_equal_approx(body.get_meta("rest_scale", body.scale))
+	_frog_art.visible = show
+	if body != null and is_instance_valid(body):
+		body.visible = not show
+	# The cut carries TARGET's marker on the Frog's head: the 3D pip steps aside.
+	if node != null and is_instance_valid(node):
+		for c in node.get_children():
+			if c != body and c is MeshInstance3D and (c as MeshInstance3D).mesh is CylinderMesh:
+				(c as Node3D).visible = not show
+	if not show:
+		return
+	# TARGET's box in the square, laid at the Frog's depth.
+	var fwd := -_cam.global_transform.basis.z
+	var d := (node.global_position - _cam.global_position).dot(fwd)
+	if d <= 0.1:
+		return
+	var k := side / 1024.0
+	var b := FROG_ART_BOX
+	var tl := _cam.project_position(Vector2(x0 + b.position.x * k, b.position.y * k), d)
+	var tr := _cam.project_position(Vector2(x0 + b.end.x * k, b.position.y * k), d)
+	var bl := _cam.project_position(Vector2(x0 + b.position.x * k, b.end.y * k), d)
+	var right := tr - tl
+	var up := tl - bl
+	_frog_art.global_transform = Transform3D(Basis(right, up, right.cross(up).normalized()), (tr + bl) * 0.5)
 
 
 func _add_floor_art(beast_id: String) -> void:
@@ -4069,11 +4159,13 @@ func _place_backdrop() -> void:
 	if _floor_art != null and _rest_rocks.size() > 0 and _rest_rocks[0] is Node3D \
 			and is_instance_valid(_rest_rocks[0]):
 		(_rest_rocks[0] as Node3D).visible = _climb_t > BACKDROP_REST_CLIMB
-	if _climb_t > BACKDROP_REST_CLIMB or _shake > 0.001:
-		return
 	var vs := get_viewport().get_visible_rect().size
 	var side := minf(vs.x, vs.y)
 	var x0 := (vs.x - side) * 0.5
+	var at_rest := _climb_t <= BACKDROP_REST_CLIMB and _shake <= 0.001
+	_place_frog_art(at_rest, vs, x0, side)
+	if not at_rest:
+		return
 	var bottom := side * BACKDROP_ROWS / 1024.0
 	var fwd := -_cam.global_transform.basis.z
 	var d := (_beast_box.get_center() - _cam.global_position).dot(fwd) * BACKDROP_DEPTH
