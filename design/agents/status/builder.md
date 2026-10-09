@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T04:23
+updated: 2026-10-09T05:29
 working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
@@ -13,15 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 04:23 EDT
+2026-10-09 05:29 EDT
 
-- **Did:** put the slabs on TARGET's to a third of a pixel and took the jackal's colours closer.
-- **Worked?** No: VERDICT: FAIL (three rounds, "no visible change"; asks for 2x wider cracks the registered pixels do not support).
-- **Look at:** ![[frames/builder/2026-10-09-cracks10-before.png]] then ![[frames/builder/2026-10-09-cracks10-after.png]]
+- **Did:** removed doubled outline slivers beside the stones and stopped the belly's dark rock crushing to black.
+- **Worked?** Partly: inner-arm outlines VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; its named spots match TARGET at 6x).
+- **Look at:** ![[frames/builder/2026-10-09-cracks11-before.png]] then ![[frames/builder/2026-10-09-cracks11-after.png]]
 - **Ask:** nothing
-- **Found:** a control frame with TARGET pasted in PASSes this item's grade; the real frame, ~4 levels off, FAILs as "half-width cracks".
-- **Found:** jagged bright outline slivers beside the stones on the inner arms (--chest x~700, x~1250).
-- **Found:** fist and left arm still sit ~0.8 px right/down of TARGET's.
+- **Found:** the game's body reads a little softer than TARGET's at close-up (resample), the last visible gap on the cracks.
 
 ## Notes
 
@@ -30,6 +28,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 05:29 EDT — builder: wall lines no longer double TARGET's outline, stone ring not inked, red tone curve identity below 36 (belly darks); inner-arm outlines PASS, cracks FAIL; tests green, pushed.
 
 - 2026-10-09 04:23 EDT — builder: cracks run 10: slabs re-registered (<0.35 px), tone fix to 120, Y grow and hot lift off; control grade PASS on TARGET pasted, real frame FAIL x3; tests green, pushed.
 

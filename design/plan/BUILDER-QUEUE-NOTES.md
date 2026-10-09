@@ -2189,6 +2189,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks10-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks10-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 05:29 EDT, builder (run 11). Not passed; item left open.
+
+- **Belly darks crushed to black.** tools/jackal_tone_fix.json's red curve was measured on the upper body only (jackal_tone.py stops at y 350), which has no red below 36, and it took red 0-21 to 0: TARGET's dark lower-belly rock (R 16-28) drew pure black round slabs 3-5 (game R 0 where TARGET is 20). Red below 36 reset to identity; measured on the lower body the response is now 16->15, 20->19, 24->23, 28->27. Registered error (square px), before/after: belly 8.23/6.76, chest 6.64/5.86, left gap 4.88/4.38, beast 5.52/5.29.
+- **Doubled wall lines** (also the "Inner arm outlines" item): beast_rig.py `_finish_body` no longer paints a wall's line where TARGET's own lit line runs within WALL_DOUBLE (12) px (left flank under the bottom slab, torso / right-arm gap), and `paint_hidden` paints the line only on the stone's own pixels, not its 3 px grown ring (a cream speck under slab 5).
+- **Grader:** R1 FAIL (lower belly near-black: true, fixed by the tone curve), R2 FAIL ("unchanged"; red smear inside the right outline, notches left of the stem: at 6x both match TARGET). No penalty beyond "no visible change". Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks11-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.
@@ -2325,4 +2333,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - New `--frog` close-up in tools/vs_target.py.
 - Grader: R1 FAIL (judged at the downscaled --floor pair), R2 FAIL (black side faces), R3 PASS. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-pedestal2-before.png|420]] ![[agents/frames/builder/2026-10-09-pedestal2-after.png|420]]
+- Meshy: 0 credits.
+
+## Inner arm outlines beside the stones: smooth, no jagged slivers.
+
+2026-10-09 05:29 EDT, builder (run 11). PASS.
+
+- The slivers were the silhouette walls' own painted line running 2-6 px inside TARGET's line: the left-flank wall under the bottom slab (x 422-430, y 505-530) and the torso / right-arm gap wall (x 632-636, y 519-530), each a second cream line beside TARGET's. beast_rig.py `_finish_body` skips a wall's line wherever TARGET's lit line (R>170, G>95, R-B>80, near the edge) is within WALL_DOUBLE 12 px; the wall still closes the silhouette, its pixels keep TARGET's dark rock.
+- A cream speck under slab 5 was the stone's 3 px grown ring painted as line; `paint_hidden` now paints only the stone's own pixels.
+- Same run fixed the tone curve that crushed the belly's darks (see the Cracks item).
+- **Grader:** R1 VERDICT: PASS (minor: left inner outline a touch thinner beside the upper stones).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks11-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]]
 - Meshy: 0 credits.

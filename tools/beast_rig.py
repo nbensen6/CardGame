@@ -87,6 +87,8 @@ WALLS = [
     [(626, 495), (641, 536)],                          # torso / right-arm gap
     [(683, 500), (686, 536)],
 ]
+# How near TARGET's own line a wall may run before it draws no line of its own.
+WALL_DOUBLE = 12
 SEED = (513, 380)  # the chest
 
 # Parts: (name, parent, pivot, region polygon). A part owns the figure's
@@ -221,6 +223,7 @@ def paint_hidden(T, m, line, walls):
     for x0, y0, x1, y1 in STONES:
         rects[y0:y1, x0:x1] = True
     if TIGHT:
+        raw_stone = stone
         stone = ndi.binary_dilation(stone, iterations=TIGHT_GROW) & m
         rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
         src = np.clip(T, 0, 255).astype(np.uint8).copy()
@@ -254,7 +257,10 @@ def paint_hidden(T, m, line, walls):
         else:
             out = carry_seam(out, hole)
         # The band's stone pixels: the line goes back over them below.
-        out[stone & band] = LINE
+        # Only the stone's own pixels: the grown ring poked out under a
+        # slab's edge as a cream speck beside TARGET's line (queue, "Inner
+        # arm outlines beside the stones"); there TARGET's own dark rock stays.
+        out[raw_stone & band] = LINE
         return _finish_body(out, T, m, line, walls, stone)
     stone = (ndi.binary_dilation(stone, iterations=6) | ndi.binary_dilation(rects, iterations=3)) & m
     edge = m & ~ndi.binary_erosion(m, iterations=6)
@@ -383,6 +389,17 @@ def _finish_body(out, T, m, line, walls, stone):
     band = m & ~ndi.binary_erosion(m, iterations=5)
     near = ndi.binary_dilation(walls | stone, iterations=4)
     need = band & near & ~line
+    # Where a wall runs a few px inside TARGET's own line (the left flank
+    # under the bottom stone, the torso / right-arm gap), the painted band
+    # drew a second, jagged line beside TARGET's (queue, "Inner arm outlines
+    # beside the stones"). TARGET's line there is lit orange-cream, dimmer
+    # than `line` takes; any such pixel (saturated, so not a grey stone)
+    # within WALL_DOUBLE px and near the silhouette's edge, means the wall needs no line of its own.
+    if WALL_DOUBLE:
+        rim_zone = ~ndi.binary_erosion(m, iterations=12)
+        tline = (T[..., 0] > 170) & (T[..., 1] > 95) & (T[..., 0] - T[..., 2] > 80) & rim_zone
+        own = ndi.binary_dilation(tline, iterations=WALL_DOUBLE) & ndi.binary_dilation(walls, iterations=7)
+        need &= ~own
     need[CUT - 3:] = False
     out[need] = LINE
     return out

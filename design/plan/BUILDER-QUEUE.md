@@ -9,11 +9,6 @@ TARGET.png when none is open. Nick may reorder, add, delete and tick.
 Every item names the shot that must change. If the shot does not change, the
 run failed.
 
-- [ ] **Inner arm outlines beside the stones: smooth, no jagged slivers.**
-      TARGET's cream outline down the inner arms beside the stones is one smooth line; the game shows short jagged bright slivers there (`--chest` pair, game x~700 and x~1250).
-      **Done when** the `--square` and `--chest` pairs show no visible difference in the inner arm outlines beside the stones.
-      Test: state=3d beast=cinder_jackal ^inner-arm-outlines-beside-the-stones-smo
-
 ## Now — the Cinder Jackal fight
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
@@ -38,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 10, R3 FAIL: "belly web dim or missing, Y core stops below the fork, cracks thinner and redder; widen 1.5-2x with #FFD040 cores". Registered, the body under and between the stones matches TARGET within ~4 levels (chest error 3.7, stem column within a few levels) and a control (TARGET pasted into the frame) PASSes, so do not widen; the visible differences left are the slab edges and the jagged outline slivers beside the stones (`--chest` x~700, x~1250).
+      Next pass: grader 2026-10-09 run 11, R2 FAIL: "frame unchanged from BEFORE; red smear inside the right outline by the second slab, dark notches left of the stem, belly web a bit dimmer". Registered: the belly's dark rock was crushed to black by the tone fix (fixed, belly error 8.2 -> 6.8); at 6x the right-outline and stem spots match TARGET. Remaining honest gap is the game's softer resample, not the cracks.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
@@ -167,6 +162,12 @@ run failed.
       In the `--beast` and `--chest` pairs TARGET's four upper slabs are larger and sit a few px lower than the game's (the second slab ~10% wider, the third and fourth ~10-15% larger); the cracked body round them shows where the game's slabs are smaller.
       **Done when** the `--stones` and `--chest` pairs show no visible difference in the slabs' size and place.
       Test: state=3d beast=cinder_jackal ^stones-target-s-slab-size-round-the-body
+
+- [ ] 👀 **Inner arm outlines beside the stones: smooth, no jagged slivers.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Inner arm outlines beside the stones: smooth, no jagged slivers.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]] ^inner-arm-outlines-beside-the-stones-smo
 
 ## Waiting on Nick
 
