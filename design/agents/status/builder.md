@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T20:21
+updated: 2026-10-08T21:25
 working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 20:21 EDT
+2026-10-08 21:25 EDT
 
-- **Did:** turned the fight's bloom off so jackal crack cores stay yellow; cracks now glow smoothly without stipple.
-- **Worked?** Partly: hot cores now measure TARGET's colour; grader still wants a bigger sternum glow. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-09-cracks4-before.png]] then ![[frames/builder/2026-10-09-cracks4-after.png]]
+- **Did:** sharpened the jackal to TARGET's edge crispness and cleared pale stone smears round the slabs.
+- **Worked?** No for the grader, yes by pixels: chest error 12.6 to 9.5, sharpness 4.7 to 8.5 (TARGET 8.4). VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-09-cracks5-before.png]] then ![[frames/builder/2026-10-09-cracks5-after.png]]
 - **Ask:** nothing
-- **Found:** the HUD and climb gauge anchor to the full frame, not the centred square (queued).
-- **Found:** with bloom off the fist fire shows separate tongues; the fist fire item may be closer now.
+- **Found:** a fixed ember speck sits on the jackal's chest right of the sternum in the rest shot.
+- **Found:** widening the cracks as graders ask (tried this run) visibly departs from TARGET's own pixels.
 
 ## Notes
 

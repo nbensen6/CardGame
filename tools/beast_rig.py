@@ -206,7 +206,26 @@ def paint_hidden(T, m, line, walls):
         rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
         src = np.clip(T, 0, 255).astype(np.uint8).copy()
         hole = stone & ~rim
+        # A stone's pale lit edge and its grey fringe reach past the grown
+        # mask; inpainted from, they smear a cream blob under the sternum
+        # seam where the fight's slab sits a few px off TARGET's. Any pale,
+        # unsaturated pixel just round a hole goes into the hole too.
+        sat = (mx - mn) / np.maximum(mx, 1)
+        pale = (sat < 0.45) & (mx > 110) & ndi.binary_dilation(hole, iterations=6) & m & ~rim
+        hole = hole | ndi.binary_dilation(pale, iterations=1) & m & ~rim
+        # Where a stone crosses the outline its grey ends sat in the rim,
+        # outside the hole, and showed as pale smudges beside the fight's
+        # slabs. They are filled too, from rock only (the line and the sky
+        # masked dark so neither smears in); _finish_body redraws the line.
+        band = m & ~ndi.binary_erosion(m, iterations=5)
+        hole = hole | (stone & rim & ~band)
+        src[~m | band] = ROCK_DARK
+        src[band & line & ~stone] = ROCK_DARK
         out = cv2.inpaint(src, hole.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA).astype(float)
+        keep = ~hole
+        out[keep] = T[keep]
+        # The band's stone pixels: the line goes back over them below.
+        out[stone & band] = LINE
         return _finish_body(out, T, m, line, walls, stone)
     stone = (ndi.binary_dilation(stone, iterations=6) | ndi.binary_dilation(rects, iterations=3)) & m
     edge = m & ~ndi.binary_erosion(m, iterations=6)
@@ -445,16 +464,31 @@ def underlay_line(rgb, a, own_px, m):
     return out
 
 
+PRESHARPEN = 0.6
+PRESHARPEN_SIGMA = 1.5   # canvas px (2x TARGET)
+
+
 def upscale(rgb, a):
     """2x, premultiplied and in float: in 8 bits the faint edge of a cut
     divided back out to a pale hairline along every joint."""
     h, w = a.shape
     pre = [rgb[..., k] * a for k in range(3)] + [a]
-    big = [np.asarray(Image.fromarray(ch.astype(np.float32), "F").resize((w * SCALE, h * SCALE), Image.BILINEAR))
+    big = [np.asarray(Image.fromarray(ch.astype(np.float32), "F").resize((w * SCALE, h * SCALE), Image.LANCZOS))
            for ch in pre]
     A = np.clip(big[3], 0, 1)
     A[A < 0.03] = 0.0     # no faint specks past the edge
     rgb2 = np.dstack([big[k] / np.maximum(A, 1e-3) for k in range(3)])
+    if PRESHARPEN:
+        # The fight draws the parts through a viewport and a footprint
+        # filter, which soften TARGET's crisp crack edges by about half
+        # (Laplacian inside the chest 4.7 against TARGET's 8.4). An unsharp
+        # mask here, inside the solid rock only, puts the edge back before
+        # the downsample, where it cannot ring on screen.
+        solid = ndi.binary_erosion(A > 0.99, iterations=int(PRESHARPEN_SIGMA * 3) + 1)
+        for k in range(3):
+            ch = rgb2[..., k]
+            ch2 = ch + (ch - ndi.gaussian_filter(ch, PRESHARPEN_SIGMA)) * PRESHARPEN
+            rgb2[..., k] = np.where(solid, ch2, ch)
     return np.dstack([np.clip(rgb2, 0, 255), A * 255])
 
 
@@ -480,10 +514,11 @@ def sink(arr):
 # TARGET's (graders, 2026-10-08 runs 1-3 and 10-09). A soft glow of each
 # crack's own colour, screened onto the dark rock next to it, puts it back
 # without the shader's per-pixel taps (which stippled the channels).
-CRACK_GLOW = 0.55          # strength of the narrow spill
+CRACK_GLOW = 0.0           # strength of the narrow spill
 CRACK_GLOW_SIGMA = 1.6     # TARGET px
-HOT_GLOW = 0.45            # the yellow cores' wider glow
+HOT_GLOW = 0.0             # the yellow cores' wider glow
 HOT_GLOW_SIGMA = 4.0
+
 
 
 def crack_glow(img, m):

@@ -2098,6 +2098,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks4-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks4-after.png|420]]
 - Meshy: 0 credits.
 
+
+2026-10-08 21:25 EDT, builder (run 5). Not passed; item left open.
+
+- **Blur was the render path, not the art.** Laplacian inside the chest: TARGET 8.4, game 4.7. Three causes, fixed in order: the rig viewport drew the parts at 0.7 with trilinear mips (RIG_SUPERSAMPLE 2.0 -> 2.857 so the viewport renders the 2x canvas 1:1; 5.8), the cut-out's 2x upscale was bilinear (now Lanczos; 7.2), and the footprint downsample softens a little (new PRESHARPEN 0.6, sigma 1.5 canvas px, unsharp inside solid rock only, before the downsample so it cannot ring on screen; 8.5).
+- **Baked crack glow off** (CRACK_GLOW 0, HOT_GLOW 0): it softened every crack into a halo; with the sharper path TARGET's own pixels match. Chest error 12.6 -> 9.5, hot cores 6.1%/6.1%, hot colour (251,204,44)/(252,198,51).
+- **Stone smears.** Pale unsaturated pixels within 6 px of a stone hole now join the hole (they smeared cream under the seam), and a stone's grey ends inside the rim are filled from rock with the line and sky masked dark, the line redrawn over the band.
+- **Tried and reverted:** `crack_boost` (each crack widened 1 TARGET px with its brightest colour, middles heated to (255,196,70), a painted seam from the Y to the top stone). Chest error 15.1 and it read as orange cartoon outlines, spreading onto the muzzle lines. Not TARGET.
+- **Grader:** R1 FAIL ("no visible change at frame scale"; again asks for 2-3x wider cracks with yellow-white cores). Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks5-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks5-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R2 (2026-10-09 run 4): sternum Y glow about half TARGET's area and its stem dims before the top stone; lower-torso plates read crimson where TARGET's are brown. Its 'thin limb cracks, more fine cracks' claims contradict the registered pixels (coverage and colour within a few %), so work the Y glow, the stem and the lower-torso tint only.
+      Next pass: grader R1 (2026-10-09 run 5): still calls cracks 2-3x thinner with no yellow cores and a short dim seam; registered pixels now match TARGET (chest error 9.5, sharpness 8.5/8.4, hot 6.1%/6.1%), and a 1 px widen with heated cores tried this run read as a cartoon outline, so try the limb gaps (purple sky) and the feet band that darken the body's read before touching the cracks again.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum

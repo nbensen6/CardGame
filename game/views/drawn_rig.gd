@@ -120,7 +120,7 @@ const RIG_SCREEN_SCALE := 0.35
 ## above screen size and the billboard box-filters each pixel's footprint
 ## (drawn_sprite.gdshader `footprint`), so the parts reach the screen as
 ## one clean downsample of TARGET's pixels, not two soft resamples.
-const RIG_SUPERSAMPLE := 2.0
+const RIG_SUPERSAMPLE := 2.857
 ## The billboard's unsharp mask (drawn_sprite.gdshader `sharpen`). Off since
 ## the footprint filter: at 2.2 it rang round every crack (an orange rim on
 ## both sides of a dark middle, 2026-10-08 run 3).
