@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T22:45
-working_on: "Cracks: wide hot cores and a long sternum seam."
+updated: 2026-10-09T00:27
+working_on: "Cards: big bright art, light trim, no pips."
 ---
 
 # builder
@@ -13,14 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 22:45 EDT
+2026-10-09 00:27 EDT
 
-- **Did:** filled the gap under the jackal's arm with TARGET's rock, aligned it to the pixel, fixed crushed darks.
-- **Worked?** Partly: chest error 9.8 to 8.0 against TARGET, but graders still want wider glowing cracks. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-09-cracks6-before.png]] then ![[frames/builder/2026-10-09-cracks6-after.png]]
+- **Did:** hid the chest speck, hung TARGET's own cliffs behind the jackal, dimmed floor seams, rebuilt cards in TARGET's frame.
+- **Worked?** Partly: chest speck VERDICT: PASS; cracks, fist, floor, cliffs and cards each moved closer, last VERDICT: FAIL on each.
+- **Look at:** ![[frames/builder/2026-10-09-cracks7-before.png]] then ![[frames/builder/2026-10-09-cards-after.png]]
 - **Ask:** nothing
-- **Found:** a 4-px yellow speck sits on the jackal's chest; it is a scene object, not the art (queued).
-- **Found:** the lava strip still draws red bars either side of the body outside the pocket.
+- **Found:** Scramble's card art has crates and a figure TARGET's does not; Leap's art lacks TARGET's pale sky.
+- **Found:** the HUD (energy box, piles, End Turn/Switch, climb gauge) still sits outside the centred square (queued already).
+- **Found:** a dark red block stands on the floor at the frame's right edge, outside the square.
 
 ## Notes
 
@@ -29,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 00:27 EDT — builder: sigil hidden on the drawn jackal (speck PASS); stones re-registered; fist flame haze; floor seams dim on dark hex slabs; TARGET backdrop (tools/backdrop_cut.py) replaces 3D cliffs; TARGET card frame (tools/cardframe_target.py), hand centred; tests green, pushed.
 
 - 2026-10-08 14:16 EDT — builder: queued 6 items from two blind critics; soft slabs: STAIR_THICK 0.2, bevel 0.12, lighter walls/ink, slabs lowered and spread left; test bound updated; grader FAIL then PASS; marked 👀; tests green, pushed.
 - 2026-10-08 02:18 EDT — builder: fist fire: beast_rig.py crisp fire alpha, plume leans up-left, skirt trimmed, yellow-white core + orange edges, 8-frame licking strip on a discrete idle track (scale flicker dropped); grader FAIL, FAIL (CLOSER), PASS; marked 👀; tests green, pushed.
