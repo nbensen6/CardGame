@@ -161,7 +161,7 @@ run failed.
 - [ ] **Stones: TARGET's slab size round the body.**
       In the `--beast` and `--chest` pairs TARGET's four upper slabs are larger and sit a few px lower than the game's (the second slab ~10% wider, the third and fourth ~10-15% larger); the cracked body round them shows where the game's slabs are smaller.
       **Done when** the `--stones` and `--chest` pairs show no visible difference in the slabs' size and place.
-      Test: state=3d beast=cinder_jackal
+      Test: state=3d beast=cinder_jackal ^stones-target-s-slab-size-round-the-body
 
 ## Waiting on Nick
 
