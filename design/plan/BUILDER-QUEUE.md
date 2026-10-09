@@ -44,11 +44,11 @@ run failed.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
 
-- [ ] **Floor: faint warm seams, not bright orange.**
-      Next pass: grader R11 (2026-10-09 run 7): seams "saturated red, too visible" (want dull brown-orange #5a3220, barely lighter than faces); slabs want per-slab tone, lit bevel/top-edge relief, warm charcoal #2e2928; no red glow band under the lava. Graders flip between "seams too dark" and "too bright" round to round; TARGET measured: faces (31,22,29), seam = black gap + (60-80,20-27,11-24) lip on the near side.
-      Both critics, MODERATE: TARGET's hex floor is dark with faint warm seams; the game's seams are bright high-contrast orange and the floor is tinted purple.
-      **Done when** the `--square` pair shows no visible difference in the floor and its seams.
-      Test: state=3d beast=cinder_jackal ^floor-faint-warm-seams-not-bright-orange
+- [ ] 👀 **Floor: faint warm seams, not bright orange.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Floor: faint warm seams, not bright orange.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-floorart-after.png|420]] ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
       Next pass: grader R10 (2026-10-09 run 7): "blurred, near-black, no facet highlights; right cliff a boxy slab". The cliffs are now TARGET's own pixels on a backdrop (tools/backdrop_cut.py), registered error ~2.5 levels against 30 before, edge Laplacian ~0.78x TARGET's; graders mostly judge the 16:9 extension outside the square and the fill where TARGET's climb gauge stood. Next: sharpen the backdrop to TARGET's edge energy, and make the out-of-square extension read as faceted slate.
@@ -141,6 +141,11 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-lavaband-after.png|420]] ^lava-line-target-s-bright-yellow-band-acr
+
+- [ ] **Frog's pedestal: TARGET's dark plinth, no bright orange edge.**
+      TARGET's pedestal is a darker hex plinth with a dim warm rim; the game's top reads lighter and its right edge burns bright orange (the `--floor` pair shows both; TARGET's own pedestal is now painted under the game's).
+      **Done when** the `--square` and `--floor` pairs show no visible difference in the pedestal.
+      Test: state=3d beast=cinder_jackal
 
 ## Waiting on Nick
 

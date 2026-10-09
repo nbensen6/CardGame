@@ -2210,6 +2210,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 - **Later rounds, same run.** Measured TARGET's seams column by column: faces a flat (31,22,29), each seam a 2-4 px near-black gap with a dull red lip (60-80,20-27,11-24) on its near side only. New obsidian.gdshader `lip_*` uniforms draw that (lip on the side where the edge distance grows down-screen). R7 (Voronoi 5, lip): seams faint/warm MET, not purple MET; asked for larger hex-like slabs and a warm wash by the lava. R8 (hex 6.5 + lip): seams "black". R9 (Voronoi 7, lip x3 by the lava): busy horizon. R10 (Voronoi 5, lip 0.55): seams "dead". R11 (hex 6.5, thin warm seams, no lip): seams "saturated red". Kept: hex 6.5, seams (0.65,0.3,0.13) x0.4, slab_var 0.12, faces (0.24,0.203,0.215), rim_gain 0.3. Every round: no penalties, closer than before. VERDICT: FAIL.
 
+
+2026-10-09 02:45 EDT, builder (run 8). PASSED.
+
+- **The floor is TARGET's own pixels now.** tools/floor_cut.py cuts TARGET rows 540-1024 (the lowest slab, the Frog, its HP bar and the climb gauge inpainted; TARGET's own pedestal kept, so the fight's stands on it; rows under the hand mirrored), with 420 px pads past each side (TARGET's edge mirrored, then each row's own tone, darkening outward, like backdrop_cut.py).
+- New drawn_floor.gdshader on a big plane 0.04 above the ground: each ground point is mapped through the REST camera (combat_3d._place_backdrop hands it the camera's `get_camera_transform()` - with v_offset; `global_transform` put every seam 10-20 px low - and projection) into TARGET's centred square, coloured through the drawn jackal's colour table. At rest the floor is TARGET's; when the lens climbs the slabs stay on the ground. No mipmaps (the grazing angle picked a blurred one).
+- Square floor error: left 9.9 -> 8.4, right 11.3 -> 5.4.
+- New `--floor` close-up in tools/vs_target.py (a grader asked for one).
+- Grader: R1 FAIL (projection low, doubled seams), R2 FAIL (bands in the pads), R3 FAIL (judged the 16:9 pads), R4 PASS with the `--floor` close-up. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-floorart-before.png|420]] ![[agents/frames/builder/2026-10-09-floorart-after.png|420]]
+- Meshy: 0 credits.
+
 ## Cliffs: dark slate closing in, not blue and far back.
 
 2026-10-09 00:20 EDT, builder (run 7). Not passed; item left open; the backdrop is merged (much nearer TARGET by every measure).

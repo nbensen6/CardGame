@@ -3989,6 +3989,14 @@ const BACKDROP_DEPTH := 1.12
 const BACKDROP_REST_CLIMB := 0.15
 const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
 var _backdrop: MeshInstance3D = null
+## TARGET's floor on the ground (tools/floor_cut.py, drawn_floor.gdshader):
+## builder 2026-10-09, Floor item. The procedural hex slabs went eleven grader
+## rounds without TARGET's size, seams and tone.
+const FLOOR_ART := {"cinder_jackal": "res://assets/3d/cast/cinder_jackal_floor.png"}
+const DRAWN_FLOOR := preload("res://assets/3d/drawn_floor.gdshader")
+## Just above the ground's top (y 0), under every hunter, rock and slab.
+const FLOOR_ART_LIFT := 0.04
+var _floor_art: MeshInstance3D = null
 
 
 func _add_backdrop(beast_id: String) -> void:
@@ -4020,6 +4028,31 @@ func _add_backdrop(beast_id: String) -> void:
 	var wall := _env.find_child("Wall", true, false) if _env != null else null
 	if wall is Node3D:
 		(wall as Node3D).visible = false
+	_add_floor_art(beast_id)
+
+
+func _add_floor_art(beast_id: String) -> void:
+	if _floor_art != null:
+		_floor_art.queue_free()
+		_floor_art = null
+	if not FLOOR_ART.has(beast_id):
+		return
+	var tex := load(String(FLOOR_ART[beast_id])) as Texture2D
+	if tex == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = DRAWN_FLOOR
+	mat.set_shader_parameter("tex", tex)
+	mat.render_priority = -2
+	var q := PlaneMesh.new()
+	q.size = Vector2.ONE * 400.0   # the shader discards all but TARGET's floor
+	_floor_art = MeshInstance3D.new()
+	_floor_art.name = "FloorArt"
+	_floor_art.mesh = q
+	_floor_art.material_override = mat
+	_floor_art.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_floor_art)
+	_floor_art.global_position = Vector3(_rig.global_position.x, FLOOR_ART_LIFT, _rig.global_position.z)
 
 
 ## Lays the backdrop over the centred square while the lens rests on the
@@ -4046,6 +4079,14 @@ func _place_backdrop() -> void:
 	var up := tl - bl
 	var basis := Basis(right, up, right.cross(up).normalized())
 	_backdrop.global_transform = Transform3D(basis, (tr + bl) * 0.5)
+	if _floor_art != null:
+		var fm := _floor_art.material_override as ShaderMaterial
+		fm.set_shader_parameter("rest_view", Projection(_cam.get_camera_transform().affine_inverse()))   # with v_offset
+		fm.set_shader_parameter("rest_proj", _cam.get_camera_projection())
+		fm.set_shader_parameter("vp_size", vs)
+		fm.set_shader_parameter("sq_x0", x0)
+		fm.set_shader_parameter("sq_side", side)
+		fm.set_shader_parameter("ready", true)
 
 
 ## How high the lava's warm band climbs the flat cliffs, in arena radii.

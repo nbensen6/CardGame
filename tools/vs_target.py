@@ -11,6 +11,7 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png --square   TARGET vs the centred square of the shot
     python tools/vs_target.py shot.png out.png --stones   just the staircase of slabs, cut from the same square
     python tools/vs_target.py shot.png out.png --fist     the raised fist and its flame, cut from the same square
+    python tools/vs_target.py shot.png out.png --floor    the floor from the lava line to the hand, cut from the same square
 
 `--square` is the 1:1 test (Nick, 2026-10-08): TARGET.png is square, the game
 is 16:9, so the game's centred 720x720 square must hold TARGET's picture with
@@ -46,6 +47,10 @@ REGIONS = {
     # the raised fist and its flame, top left of the square (builder
     # 2026-10-09: --beast cuts the flame off at its left edge)
     "--fist": {"target": (0.06, 0.04, 0.38, 0.36), "shot": (0.2525, 0.04, 0.4325, 0.36)},
+    # the floor between the lava line and the hand, the square's full width
+    # (builder 2026-10-09: a grader asked for a floor close-up to judge the
+    # seams and slabs against)
+    "--floor": {"target": (0.0, 0.52, 1.0, 0.78), "shot": (0.21875, 0.52, 0.78125, 0.78)},
 }
 
 
