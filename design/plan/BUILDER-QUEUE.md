@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R8 (2026-10-09 run 6): arm, forearm and thigh cracks thin red hairlines, Y and seam narrow; FIX 2-3x wider cracks with #FFD040 centres fading to orange on every crack. R7 (strong bloom) instead called the cracks blurred and the pec/chin yellow wrong, so next try a crisp 1-px widen of the limb channels with an orange body and thin yellow core (crack_widen knobs), head excluded.
+      Next pass: grader R1 (2026-10-09 run 7): limb, belly and Y cracks "thinner, redder, less bloom"; FIX 2x wider #FFD040 cracks with glow. Registered TARGET/game per region now match (crack %, hot %, mean colour within 1-3 levels; stem pixels equal), so widening would move away from TARGET: next run, look for a scene-level cause (sky, cliffs, light round the jackal) rather than the art.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum

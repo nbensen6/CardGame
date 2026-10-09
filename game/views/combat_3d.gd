@@ -7116,7 +7116,7 @@ const STAIRCASE := {
 	"cinder_jackal": {"near": 0.33, "far": 0.92,
 		"width": [0.315, 0.278, 0.195, 0.138, 0.158, 0.130],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
-		"adjust": [Vector2(0.159, -0.017), Vector2(0.009, 0.001), Vector2(0.006, -0.010), Vector2(-0.003, -0.020), Vector2(-0.002, -0.017), Vector2(0.010, -0.015)]},
+		"adjust": [Vector2(0.159, -0.017), Vector2(0.013, 0.008), Vector2(0.004, -0.004), Vector2(-0.006, -0.015), Vector2(-0.009, -0.011), Vector2(0.001, -0.006)]},
 }
 ## The rest camera's eye over a waiting hunter's feet, as _aim_camera puts it
 ## (measured: 1.29 up, FOLLOW_DIST back along follow_yaw_for's line from the
@@ -7869,6 +7869,11 @@ func _place_sigil(s: Dictionary) -> void:
 	_sigil.visible = on
 	if not on:
 		return
+	# TARGET.png draws no mark on the jackal: a drawn beast keeps the sigil as
+	# the strike's anchor but shows no glow dot or light on its chest.
+	for c in _sigil.get_children():
+		if c is Node3D:
+			(c as Node3D).visible = not _beast_drawn
 	# The model carries its own gold mark now, at the Height its data says. Put
 	# the marker THERE rather than at 88% of the bounding box, or the beast wears
 	# two sigils in different places and the floating one wins the eye.

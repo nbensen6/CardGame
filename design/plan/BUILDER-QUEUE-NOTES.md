@@ -2127,6 +2127,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Bloom rounds, reverted.** R7: CRACK_GLOW 0.6 σ2.5 + HOT_GLOW 0.6 σ5 (error 13.5): "slightly closer", but soft bloomed blur, yellow over the pecs, a chin patch and glowing face lines. New `GLOW_TOP` (335) keeps glow off the head. R8: CRACK_GLOW 0.25 σ1.2 + HOT_GLOW 0.5 σ2.5 below the chin (error 8.4): "hard to tell apart", asks 2-3x wider #FFD040 cracks again. R7 asked for crisp channels, R8 for wider ones; graders also disagree on the right forearm (matches / thin hairlines). Glow back to 0, the pushed state.
 - Frames: ![[agents/frames/builder/2026-10-09-cracks6-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks6-after.png|420]]
 - Meshy: 0 credits.
+2026-10-08 23:13 EDT, builder (run 7). Not passed; item left open.
+
+- **Chest speck was the weak-point sigil.** Its glow mesh and light sat at the Height 5 climb point plus 1.7 hunter heights, right of the sternum. TARGET draws no mark; for a drawn beast the sigil's children are now hidden (the node stays as the strike anchor).
+- **Stones re-registered.** The six slabs sat 2-4 px low/right of TARGET's, so the cut-out's inpainted stone holes showed round them and dimmed the seam under the top stone. STAIRCASE `adjust` re-solved; all six centroids now within 1.5 px of TARGET's.
+- **Measured (TARGET/game, square at 720):** forearm R crack 24.6/25.4%, hot 7.6/8.4%; belly 26.8/28.9%; chest 20.8/20.4%, hot 6.3/6.3%, mean (107,45,24) both; stem column pixels within a few levels.
+- **Grader:** R1 FAIL (seam "a little brighter, further down"; asks 2x wider cracks again). No penalties. VERDICT: FAIL. Not widened: the registered pixels already equal TARGET's.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]]
+- Meshy: 0 credits.
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.
