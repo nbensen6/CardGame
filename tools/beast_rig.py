@@ -477,6 +477,60 @@ def enclosed_gaps(m):
     return ndi.binary_dilation(gap, iterations=2) & ~m | gap
 
 
+# The open pocket under the raised arm shows TARGET's near-black rock and its
+# lava glow; the fight showed purple sky and the heat band's red bars there. The torso layer carries TARGET's own
+# pixels in them, stones lifted out, faded on their open side. They sit at
+# POCKET_ALPHA, just under 1, so the shader's halo (which reads the alpha)
+# does not ring their open edge (drawn_sprite.gdshader `halo_from`).
+POCKETS = [
+    [(222, 300), (480, 300), (480, CUT), (222, CUT)],                # under the fist arm
+]
+POCKET_ALPHA = 0.94
+POCKET_FEATHER = 9.0   # TARGET px, on the open side
+HALO_FROM = 0.97
+POCKET_STONE_TOP = 455   # TARGET row; its stones in the pocket all lie below
+
+
+def pockets(T, m):
+    """Soft alpha and TARGET's pixels (stones inpainted) for the pockets."""
+    poly = np.zeros(m.shape, bool)
+    for pts in POCKETS:
+        poly |= poly_mask(pts, m.shape)
+    poly[CUT:] = False
+    soft = np.clip(ndi.gaussian_filter(poly.astype(float), POCKET_FEATHER) * 2.0 - 1.0, 0, 1)
+    # Full strength against the body, where the body hides the edge.
+    soft = np.where(ndi.binary_dilation(m, iterations=14) & poly, 1.0, soft)
+    a = soft * POCKET_ALPHA * ~m
+    mx, mn = T.max(2), T.min(2)
+    stone = poly & ~m & (mx - mn < 50) & (mx > 70)
+    stone[:POCKET_STONE_TOP] = False   # above: the outline's warm glow, not stone
+    stone = ndi.binary_opening(stone, iterations=1)
+    stone = ndi.binary_dilation(stone, iterations=4) & ~m
+    # The rock and glow here change with height, not across, so each row of
+    # a stone's hole is the line between the rock either side of it (or the
+    # one side the body leaves).
+    rgb = T.copy()
+    ok = ~stone & ~m
+    for y in np.nonzero(stone.any(1))[0]:
+        xs = np.nonzero(stone[y])[0]
+        runs = np.split(xs, np.nonzero(np.diff(xs) > 1)[0] + 1)
+        for r in runs:
+            x0, x1 = r[0] - 1, r[-1] + 1
+            while x0 >= 0 and not ok[y, x0]:
+                x0 -= 1
+            while x1 < m.shape[1] and not ok[y, x1]:
+                x1 += 1
+            L = T[y, x0] if x0 >= 0 else None
+            R = T[y, x1] if x1 < m.shape[1] and not m[y, x1] else None
+            if L is None and R is None:
+                continue
+            L = R if L is None else L
+            R = L if R is None else R
+            w = (r - x0) / float(x1 - x0)
+            rgb[y, r] = L[None, :] * (1 - w[:, None]) + R[None, :] * w[:, None]
+    return rgb, a
+
+
 def labels(m):
     lab = np.zeros(m.shape, object)
     lab[:] = "torso"
@@ -610,11 +664,30 @@ def crack_glow(img, m):
     return out
 
 
+# The fight's resample spreads each thin yellow core into the dark rock
+# beside it, so its peak lands dimmer and oranger than TARGET's (registered,
+# hot cores: TARGET green 207, game 193). The cores are lifted toward
+# yellow by that much before the resample, so they land on TARGET's colour.
+HOT_LIFT = 18.0
+
+
+def hot_lift(img, m):
+    if not HOT_LIFT:
+        return img
+    r, g = img[..., 0], img[..., 1]
+    w = np.clip((r - 215) / 25.0, 0, 1) * np.clip((g - 140) / 40.0, 0, 1) * m
+    out = img.copy()
+    out[..., 1] = np.minimum(g + HOT_LIFT * w, 255)
+    out[..., 0] = np.minimum(r + 0.5 * HOT_LIFT * w, 255)
+    return out
+
+
 def build():
     T = np.asarray(Image.open(TARGET).convert("RGB")).astype(float)
     m, line, walls = silhouette(T)
     body = paint_hidden(T, m, line, walls)
     body = crack_glow(body, m)
+    body = hot_lift(body, m)
     fire_rgb, fire_a = fire_layer(T, m)
     lab = labels(m)
     alpha, own = layer_alpha(lab, m)
@@ -624,6 +697,7 @@ def build():
     # TARGET's own pixels there, opaque, behind the limbs that frame them.
     gap = enclosed_gaps(m)
     alpha["torso"] = alpha["torso"] | gap
+    pocket_rgb, pocket_a = pockets(T, m)
 
     layers = {}
     for name in ORDER:
@@ -631,6 +705,11 @@ def build():
             rgb, a = fire_rgb, fire_a
         else:
             rgb, a = underlay_line(body, alpha[name], own[name], m), alpha[name].astype(float)
+            if name == "torso":
+                put = (pocket_a > 0) & (a < 1)
+                rgb = rgb.copy()
+                rgb[put] = pocket_rgb[put]
+                a = np.maximum(a, pocket_a)
         rgb, a = crop_box(rgb).copy(), crop_box(a).copy()
         if name in ("torso", "fore_r"):
             if SINK_TARGET:
@@ -795,7 +874,8 @@ def write_scene(W, H, placed, px, floor_px, mid_px, lab):
         res.append(f'[ext_resource type="Texture2D" path="res://assets/3d/cast/{ID}_2d_{name}.png" id="{name}"]')
     subs = ['[sub_resource type="ShaderMaterial" id="drawn"]', 'resource_local_to_scene = true',
             'shader = ExtResource("shader")', 'shader_parameter/tex = ExtResource("rest")',
-            f'shader_parameter/halo = {HALO:g}', f'shader_parameter/halo_px = {HALO_PX:g}', '']
+            f'shader_parameter/halo = {HALO:g}', f'shader_parameter/halo_px = {HALO_PX:g}',
+            f'shader_parameter/halo_from = {HALO_FROM:g}', '']
     lib = []
     for i, (cname, (length, loop, tracks)) in enumerate(clips().items()):
         rid = f"anim_{cname}"

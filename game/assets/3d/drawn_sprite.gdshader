@@ -66,6 +66,13 @@ float crackness(vec4 c) {
 }
 uniform float halo_px = 10.0;
 uniform vec3 halo_color = vec3(1.0, 0.674, 0.259);
+// Above 0, only texels at least this opaque cast the halo: a backdrop pocket
+// drawn just under full alpha (beast_rig.py POCKET_ALPHA) casts none.
+uniform float halo_from = 0.0;
+
+float halo_a(float a) {
+	return halo_from > 0.0 ? smoothstep(halo_from - 0.02, 1.0, a) : a;
+}
 
 float glow_at(vec2 uv) {
 	vec2 t = halo_px / vec2(textureSize(tex, 0));
@@ -73,7 +80,7 @@ float glow_at(vec2 uv) {
 	for (int i = 0; i < 12; i++) {
 		float a = float(i) * 0.5236;
 		vec2 d = vec2(cos(a), sin(a));
-		g += texture(tex, uv + d * t * 0.45).a * 0.6 + texture(tex, uv + d * t).a * 0.4;
+		g += halo_a(texture(tex, uv + d * t * 0.45).a) * 0.6 + halo_a(texture(tex, uv + d * t).a) * 0.4;
 	}
 	return g / 12.0;
 }

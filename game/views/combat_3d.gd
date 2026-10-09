@@ -615,7 +615,7 @@ const DRAWN_GAP_PER_HEIGHT := 1.21
 ## A drawn beast's slide, in its rig-canvas pixels (x right, y up): where TARGET draws the figure in the square, once the camera is
 ## right for everything else (builder 2026-10-08, "Cracks: wide hot cores";
 ## with the gap and pitch below, the jackal drew 27 px right of TARGET's).
-const DRAWN_SHIFT_PX := {"cinder_jackal": Vector2(-82.0, 43.0)}
+const DRAWN_SHIFT_PX := {"cinder_jackal": Vector2(-83.2, 43.0)}
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone
@@ -3959,6 +3959,10 @@ func _add_lava(beast_id: String) -> void:
 	var bd: Dictionary = BIOME.get(biome, BIOME["crag"])
 	if bd.has("haze_color"):
 		heat.set_shader_parameter("glow_color", bd["haze_color"])
+	# Drawn before every other see-through thing: the jackal's backdrop
+	# pockets (alpha just under 1, no depth prepass) had the band's glow laid
+	# over them as a red bar beside its body.
+	heat.render_priority = -1
 	band.material_override = heat
 	band.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	band.position.y = pool.position.y + cyl.height * 0.5

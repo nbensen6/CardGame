@@ -17,6 +17,7 @@ shader = ExtResource("shader")
 shader_parameter/tex = ExtResource("rest")
 shader_parameter/halo = 0.6
 shader_parameter/halo_px = 18
+shader_parameter/halo_from = 0.97
 
 [sub_resource type="Animation" id="anim_idle"]
 resource_name = "idle"
@@ -417,7 +418,7 @@ z_index = 0
 z_as_relative = false
 texture = ExtResource("torso")
 centered = false
-position = Vector2(-256, -710)
+position = Vector2(-584, -710)
 
 [node name="arm_r" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(280, -532)
