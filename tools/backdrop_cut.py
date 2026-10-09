@@ -26,6 +26,7 @@ from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import beast_rig as rig  # noqa: E402
+import gauge_unblend  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "game/assets/3d/cast/cinder_jackal_backdrop.png"
@@ -63,6 +64,7 @@ MIRROR = [(10, 14, 130, 96, "below"), (862, 22, 998, 54, "below"),
 # or mirrored fill read as a pillar or a portal (graders 2026-10-09).
 GAUGE = (909, 304, 1010, CUT + FADE)
 GAUGE_GLOW = 492                  # TARGET row where the lava glow starts
+GAUGE_UNBLEND = True              # the scene behind the see-through gauge recovered (tools/gauge_unblend.py), not a flat shade
 GAUGE_SHADE = (9.0, 12.0, 20.0)  # the right cliff's shadow tone, sampled
 # Over smooth sky an inpaint is clean: the intent chip and the top frame.
 HUD = [(424, 16, 532, 50), (10, 14, 418, 96), (862, 22, 998, 54)]   # the last two are mirrored over after
@@ -191,6 +193,10 @@ def build():
     # it is one flat shadow tone, the lava glow at its foot inpainted.
     gx0, gy0, gx1, gy1 = GAUGE
     T = T.copy()
+    if GAUGE_UNBLEND:
+        # The scene behind TARGET's see-through gauge, recovered: the fight's
+        # panel (same face and alpha) lands back on TARGET's pixels over it.
+        T = gauge_unblend.unblend(T)
     shade = np.zeros(T.shape[:2])
     shade[gy0 - 4:GAUGE_GLOW, gx0 + 3:gx1 - 3] = 1.0   # inside the panel's border (run 15)
     rect = shade > 0
@@ -198,8 +204,9 @@ def build():
     # Inside the panel only: its blur spilled ~10 px left of the gauge as a
     # dark band over TARGET's lava glow (grader run 15, "feet in the lava").
     shade = np.where(rect, np.clip(shade * 1.6, 0, 1), 0.0)[..., None]
-    T = T * (1 - shade) + np.array(GAUGE_SHADE) * shade
-    other[GAUGE_GLOW:gy1, gx0 - 2:gx1 + 2] = True
+    if not GAUGE_UNBLEND:
+        T = T * (1 - shade) + np.array(GAUGE_SHADE) * shade
+        other[GAUGE_GLOW:gy1, gx0 - 2:gx1 + 2] = True
     for (x0, y0, x1, y1) in rig.STONES + HUD + EXTRA:
         other[max(0, y0 - GROW):y1 + GROW, max(0, x0 - GROW):x1 + GROW] = True
     for (x0, y0, x1, y1) in BORDER:

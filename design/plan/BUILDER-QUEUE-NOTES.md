@@ -2541,3 +2541,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (judged at --floor scale, "no visible change"), R2 PASS with a 6x close-up of the spot. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]] ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]]
 - Meshy: 0 credits.
+
+## Climb gauge panel: see-through, the lava showing through it.
+
+2026-10-09 12:20 EDT, builder (run 15). PASS.
+
+- **Measured TARGET's panel:** inside/outside at the lava band (81,34,15)/(226,68,19): a dark face at about 0.64 alpha. combat_3d `GAUGE_FACE` (0.06,0.055,0.07,0.64), `GAUGE_EDGE` alpha 0.6 (was the shared FLAT_FACE at 0.86).
+- **The scene behind it, recovered** (new tools/gauge_unblend.py, used by backdrop_cut.py and floor_cut.py in place of the flat GAUGE_SHADE and the mirrored floor): scene = (TARGET - 0.64 face) / 0.36 inside the panel; the gauge's own marks (rail, bars, ticks, sigil, "+5", pips) filled along their row, rows they fill edge to edge mirrored from the clean rows beside them, the cliff rows above the haze carried across from the panel's sides, the border ring carried in from outside. Panel mean abs error on the --square pair 8.68 -> 6.46.
+- **Grader:** R1 FAIL (pip ghosts, doubled bottom border, flat upper fill), R2 PASS (minor: band's lower edge a touch hard, seams a touch faint, panel top ~3 px low). VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]] ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]]
+- Meshy: 0 credits.

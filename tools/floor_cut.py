@@ -22,6 +22,9 @@ import cv2
 import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import gauge_unblend  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = ROOT / "design/art/targets/TARGET.png"
@@ -45,6 +48,7 @@ CARRY = 40                # rows under it whose seams are carried on, not mirror
 SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
 GAUGE_MIRROR = True   # the floor under the climb gauge mirrored in from its left, not inpainted
+GAUGE_UNBLEND = True  # ...or, better, recovered from under TARGET's see-through panel
 SLAB_GROW = 2
 SLAB_SHADE = 0.85   # the floor's tone under the lowest slab, its shadow
 SIDE_FEATHER = 40
@@ -59,10 +63,16 @@ PAD_DARK = 0.25
 
 def build() -> None:
     T = np.asarray(Image.open(TARGET).convert("RGB"))
+    if GAUGE_UNBLEND:
+        # The floor behind TARGET's see-through gauge, recovered: the fight's
+        # panel lands back on TARGET's pixels over it (tools/gauge_unblend.py).
+        T = np.clip(gauge_unblend.unblend(T), 0, 255).astype(np.uint8)
     img = T[TOP:].copy()
     H, W = img.shape[:2]
     hole = np.zeros((H, W), bool)
     for i, (x0, y0, x1, y1) in enumerate(HOLES):
+        if i == 1 and GAUGE_UNBLEND:
+            continue
         if i == 0:
             # The lowest slab: its own pixels (pale grey, and its dark rim),
             # not its box. The box's corners showed past the fight's slab as
@@ -118,7 +128,7 @@ def build() -> None:
     # down onto the floor as a glow smear left of the gauge, and the floor's
     # seams stopped short of it (queue "Floor by the climb gauge", run 15).
     # The floor beside it is mirrored in instead, seams and all.
-    if GAUGE_MIRROR:
+    if GAUGE_MIRROR and not GAUGE_UNBLEND:
         gx0, gy0, gx1, gy1 = HOLES[1]
         a0, a1 = gx0 - GROW, min(W, gx1 + GROW)
         rows = slice(0, max(0, gy1 - TOP + GROW))

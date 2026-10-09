@@ -947,6 +947,12 @@ static func add_a1_panel(target: Control, tint: Color, pad: float = 0.0,
 ## 2026-10-08): a dark translucent face and a thin plain edge, nothing lit.
 const FLAT_FACE := Color(0.06, 0.055, 0.07, 0.86)
 const FLAT_EDGE := Color(0.36, 0.34, 0.38, 0.9)
+## The climb gauge's face is see-through in TARGET: its lava band reads
+## through at about a third of its strength (measured, TARGET in/out of the
+## panel at the band: (81,34,15) / (226,68,19); builder 2026-10-09 run 15).
+const GAUGE_FACE := Color(0.06, 0.055, 0.07, 0.64)
+## ...and its border a soft grey, dimmer than the other flat panels' edge.
+const GAUGE_EDGE := Color(0.36, 0.34, 0.38, 0.6)
 ## The intent chip: a dark red-brown face, a thin red edge while it swings.
 const INTENT_FACE := Color(0.20, 0.07, 0.07, 0.88)
 const INTENT_EDGE_HOSTILE := Color(0.78, 0.24, 0.20)
@@ -1526,7 +1532,7 @@ func _build_gauge() -> void:
 	# stands beside the beast", 2026-09-29): it was the last flat brown box.
 	panel.add_theme_stylebox_override("panel", a1_clear_style(0.0, 0.0))
 	# TARGET's gauge: a dark rounded panel with a thin plain border.
-	add_flat_panel(panel, flat_panel_style(FLAT_FACE, FLAT_EDGE, 12, 1))
+	add_flat_panel(panel, flat_panel_style(GAUGE_FACE, GAUGE_EDGE, 12, 1))
 
 	_gauge = Control.new()
 	_gauge.mouse_filter = Control.MOUSE_FILTER_IGNORE

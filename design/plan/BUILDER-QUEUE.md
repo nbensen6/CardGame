@@ -195,10 +195,16 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]] ^floor-by-the-climb-gauge-no-orange-glow-
 
-- [ ] **Climb gauge panel: see-through, the lava showing through it.**
-      TARGET's gauge panel is translucent: the lava band, its glow and the floor seams read through it (square ~x640-705, y330-400). The game's panel is near-opaque dark there, with a darker top-right corner.
-      **Done when** the `--square` pair shows no visible difference inside the climb gauge panel.
-      Test: state=3d beast=cinder_jackal ^climb-gauge-panel-see-through-the-lava-s
+- [ ] 👀 **Climb gauge panel: see-through, the lava showing through it.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Climb gauge panel: see-through, the lava showing through it.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ^climb-gauge-panel-see-through-the-lava-s
+
+- [ ] **Right of and under the climb gauge: lava and floor, not a dark box.**
+      Between the gauge panel and the square's right edge (square ~x707-720, y215-420) and under the panel's foot (~x645-720, y510-600) the game shows a flat dark strip and block; TARGET shows its lava band, glow and floor carrying on there.
+      **Done when** the `--square` pair shows no visible difference right of and below the climb gauge.
+      Test: state=3d beast=cinder_jackal ^right-of-and-under-the-climb-gauge-lava
 
 ## Waiting on Nick
 
