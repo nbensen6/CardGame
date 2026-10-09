@@ -131,7 +131,7 @@ FIRE_LEAN = 0.32
 # edge pushed it into a tall pale plume off the fist; TARGET's is a compact
 # orange-yellow blaze curling round the top and back of the fist.
 FIRE_RAW = True
-FIRE_HAZE = 0.92       # alpha of TARGET's own glow round the flame, at the flame
+FIRE_HAZE = 0.0        # 0.92 until the backdrop (tools/backdrop_cut.py) carried TARGET's glow itself
 FIRE_HAZE_PX = 55.0    # TARGET px it fades over
 FIRE_MAX_A = 1.0       # 0.95 (under halo_from, no halo) tried 2026-10-09: no visible change, error up
 FIRE_HUG = 22

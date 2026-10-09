@@ -2177,3 +2177,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 - **Later rounds, same run.** Measured TARGET's seams column by column: faces a flat (31,22,29), each seam a 2-4 px near-black gap with a dull red lip (60-80,20-27,11-24) on its near side only. New obsidian.gdshader `lip_*` uniforms draw that (lip on the side where the edge distance grows down-screen). R7 (Voronoi 5, lip): seams faint/warm MET, not purple MET; asked for larger hex-like slabs and a warm wash by the lava. R8 (hex 6.5 + lip): seams "black". R9 (Voronoi 7, lip x3 by the lava): busy horizon. R10 (Voronoi 5, lip 0.55): seams "dead". R11 (hex 6.5, thin warm seams, no lip): seams "saturated red". Kept: hex 6.5, seams (0.65,0.3,0.13) x0.4, slab_var 0.12, faces (0.24,0.203,0.215), rim_gain 0.3. Every round: no penalties, closer than before. VERDICT: FAIL.
 
+## Cliffs: dark slate closing in, not blue and far back.
+
+2026-10-09 00:20 EDT, builder (run 7). Not passed; item left open; the backdrop is merged (much nearer TARGET by every measure).
+
+- **Tones first** (cliff_flat lit/side/shade darker and less blue, FLANK_LIT down, flanks on both sides): R1 FAIL, darker but "thin spires, wrong shapes".
+- **TARGET's own background.** New tools/backdrop_cut.py cuts TARGET's sky and cliffs above the lava line, takes out the jackal, flame, stones and HUD (figure: wide inpaint from clean background; HUD/frame: tight inpaint or mirrored from the open side; climb gauge: one flat shadow tone, it is near-opaque in TARGET) and pads the 16:9 sides with the edge's own row tones. combat_3d `_add_backdrop` / `_place_backdrop` hang it on a quad through drawn_sprite.gdshader's colour table, fitted to the centred square from the rest camera at 1.12x the jackal's depth (refit while the lens rests; it stays put in the world when the camera climbs). The 3D flank prisms are gone (`flank_cliffs` []), the wall ring is hidden behind it, the seam sparks are off (`seam_drips` false). Test rewritten: the jackal hangs a backdrop, no biome stands flank prisms.
+- **The flame's own glow** now comes from the backdrop: beast_rig FIRE_HAZE 0.92 -> 0 (its tone-fixed copy rimmed the flame darker).
+- **Measured (square at 720, TARGET/game):** left cliff error 30.3 -> 2.6, right cliff 29.7 -> 2.5, sky 15.4 -> 6.6; edge Laplacian game ~0.78x TARGET's.
+- **Grader:** R1-R10 FAIL. R2-R8: dark/closing in/no extra peaks MET; faceting and highlights not. R9 and R10 named a penalty (a "pillar", then a "boxy slab": the fill where TARGET's gauge stood). Each round's other complaints were mostly the 16:9 extension outside the square. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cliffs-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs-after.png|420]]
+- Meshy: 0 credits.
+

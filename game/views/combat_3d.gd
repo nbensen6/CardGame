@@ -2453,6 +2453,7 @@ func _process(delta: float) -> void:
 	if _flash != null:
 		_flash.light_energy = maxf(0.0, _flash.light_energy - delta * 9.0)
 	_tick_grip(delta)
+	_place_backdrop()
 
 
 ## How long the party can cling, including any grip relics.
@@ -3113,6 +3114,7 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		_beast_box = _beast.call("trim_box", _beast_box)
 	if _beast.get_node_or_null("Body") is Sprite3D:
 		_beast_box = drawn_box(_beast_box, _beast_scale)
+	_add_backdrop(key)
 	_read_climb_points()
 	# The hull BEFORE the stones: _build_float_stones' _top_hold() call reads
 	# _front_of_beast(), which falls back to the box's raw far edge whenever
@@ -3276,7 +3278,11 @@ const BIOME := {
 		# as thin spikes over grey haze; TARGET has one big dark slate mass
 		# with cool lit edges down to the lava line. Sides (-1 left, +1 right,
 		# from the rest camera) that get a cliff mass, see flank_cliffs().
-		"flank_cliffs": [-1.0],
+		# None (builder 2026-10-09): TARGET's own cliffs hang behind the jackal
+		# (BACKDROP); the prisms stood in front of them.
+		"flank_cliffs": [],
+		# No sparks falling down the cliff seams: TARGET has none.
+		"seam_drips": false,
 		# Lava rock under the hunters (session, 2026-09-29) made the climb
 		# stones red-black crates. Scene pass 2 (picture A, Nick 2026-10-04):
 		# pale grey flat slabs instead, thin enough that a high one no longer
@@ -3792,7 +3798,7 @@ const FLANK_CLIFF_SET := [
 ]
 
 const FLANK_LIT_AT := 0.4
-const FLANK_LIT := Color(0.33, 0.35, 0.44)
+const FLANK_LIT := Color(0.24, 0.25, 0.29)
 const FLANK_KEY := Vector3(-0.8, 0.35, -0.45)
 var _flank: Node3D = null
 
@@ -3843,6 +3849,81 @@ func _add_flank_cliffs(beast_id: String) -> void:
 		var p: Vector3 = c["pos"] * r
 		mi.position = Vector3(p.x, size.y * 0.5 - 0.05 * r, p.z)
 		_flank.add_child(mi)
+
+
+## TARGET's own sky and cliffs behind a drawn beast (tools/backdrop_cut.py),
+## fitted to the screen's centred square from the rest camera: TARGET's rows
+## 0..BACKDROP_ROWS of 1024 over the square's top, down to its lava line.
+## The 3D cliffs could not take TARGET's two big slate masses (builder
+## 2026-10-09, Cliffs item); like the jackal, the backdrop is TARGET's pixels,
+## shown through drawn_sprite.gdshader's colour table so the screen shows them.
+const BACKDROP := {"cinder_jackal": "res://assets/3d/cast/cinder_jackal_backdrop.png"}
+const BACKDROP_ROWS := 540.0
+## TARGET px the backdrop runs on past each side of the square (mirrored).
+const BACKDROP_PAD := 420.0
+## How far behind the beast's plane the backdrop hangs, as a multiple of the
+## beast's depth from the lens: behind the jackal, in front of the far wall.
+const BACKDROP_DEPTH := 1.12
+const BACKDROP_REST_CLIMB := 0.15
+const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
+var _backdrop: MeshInstance3D = null
+
+
+func _add_backdrop(beast_id: String) -> void:
+	if _backdrop != null:
+		_backdrop.queue_free()
+		_backdrop = null
+	# A rigged drawing only (views/drawn_rig.gd): a modelled jackal stands in
+	# the 3D arena's own cliffs.
+	if not BACKDROP.has(beast_id) or _beast == null or not _beast.has_method("shift_view"):
+		return
+	var tex := load(String(BACKDROP[beast_id])) as Texture2D
+	if tex == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = DRAWN_SPRITE
+	mat.set_shader_parameter("tex", tex)
+	mat.render_priority = -3
+	var q := QuadMesh.new()
+	q.size = Vector2.ONE
+	_backdrop = MeshInstance3D.new()
+	_backdrop.name = "Backdrop"
+	_backdrop.mesh = q
+	_backdrop.material_override = mat
+	_backdrop.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(_backdrop)
+	# The arena's own wall ring passes nearer the lens than the backdrop at the
+	# frame's sides and blacked out TARGET's right cliff: the backdrop is the
+	# cliffs now.
+	var wall := _env.find_child("Wall", true, false) if _env != null else null
+	if wall is Node3D:
+		(wall as Node3D).visible = false
+
+
+## Lays the backdrop over the centred square while the lens rests on the
+## ground; once it climbs or shakes the backdrop stays put in the world.
+func _place_backdrop() -> void:
+	if _backdrop == null or _cam == null or _beast == null:
+		return
+	# The rest frame's climb_t is ~0.11 (the hunter waits on its rock).
+	if _climb_t > BACKDROP_REST_CLIMB or _shake > 0.001:
+		return
+	var vs := get_viewport().get_visible_rect().size
+	var side := minf(vs.x, vs.y)
+	var x0 := (vs.x - side) * 0.5
+	var bottom := side * BACKDROP_ROWS / 1024.0
+	var fwd := -_cam.global_transform.basis.z
+	var d := (_beast_box.get_center() - _cam.global_position).dot(fwd) * BACKDROP_DEPTH
+	if d <= 0.1:
+		return
+	var pad := side * BACKDROP_PAD / 1024.0
+	var tl := _cam.project_position(Vector2(x0 - pad, 0.0), d)
+	var tr := _cam.project_position(Vector2(x0 + side + pad, 0.0), d)
+	var bl := _cam.project_position(Vector2(x0 - pad, bottom), d)
+	var right := tr - tl
+	var up := tl - bl
+	var basis := Basis(right, up, right.cross(up).normalized())
+	_backdrop.global_transform = Transform3D(basis, (tr + bl) * 0.5)
 
 
 ## How high the lava's warm band climbs the flat cliffs, in arena radii.
@@ -4073,6 +4154,10 @@ func _add_embers(beast_id: String) -> void:
 		l.light_cull_mask = SEAM_LIT_LAYER
 		l.position = at
 		_ember_field.add_child(l)
+		# TARGET (builder 2026-10-09): no sparks pour down the cliffs; the
+		# jackal's biome names "seam_drips": false.
+		if not bool((BIOME.get(String(BEAST_BIOME.get(beast_id, "crag")), {}) as Dictionary).get("seam_drips", true)):
+			continue
 		var drip := _ember_particles(maxf(r * 0.02, 0.04))
 		drip.amount = 60
 		drip.lifetime = 2.4
