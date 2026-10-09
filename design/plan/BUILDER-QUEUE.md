@@ -21,10 +21,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       **Done when** the `--square` and `--stones` pairs show no visible difference along the slabs' undersides.
       Test: state=3d beast=cinder_jackal ^warm-specks-under-the-upper-right-slab
 
-- [ ] **Warm floor showing beside the last card.**
-      TARGET is near-black between the last card (Tongue Flick) and End Turn and behind the first card's lower left corner; the game shows dark red floor seams and a reddish tint there.
-      **Done when** the `--square` and `--hand` pairs show no visible difference beside the hand's ends.
-      Test: state=3d beast=cinder_jackal ^warm-floor-showing-beside-the-last-card
+- [ ] 👀 **Warm floor showing beside the last card.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Warm floor showing beside the last card.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-handfloor-after.png|420]] ^warm-floor-showing-beside-the-last-card
 
 - [ ] **Scene lines soft: TARGET's crisp outline, cracks and slab edges.**
       Next pass: grader 2026-10-09 run 18 R4 FAIL after slabs, backdrop and rig all moved to the Lanczos footprint and colour table: names card text and art ("Deal 1 damage", "Climb 2" blurrier, Leap and Scramble art smeared), crack edges, slab stair-steps. Measured: slab error 3.6 -> 2.6 levels, jackal head/chest error 2.6-2.8 with detail 0.96-0.98 of TARGET's, cliffs 0.96. FIX: the cards: their text and art are the largest per-pixel difference left in the item's list (hand error ~17 levels, partly placement); look at how the rotated card text is drawn (AA, font size, oversampling) against TARGET's.
@@ -249,6 +250,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-fistseam-after.png|420]] ^faint-dark-streaks-in-the-fist-s-glow
+
+- [ ] **Energy box: TARGET's orange glow on near-black.**
+      TARGET's energy box sits in a wide soft orange glow over near-black floor; the game's box has only a thin rim glow and purple-grey floor slabs show round it and above it.
+      **Done when** the `--square` and `--hand` pairs show no visible difference round the energy box.
+      Test: state=3d beast=cinder_jackal ^energy-box-target-s-orange-glow-on-near-
 
 ## Waiting on Nick
 

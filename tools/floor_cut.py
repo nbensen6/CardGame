@@ -46,6 +46,17 @@ SHADOW = ((507.0, 692.0), (56.0, 8.0))   # centre, radii in TARGET px
 CARDS_ROW = 790           # TARGET row the hand starts at: below it, rows repeat
 CARRY = 40                # rows under it whose seams are carried on, not mirrored
 KEEP_RIGHT_X = 912      # TARGET x from which rows below CARDS_ROW stay TARGET's own (0: off)
+KEEP_GAP = True
+GAP_TOP_X = 790          # TARGET x past which the floor above the last card's corner is kept
+GAP_CORNER = (870, 846)  # the last card's top right corner, TARGET px
+GAP_SLOPE = -0.15        # its right edge's run in x per row down
+GAP_UNDER = 10           # px past that line, under the card, filled the same way
+GAP_MARGIN = 4           # px kept clear of the card's edge
+GAP_L_CORNER = (150, 832)  # the first card's top left corner, TARGET px
+GAP_L_SLOPE = 0.18         # its left edge's run in x per row down
+LEFT_HUD = [(0, 800, 147, 938), (0, 938, 175, 1012), (147, 823, 193, 885)]   # energy box, piles, the first card's cost coin (TARGET px)
+GAP_L_MARGIN = 10          # px kept clear of the first card's slanted edge
+BUTTONS = [(874, 888, 1001, 935), (874, 952, 1000, 999)]   # End Turn, Switch (TARGET px)
 SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
 GAUGE_MIRROR = True   # the floor under the climb gauge mirrored in from its left, not inpainted
@@ -162,6 +173,42 @@ def build() -> None:
     # End Turn (grader run 15, "Right of and under the climb gauge").
     if KEEP_RIGHT_X:
         out[band:, KEEP_RIGHT_X:] = img[band:, KEEP_RIGHT_X:]
+    # Between the last card and End Turn / Switch TARGET's floor shows: a
+    # dark wedge with red seams. The mirrored rows drew lighter floor there
+    # with a hard vertical edge at KEEP_RIGHT_X (critics 2026-10-09 run 18).
+    # TARGET's own pixels from just right of the card's edge, the buttons
+    # themselves inpainted from round them.
+    if KEEP_GAP:
+        yy = np.arange(band, H) + TOP
+        edge = np.where(yy < GAP_CORNER[1], GAP_TOP_X,
+                        GAP_CORNER[0] + GAP_SLOPE * (yy - GAP_CORNER[1])) + GAP_MARGIN
+        xs = np.arange(W)[None, :]
+        keep = xs > edge[:, None] - GAP_UNDER
+        # the strip at the card's edge (and a little under it, where the
+        # fight's card may sit a pixel off) filled from the dark side
+        strip = keep & (xs <= edge[:, None])
+        gap = img[band:].copy()
+        btn = np.zeros(gap.shape[:2], bool)
+        for (x0, y0, x1, y1) in BUTTONS:
+            btn[max(0, y0 - TOP - band - 3):y1 - TOP - band + 4, x0 - 3:x1 + 4] = True
+        gbgr = np.ascontiguousarray(gap[..., ::-1])
+        gap = cv2.inpaint(gbgr, (btn | ~keep | strip).astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA)[..., ::-1].astype(float)
+        out[band:][keep] = gap[keep]
+        # Left of the first card the same: TARGET's floor there is near black
+        # round the energy box and the piles (they are inpainted).
+        ledge = np.where(yy < GAP_L_CORNER[1], -1.0,
+                         GAP_L_CORNER[0] + GAP_L_SLOPE * (yy - GAP_L_CORNER[1])) - GAP_L_MARGIN
+        lkeep = xs < ledge[:, None] + GAP_UNDER
+        lstrip = lkeep & (xs >= ledge[:, None])
+        lgap = img[band:].copy()
+        lbtn = np.zeros(lgap.shape[:2], bool)
+        for (x0, y0, x1, y1) in LEFT_HUD:
+            lbtn[max(0, y0 - TOP - band - 3):max(0, y1 - TOP - band + 4), max(0, x0 - 3):x1 + 4] = True
+        # filled only from TARGET's floor left of the card: the card's pale
+        # border right of the piles bled in as a grey wedge
+        src = lbtn | ~lkeep | lstrip
+        lgap = cv2.inpaint(np.ascontiguousarray(lgap[..., ::-1]), src.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA)[..., ::-1].astype(float)
+        out[band:][lkeep] = lgap[lkeep]
     out[:, :EDGE] = out[:, EDGE:EDGE + 1]
     out[:, W - EDGE:] = out[:, W - EDGE - 1:W - EDGE]
     # Mirror only clean floor: left of the pedestal (x < 356) and between it

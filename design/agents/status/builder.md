@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T15:36
+updated: 2026-10-09T16:13
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,13 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 15:36 EDT
+2026-10-09 16:13 EDT
 
-- **Did:** removed the ear smudge and the fist-glow seam; slab cuts undo the 3D colour grade.
-- **Worked?** Partly: ear smudge VERDICT: PASS; fist-glow seam VERDICT: PASS; scene sharpness VERDICT: FAIL (three rounds, "no visible change", slab tone measured 10 -> 3 levels).
-- **Look at:** ![[frames/builder/2026-10-09-earsmudge-before.png]] then ![[frames/builder/2026-10-09-earsmudge-after.png]] and ![[frames/builder/2026-10-09-fistseam-after.png]]
+- **Did:** fixed the ear smudge, fist-glow seam and hand-gap floor; slabs, cliffs and jackal now Lanczos-resampled.
+- **Worked?** Partly: ear smudge, fist-glow seam, hand-gap floor VERDICT: PASS; scene sharpness and slab undersides VERDICT: FAIL (specks gone, edges still read soft).
+- **Look at:** ![[frames/builder/2026-10-09-lines18-before.png]] then ![[frames/builder/2026-10-09-handfloor-after.png]]
 - **Ask:** nothing
-- **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop now carries TARGET's outline there, but a swing would show it.
+- **Found:** the energy box lacks TARGET's wide orange glow, and the floor above it reads purple-grey where TARGET is near-black.
+- **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop carries the outline there, so a swing would show it.
 
 ## Notes
 

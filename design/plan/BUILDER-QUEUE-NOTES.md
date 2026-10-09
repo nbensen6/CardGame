@@ -2669,3 +2669,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 - 2026-10-09 16:05 EDT, later in run 18: the slab cuts are drawn through drawn_sprite.gdshader now (STAIR_SLAB_DRAWN): TARGET's 1024 px, its colour table in place of SCREEN_COMP, a Lanczos-2 footprint at the screen (lanczos_edges, billboard in the shader). Slab error vs TARGET 3.6 -> 2.6 levels, detail 0.95-0.99, warm 12 -> 5. Grader R4 FAIL: specks MET, middle slab's lower edge pale and stair-stepped.
 
+## Warm floor showing beside the last card.
+
+2026-10-09 16:13 EDT, builder (run 18). PASS; item marked 👀.
+
+- Queued from the run-18 matched check (both critics MINOR). tools/floor_cut.py mirrored the floor above the hand row into the rows under it, so the gaps beside the hand showed lighter floor with red seams and a hard vertical edge at KEEP_RIGHT_X (912).
+- Now (KEEP_GAP): right of the last card's edge (a line from its top right corner, TARGET px) and left of the first card's, the floor under the hand row is TARGET's own pixels; End Turn, Switch, the energy box, the piles and the first card's coin are inpainted from that side only, and a strip at each card edge (and GAP_UNDER px under the card) is filled from the dark side. Error vs TARGET-at-720: right gap 17.9 -> 15.8, between the energy box and the first card 20.3 -> 7.5 levels.
+- Grader R1 FAIL (a warm wedge left against the card edges), R2 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-handfloor-before.png|420]] ![[agents/frames/builder/2026-10-09-handfloor-after.png|420]]
+- Meshy: 0 credits.
+
