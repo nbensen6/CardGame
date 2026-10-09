@@ -618,8 +618,10 @@ const DRAWN_GAP_PER_HEIGHT := 1.21
 const DRAWN_SHIFT_PX := {"cinder_jackal": Vector2(-83.2, 43.0)}
 ## A drawn beast's zoom about a rig-canvas pivot, after the height fit
 ## (builder 2026-10-09, "Cracks": registered on TARGET's square the fit drew
-## the jackal 0.5% small, its fist and forearm ~2 px off TARGET's lines).
-const DRAWN_ZOOM := {"cinder_jackal": [1.005, Vector2(867, 631)]}
+## the jackal 0.5% small, its fist and forearm ~2 px off TARGET's lines). 1.008
+## since run 15, with the drawing turned square on to the camera (drawn_rig.gd
+## FACE_CAMERA): registered, every part within ~0.2 px of TARGET.
+const DRAWN_ZOOM := {"cinder_jackal": [1.008, Vector2(867, 631)]}
 ## How far LEFT of the top hold's own x the nearest approach stone starts
 ## (route_pos) -- the lateral half of Nick's diagonal sweep (#14, live,
 ## 2026-09-24 22:25 EDT). Sized off the HUNTER, like every other stone

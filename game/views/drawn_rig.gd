@@ -225,7 +225,7 @@ func _make_fire_overlay(tex: Texture2D) -> void:
 
 
 ## Map screen UV to the billboard's UV: the homography through its four
-## projected corners (a Y-billboard under a pitched camera is a keystone).
+## projected corners (the quad under a pitched camera is a keystone).
 func _update_fire_overlay() -> void:
 	if _fire_rect == null:
 		return
@@ -238,14 +238,12 @@ func _update_fire_overlay() -> void:
 	var vp := get_viewport().get_visible_rect().size
 	var w := float(body.texture.get_width()) * body.pixel_size
 	var h := float(body.texture.get_height()) * body.pixel_size
-	var centre := body.global_transform * Vector3(body.offset.x * body.pixel_size, body.offset.y * body.pixel_size, 0.0)
-	var right := cam.global_transform.basis.x
-	right.y = 0.0
-	right = right.normalized() * body.global_transform.basis.get_scale().x
-	var up := Vector3.UP * body.global_transform.basis.get_scale().y
+	# The billboard's shader has no vertex billboarding: the quad lies in the
+	# Body's own XY plane, centred on its offset.
+	var off := body.offset * body.pixel_size
 	var src: Array[Vector2] = []
 	for k in [Vector2(-0.5, 0.5), Vector2(0.5, 0.5), Vector2(0.5, -0.5), Vector2(-0.5, -0.5)]:
-		var wp: Vector3 = centre + right * (k.x * w) + up * (k.y * h)
+		var wp: Vector3 = body.global_transform * Vector3(off.x + k.x * w, off.y + k.y * h, 0.0)
 		if cam.is_position_behind(wp):
 			_fire_layer.visible = false
 			return
@@ -296,7 +294,23 @@ static func homography(src: Array[Vector2], dst: Array[Vector2]) -> PackedFloat6
 	return out
 
 
+## Turn the drawing to face the camera square on, every frame. Its shader
+## does no billboarding, so the quad stood upright under the fight's pitched
+## camera and drew TARGET keystoned: registered against TARGET, the raised
+## fist sat ~1.7 px right and 1 px down, the head 0.8 px high (builder
+## 2026-10-09 run 15; graders' "fist ~1 px right/down" since run 9). Square
+## on, with DRAWN_ZOOM 1.008, every part lands within ~0.2 px of TARGET.
+const FACE_CAMERA := true
+
+
 func _process(_dt: float) -> void:
+	if FACE_CAMERA:
+		var body := get_node_or_null("Body") as Node3D
+		var cam := get_viewport().get_camera_3d()
+		if body != null and cam != null:
+			var gb := cam.global_transform.basis.orthonormalized()
+			var sc := body.global_transform.basis.get_scale()
+			body.global_transform = Transform3D(gb.scaled(sc), body.global_transform.origin)
 	_update_fire_overlay()
 	for c in _holds:
 		var m: Node2D = _holds[c]

@@ -38,11 +38,11 @@ run failed.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
-- [ ] **Fist fire: compact curling blaze wrapped on the fist.**
-      Next pass: grader 2026-10-09 run 15 R3 FAIL, no penalties, --square MET, colour "clearly improved" (the flame now reaches the screen past ACES, drawn_fire_overlay); on --fist still "bottom-left tongue a thin hairline curl (TARGET: a solid pointed orange tongue), fist rim whiter with a faint second edge, inner curl strokes soft, a few px of orange haze right of the flame, fist ~1 px right/down". FIX: the tongue first (its tip is half fire layer, half backdrop: key it whole into the fire layer), then the rim.
-      Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
-      **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
-      Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
+- [ ] 👀 **Fist fire: compact curling blaze wrapped on the fist.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fist fire: compact curling blaze wrapped on the fist.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-fireover2-after.png|420]] ^fist-fire-compact-curling-blaze-wrapped-
 
 - [ ] 👀 **Floor: faint warm seams, not bright orange.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Floor: faint warm seams, not bright orange.|details]]

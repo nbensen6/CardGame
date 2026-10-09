@@ -2285,6 +2285,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-fireover-before.png|420]] ![[agents/frames/builder/2026-10-09-fireover-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 12:00 EDT, builder (run 15, second pass). PASS.
+
+- **The overlay sat ~1 px off the billboard** (a doubled tongue and rim): DrawnRig projected a Y-billboard's corners, but drawn_sprite.gdshader does no billboarding, so the quad lies in the Body's own plane. Corners now from the Body's transform: registered within 0.1 px.
+- **The keystone.** That showed the real "fist ~1 px right/down": the drawing stood upright under the fight's pitched camera, so TARGET reached the screen keystoned (registered on 80-px patches: fist +1.7/+1.0 px, head 0.8 px high, right arm 0.9 px high). DrawnRig `FACE_CAMERA` turns the Body square on to the camera every frame; DRAWN_ZOOM 1.005 -> 1.008. Every jackal patch now within ~0.2 px of TARGET.
+- **Measured** (TARGET at 720 against the game's square): beast box mean abs error 4.88 -> 2.84, fist+flame 6.32 -> 2.76, chest 5.75 -> 4.57.
+- **Grader:** R4 PASS (minor: flame edges and curl strokes a touch soft, glow right of the rim a touch wide). VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-fireover-after.png|420]] ![[agents/frames/builder/2026-10-09-fireover2-after.png|420]]
+
 ## Stray yellow speck on the jackal's chest.
 
 2026-10-08 23:20 EDT, builder. Passed.
