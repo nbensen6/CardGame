@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 10:52 AM ET",
-  "last_commit": "0d5c056",
+  "updated": "Fri Oct 9, 12:51 PM ET",
+  "last_commit": "5862260",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 10:08 AM",
+      "value": "Idle: last run ended 12:26 PM",
       "state": "idle"
     },
     {
@@ -25,7 +25,6 @@
   ],
   "needs_you": [
     "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?",
-    "The grader has failed the chest cracks 12 runs, though they measure like yours. Look and call them done?",
     "The grader failed the cards 14 times, but passes your own hand. Look and call them done?"
   ],
   "latest": {
@@ -33,6 +32,126 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:25 PM",
+      "title": "Floor under the climb gauge",
+      "bullets": [
+        "Floor below the gauge filled, no streaks",
+        "Seam right of End Turn is gone",
+        "Grader still fails it on frame edge"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-undergauge-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:20 PM",
+      "title": "Climb gauge panel now see-through",
+      "bullets": [
+        "Scene shows through the gauge panel",
+        "Matches your drawing's see-through amount",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-gaugepanel-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:10 PM",
+      "title": "Floor beside the gauge patched",
+      "bullets": [
+        "Floor copied in, not smudged over",
+        "Stone slab size also marked passing",
+        "Grader passed both"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-gaugefloor-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:04 PM",
+      "title": "Chest cracks finally pass",
+      "bullets": [
+        "Each slab keeps your drawing's stone edges",
+        "Grader passed after many failed runs",
+        "No need to call it yourself now"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks15-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:00 PM",
+      "title": "Fist fire passes the grader",
+      "bullets": [
+        "Flame now bright, not washed out",
+        "Jackal turned square to the camera",
+        "First try failed, second passed"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fireover-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fireover2-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 11:39 AM",
+      "title": "Jackal's feet in lava cleaned",
+      "bullets": [
+        "Lava band runs behind the jackal",
+        "White speck on the shin removed",
+        "Cliffs also marked passing"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-feet3-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 11:19 AM",
+      "title": "Run starts: four items already match",
+      "bullets": [
+        "Lowest slab, horizon, size, limb gaps pass",
+        "First chest cracks try still failed",
+        "Builder then moved to fire and feet"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-run15-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-run15-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 10:08 AM",
