@@ -1,10 +1,10 @@
 {
-  "updated": "Thu Oct 8, 10:51 PM ET",
-  "last_commit": "5e80eab",
+  "updated": "Fri Oct 9, 12:51 AM ET",
+  "last_commit": "d1b8706",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; cracks and fist fire still open",
+      "value": "Idle; speck passed, 5 looks still open",
       "state": "idle"
     },
     {
@@ -31,6 +31,90 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:26 AM",
+      "title": "Cards redrawn in your card frame",
+      "bullets": [
+        "Thin cream trim, full-width art, centred names",
+        "Hand now sits centred like your drawing",
+        "Two card pictures still differ from yours"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards-after-hand.png",
+          "caption": "Cards side by side"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards-after.png",
+          "caption": "Full screen now"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 12:17 AM",
+      "title": "Your cliffs now behind the jackal",
+      "bullets": [
+        "Your own sky and cliffs used as backdrop",
+        "Darker slate rocks, stray sparks removed",
+        "Still not a full match yet"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cliffs-after-square.png",
+          "caption": "Yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 11:42 PM",
+      "title": "Floor lines dimmed to faint glow",
+      "bullets": [
+        "Bright orange seams now thin and dull",
+        "Floor tiles even, dark six-sided slabs",
+        "Grader still wants it closer"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-floor-after-square.png",
+          "caption": "Yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 11:23 PM",
+      "title": "Fist flame keeps its soft glow",
+      "bullets": [
+        "Flame around the fist now glows softly",
+        "New close-up compares fist to yours",
+        "Flame shape still not quite yours"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fist5-after-fist.png",
+          "caption": "Fist close-up"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 11:13 PM",
+      "title": "Chest speck gone, stones realigned",
+      "bullets": [
+        "Yellow speck on the chest removed: passed",
+        "Six floating stones lined up again",
+        "Chest cracks still need wider glow"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks7-after-beast.png",
+          "caption": "Jackal yours vs game"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 10:48 PM",
