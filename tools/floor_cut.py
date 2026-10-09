@@ -45,6 +45,7 @@ BAR = (428, 692, 596, 726)    # box round its HP bar
 SHADOW = ((507.0, 692.0), (56.0, 8.0))   # centre, radii in TARGET px
 CARDS_ROW = 790           # TARGET row the hand starts at: below it, rows repeat
 CARRY = 40                # rows under it whose seams are carried on, not mirrored
+KEEP_RIGHT_X = 912      # TARGET x from which rows below CARDS_ROW stay TARGET's own (0: off)
 SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
 GAUGE_MIRROR = True   # the floor under the climb gauge mirrored in from its left, not inpainted
@@ -156,6 +157,11 @@ def build() -> None:
         for y in range(band, min(H, band + CARRY)):
             for k in range(3):
                 out[y, :, k] = np.interp(xs - SHEAR, xs, out[y - 1, :, k])
+    # Right of End Turn and Switch TARGET's floor below the hand row is its
+    # own: mirrored and sheared, a dark wedge of it landed as a seam above
+    # End Turn (grader run 15, "Right of and under the climb gauge").
+    if KEEP_RIGHT_X:
+        out[band:, KEEP_RIGHT_X:] = img[band:, KEEP_RIGHT_X:]
     out[:, :EDGE] = out[:, EDGE:EDGE + 1]
     out[:, W - EDGE:] = out[:, W - EDGE - 1:W - EDGE]
     # Mirror only clean floor: left of the pedestal (x < 356) and between it

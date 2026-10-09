@@ -2561,3 +2561,4 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (right strip; seam above End Turn, in both frames), under-panel MET. VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ![[agents/frames/builder/2026-10-09-undergauge-after.png|420]]
 - Meshy: 0 credits.
+- **Seam above End Turn**, after R1: floor_cut mirrored and sheared the rows below CARDS_ROW at every x, and a dark wedge of TARGET's floor landed above End Turn. Right of the buttons (TARGET x >= 912, `KEEP_RIGHT_X`) the rows stay TARGET's own. Below-gauge error 3.92 -> 2.49. Not regraded this run.
