@@ -1,6 +1,6 @@
 {
-  "updated": "Thu Oct 8, 8:22 PM ET",
-  "last_commit": "e67920b",
+  "updated": "Thu Oct 8, 10:51 PM ET",
+  "last_commit": "5e80eab",
   "status": [
     {
       "label": "Builder",
@@ -31,6 +31,108 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 10:48 PM",
+      "title": "Glow tried, kept off the face",
+      "bullets": [
+        "Two crack glow tries, both looked blurry",
+        "Glow now never touches the head",
+        "Cracks still open: graders want wider"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks6-after.png",
+          "caption": "Full screen now"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 10:45 PM",
+      "title": "Darker rock, crisper cracks, sparks behind",
+      "bullets": [
+        "Darkest rock colours no longer turn red",
+        "Crack edges sharper, yellow cores hotter",
+        "Sparks now fly behind the jackal"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks6-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks6-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 10:31 PM",
+      "title": "Rock fills gap under arm",
+      "bullets": [
+        "Gap under arm shows your rock",
+        "Jackal lined up to your drawing exactly",
+        "Yellow crack centres made brighter"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks6-after.png",
+          "caption": "Full screen"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 9:36 PM",
+      "title": "Clean lava edge at feet",
+      "bullets": [
+        "Feet use your drawing's lava edge",
+        "Removed repeated streaks under the jackal"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks5d-after.png",
+          "caption": "Full screen"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 9:32 PM",
+      "title": "Dark cliff between torso and arm",
+      "bullets": [
+        "Gap shows your dark cliff now",
+        "Chest seam runs down to the stone"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks5c-after.png",
+          "caption": "Full screen"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 9:26 PM",
+      "title": "Jackal drawn as crisp as yours",
+      "bullets": [
+        "Jackal rendered sharper, closer to drawing",
+        "Old baked crack glow turned off",
+        "Smudges on the stones cleared"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks5-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks5-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 8:21 PM",
