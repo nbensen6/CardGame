@@ -2244,3 +2244,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 PASS (centre 316.5 vs 317.5 of 640; width 439 vs 449). Minor: cards shorter than TARGET's and lean less; checked on the 2x crop and not queued: "Deal 1 damage" sits at y 664/666 in both, TARGET's card bottoms end under its own dark picture border at y ~710 (the game's at 705), and the outer card's edge leans ~6 degrees in TARGET, ~7 in the game.
 - Frames: ![[agents/frames/builder/2026-10-09-handfit-before.png|420]] ![[agents/frames/builder/2026-10-09-handfit-after.png|420]]
 - Meshy: 0 credits.
+
+## Lava line: TARGET's bright yellow band across the whole square.
+
+2026-10-09 02:20 EDT, builder (run 8). PASSED. Found this run: left of the jackal the square showed a dim red strip where TARGET has its bright yellow lava line.
+
+- The backdrop (TARGET's own pixels) stopped at TARGET row 540, the middle of the band (rows ~535-546). tools/backdrop_cut.py `FADE` 6 -> 18 with a 6-row fade, `BACKDROP_ROWS` 552: the whole band is TARGET's.
+- Where TARGET's lowest slab hid the band the inpaint left a dark blot and an orange smear beside the fight's slab; rows from 515 down are now carried across each stone hole from the row's clean ends (`LAVA_ROWS`).
+- Grader: R1 FAIL (blot and smear by the bottom stone), R2 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-lavaband-before.png|420]] ![[agents/frames/builder/2026-10-09-lavaband-after.png|420]]
+- Meshy: 0 credits.

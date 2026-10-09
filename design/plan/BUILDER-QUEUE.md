@@ -136,6 +136,12 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]] ^stray-yellow-speck-on-the-jackal-s-chest
 
+- [ ] 👀 **Lava line: TARGET's bright yellow band across the whole square.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Lava line: TARGET's bright yellow band across the whole square.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-lavaband-after.png|420]] ^lava-line-target-s-bright-yellow-band-acr
+
 ## Waiting on Nick
 
 The builder skips this section. Answer here or in Home; the item then moves

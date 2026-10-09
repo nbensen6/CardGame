@@ -3980,7 +3980,7 @@ func _add_flank_cliffs(beast_id: String) -> void:
 ## 2026-10-09, Cliffs item); like the jackal, the backdrop is TARGET's pixels,
 ## shown through drawn_sprite.gdshader's colour table so the screen shows them.
 const BACKDROP := {"cinder_jackal": "res://assets/3d/cast/cinder_jackal_backdrop.png"}
-const BACKDROP_ROWS := 540.0
+const BACKDROP_ROWS := 552.0
 ## TARGET px the backdrop runs on past each side of the square (mirrored).
 const BACKDROP_PAD := 420.0
 ## How far behind the beast's plane the backdrop hangs, as a multiple of the

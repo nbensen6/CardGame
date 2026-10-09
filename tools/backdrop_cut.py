@@ -31,7 +31,9 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "game/assets/3d/cast/cinder_jackal_backdrop.png"
 
 CUT = rig.CUT          # TARGET's lava line
-FADE = 6               # rows past the lava line, fading out
+FADE = 18              # rows past the cut: TARGET's bright lava band runs to ~546 (2026-10-09)
+LAVA_ROWS = (515, None)   # TARGET rows of the lava band and its glow
+FADE_LEN = 6           # the last rows, fading out
 SIDE_FEATHER = 28      # TARGET px at the left and right edges
 PAD = 420              # TARGET px mirrored on past each side of the square
 EDGE_SRC = 90          # TARGET px of each edge whose row tone the pad carries on
@@ -106,6 +108,21 @@ def build():
     out = img.astype(float)
     out[other] = fill_other[other]
     out[fig] = fill_fig[fig]
+    # TARGET's lava line is a horizontal band: where a stone hid it, each row
+    # is carried across the hole from its clean ends, so the yellow line runs
+    # on unbroken behind the fight's slab (grader 2026-10-09: "a dark blot and
+    # an orange smear" from the inpaint there).
+    for y in range(LAVA_ROWS[0], rows):
+        hole = other[y] & ~fig[y]
+        if not hole.any():
+            continue
+        good = ~(other[y] | fig[y])
+        xs_good = np.nonzero(good)[0]
+        if len(xs_good) < 2:
+            continue
+        xs_hole = np.nonzero(hole)[0]
+        for c in range(3):
+            out[y, xs_hole, c] = np.interp(xs_hole, xs_good, img[y, xs_good, c].astype(float))
     # The HUD and the frame: TARGET's cliffs there are vertical slabs and its
     # sky is smooth, so mirror the clean picture in from the side the rect
     # opens on (an inpaint smeared them into a blurred band, grader
@@ -158,7 +175,7 @@ def build():
     side = np.clip(np.minimum(xs, W - 1 - xs) / SIDE_FEATHER, 0, 1)
     a *= side[None, :]
     ys = np.arange(H)
-    bottom = np.clip((rows - ys) / FADE, 0, 1)
+    bottom = np.clip((rows - ys) / FADE_LEN, 0, 1)
     a *= bottom[:, None]
     rgba = np.dstack([np.clip(out, 0, 255), a * 255]).astype(np.uint8)
     Image.fromarray(rgba, "RGBA").save(OUT)
