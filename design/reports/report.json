@@ -1,11 +1,11 @@
 {
-  "updated": "Thu Oct 8, 6:51 PM ET",
-  "last_commit": "9b6e563",
+  "updated": "Thu Oct 8, 8:22 PM ET",
+  "last_commit": "e67920b",
   "status": [
     {
       "label": "Builder",
-      "value": "Running; cracks item still open",
-      "state": "working"
+      "value": "Idle; cracks and fist fire still open",
+      "state": "idle"
     },
     {
       "label": "Checker",
@@ -31,6 +31,62 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 8, 8:21 PM",
+      "title": "Glow off, truer yellow cracks",
+      "bullets": [
+        "Turned off glow washing cracks cream",
+        "Fist fire shows separate flame tongues",
+        "Next: bigger chest glow, browner plates"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks4-after.png",
+          "caption": "Full screen now"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks4-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 7:34 PM",
+      "title": "Solid, wider jackal chest cracks",
+      "bullets": [
+        "Cracks no longer hollow in middle",
+        "Hot cores brighter, more yellow",
+        "Grader: closer, still not a match"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks3-after-beast.png",
+          "caption": "Drawing vs game"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-08-cracks3-after.png",
+          "caption": "Full screen"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 8, 6:51 PM",
+      "title": "Fist fire uses your flame",
+      "bullets": [
+        "Flame copied straight from your drawing",
+        "Flicker calmer, less swaying",
+        "Still a soft dome, not tongues"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-08-fistfire2-after-beast.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 8, 6:32 PM",
