@@ -2009,6 +2009,15 @@ Run 2026-10-07 16:46 EDT.
 - Frames: ![[agents/frames/builder/2026-10-09-cards2-before.png|420]] ![[agents/frames/builder/2026-10-09-cards2-after.png|420]]
 - Meshy: 0 credits.
 
+
+2026-10-09 06:07 EDT, builder (run 11). Not passed; item left open.
+
+- **Hand 3 px higher** (HAND_REST_LIFT 78 -> 81): registered on each card in the --square pair the fan sat 3-4 px low; scale fit 1.01.
+- **Scramble re-cut** by new tools/cardart_cut.py: TARGET's window, deskewed +3 deg, 129 TARGET px wide at the frame's window aspect (no reflected copies), badge and pill inpainted. Window error (square px) 35.9 -> 30.1. Leap's cut from the same tool registered worse (24.2 -> 34.4): the older leap.png stays.
+- Tried and reverted: FAN_OVERLAP 0.786/0.776, FAN_TILT 0.085, HAND_SQUARE_CX 0.4985 (per-card phase registration too noisy to converge; outer cards swung 4-6 px past TARGET's). An art content scale/shift (cardart_fit) and a 1.22-aspect cut (no change: the art is drawn under the frame).
+- **Grader:** R1 FAIL, R2 FAIL (trim plain, Leap sky pale, fan flatter; text and pips MET; no penalties). Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cards4-before.png|420]] ![[agents/frames/builder/2026-10-09-cards4-after.png|420]]
+- Meshy: 0 credits.
 ## HUD and cards: TARGET's look, no glow.
 
 2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).

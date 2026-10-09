@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 05:49 EDT
+2026-10-09 06:07 EDT
 
-- **Did:** cleaned outline slivers and belly darks, drew TARGET's Frog at rest, matched its HP bar and the floor round it.
-- **Worked?** Partly: inner-arm outlines, Frog, HP bar, pedestal floor, slab smear VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; registered within a few levels).
-- **Look at:** ![[frames/builder/2026-10-09-frogcel-before.png]] then ![[frames/builder/2026-10-09-slabsmear-after.png]]
+- **Did:** cleaned outline slivers and belly darks, drew TARGET's Frog at rest, matched its HP bar and floor.
+- **Worked?** Partly: inner-arm outlines, Frog, HP bar, pedestal floor, slab smear VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"); cards VERDICT: FAIL (trim, Leap sky, fan tilt).
+- **Look at:** ![[frames/builder/2026-10-09-frogcel-before.png]] then ![[frames/builder/2026-10-09-cards4-after.png]]
 - **Ask:** nothing
 - **Found:** the game's body reads a little softer than TARGET's at close-up (resample), the last visible gap on the cracks.
-- **Found:** an orange glow smear on the floor just left of the climb gauge at the lava line (TARGET's gauge hole inpaint).
+- **Found:** an orange glow smear on the floor just left of the climb gauge at the lava line (queued).
 - **Found:** the second hunter's red-edged rock shows at the frame's far right, outside the square.
 
 ## Notes
@@ -30,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 06:07 EDT — builder: hand 3 px higher, Scramble art re-cut at TARGET's framing (cardart_cut.py); cards FAIL x2; tests green, pushed.
 
 - 2026-10-09 05:53 EDT — builder: lowest slab's floor hole cut to the slab's own pixels, lava masked, shadow tone (smear); PASS; tests green, pushed.
 

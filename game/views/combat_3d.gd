@@ -9545,7 +9545,7 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## bottom edge where TARGET's sit.
 ## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
 ## `--square` pair, leaving the Frog's pedestal column showing above them.
-const HAND_REST_LIFT := 78.0   # TARGET's middle card top at y 560 of the 720 square (builder 2026-10-09)
+const HAND_REST_LIFT := 81.0   # TARGET's middle card top at y 557 of the 720 square (builder 2026-10-09, registered 3 px low at 78)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that

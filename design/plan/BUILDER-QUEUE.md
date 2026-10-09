@@ -57,7 +57,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
-      Next pass: grader R8 (2026-10-09 run 8): text and no pips MET; trim still reads plain (wants a visibly beaded light gold-green inner line), Leap art paler at the top than TARGET's blue sky (the cut's badge inpaint smeared the top-left), hand placement claims contradict the measured 2x crop (middle top y 559 vs 560). FIX: a bolder beaded trim line, re-cut Leap without the top-left smear (or a Meshy image pass at TARGET's framing).
+      Next pass: grader R2 (2026-10-09 run 11): text and no pips MET, Scramble re-cut at TARGET's framing and the hand 3 px higher; still "trim plain (wants visible light gold-green beads inside the dark border), Leap top pale (wants TARGET's blue sky, no top-left smear), fan flatter (TARGET ~-12/-6/0/+4/+8 deg)". FIX: beaded trim in cardframe_target.py, `tools/cardart_cut.py leap` re-tuned (its first cut registered worse), steeper FAN_TILT checked card by card.
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
       **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
       Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
@@ -182,6 +182,11 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-slabsmear-after.png|420]] ^floor-left-of-the-frog-no-brown-smear-un
+
+- [ ] **Floor by the climb gauge: no orange glow smear at the lava line.**
+      Just left of the climb gauge at the lava line (square ~x615-640, y380-395) the game shows a soft orange glow running down onto the dark floor; TARGET's floor rows there are dark with the lava line sharp above them.
+      **Done when** the `--square` and `--floor` pairs show no visible difference left of the climb gauge at the lava line.
+      Test: state=3d beast=cinder_jackal ^floor-by-the-climb-gauge-no-orange-glow-
 
 ## Waiting on Nick
 
