@@ -2018,6 +2018,20 @@ Run 2026-10-07 16:46 EDT.
 - **Grader:** R1 FAIL, R2 FAIL (trim plain, Leap sky pale, fan flatter; text and pips MET; no penalties). Final: VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-cards4-before.png|420]] ![[agents/frames/builder/2026-10-09-cards4-after.png|420]]
 - Meshy: 0 credits.
+2026-10-09 09:57 EDT, builder (run 14). Not passed; item left open.
+
+- **Frame edge, TARGET's double line.** Measured at 1024 across TARGET's Leap, Tongue Snap and Tongue Flick sides: a cream outer line, a near-black band ~6 px, then a green inner line carrying yellow-cream beads, then a dark keyline. tools/cardframe_target.py EDGE now draws that (63 source px, ~8 screen px), BEAD dots the inner line (yellow on green, period 14), A1_PATCH right/bottom 60 -> 80 so the nine-patch holds it, the name band starts inside the cream line and gets TARGET's bevelled ">" beside the gem (CHEV_*).
+- **Art under the frame.** The base's art window is see-through; card_view.gd draws a near-black window rect, then the painting 2 px past the window (A1_ART_BLEED), then the frame, so a tilted card's window edge is the frame's filtered edge, not the art rect's staircase. A1_ART now starts inside the trim (0.089 / 0.911).
+- **Cost gem.** A painted 128 px texture (`a1_disc_texture`): TARGET's face (48,165,86), darker lower half, a lit ring at 0.85 R, dark lip, soft shadow; COST_DISC_D 0.28 -> 0.31 (area matches TARGET's on all five cards), centre 0.075 -> 0.084; digit smaller with a dark-green outline. The flat panels drew a dashed ring at hand size.
+- **Fan.** FAN_TILT 0.072 -> 0.085, HAND_SQUARE_CX 0.497 -> 0.5006, HAND_REST_LIFT 81 -> 77, FAN_DROP 10.5 -> 9.8. Per-card top-line slopes T/G: -9.9/-10.1, -5.1/-5.1, 0/0, 5.4/4.7-5, 9.7/9.2; outer-edge tilts 9.3/9.7 and 7.9/8.1; disc centroids within ~1 px.
+- **Picture rim.** TARGET.png is framed by a 14/1024 band of (14,12,22) and its hand runs under the bottom band. combat_3d `_add_picture_rim`: top and bottom bands across the width (CanvasLayer 5, no input).
+- **Leap and Scramble re-cut** (tools/cardart_cut.py): per-card window width, centre and tilt registered on the --square pair (Leap 375.3/886.4/-5/127, Scramble 648.9/886.9/+5/129), badge key tightened to the emerald disc only and the pill key to its own blob (the loose keys inpainted Leap's light foliage into a white haze), trim columns at Leap's edges replaced, a light unsharp mask, Leap saturation 1.2, output ~2x the on-screen window (SCALE 1.4). Registered window error, square px: Leap 23.3 -> 9.1, Scramble 32.3 -> 9.3.
+- Name ink warm cream (195,187,161 measured) and 3 px higher in its band.
+- **Grader:** R1-R11 FAIL, no penalties in any round; each said the fan, trim and art moved toward TARGET. Every round repeated this item's Next-pass words (Leap "pale haze, no blue sky", trim "no beads", fan "flatter") while the registered pixels match within ~9 levels and ~0.5 deg; R2 called the trim MET, R4 called it too heavy, R5 none. **Control:** the same frame with TARGET's own hand pasted in, graded with this item's text: VERDICT: PASS (it still called the beads "a little fainter" and Leap "a touch paler"). Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cards5-before.png|420]] ![[agents/frames/builder/2026-10-09-cards5-after.png|420]]
+- Meshy: 0 credits.
+
+
 ## HUD and cards: TARGET's look, no glow.
 
 2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).

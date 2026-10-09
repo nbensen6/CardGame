@@ -49,13 +49,16 @@ def rounded(draw, inset, fill):
 # dull-gold line with a green-grey line inside it, then a dark keyline round
 # the art window. The name band covers the band along the top, so the top
 # edge reads as the cream line alone, as in TARGET.
-EDGE = [((14, 10, 6), 3), ((226, 228, 170), 10), ((14, 16, 18), 22),
-        ((212, 206, 134), 8), ((104, 120, 80), 4), ((16, 20, 14), 3)]
+EDGE = [((14, 10, 6), 3), ((226, 228, 170), 10), ((14, 16, 18), 26),
+        ((168, 190, 120), 9), ((118, 140, 102), 7), ((74, 98, 80), 5), ((16, 22, 18), 3)]
 # The beads: TARGET's inner gold line is dotted, bright yellow beads with
 # darker olive-gold gaps (the "trim" seen at 720 down every card's sides).
-BEAD = (150, 150, 92)    # the GAP colour, painted over the gold line: TARGET's beads are fine and low-contrast
-BEAD_W = 8               # px across: the gold line's width
-BEAD_ON, BEAD_PERIOD = 6, 15   # px along: gap length, bead period
+BEAD = (232, 224, 150)   # the beads: yellow-cream dots on TARGET's green inner line
+BEAD_W = 9               # px across: the gold line's width
+BEAD_ON, BEAD_PERIOD = 9, 14   # px along: bead length, bead period
+CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its apex
+CHEV_LIT = (68, 65, 80)
+CHEV_DARK = (42, 39, 50)
 BAND_FROM = 11           # the name band starts inside the cream line, px
 ART_BG = (10, 11, 9)     # TARGET's art window behind an icon: near-black
 
@@ -86,6 +89,15 @@ def build():
     bb = int(BAND_BOTTOM * H)
     a[BAND_FROM:bb, BAND_FROM:W - BAND_FROM, :3] = BAND
     a[bb - 3:bb, BAND_FROM:W - BAND_FROM, :3] = (34, 32, 40)
+    # TARGET's name band is bevelled into a ">" just right of the cost gem:
+    # a lit upper facet and a darker lower one, apex pointing at the name.
+    mid = (BAND_FROM + bb) // 2
+    x0, x1 = CHEV_X
+    for y in range(BAND_FROM, bb - 3):
+        k = abs(y - mid) / max(1, mid - BAND_FROM)
+        xe = int(x1 - (x1 - x0) * k)
+        if xe > x0:
+            a[y, x0:xe, :3] = CHEV_LIT if y < mid else CHEV_DARK
     # The art window, behind the art: an icon's clear ground shows black.
     ab = int(ART_BOTTOM * H)
     a[bb:ab, top:W - top, :3] = ART_BG

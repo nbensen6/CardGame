@@ -647,7 +647,7 @@ const A1_PATCH := [130, 130, 80, 80]   # left, top, right, bottom
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.072, 0.132, 0.928 - 0.072, 0.63 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
+const A1_ART := Rect2(0.089, 0.132, 0.911 - 0.089, 0.63 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
 const A1_TYPE := Rect2(0.112, 0.60, 0.900 - 0.112, 0.66 - 0.60)
 const A1_TEXT := Rect2(0.08, 0.665, 0.92 - 0.08, 0.95 - 0.665)
 

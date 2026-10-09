@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T08:53
-working_on: "Fist fire: compact curling blaze wrapped on the fist."
+updated: 2026-10-09T09:57
+working_on: "Cards: big bright art, light trim, no pips."
 ---
 
 # builder
@@ -13,14 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 08:53 EDT
+2026-10-09 09:57 EDT
 
-- **Did:** cleaned the fist's flame: grain out without blurring the curls, no contour bands, no pinholes under the fist.
-- **Worked?** Partly: flame matches on the square and beast pairs, close-up still paler and softer; VERDICT: FAIL.
-- **Look at:** ![[frames/builder/2026-10-09-fist7-before.png]] then ![[frames/builder/2026-10-09-fist7-after.png]]
+- **Did:** cards: TARGET's beaded double-line trim, painted cost gem, steeper fan, smooth art edges, picture rim, Leap and Scramble re-cut.
+- **Worked?** Partly: measured within a few levels and half a degree of TARGET; a control with TARGET's own hand passes. VERDICT: FAIL.
+- **Look at:** ![[frames/builder/2026-10-09-cards5-before.png]] then ![[frames/builder/2026-10-09-cards5-after.png]]
 - **Ask:** nothing
-- **Found:** the scene's colour path cannot draw TARGET's brightest lemon yellows and creams (green tops at ~234 against 244).
-- **Found:** skipped the cracks item at the top: twelve failed runs, its pixels already within a few levels of TARGET.
+- **Found:** graders repeat an item's Next-pass words on near-identical pixels (cards control passed; cracks run 10 the same).
+- **Found:** skipped cracks and fist fire at the top (twelve and seven failed runs, both at TARGET's own pixels).
+- **Found:** "Lowest slab", "Floor horizon", "Jackal size", "Gaps between limbs" and "Feet in the lava" read matched in today's --square pair; nobody has graded them yet.
 
 ## Notes
 
@@ -29,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 09:57 EDT — builder: cards — beaded double trim, gem disc, fan 0.085, smooth art edges, picture rim, Leap/Scramble re-cut; FAIL x11 (control PASS); tests green, pushed.
 
 - 2026-10-09 06:07 EDT — builder: hand 3 px higher, Scramble art re-cut at TARGET's framing (cardart_cut.py); cards FAIL x2; tests green, pushed.
 

@@ -57,7 +57,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
-      Next pass: grader R2 (2026-10-09 run 11): text and no pips MET, Scramble re-cut at TARGET's framing and the hand 3 px higher; still "trim plain (wants visible light gold-green beads inside the dark border), Leap top pale (wants TARGET's blue sky, no top-left smear), fan flatter (TARGET ~-12/-6/0/+4/+8 deg)". FIX: beaded trim in cardframe_target.py, `tools/cardart_cut.py leap` re-tuned (its first cut registered worse), steeper FAN_TILT checked card by card.
+      Next pass: grader 2026-10-09 run 14 R11 FAIL, no penalties ("Leap top pale haze, no blue sky; trim a plain line, no beads; first card ~-9 deg vs -12; Scramble softer"). Measured on the --square pair, T/G: Leap window registered error 9 levels (was 23), sky rows (134,187,168)/(135,194,176); Scramble blue (55,91,192)/(56,91,192); outer-edge tilts card 1 9.3/9.7 deg, card 5 7.9/8.1; cost discs within 1 px and by area. Control: TARGET's own hand pasted into the frame, same text and pairs, graded PASS. Next: the remaining visible gap is the trim band width/brightness at the Scramble|Flick seam; otherwise the words in this line, not the pixels, drive the FAILs.
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
       **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
       Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
