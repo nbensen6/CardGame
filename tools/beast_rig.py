@@ -63,6 +63,8 @@ TIGHT_GROW = 3
 CRACK_SYNTH = True
 # TARGET's own dark rock in a stone's grown ring is kept, not rebuilt (max channel below this).
 KEEP_DARK = 70
+# ...but not within this many px of a stone's own pixels (its dark underline).
+KEEP_DARK_OFF = 3
 # 0 since 2026-10-08: the fight draws the jackal at TARGET's place, its cut
 # on TARGET's lava line, so TARGET's own glow rows show and the ramp only
 # hazed the hips orange (grader, "Cracks: wide hot cores").
@@ -300,7 +302,9 @@ def paint_hidden(T, m, line, walls):
                 gap = inner & ~raw_stone & (cover >= 2)
                 gap = ndi.binary_dilation(gap, iterations=1) & inner & ~raw_stone
                 out[gap] = inp[gap]
-                dark = gap & (mx < KEEP_DARK)
+                # Not a stone's own dark underline, though: kept, it showed
+                # as dark dashes under the fight's slab (run 15).
+                dark = gap & (mx < KEEP_DARK) & ~ndi.binary_dilation(raw_stone, iterations=KEEP_DARK_OFF)
                 out[dark] = T[dark]
         else:
             out = carry_seam(out, hole)

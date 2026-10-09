@@ -2431,3 +2431,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-slabsmear-before.png|420]] ![[agents/frames/builder/2026-10-09-slabsmear-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-09 11:19 EDT, builder (run 15). Not passed; item left open.
+
+- **Dark dashes under slab 2 were TARGET's stone underline.** KEEP_DARK put TARGET's own dark pixels back in the gap between two stones' grown rings; under slab 2 those were the slab's own dark underline, and where the fight's slab sits ~1 px higher they showed as dark dashes with orange specks. New KEEP_DARK_OFF 3: nothing within 3 px of a stone's pixels is kept dark.
+- **Tried and reverted:** keeping TARGET's pixels in the grown ring outside each stone (KEEP_RING 1) and filling a stone's outer px from the nearest plain rock (EDGE_FILL 4): grey blotches at every hole edge.
+- **Measured:** game slabs cover TARGET's within ~1-2 px (stone masks, --square). 32-px blocks on --chest: the largest differences are all slab edges (game slabs ~15 levels lighter) plus slab 1's top edge row.
+- **Grader:** R1 FAIL ("no visible change"; belly web dim, seam narrow below the fork, red glow right of slab 2, same as runs 10-13). VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-run15-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
+- Meshy: 0 credits.

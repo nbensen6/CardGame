@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 12 R1 FAIL ("unchanged; seam short and dim, belly web dark, cracks thin and red, red smear right of slab 2, notches left of the stem"). Measured on the --chest pair, T/G: stem max per row within 10 levels; belly under slab 4 mean (94,29,13)/(96,29,11), hot 6.5%/7.0%; left of stem hot 34%/36%; right smear (135,109,87)/(137,109,86); pecs hot 14.8%/15.1%. Widening would move off TARGET's pixels; not done. Run 13 (2026-10-09) left it unworked: registered on --chest the body is within ~6 levels of TARGET (25x20 blocks), the remaining blocks are slab edges.
+      Next pass: grader 2026-10-09 run 15 R1 FAIL ("no visible change; belly web dim and thin, seam narrows below the fork, red glow right of slab 2"). Run 15 removed the dark dashes under slab 2 (a stone's own underline kept by KEEP_DARK); 32-px blocks on --chest now differ from TARGET only on slab edges (slabs ~1-3 px off) and one block at slab 1's top edge. FIX left: slab 1 ~2 px high/low against TARGET's top edge; the rest is TARGET's own pixels.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
