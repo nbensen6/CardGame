@@ -4011,7 +4011,7 @@ const BACKDROP_SHARPEN := 0.25
 const BACKDROP_LANCZOS := true
 ## Then an unsharp mask at screen-pixel reach: the half-pixel taps' own
 ## bilinear blur left the cliffs' fine detail under TARGET's.
-const BACKDROP_SCREEN_SHARPEN := 0.4
+const BACKDROP_SCREEN_SHARPEN := 0.7
 const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
 var _backdrop: MeshInstance3D = null
 ## TARGET's floor on the ground (tools/floor_cut.py, drawn_floor.gdshader):

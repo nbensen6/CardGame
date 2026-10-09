@@ -2586,6 +2586,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
 
+2026-10-09 17:36 EDT, builder (run 19). Not passed; item left open.
+
+- Slab cut unsharp per slab (SHARPEN 85,120,80,75,70,75 now that REBLEED keeps the edge from ringing): slab detail vs TARGET 0.89-0.97 -> 0.97-1.02, error 4.16 -> 4.26.
+- RIG_SCREEN_SHARPEN 0.15 -> 0.22, BACKDROP_SCREEN_SHARPEN 0.4 -> 0.7: head 0.96 -> 1.01, chest 0.99 -> 1.03, forearm 0.95 -> 0.99, cliffs 0.96-1.00 -> 0.99-1.05 (0.3 overshot to 1.06).
+- Tried and dropped: drawn_sprite's rgb-to-alpha clamp only for premultiplied input (the slabs are straight alpha; undersides closer, tops 2-4 levels worse, slab error 4.26 -> 4.60).
+- Grader R1 FAIL (before = run 18's frame), R2 FAIL ("no visible change"). VERDICT: FAIL.
+- Meshy: 0 credits.
+
 2026-10-09 15:24 EDT, builder (run 18). Not passed; item left open.
 
 - Found and fixed: the slab cuts are 3D sprites, so the fight's Environment (ACES, contrast 1.10, saturation 1.18) ran over TARGET's pixels; the jackal and HUD are not affected. Per channel the slabs came out gain 1.13-1.22 x TARGET minus 12-26: tops ~10 levels bright, the pale top-edge light lost. tools/cut_slabs.py now undoes it (SCREEN_COMP, two fitted passes): slab error vs TARGET-at-720 10.0 -> 3.3 levels.

@@ -30,7 +30,7 @@ SCALE = 1  # TARGET's own pixels: the game draws them at ~0.7x, so no upsample
 # Each pass is per channel polynomial coefficients (highest power first) of
 # shot = f(drawn) on 0..255, fitted on the shot after the passes before it;
 # the cut undoes them last pass first.
-SHARPEN = [60, 60, 60, 60, 60, 60]  # per slab, lowest first
+SHARPEN = [85, 120, 80, 75, 70, 75]  # per slab, lowest first
 SHARPEN_RADIUS = 1.0
 REBLEED = True
 ALPHA_IN = 3

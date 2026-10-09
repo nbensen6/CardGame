@@ -15,11 +15,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-09 17:29 EDT
 
-- **Did:** cleaned slab edges: no pale fringe, smooth contour, jackal's line no longer pokes out under the middle slab.
-- **Worked?** Yes: VERDICT: PASS (specks gone, undersides match TARGET; only MINOR softness left).
+- **Did:** cleaned slab edges and specks under the middle slab; sharpened slabs, jackal and cliffs to TARGET's detail.
+- **Worked?** Partly: slab undersides VERDICT: PASS; scene sharpness VERDICT: FAIL ("no visible change"; detail now 0.97-1.05 of TARGET's).
 - **Look at:** ![[frames/builder/2026-10-09-sliplip-before.png]] then ![[frames/builder/2026-10-09-sliplip-after.png]]
 - **Ask:** nothing
 - **Found:** slab 2's left end sits about 1 px left of TARGET's.
+- **Found:** drawn_sprite.gdshader clamps colour to alpha for the straight-alpha slab cuts, a stepped dark rim on the slab diagonals.
 
 ## Notes
 
