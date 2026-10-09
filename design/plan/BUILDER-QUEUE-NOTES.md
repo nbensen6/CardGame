@@ -2611,3 +2611,4 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 PASS. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-intent-before.png|420]] ![[agents/frames/builder/2026-10-09-intent-after.png|420]]
 - Meshy: 0 credits.
+- Later in run 16: R3 (a 0.25 unsharp pass alone) FAIL, "no visible change", reverted. R4 (slab sprites mipmapped with the box filter, kept: the jaggies on the lowest slab's edges smooth out in the --stones close-up) FAIL, no penalty. Tried the jackal's halo 0.6 -> 0.35: the glow 3-5 px outside the rim fell below TARGET's (33 vs 48), reverted.

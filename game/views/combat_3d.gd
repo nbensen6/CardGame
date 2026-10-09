@@ -7846,13 +7846,16 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 	var tex: Texture2D = STAIR_SLAB_TEX[clampi(k, 0, STAIR_SLAB_TEX.size() - 1)]
 	var sp := Sprite3D.new()
 	sp.name = "SlabPicture"
-	sp.texture = tex
+	# Mipmapped (box filter): the cut is ~1.4x the slab's size on a 720
+	# screen, and without mips the edges stair-stepped and the faces read
+	# grainy beside TARGET's (graders 2026-10-09 run 16).
+	sp.texture = CardView._a1_mip(tex)
 	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sp.shaded = false
 	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
 	sp.transparent = true
 	sp.flip_h = side > 0.0
-	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(tex.get_width())
 	sp.offset = Vector2(0.0, -float(tex.get_height()) * (0.5 - STAIR_SLAB_TOP))
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
