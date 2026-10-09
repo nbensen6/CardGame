@@ -13,6 +13,19 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open item); shared MINOR: slab underside specks, warm floor beside the hand (queued)
+
+- [ ] **Warm specks under the upper right slab.**
+      Next pass: grader 2026-10-09 run 18 R3 FAIL: specks gone ("MET"), but the big middle slab's underside edge reads lighter and ragged where TARGET's ends in a crisp dark line. Measured: the edge pixel is one blended step (~69 vs TARGET's ~48), the dark contour under it is there; it is the sprite's resample, the same softness as "Scene lines soft". FIX: land slab sprites on the pixel grid (texel centres on screen pixel centres at exactly 1:1) or draw them in the 2D pass.
+      TARGET's slabs end in a dark grey underside lip; along the upper right slab's underside the game shows small orange-red specks (the crack behind showing through).
+      **Done when** the `--square` and `--stones` pairs show no visible difference along the slabs' undersides.
+      Test: state=3d beast=cinder_jackal ^warm-specks-under-the-upper-right-slab
+
+- [ ] **Warm floor showing beside the last card.**
+      TARGET is near-black between the last card (Tongue Flick) and End Turn and behind the first card's lower left corner; the game shows dark red floor seams and a reddish tint there.
+      **Done when** the `--square` and `--hand` pairs show no visible difference beside the hand's ends.
+      Test: state=3d beast=cinder_jackal ^warm-floor-showing-beside-the-last-card
+
 - [ ] **Scene lines soft: TARGET's crisp outline, cracks and slab edges.**
       Next pass: grader 2026-10-09 run 18 R1-R3 FAIL, "no visible change" in the item's area each round, same wording as runs 16-17 (outline halo, fuzzy cracks, soft slab edges, card text). Measured after: slabs within ~3 levels of TARGET (were ~10: the 3D Environment's contrast/saturation, now undone in the cuts) with no fringe; jackal registered at 0,0 sub-pixel, cream band's 1 px outer ring +3.5 levels, beyond it -1. FIX: no pixel-level difference left to find at 720; next run do a Matched check (two fresh critics) and close or re-queue by what they name.
       Both critics, MODERATE (2026-10-09): TARGET's painted lines are crisp (the jackal's cream outline, cracks, ear tips, the slab edges and chips, cliff edge light, card art and text); the game's read smeared, as if resampled, with a wider glow halo round the outline.

@@ -33,6 +33,16 @@ SCALE = 1  # TARGET's own pixels: the game draws them at ~0.7x, so no upsample
 SHARPEN = [100, 100, 80, 80, 45, 40]  # per slab, lowest first
 SHARPEN_RADIUS = 1.0
 ALPHA_IN = 4
+ALPHA_IN_DARK = 110  # ... where the slab's background is darker than this
+MATTE = True
+MATTE_IN = 3     # 4x px inside the opaque slab its colour is read from
+MATTE_OUT = 4    # 4x px outside where the background colour is read
+MATTE_POW = 1.0  # the edge's alpha squared: the shot's resample spreads it ~half a pixel out
+MATTE_MIN = 30.0 # least slab-to-background colour distance the matte trusts
+LIP = 2          # TARGET px of dark grey underside lip the slab grows into
+LIP_MIN = 70     # its darkest level
+EDGE_CLEAN = 6   # 4x px: the edge band whose warm pixels are cleaned
+EDGE_SAT = 28    # grey slab pixels stay under this max-min spread
 SCREEN_COMP = [
     [(1.1275, -11.864), (1.16293, -17.915), (1.21524, -26.145)],
     [(-0.0044, 2.34034, -96.72835), (-0.00373, 2.09371, -75.0884), (-0.00336, 1.93158, -59.15251)],
@@ -71,6 +81,16 @@ def main():
         y0, y1 = s[0].start - PAD, s[0].stop + PAD
         x0, x1 = s[1].start - PAD, s[1].stop + PAD
         mask = lab[y0:y1, x0:x1] == i
+        # The slab's dark grey underside lip (~100 levels, TARGET's own
+        # edge under the stone) fails the bright test: without it the
+        # fight's crack showed through as warm specks along the slab's
+        # underside (critics 2026-10-09 run 18). Grow into grey pixels
+        # touching the slab, LIP px at most.
+        if LIP:
+            crop_a = a[y0:y1, x0:x1]
+            grey = ((crop_a.max(2) - crop_a.min(2)) < 28) & (crop_a.max(2) > LIP_MIN)
+            for _ in range(LIP):
+                mask = mask | (nd.binary_dilation(mask) & grey)
         mask = nd.binary_closing(mask, iterations=2)
         mask = nd.binary_fill_holes(mask)
         # Work at 4x so the edge is a smooth curve, not TARGET's pixel steps:
@@ -80,7 +100,7 @@ def main():
         bmx, bmn = big.max(2), big.min(2)
         # grey share of a pixel blended with orange (saturation) or with the
         # dark floor (brightness): ~0.5 on the drawn edge
-        soft = np.minimum(np.clip((110 - (bmx - bmn)) / 70, 0, 1), np.clip((bmx - 60) / 80, 0, 1))
+        soft = np.minimum(np.clip((110 - (bmx - bmn)) / 70, 0, 1), np.clip((bmx - LIP_MIN + 10) / 50, 0, 1) if LIP else np.clip((bmx - 60) / 80, 0, 1))
         region = np.asarray(Image.fromarray(mask.astype(np.uint8) * 255).resize(
             (crop.width * 4, crop.height * 4), Image.NEAREST)) > 0
         core = nd.binary_erosion(region, iterations=6)
@@ -88,15 +108,58 @@ def main():
         soft = np.where(core, 1.0, soft * region)
         soft = nd.gaussian_filter(soft, 1.2)
         alpha = np.clip((soft - 0.3) / 0.4, 0, 1)
+        fgcol = None
+        if MATTE:
+            # Colour matting at the edge (builder run 18): each edge pixel is
+            # TARGET's blend of the slab's grey and what lies behind it, so
+            # its alpha is how far it sits from the nearest outside colour
+            # toward the nearest slab colour. A threshold ramp drew the
+            # slabs half a pixel fat over dark rock and, pulled in, let the
+            # lava and cracks through as warm specks.
+            inner = nd.binary_erosion(alpha > 0.99, iterations=MATTE_IN)
+            outer = ~nd.binary_dilation(alpha > 0.01, iterations=MATTE_OUT)
+            _, (fy, fx) = nd.distance_transform_edt(~inner, return_indices=True)
+            _, (gy, gx) = nd.distance_transform_edt(~outer, return_indices=True)
+            fg, bg = big[fy, fx], big[gy, gx]
+            dv = fg - bg
+            den = (dv * dv).sum(2)
+            am = np.clip(((big - bg) * dv).sum(2) / np.maximum(den, 1e-3), 0, 1)
+            band = ~inner & ~outer & (den > MATTE_MIN ** 2)
+            # The slab's own darker grey (its underside lip, ~100) is slab,
+            # not a blend with the dark behind it: opaque, its own colour.
+            lip = region & ((bmx - bmn) < 28) & (bmx > LIP_MIN)
+            am = np.where(lip, 1.0, am)
+            alpha = np.where(band, am ** MATTE_POW, np.where(outer, 0.0, alpha))
+            fg = np.where(lip[..., None], big, fg)
+            fgcol = fg
         # Measured on the shot (run 18): the first pixel past TARGET's slab
         # edge came out ~20 levels bright, the slab drawn ~half a pixel fat.
         # Pull the matte in by ALPHA_IN 4x pixels.
         if ALPHA_IN > 0:
-            alpha = nd.grey_erosion(alpha, size=(2 * ALPHA_IN + 1, 2 * ALPHA_IN + 1))
+            er = nd.grey_erosion(alpha, size=(2 * ALPHA_IN + 1, 2 * ALPHA_IN + 1))
+            if fgcol is not None:
+                # only over dark rock: over the lava line and the cracks a
+                # pulled-in edge let them through as warm specks
+                bgl = nd.grey_dilation(bg.max(2), size=(2 * ALPHA_IN + 3, 2 * ALPHA_IN + 3))
+                er = np.where(bgl < ALPHA_IN_DARK, er, alpha)
+            alpha = er
         # bleed: transparent pixels take the nearest slab pixel's colour
         solid = alpha > 0.5
         _, (iy, ix) = nd.distance_transform_edt(~solid, return_indices=True)
         rgb = big[iy, ix]
+        if fgcol is not None:
+            edge = ~nd.binary_erosion(alpha > 0.99, iterations=MATTE_IN)
+            rgb[edge] = fgcol[edge]
+        # TARGET's slab edges are anti-aliased against the jackal's orange
+        # cracks: those edge pixels carried the orange in, a row of warm
+        # specks along a slab's underside (critics 2026-10-09 run 18). The
+        # slabs are grey: an edge pixel with colour in it takes the nearest
+        # grey core pixel's colour instead.
+        core = nd.binary_erosion(solid, iterations=EDGE_CLEAN)
+        sat = rgb.max(2) - rgb.min(2)
+        warm = ~core & (sat > EDGE_SAT)
+        _, (cy, cx) = nd.distance_transform_edt(~(core & (sat <= EDGE_SAT)), return_indices=True)
+        rgb[warm] = rgb[cy[warm], cx[warm]]
         rgb = undo_screen(rgb)
         img = np.dstack([np.clip(np.round(rgb), 0, 255), alpha * 255]).astype(np.uint8)
         im = Image.fromarray(img, "RGBA")

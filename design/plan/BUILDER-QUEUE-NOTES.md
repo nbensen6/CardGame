@@ -2656,3 +2656,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-fistseam-before.png|420]] ![[agents/frames/builder/2026-10-09-fistseam-after.png|420]]
 - Meshy: 0 credits.
 
+## Warm specks under the upper right slab.
+
+2026-10-09 15:57 EDT, builder (run 18). Not passed; item left open.
+
+- Queued from the run-18 matched check (both critics MINOR). Cause: TARGET's slabs end in a dark grey underside lip (~100) that the cut's bright test left out, so the rig's crack showed through; and the matte pulled in (ALPHA_IN) let the lava line through on the lowest slab's top edge.
+- tools/cut_slabs.py: grows each slab into its grey lip (LIP 2 px, > 70); colour matting at the edge (alpha from the nearest slab and background colours; the slab's own darker grey is opaque); the matte pulled in only where the background is dark (ALPHA_IN_DARK). Warm pixels on the slabs where TARGET is grey: 66 -> 12; underside band tone within 1-5 levels of TARGET on all six.
+- Tried and dropped: nearest filtering on the slab sprites (error 3.5 -> 5.0 levels), more unsharp (error up), an opaque dark contour under each slab (already drawn by the rig; no change).
+- Grader R1 FAIL (no change: the fix had not reached the frame), R2 FAIL (undersides light: matte took the lip as half-transparent), R3 FAIL (specks MET; middle slab's lower edge soft). VERDICT: FAIL.
+- Meshy: 0 credits.
+
