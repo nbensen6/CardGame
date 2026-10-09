@@ -41,6 +41,8 @@ FROG = (440, 578, 590, 712)   # box round the Frog and its marker
 BAR = (428, 692, 596, 726)    # box round its HP bar
 SHADOW = ((507.0, 692.0), (56.0, 8.0))   # centre, radii in TARGET px
 CARDS_ROW = 790           # TARGET row the hand starts at: below it, rows repeat
+CARRY = 40                # rows under it whose seams are carried on, not mirrored
+SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
 SIDE_FEATHER = 40
 # Past the square's sides the 16:9 frame shows more floor: TARGET's slabs
@@ -88,6 +90,16 @@ def build() -> None:
     band = CARDS_ROW - TOP
     for y in range(band, H):
         out[y] = out[max(0, 2 * band - 1 - y)]
+    # The first CARRY rows under CARDS_ROW show between and beside the hand:
+    # mirrored, TARGET's diagonal seams folded into chevrons there (grader
+    # 2026-10-09, "a dark slab past the pedestal's lower right"). There each
+    # row is the row above slid SHEAR px right, so the seams by the hand (they
+    # run down and right at about 0.43) carry straight on.
+    if CARRY:
+        xs = np.arange(W, dtype=float)
+        for y in range(band, min(H, band + CARRY)):
+            for k in range(3):
+                out[y, :, k] = np.interp(xs - SHEAR, xs, out[y - 1, :, k])
     out[:, :EDGE] = out[:, EDGE:EDGE + 1]
     out[:, W - EDGE:] = out[:, W - EDGE - 1:W - EDGE]
     # Mirror only clean floor: left of the pedestal (x < 356) and between it

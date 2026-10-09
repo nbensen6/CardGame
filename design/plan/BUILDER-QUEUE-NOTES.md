@@ -2367,3 +2367,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 VERDICT: PASS (minor: glyph shapes).
 - Frames: ![[agents/frames/builder/2026-10-09-hpbar-before.png|420]] ![[agents/frames/builder/2026-10-09-hpbar-after.png|420]]
 - Meshy: 0 credits.
+
+## Frog's pedestal: no extra dark slab at its lower right.
+
+2026-10-09 05:49 EDT, builder (run 11). PASS.
+
+- The "slab" was tools/floor_cut.py's mirror under CARDS_ROW (790): TARGET's diagonal seam band by the pedestal folded into a chevron where the game's hand sits lower than TARGET's. The first CARRY (40) rows under CARDS_ROW are now each the row above slid SHEAR (2.3) px right, so the seams by the hand run straight on; rows past them still mirror (under the cards). Tried first: a Navier-Stokes inpaint of those rows (a horizontal smear, reverted).
+- **Grader:** R1 VERDICT: PASS (minor: seam a touch steeper).
+- Frames: ![[agents/frames/builder/2026-10-09-pedwedge-before.png|420]] ![[agents/frames/builder/2026-10-09-pedwedge-after.png|420]]
+- Meshy: 0 credits.

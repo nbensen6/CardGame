@@ -13,14 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 05:44 EDT
+2026-10-09 05:49 EDT
 
-- **Did:** cleaned outline slivers and belly darks, drew TARGET's own Frog at rest, matched its HP bar.
-- **Worked?** Partly: inner-arm outlines, Frog and HP bar VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; registered within a few levels).
-- **Look at:** ![[frames/builder/2026-10-09-hpbar-before.png]] then ![[frames/builder/2026-10-09-hpbar-after.png]]
+- **Did:** cleaned outline slivers and belly darks, drew TARGET's Frog at rest, matched its HP bar and floor.
+- **Worked?** Partly: inner-arm outlines, Frog, HP bar, pedestal floor VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; registered within a few levels).
+- **Look at:** ![[frames/builder/2026-10-09-frogcel-before.png]] then ![[frames/builder/2026-10-09-pedwedge-after.png]]
 - **Ask:** nothing
 - **Found:** the game's body reads a little softer than TARGET's at close-up (resample), the last visible gap on the cracks.
-- **Found:** a dark slab with a red edge past the pedestal's lower right (queued).
+- **Found:** a faint brown smear on the floor under the lowest slab (queued).
+- **Found:** the second hunter's red-edged rock shows at the frame's far right, outside the square.
 
 ## Notes
 
@@ -29,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 05:49 EDT — builder: floor under the hand carries TARGET's seams on instead of mirroring them (pedestal wedge); PASS; tests green, pushed.
 
 - 2026-10-09 05:44 EDT — builder: HP bar under the Frog drawn to TARGET's (size, rim, numerals); PASS; tests green, pushed.
 

@@ -171,10 +171,16 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]] ^inner-arm-outlines-beside-the-stones-smo
 
-- [ ] **Frog's pedestal: no extra dark slab at its lower right.**
-      In the `--frog` pair the game shows a dark slab with a red edge past the pedestal's lower right (game ~x1800-1940, y540-600); TARGET's floor there is plain hex slabs.
-      **Done when** the `--frog` and `--square` pairs show no visible difference round the pedestal's lower right.
-      Test: state=3d beast=cinder_jackal ^frog-s-pedestal-no-extra-dark-slab-at-it
+- [ ] 👀 **Frog's pedestal: no extra dark slab at its lower right.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Frog's pedestal: no extra dark slab at its lower right.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-pedwedge-after.png|420]] ^frog-s-pedestal-no-extra-dark-slab-at-it
+
+- [ ] **Floor left of the Frog: no brown smear under the lowest slab.**
+      In the `--frog` pair the game shows a faint brownish smear on the floor left of the Frog, under the lowest slab (game ~x1150-1200, y100-150); TARGET's floor there is plain dark slab.
+      **Done when** the `--frog` pair shows no visible difference on the floor under the lowest slab.
+      Test: state=3d beast=cinder_jackal ^floor-left-of-the-frog-no-brown-smear-un
 
 ## Waiting on Nick
 
