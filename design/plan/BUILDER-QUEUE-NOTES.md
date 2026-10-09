@@ -2357,3 +2357,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (spots fainter, highlight yellower, head bumps even: the inpainted head under the old marker), R2 PASS after the marker came with the cut and the tone fix. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-frogcel-before.png|420]] ![[agents/frames/builder/2026-10-09-frogcel-after.png|420]]
 - Meshy: 0 credits.
+
+## HP bar under the Frog: TARGET's size and weight.
+
+2026-10-09 05:44 EDT, builder (run 11). PASS.
+
+- ui/unit_bar.gd drawn to TARGET's bar sampled at the 720 square: 11 px tall (was 13), a dark maroon rounded rim (was near-black), fill (199,33,31) with a two-row pink lit band, one mid row and a lighter last row, numerals at 10 px (was 13) with a 3 px maroon outline (was 4 px black). HUNTER_BAR_SIZE 102 -> 100. The beast's top bar keeps UnitBar.FILL.
+- Measured: TARGET bar x 310-408, y 500-509, text x 346-372; game x 309-408, y 499-509, text x 346-371.
+- **Grader:** R1 VERDICT: PASS (minor: glyph shapes).
+- Frames: ![[agents/frames/builder/2026-10-09-hpbar-before.png|420]] ![[agents/frames/builder/2026-10-09-hpbar-after.png|420]]
+- Meshy: 0 credits.

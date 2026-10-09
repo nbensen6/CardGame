@@ -13,12 +13,22 @@ const FILL_BLOCKED := Color(0.22, 0.52, 0.86)
 const TRACK := Color(0.16, 0.04, 0.04, 0.92)
 const EDGE := Color(0.02, 0.01, 0.01, 0.95)
 const SHIELD := Color(0.30, 0.62, 0.95)
-const BAR_H := 13.0
+const BAR_H := 11.0
+## TARGET.png's bar under the Frog, sampled at the 720 square (builder
+## 2026-10-09, "HP bar under the Frog"): a dark maroon rim, not black; a
+## deeper red with a two-row pink lit band on top and a lighter last row; slim
+## numerals with a thin maroon outline.
+const RIM := Color(0.17, 0.02, 0.04, 0.95)
+const BAR_FILL := Color(0.78, 0.13, 0.12)
+const BAR_LIT := Color(0.85, 0.44, 0.41)
+const BAR_LIT2 := Color(0.80, 0.29, 0.27)
+const BAR_FOOT := Color(0.66, 0.20, 0.20)
+const TEXT_OUTLINE := 3
 
 var hp := 0
 var max_hp := 1
 var block := 0
-var font_size := 13
+var font_size := 10
 
 
 func _ready() -> void:
@@ -48,18 +58,25 @@ func _draw() -> void:
 	var font := get_theme_default_font()
 	var y0 := (size.y - BAR_H) * 0.5
 	var bar := Rect2(0.0, y0, size.x, BAR_H)
-	draw_rect(bar.grow(1.0), EDGE)
+	var rim := StyleBoxFlat.new()
+	rim.bg_color = RIM
+	rim.set_corner_radius_all(2)
+	draw_style_box(rim, bar.grow(1.0))
 	draw_rect(bar, TRACK)
 	var f := fill_frac(hp, max_hp)
 	if f > 0.0:
-		var fill_c := FILL_BLOCKED if block > 0 else FILL
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * f, BAR_H)), fill_c)
-		# A lit line along the top of the fill: the bar reads as a tube, not a stripe.
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * f, 3.0)), fill_c.lightened(0.35))
+		var blocked := block > 0
+		var fill_c := FILL_BLOCKED if blocked else BAR_FILL
+		var w := bar.size.x * f
+		draw_rect(Rect2(bar.position, Vector2(w, BAR_H)), fill_c)
+		# The lit band along the top and the lighter last row: a tube.
+		draw_rect(Rect2(bar.position, Vector2(w, 2.0)), FILL_BLOCKED.lightened(0.35) if blocked else BAR_LIT)
+		draw_rect(Rect2(bar.position + Vector2(0, 2.0), Vector2(w, 1.0)), FILL_BLOCKED.lightened(0.2) if blocked else BAR_LIT2)
+		draw_rect(Rect2(bar.position + Vector2(0, BAR_H - 1.0), Vector2(w, 1.0)), FILL_BLOCKED.lightened(0.15) if blocked else BAR_FOOT)
 	var txt := hp_text(hp, max_hp)
 	var tw := font.get_string_size(txt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
 	var base := Vector2((size.x - tw) * 0.5, y0 + BAR_H * 0.5 + font_size * 0.36)
-	draw_string_outline(font, base, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, 4, EDGE)
+	draw_string_outline(font, base, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, TEXT_OUTLINE, RIM)
 	draw_string(font, base, txt, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(1, 0.97, 0.92))
 	if block > 0:
 		_draw_shield(Vector2(0.0, size.y * 0.5), block, font)

@@ -154,10 +154,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-frogcel-after.png|420]] ^frog-target-s-clean-cel-line-not-a-heavy
 
-- [ ] **HP bar under the Frog: TARGET's size and weight.**
-      TARGET's 42/42 bar is a little smaller with a lighter rim and thinner numerals; the game's is larger and bolder (`--frog` pair).
-      **Done when** the `--frog` pair shows no visible difference in the HP bar.
-      Test: state=3d beast=cinder_jackal ^hp-bar-under-the-frog-target-s-size-and-
+- [ ] 👀 **HP bar under the Frog: TARGET's size and weight.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HP bar under the Frog: TARGET's size and weight.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-hpbar-after.png|420]] ^hp-bar-under-the-frog-target-s-size-and-
 
 - [ ] **Stones: TARGET's slab size round the body.**
       In the `--beast` and `--chest` pairs TARGET's four upper slabs are larger and sit a few px lower than the game's (the second slab ~10% wider, the third and fourth ~10-15% larger); the cracked body round them shows where the game's slabs are smaller.
@@ -169,6 +170,11 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-cracks11-after.png|420]] ^inner-arm-outlines-beside-the-stones-smo
+
+- [ ] **Frog's pedestal: no extra dark slab at its lower right.**
+      In the `--frog` pair the game shows a dark slab with a red edge past the pedestal's lower right (game ~x1800-1940, y540-600); TARGET's floor there is plain hex slabs.
+      **Done when** the `--frog` and `--square` pairs show no visible difference round the pedestal's lower right.
+      Test: state=3d beast=cinder_jackal ^frog-s-pedestal-no-extra-dark-slab-at-it
 
 ## Waiting on Nick
 

@@ -3046,7 +3046,7 @@ func _position_unit_bars() -> void:
 
 
 ## A hunter's HP bar on screen, px (TARGET.png: ~102x13 in its 720 square).
-const HUNTER_BAR_SIZE := Vector2(102, 17)
+const HUNTER_BAR_SIZE := Vector2(100, 17)
 
 
 ## Centred just under the hunter's feet.

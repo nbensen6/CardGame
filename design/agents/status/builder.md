@@ -13,13 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 05:41 EDT
+2026-10-09 05:44 EDT
 
-- **Did:** cleaned outline slivers and belly darks, and put TARGET's own Frog on its rock at rest.
-- **Worked?** Partly: inner-arm outlines VERDICT: PASS; Frog VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; registered within a few levels).
-- **Look at:** ![[frames/builder/2026-10-09-frogcel-before.png]] then ![[frames/builder/2026-10-09-frogcel-after.png]]
+- **Did:** cleaned outline slivers and belly darks, drew TARGET's own Frog at rest, matched its HP bar.
+- **Worked?** Partly: inner-arm outlines, Frog and HP bar VERDICT: PASS; cracks VERDICT: FAIL ("unchanged"; registered within a few levels).
+- **Look at:** ![[frames/builder/2026-10-09-hpbar-before.png]] then ![[frames/builder/2026-10-09-hpbar-after.png]]
 - **Ask:** nothing
 - **Found:** the game's body reads a little softer than TARGET's at close-up (resample), the last visible gap on the cracks.
+- **Found:** a dark slab with a red edge past the pedestal's lower right (queued).
 
 ## Notes
 
@@ -28,6 +29,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 05:44 EDT — builder: HP bar under the Frog drawn to TARGET's (size, rim, numerals); PASS; tests green, pushed.
 
 - 2026-10-09 05:41 EDT — builder: TARGET's own Frog (tools/frog_cut.py) drawn over the model at rest, pip hidden meanwhile; Frog PASS; tests green, pushed.
 
