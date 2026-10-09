@@ -1,11 +1,11 @@
 {
-  "updated": "Fri Oct 9, 8:52 AM ET",
-  "last_commit": "47e0aff",
+  "updated": "Fri Oct 9, 10:52 AM ET",
+  "last_commit": "0d5c056",
   "status": [
     {
       "label": "Builder",
-      "value": "Working: new run started 8:07 AM",
-      "state": "working"
+      "value": "Idle: last run ended 10:08 AM",
+      "state": "idle"
     },
     {
       "label": "Checker",
@@ -25,13 +25,54 @@
   ],
   "needs_you": [
     "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?",
-    "The grader has failed the chest cracks 12 runs, though they measure like yours. Look and call them done?"
+    "The grader has failed the chest cracks 12 runs, though they measure like yours. Look and call them done?",
+    "The grader failed the cards 14 times, but passes your own hand. Look and call them done?"
   ],
   "latest": {
     "path": "design/match-log/iter-25.png",
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 10:08 AM",
+      "title": "Card trim and art redone",
+      "bullets": [
+        "Beaded double trim and green cost gems",
+        "Leap and Scramble pictures re-cut again",
+        "Grader failed 14 times; your hand passes"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards5-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards5-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 8:54 AM",
+      "title": "Fist flame smoothed, specks gone",
+      "bullets": [
+        "Flame redrawn smooth, no blotchy patches",
+        "Pinholes under the fist removed",
+        "Grader fails: flame core too pale"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fist7-before-fist.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-fist7-after-fist.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 7:20 AM",
