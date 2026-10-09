@@ -2221,3 +2221,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (Switch high/short, dark), R2 PASS. VERDICT: PASS.
 - Frames: ![[agents/frames/builder/2026-10-09-hudsquare-before.png|420]] ![[agents/frames/builder/2026-10-09-hudsquare-after.png|420]]
 - Meshy: 0 credits.
+
+## Hand: centred and as wide as TARGET's.
+
+2026-10-09 01:45 EDT, builder (run 8). PASSED.
+
+- Measured on a 2x crop of the square's bottom: TARGET's middle card spans x 305-398 of 720 with its top at y 560; the game's was x 321-420, top y 570, every card ~7% wider.
+- `HAND_REST_SCALE` 0.70 -> 0.65, `FAN_OVERLAP` 0.74 -> 0.77 (TARGET's cards nearly abut), `HAND_SQUARE_CX` 0.524 -> 0.497, `FAN_DROP` 7 -> 10.5 (outer tops ~20 px under the middle's), `HAND_REST_LIFT` 36 -> 61 (the smaller scale sinks the fan about its low pivot).
+- Grader: R1 PASS (centre 316.5 vs 317.5 of 640; width 439 vs 449). Minor: cards shorter than TARGET's and lean less; queued as "Cards: TARGET's taller cards running off the bottom, more tilt."
+- Frames: ![[agents/frames/builder/2026-10-09-handfit-before.png|420]] ![[agents/frames/builder/2026-10-09-handfit-after.png|420]]
+- Meshy: 0 credits.

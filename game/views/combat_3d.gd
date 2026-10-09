@@ -9374,11 +9374,11 @@ func _beast_shake() -> void:
 ## before it, including the right end of its name plate - so half the hand
 ## had its title hidden. The overlap has to leave the NAME readable, which is
 ## the only thing you scan a fanned hand for.
-const FAN_OVERLAP := 0.74     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
+const FAN_OVERLAP := 0.77     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
 ## Where TARGET centres the hand, as a fraction of the centred square's width.
-const HAND_SQUARE_CX := 0.524
+const HAND_SQUARE_CX := 0.497   # TARGET's middle card centred at x 351 of 720 (builder 2026-10-09)
 const FAN_TILT := 0.085       # radians per card away from centre
-const FAN_DROP := 7.0         # px each card sinks per step from centre, making the arc
+const FAN_DROP := 10.5        # px each card sinks per step from centre, making the arc
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
 ## Enough to clear the screen edge. The fan deliberately lets the bottom of a
 ## card fall off the bottom of the screen - that is what "out of the way"
@@ -9399,12 +9399,12 @@ const FAN_HOVER_SCALE := 1.34
 ## pedestal and HP bar behind it: both critics put the Frog's rock MAJOR.
 ## Scaled about the same low pivot as the fan's tilt, so the rest pose sinks
 ## as it shrinks; a hovered card still grows to FAN_HOVER_SCALE.
-const HAND_REST_SCALE := 0.70
+const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 square (builder 2026-10-09)
 ## Px the shrunken fan is lifted back up, so its name plates still clear the
 ## bottom edge where TARGET's sit.
 ## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
 ## `--square` pair, leaving the Frog's pedestal column showing above them.
-const HAND_REST_LIFT := 36.0
+const HAND_REST_LIFT := 61.0   # TARGET's middle card top at y 560 of the 720 square (builder 2026-10-09)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that

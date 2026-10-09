@@ -97,10 +97,11 @@ run failed.
       **Done when** the `--square` and `--stones` pairs show the lowest slab in TARGET's place, clear of the Frog.
       Test: state=3d beast=cinder_jackal ^lowest-slab-float-it-above-and-left-of
 
-- [ ] **Hand: centred and as wide as TARGET's.**
-      TARGET's five cards span the square's middle (~x108-555 of 640) and are wider; the game's sit ~55px left of centre and narrower.
-      **Done when** the `--square` and `--hand` pairs show the hand the same width and centred like TARGET's.
-      Test: state=3d beast=cinder_jackal ^hand-centred-and-as-wide-as-target-s
+- [ ] 👀 **Hand: centred and as wide as TARGET's.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hand: centred and as wide as TARGET's.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-handfit-after.png|420]] ^hand-centred-and-as-wide-as-target-s
 
 - [ ] **Floor horizon: the lava line at TARGET's height.**
       In the `--square` pair TARGET's lava line and floor horizon sit about 55% down the square (~y380 game px); the game's sit ~40-55 px lower, so the bottom slab, drawn in TARGET's place, overlaps the lava band instead of the dark floor.
@@ -134,6 +135,11 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]] ^stray-yellow-speck-on-the-jackal-s-chest
+
+- [ ] **Cards: TARGET's taller cards running off the bottom, more tilt.**
+      TARGET's cards are ~1.15x taller for their width (middle card top at y560 of the 720 square, "Deal 1 damage" at y664, bottoms off the frame) and the outer cards lean ~8 degrees; the game's cards are shorter (bottom borders show at ~y705) and lean ~5-6 degrees.
+      **Done when** the `--square` and `--hand` pairs show the cards the same height, running off the bottom, with TARGET's tilt.
+      Test: state=3d beast=cinder_jackal ^cards-target-s-taller-cards-running-off-t
 
 ## Waiting on Nick
 
