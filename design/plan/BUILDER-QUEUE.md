@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader 2026-10-09 run 8: "no visible change; 2x wider #FFD040 cracks, seam down the abdomen, glow into rock". Run 8 fixed a real 0.5% scale miss (fist/forearm lines ~2 px off; registered error 7.4 -> 6.1); 25x50 block means now within 0-7 levels of TARGET everywhere on the body except the lava band. Zoomed crops of chest and belly are TARGET\'s own cracks; nothing in the art is left to widen.
+      Next pass: grader 2026-10-09 run 9 (with the new --chest pair): "seam below the top stone and the belly web dimmer, thinner, redder than TARGET; Y a touch narrow at its stem". Row profiles across the seam in the --chest pair match TARGET within ~10 levels (e.g. y 330: T 214,54,3 / G 213,48,0), so the art is TARGET's; the stones (smaller, offset) are the visible difference there. Next: grade with --chest and --stones together, or fix the slabs' size so TARGET's seam reads the same round them.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum

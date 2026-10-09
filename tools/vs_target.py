@@ -11,6 +11,7 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png --square   TARGET vs the centred square of the shot
     python tools/vs_target.py shot.png out.png --stones   just the staircase of slabs, cut from the same square
     python tools/vs_target.py shot.png out.png --fist     the raised fist and its flame, cut from the same square
+    python tools/vs_target.py shot.png out.png --chest    the sternum Y and the chest cracks, cut from the same square
     python tools/vs_target.py shot.png out.png --frog     the Frog on its pedestal, cut from the same square
     python tools/vs_target.py shot.png out.png --floor    the floor from the lava line to the hand, cut from the same square
 
@@ -53,6 +54,10 @@ REGIONS = {
     # seams and slabs against)
     # the Frog on its pedestal, cut from the same square
     "--frog": {"target": (0.30, 0.55, 0.70, 0.80), "shot": (0.21875 + 0.30 * 0.5625, 0.55, 0.21875 + 0.70 * 0.5625, 0.80)},
+    # the chest: the sternum Y, the seam under it and the pec cracks
+    # (builder 2026-10-09: a grader asked for a zoomed chest crop, the 1x
+    # pairs being too small to judge the cracks' width and sharpness)
+    "--chest": {"target": (0.40, 0.28, 0.64, 0.52), "shot": (0.21875 + 0.40 * 0.5625, 0.28, 0.21875 + 0.64 * 0.5625, 0.52)},
     "--floor": {"target": (0.0, 0.52, 1.0, 0.78), "shot": (0.21875, 0.52, 0.78125, 0.78)},
 }
 

@@ -2168,6 +2168,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks8-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks8-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 03:22 EDT, builder (run 9). Not passed; item left open.
+
+- **Under the stones, rebuilt instead of inpainted.** New `tools/crack_synth.py`, called from beast_rig.py `paint_hidden` (`CRACK_SYNTH`, replaces `carry_seam`): each hole a stone leaves is filled with crack-free plate rock lifted to the ring's median tone (the inpaint pulled in the stones' shadows), every crack that runs into the hole (bright ones by colour, dim belly ones by a 9 px red top-hat) is carried on through it, paired with the crack facing it or run to a junction ahead, and a sparse Delaunay web of junctions (19 px apart, 60% of edges kept) with per-plate tone offsets breaks up the big holes. Crack colour per row is read off TARGET's visible cracks beside the holes. Where the fight's slab sits a few px off TARGET's, the body round it now reads as cracked plates, not a dark smudge.
+- **Sharpness.** `RIG_SCREEN_SHARPEN` 0 -> 0.2 (drawn_rig.gd): Laplacian on the --beast pair, T/G, forearm 10.84/10.82 (was 9.75), chest 10.69/11.39, body 8.45/8.56. 0.3 overshot (11.4/12.3).
+- **Sternum Y.** New beast_rig.py `y_core`: the Y's yellow pixels grow 1 px at 0.6 inside Y_BOX only (grader R1: "Y core a little narrower").
+- **New `--chest` close-up** in vs_target.py (TARGET 0.40-0.64 x 0.28-0.52), at the grader's request.
+- **Measured.** Registered mean error on the --beast pair, before/after: forearm 10.75/10.95, chest 4.39/4.80, body 6.88/6.98 (the Y grow and sharpen move away from TARGET's pixels a little). Seam row profiles in the --chest pair match TARGET within ~10 levels.
+- **Grader:** R1 FAIL (before/after "pixel-identical" on the beast; softness, Y a touch narrow), R2 FAIL (with --chest: seam below the top stone and belly web dimmer, which the row profiles do not show; also flagged the stones' place and size). No penalty beyond "no visible change". Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks9-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks9-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

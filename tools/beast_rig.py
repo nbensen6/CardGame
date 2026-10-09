@@ -30,6 +30,9 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw
 from scipy import ndimage as ndi
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import crack_synth
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = ROOT / "design/art/targets/TARGET.png"
@@ -56,6 +59,8 @@ INPAINT_STONES = True
 # pixel that is not stone and inpaints only the stones, grown a little.
 TIGHT = True
 TIGHT_GROW = 3
+# 2026-10-09: the holes are rebuilt by tools/crack_synth.py, not inpainted.
+CRACK_SYNTH = True
 # 0 since 2026-10-08: the fight draws the jackal at TARGET's place, its cut
 # on TARGET's lava line, so TARGET's own glow rows show and the ramp only
 # hazed the hips orange (grader, "Cracks: wide hot cores").
@@ -227,7 +232,16 @@ def paint_hidden(T, m, line, walls):
         out = cv2.inpaint(src, hole.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA).astype(float)
         keep = ~hole
         out[keep] = T[keep]
-        out = carry_seam(out, hole)
+        if CRACK_SYNTH:
+            # Rock without crack smears, and every crack that runs under a
+            # stone carried on through it (tools/crack_synth.py): where the
+            # fight's slab sits a few px off TARGET's, the body round it
+            # reads as TARGET's cracked rock, the sternum seam included.
+            inner = hole & ~rim
+            syn, *_ = crack_synth.fill(T, inner, m, ~rim)
+            out[inner] = syn[inner]
+        else:
+            out = carry_seam(out, hole)
         # The band's stone pixels: the line goes back over them below.
         out[stone & band] = LINE
         return _finish_body(out, T, m, line, walls, stone)
@@ -692,6 +706,32 @@ def crack_glow(img, m):
 HOT_LIFT = 18.0
 
 
+# TARGET's sternum Y has a wide yellow-white core; after the resample the
+# game's read a px narrower and more orange where it meets the abdomen seam
+# (grader, 2026-10-09 run 9). Its yellow pixels grow by Y_GROW px, inside
+# this box only, blended at Y_GROW_A.
+Y_BOX = (478, 318, 548, 392)
+Y_GROW = 1
+Y_GROW_A = 0.6
+
+
+def y_core(img, m):
+    if not Y_GROW:
+        return img
+    x0, y0, x1, y1 = Y_BOX
+    sub = img[y0:y1, x0:x1]
+    r, g = sub[..., 0], sub[..., 1]
+    hot = (r > 225) & (g > 165)
+    grown = ndi.binary_dilation(hot, iterations=Y_GROW) & ~hot & m[y0:y1, x0:x1]
+    num = np.dstack([ndi.maximum_filter(sub[..., k] * hot, size=2 * Y_GROW + 1) for k in range(3)])
+    lum = sub @ np.array([0.3, 0.59, 0.11])
+    put = grown & (num @ np.array([0.3, 0.59, 0.11]) > lum)
+    out = img.copy()
+    o = out[y0:y1, x0:x1]
+    o[put] = o[put] * (1 - Y_GROW_A) + num[put] * Y_GROW_A
+    return out
+
+
 def hot_lift(img, m):
     if not HOT_LIFT:
         return img
@@ -762,6 +802,7 @@ def build():
     m, line, walls = silhouette(T)
     body = paint_hidden(T, m, line, walls)
     body = crack_glow(body, m)
+    body = y_core(body, m)
     body = hot_lift(body, m)
     body = crack_widen(body, m)
     fire_rgb, fire_a = fire_layer(T, m)
