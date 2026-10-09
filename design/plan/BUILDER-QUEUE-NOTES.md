@@ -2087,6 +2087,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-08-cracks3-before.png|420]] ![[agents/frames/builder/2026-10-08-cracks3-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-08 20:21 EDT, builder (run 4). Not passed; item left open.
+
+- **The cream cores were the scene's glow.** The 3D LUT was calibrated with glow off (drawn_lut3d.py turns it off to measure), but the fight ran with it on. Registered on TARGET's hot pixels: TARGET (249,192,51), game with glow (251,204,102), glow off (249,182,51). glow_hdr_threshold 2.3, glow_levels/1 0, additive blend and intensity 0.5 all left it at ~(250,203,100); only glow off fixes it. combat_3d.tscn `glow_enabled = false`. It also takes the pink fringe off the jackal's cream line and gives the fist fire its tongues back (the fist item's Next pass asked for exactly this).
+- **Shader crack knobs off** (RIG_CRACK_GROW 0): the 16-tap max filter stippled the channels (hatched orange, visible at 3x). With the knobs off and glow off, chest crack coverage is TARGET 18.4% / game 19.4%, crack colour (203,75,26)/(201,74,23).
+- **Offline crack glow** in tools/beast_rig.py (`crack_glow`): each crack's own colour, gaussian-blurred (σ 1.6 TARGET px, 0.55) and the yellow cores' (σ 4, 0.45), screened onto the rock inside the line. Smooth, so no stipple. σ 6 at 0.8 overshot TARGET's Y at close range and was reverted.
+- Tried and reverted: NS inpaint with TIGHT_GROW 5 for the stone holes (no better than TELEA; the game's stones cover the holes).
+- drawn_lut3d.py no longer asserts glow is on.
+- **Grader:** R1 FAIL (glow off, knobs off; "almost the same"), R2 FAIL (with crack glow; "a little brighter and wider"). No penalties. Final: VERDICT: FAIL. Both again claimed more fine cracks than TARGET, which TARGET's own pixels cannot have.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks4-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks4-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

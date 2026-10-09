@@ -474,10 +474,45 @@ def sink(arr):
     return arr
 
 
+# TARGET's cracks read as glowing channels: at a glance the light spills a
+# little onto the plates beside them, and the sternum's yellow lights the
+# chest round it. Through the fight's resamples that spill reads thinner than
+# TARGET's (graders, 2026-10-08 runs 1-3 and 10-09). A soft glow of each
+# crack's own colour, screened onto the dark rock next to it, puts it back
+# without the shader's per-pixel taps (which stippled the channels).
+CRACK_GLOW = 0.55          # strength of the narrow spill
+CRACK_GLOW_SIGMA = 1.6     # TARGET px
+HOT_GLOW = 0.45            # the yellow cores' wider glow
+HOT_GLOW_SIGMA = 4.0
+
+
+def crack_glow(img, m):
+    rim = m & ~ndi.binary_erosion(m, iterations=RIM + 3)
+    inner = m & ~rim
+    mx, mn = img.max(2), img.min(2)
+    sat = (mx - mn) / np.maximum(mx, 1)
+    crack = inner & (img[..., 0] > 150) & (sat > 0.6) & (img[..., 2] < 110)
+    hot = inner & (img[..., 0] > 225) & (img[..., 1] > 150) & (img[..., 2] < 140)
+    def blur(mask, sig):
+        w = mask.astype(float)
+        col = np.dstack([ndi.gaussian_filter(img[..., k] * w, sig) for k in range(3)])
+        a = ndi.gaussian_filter(w, sig)
+        return col / np.maximum(a[..., None], 1e-4), np.clip(a * 2.0, 0, 1)
+    out = img.copy()
+    for mask, sig, k in ((crack, CRACK_GLOW_SIGMA, CRACK_GLOW), (hot, HOT_GLOW_SIGMA, HOT_GLOW)):
+        col, a = blur(mask, sig)
+        a = a * k * inner
+        # Screen: only ever brightens, never past the glow's own colour.
+        scr = 255 - (255 - out) * (255 - col) / 255
+        out = out * (1 - a[..., None]) + scr * a[..., None]
+    return out
+
+
 def build():
     T = np.asarray(Image.open(TARGET).convert("RGB")).astype(float)
     m, line, walls = silhouette(T)
     body = paint_hidden(T, m, line, walls)
+    body = crack_glow(body, m)
     fire_rgb, fire_a = fire_layer(T, m)
     lab = labels(m)
     alpha, own = layer_alpha(lab, m)

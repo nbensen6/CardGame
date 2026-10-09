@@ -67,9 +67,12 @@ def shoot():
     # the table learnt that a hot emission shows brighter than it does as a
     # thin crack, and drew the cracks ~10% dark (2026-10-08). The fight's
     # bloom then adds only the halo round each line, as TARGET draws it.
+    # (2026-10-09: the fight itself now runs with glow off, because the bloom
+    # also lifted the hot cores' blue from 51 to 100 and turned them cream;
+    # this keeps working if it is ever turned back on.)
     env = os.path.join(ROOT, "game/views/combat_3d.tscn")
     src_e = open(env).read()
-    assert "glow_enabled = true" in src_e
+    assert "glow_enabled = " in src_e
     jobs = [(99, False)] + [(g, f) for g in range((N + 3) // 4) for f in (False, True)]
     try:
         open(env, "w").write(src_e.replace("glow_enabled = true", "glow_enabled = false", 1))

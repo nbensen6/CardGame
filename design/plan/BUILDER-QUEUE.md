@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R3 (2026-10-08 run 3): limb cracks still read thin and red with no yellow core, sternum Y half TARGET's size with no glow into the plates and no thick yellow seam to the stones; registered pixels already match TARGET (crack/hot coverage within 1-5%), so the next try is painting TARGET's look into the torso/arm part PNGs (tools/beast_rig.py) rather than more shader knobs.
+      Next pass: grader R2 (2026-10-09 run 4): sternum Y glow about half TARGET's area and its stem dims before the top stone; lower-torso plates read crimson where TARGET's are brown. Its 'thin limb cracks, more fine cracks' claims contradict the registered pixels (coverage and colour within a few %), so work the Y glow, the stem and the lower-torso tint only.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
@@ -119,6 +119,11 @@ run failed.
       Where the legs meet the lava TARGET's glow fades softly; the game shows hard red bars and white specks at the cut.
       **Done when** the `--beast` pair shows no visible difference where the legs meet the lava.
       Test: state=3d beast=cinder_jackal ^jackal-s-feet-in-the-lava-no-red-bars-or
+
+- [ ] **HUD and climb gauge inside the centred square.**
+      In the `--square` pair TARGET's boss bar, energy box, pile counters, End Turn/Switch and the climb gauge all sit inside the square; the game anchors them to the full 1280 frame, so the square cuts the boss bar and leaves out the rest.
+      **Done when** the `--square` and `--hand` pairs show every HUD element in TARGET's place.
+      Test: state=3d beast=cinder_jackal ^hud-and-climb-gauge-inside-the-centred-s
 
 ## Waiting on Nick
 

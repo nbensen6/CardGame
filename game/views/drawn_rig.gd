@@ -127,7 +127,10 @@ const RIG_SUPERSAMPLE := 2.0
 const RIG_SHARPEN := 0.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.
-const RIG_CRACK_GROW := 0.95
+## Off since 2026-10-09: its 16 taps stippled the channels, and with the
+## fight's bloom off TARGET's own pixels match; tools/beast_rig.py's
+## crack_glow adds the soft spill instead.
+const RIG_CRACK_GROW := 0.0
 const RIG_CRACK_HEAT := 1.0
 const RIG_CRACK_ORANGE := 0.0
 const RIG_HOT_GLOW := 0.6
