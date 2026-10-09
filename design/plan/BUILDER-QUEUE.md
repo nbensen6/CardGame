@@ -15,11 +15,11 @@ run failed.
 
 Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open item); shared MINOR: slab underside specks, warm floor beside the hand (queued)
 
-- [ ] **Warm specks under the upper right slab.**
-      Next pass: grader 2026-10-09 run 18 R5 FAIL: specks MET in R3-R5; each round names the big middle slab's lower edge as pale and ragged against TARGET's dark lip. Measured after R5 (slab 1 nudged up half a pixel): slab 1 error 6.95 -> 4.7 levels, registered at 0,0; its edge column profiles match TARGET within one step; underside band tone within 1-5 levels on all six. FIX: zoom the --stones pair 4x at the middle slab's lower edge and compare row by row; if nothing differs past one pixel, a Matched check decides whether it still reads.
-      TARGET's slabs end in a dark grey underside lip; along the upper right slab's underside the game shows small orange-red specks (the crack behind showing through).
-      **Done when** the `--square` and `--stones` pairs show no visible difference along the slabs' undersides.
-      Test: state=3d beast=cinder_jackal ^warm-specks-under-the-upper-right-slab
+- [ ] 👀 **Warm specks under the upper right slab.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Warm specks under the upper right slab.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-sliplip-after.png|420]] ^warm-specks-under-the-upper-right-slab
 
 - [ ] 👀 **Warm floor showing beside the last card.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Warm floor showing beside the last card.|details]]

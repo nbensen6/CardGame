@@ -2670,6 +2670,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - 2026-10-09 16:05 EDT, later in run 18: the slab cuts are drawn through drawn_sprite.gdshader now (STAIR_SLAB_DRAWN): TARGET's 1024 px, its colour table in place of SCREEN_COMP, a Lanczos-2 footprint at the screen (lanczos_edges, billboard in the shader). Slab error vs TARGET 3.6 -> 2.6 levels, detail 0.95-0.99, warm 12 -> 5. Grader R4 FAIL: specks MET, middle slab's lower edge pale and stair-stepped.
 - Later in run 18: per-slab sub-pixel nudge (STAIR_SLAB_NUDGE, registered on the --square pair): slab 1 error 6.95 -> 4.7, slab 2 10.9 -> 7.4, ring past the edges within +-4.5 levels. Grader R5 FAIL (middle slab's lower edge). VERDICT: FAIL.
 
+- 2026-10-09 17:29 EDT, builder (run 19). PASS; item marked 👀.
+- Zoomed the middle slab's lower edge 9x: its edge sat within 0.3 px of TARGET's on every column, but read notched, with a pale fringe and a yellow speck where TARGET's crack meets it.
+- tools/cut_slabs.py: the matte's contour smoothed (EDGE_SMOOTH 2.0 at 4x, a one-TARGET-px ramp); REBLEED: Pillow's RGBA resize left clear pixels black, and the unsharp mask lit a pale fringe along every slab edge off them. Slab error 4.41 -> 4.16 levels, all six better.
+- tools/beast_rig.py: the jackal's wall line (LINE) was painted through a stone's outer px, running out under the middle slab's lower edge as the yellow speck; the stone's outer ring now keeps TARGET's own pixels there too.
+- Tried and dropped: a ring of TARGET's own pixels round each slab (RING 2: error 4.3 -> 5.4, a halo on the tops), a 1 px TARGET lip under each slab (UNDER_LIP: 4.3 -> 4.7), a crisper ramp (no closer), unsharp 100 / 40 (worse / same).
+- Grader R1 FAIL (no visible change), R2 FAIL (pale fringe and speck on the middle slab), R3 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-sliplip-before.png|420]] ![[agents/frames/builder/2026-10-09-sliplip-after.png|420]] ![[agents/frames/builder/2026-10-09-sliplip-zoom-middle.png|420]]
+- Meshy: 0 credits.
+
 ## Warm floor showing beside the last card.
 
 2026-10-09 16:13 EDT, builder (run 18). PASS; item marked 👀.

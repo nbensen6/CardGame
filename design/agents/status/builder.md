@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T16:13
+updated: 2026-10-09T17:29
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,14 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 16:13 EDT
+2026-10-09 17:29 EDT
 
-- **Did:** fixed ear smudge, fist-glow seam, hand-gap floor; Lanczos-resampled slabs, cliffs, jackal; resized energy box.
-- **Worked?** Partly: ear smudge, fist-glow seam, hand-gap floor VERDICT: PASS; scene sharpness, slab undersides and energy box VERDICT: FAIL (each closer by measure).
-- **Look at:** ![[frames/builder/2026-10-09-lines18-before.png]] then ![[frames/builder/2026-10-09-handfloor-after.png]]
+- **Did:** cleaned slab edges: no pale fringe, smooth contour, jackal's line no longer pokes out under the middle slab.
+- **Worked?** Yes: VERDICT: PASS (specks gone, undersides match TARGET; only MINOR softness left).
+- **Look at:** ![[frames/builder/2026-10-09-sliplip-before.png]] then ![[frames/builder/2026-10-09-sliplip-after.png]]
 - **Ask:** nothing
-- **Found:** the energy box halo is cut at the square's left edge by something drawn over the frame there.
-- **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop carries the outline there, so a swing would show it.
+- **Found:** slab 2's left end sits about 1 px left of TARGET's.
 
 ## Notes
 

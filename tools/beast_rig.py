@@ -357,8 +357,18 @@ def paint_hidden(T, m, line, walls):
         # Only the stone's own pixels: the grown ring poked out under a
         # slab's edge as a cream speck beside TARGET's line (queue, "Inner
         # arm outlines beside the stones"); there TARGET's own dark rock stays.
-        out[raw_stone & band] = LINE
-        return _finish_body(out, T, m, line, walls, stone)
+        # Not in the kept ring at a stone's edge either: the rim line
+        # painted there ran out under the middle slab's lower edge as a
+        # yellow speck beside TARGET's own line (builder run 19).
+        kept = np.zeros_like(m)
+        if STONE_EDGE_KEEP:
+            # the stone's own outer px in the silhouette's band too, where a
+            # wall's line is painted round the stone
+            edge_ring = ndi.binary_dilation(raw_stone, iterations=1) & ~core & m
+            out[edge_ring] = T[edge_ring]
+            kept = ring | edge_ring
+        out[raw_stone & band & ~kept] = LINE
+        return _finish_body(out, T, m, line, walls, stone, kept)
     stone = (ndi.binary_dilation(stone, iterations=6) | ndi.binary_dilation(rects, iterations=3)) & m
     edge = m & ~ndi.binary_erosion(m, iterations=6)
     clean = m & ~stone & ~edge
@@ -469,7 +479,7 @@ def carry_seam(out, hole):
     return out * (1 - a[..., None]) + col * a[..., None]
 
 
-def _finish_body(out, T, m, line, walls, stone):
+def _finish_body(out, T, m, line, walls, stone, kept=None):
     # TARGET's lava up-light: the bottom of the torso glows orange into the
     # cut. In the fight the floor's lava strip hides the sprite's last rows,
     # where TARGET's own glow lives, so the lower body read as an unlit dark
@@ -498,6 +508,8 @@ def _finish_body(out, T, m, line, walls, stone):
         own = ndi.binary_dilation(tline, iterations=WALL_DOUBLE) & ndi.binary_dilation(walls, iterations=7)
         need &= ~own
     need[CUT - 3:] = False
+    if kept is not None:
+        need &= ~kept
     out[need] = LINE
     return out
 
