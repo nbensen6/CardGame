@@ -141,6 +141,10 @@ FIRE_SMOOTH = True
 FIRE_SMOOTH_D = 11
 FIRE_SMOOTH_SC = 40.0
 FIRE_SMOOTH_SS = 5.0
+# Unsharp on the smoothed flame (canvas px sigma, gain): TARGET's curl
+# strokes read inked; after the resample the game's read soft (grader R3).
+FIRE_INK_SIG = 2.5
+FIRE_INK = 0.0   # 0.8 tried 2026-10-09: brought the grain back
 FIRE_SHELL_PX = 0.0       # canvas px (2x TARGET) of the flame's outer shell
 FIRE_SHELL_R = (110.0, 165.0)   # red: fully faded .. fully kept
 FIRE_HAZE = 0.92        # 0.92 until the backdrop (tools/backdrop_cut.py) carried TARGET's glow itself
@@ -851,7 +855,10 @@ def build():
             sm = cv2.bilateralFilter(L[..., :3].astype(np.float32), FIRE_SMOOTH_D,
                                      FIRE_SMOOTH_SC, FIRE_SMOOTH_SS).astype(float)
             L = L.copy()
-            L[..., :3] = np.where((L[..., 3:4] > 0), sm, L[..., :3])
+            if FIRE_INK:
+                bl = np.dstack([ndi.gaussian_filter(sm[..., k], FIRE_INK_SIG) for k in range(3)])
+                sm = np.clip(sm + (sm - bl) * FIRE_INK, 0, 255)
+            L[..., :3] = np.where((L[..., 3:4] > 250), sm, np.where(L[..., 3:4] > 0, L[..., :3] * 0 + sm, L[..., :3]))
             # The flame's soft edge carried TARGET's dark glow colour, a dark
             # rim round every tongue over the fight's backdrop: each edge
             # pixel takes the colour of the nearest solid flame pixel.

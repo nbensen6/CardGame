@@ -101,7 +101,8 @@ def fist_backdrop(out, img, fig, wide, fire_a, m):
     near = ndi.binary_dilation(flame | m, iterations=90) & area
     src_mask = repl | (warm & near) | hud
     src_mask &= area
-    bgr = np.ascontiguousarray(np.clip(img[..., ::-1], 0, 255).astype(np.uint8))
+    # the figure already filled in `out`, so no outline leaks in from past the area
+    bgr = np.ascontiguousarray(np.clip(out[..., ::-1], 0, 255).astype(np.uint8))
     # whatever lies outside the area stays as source
     cool = cv2.inpaint(bgr, src_mask.astype(np.uint8) * 255, 11, cv2.INPAINT_TELEA)[..., ::-1].astype(float)
     # The boss-bar rect: TARGET's cliffs there are vertical slabs and its sky
@@ -172,6 +173,13 @@ def build():
     # backdrop keeps it rather than an inpainted smear.
     fig = m | ndi.binary_dilation(line, iterations=2) & ndi.binary_dilation(m, iterations=12)
     fig = ndi.binary_dilation(fig, iterations=FIG_GROW)
+    # The outline's soft cream glow reaches past the grown figure (beside
+    # the left ear it stood as a pale wisp in the sky, grader 2026-10-09):
+    # warm-light pixels just round the figure go with it.
+    r_, g_, b_ = T[..., 0], T[..., 1], T[..., 2]
+    glowline = (r_ > 150) & (g_ > 100) & (r_ - b_ > 40) & ndi.binary_dilation(fig, iterations=8)
+    glowline &= ~ndi.binary_erosion(ndi.binary_dilation(fire_a > 0.5, iterations=40), iterations=1) | m
+    fig |= ndi.binary_dilation(glowline, iterations=2)
     # The flame's tongues, a little inside their edge: the backdrop keeps
     # TARGET's glow right at the tongues, so no dark fill rims the flame.
     fig |= ndi.binary_erosion(fire_a > 0.5, iterations=5)   # past the tongues' sway

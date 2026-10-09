@@ -39,7 +39,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] **Fist fire: compact curling blaze wrapped on the fist.**
-      Next pass: grader R2 (2026-10-09 run 7, with the new --fist pair): shape, size and place MET; still "blurred, wide orange bloom, dark fringe, faint inner curls" against TARGET's near-black cliff. Measured edge sharpness equals TARGET's; the slate cliffs behind the fist (Cliffs item) and the drip column left of it are the next things to fix, then re-grade with --fist.
+      Next pass: grader R3 (2026-10-09 run 9, with --fist): shape, size, place MET, no penalties, closer (drip column and dark rim gone); still "inner curl strokes soft and low-contrast, orange haze a few px past the edge, core paler". Registered on the --fist pair the flame bands match TARGET within ~6 levels, the glow by distance matches within ~10, and the game's gradients are stronger than TARGET's; the fist and flame sit ~1.5 screen px right/down of TARGET's (static, not the idle). Next: find that 1.5 px offset in the arm's placement, then re-grade with --fist.
       Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
@@ -51,7 +51,7 @@ run failed.
       ![[agents/frames/builder/2026-10-09-floorart-after.png|420]] ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
-      Next pass: grader R12 (2026-10-09 run 8): \"right wall hazy, left wall murky, dark smudge right of the head, mid-ground outcrops dim\". Registered square error is now ~0.8 (left) / 2.2 (right) levels, so the backdrop IS TARGET's pixels; the visible differences are the figure-fill smears in the backdrop (a dark column over the fist, a smudge above-right of the head) showing where the animated jackal does not cover TARGET's silhouette. Next: fill those from cliff/sky rows, not a wide inpaint (a row-carry over the HUD band failed, it painted purple across the cliff).
+      Next pass: grader R13 (2026-10-09 run 9): "left cliff by the fist lighter and hazier, facet edges soft, glow washes the cliff". Registered on the --fist pair the left cliff matches TARGET (mean (10,11,19)/(9,10,19), Laplacian 1.11/1.06). The column over the fist and the wisp by the left ear are gone (backdrop_cut.fist_backdrop). Next: grade with before and after --fist and --beast close-ups, as the grader asked.
       Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
       **Done when** the `--square` pair shows no visible difference in the cliffs.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
@@ -157,6 +157,11 @@ run failed.
       TARGET's 42/42 bar is a little smaller with a lighter rim and thinner numerals; the game's is larger and bolder (`--frog` pair).
       **Done when** the `--frog` pair shows no visible difference in the HP bar.
       Test: state=3d beast=cinder_jackal ^hp-bar-under-the-frog-target-s-size-and-
+
+- [ ] **Stones: TARGET's slab size round the body.**
+      In the `--beast` and `--chest` pairs TARGET's four upper slabs are larger and sit a few px lower than the game's (the second slab ~10% wider, the third and fourth ~10-15% larger); the cracked body round them shows where the game's slabs are smaller.
+      **Done when** the `--stones` and `--chest` pairs show no visible difference in the slabs' size and place.
+      Test: state=3d beast=cinder_jackal
 
 ## Waiting on Nick
 

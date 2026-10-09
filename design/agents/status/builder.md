@@ -13,16 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 02:46 EDT
+2026-10-09 04:00 EDT
 
-- **Did:** HUD and hand into TARGET's square; TARGET's own floor, pedestal and full lava band; card art and edges; darker cliffs.
-- **Worked?** Partly: HUD, hand, lava line, floor and pedestal VERDICT: PASS; cracks, cards and cliffs VERDICT: FAIL, each closer.
-- **Look at:** ![[frames/builder/2026-10-09-cracks8-before.png]] then ![[frames/builder/2026-10-09-cliffs11-after.png]]
+- **Did:** rebuilt the body under the stones, cleaned the fist's flame and the backdrop round it.
+- **Worked?** No: cracks VERDICT: FAIL; fist fire VERDICT: FAIL (closer, no penalties); cliffs VERDICT: FAIL. Registered pixels match TARGET in each.
+- **Look at:** ![[frames/builder/2026-10-09-fist6-before.png]] then ![[frames/builder/2026-10-09-fist6-after.png]]
 - **Ask:** nothing
-- **Found:** the Frog sprite has a heavy pixelated outline TARGET's lacks (queued).
-- **Found:** the HP bar under the Frog is larger and bolder than TARGET's (queued).
-- **Found:** a red-edged slab stands on the floor at the 16:9 frame's right edge, outside the square.
-- **Found:** the backdrop's figure fill shows as a dark column over the fist and a smudge right of the head where the animated jackal does not cover TARGET's silhouette.
+- **Found:** TARGET's upper slabs are ~10-15% larger than the game's (queued).
+- **Found:** the fist and its flame sit ~1.5 screen px right/down of TARGET's, a static offset.
+- **Found:** graders on cracks, fist and cliffs keep naming differences the registered pixels do not show.
 
 ## Notes
 

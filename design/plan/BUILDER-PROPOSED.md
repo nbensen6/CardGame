@@ -234,3 +234,5 @@ appends here, never to the queue.
 - [ ] **`vs_target.py --beast` and `--hand` crops are fitted to the beast, not the square.** Map their shot boxes through the --square test (x 280+0.703t, y 0.703t) as `--stones` now is, so the close-ups agree with the 1:1 test.
 
 - (2026-10-09 run 8) A red-edged slab stands on the floor at the 16:9 frame's right edge, outside the centred square.
+
+- 2026-10-09 builder run 9: graders on Cracks, Fist fire and Cliffs name differences (softer, paler, hazier) that registered pixel measurements on the same pairs do not show (band colours within ~6 levels, sharpness equal or higher). A grader input that adds a registered difference map, or a 2x close-up pair for each item, may let these items close.

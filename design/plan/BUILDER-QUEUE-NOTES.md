@@ -2201,6 +2201,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (judged on --beast, flame cut off), R2 FAIL with --fist: shape and place MET; asks for crisper edges and stronger inner curls, no bloom. VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-fist5-before.png|420]] ![[agents/frames/builder/2026-10-09-fist5-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-09 04:00 EDT, builder (run 9). Not passed; item left open.
+
+- **Sparkle in the flame.** TARGET's flame carries ~6-10 levels of grain at 1024 px; the fight's colour path blows it up in the bright yellows, so the flame read as sparkly noise. beast_rig.py `FIRE_SMOOTH` (bilateral d 11, sigma colour 40, space 5, on the fire layer after the upscale). A flat-colour test fire rendered flat, so the grain was the art, not the render.
+- **Dark rim round the tongues.** The keyed flame's soft edge carried TARGET's dark glow colour; edge pixels within 3 px of solid flame now take the nearest flame colour. `FIRE_HAZE` 0.92 back on (TARGET's own glow round the flame rides on the fire layer, below the halo alpha).
+- **The drip column above the fist** was the backdrop's TELEA fill of the boss-bar rect and the figure pulling the flame's glow up. New backdrop_cut.py `fist_backdrop`: the figure fill round the fist rebuilt as cool slate (warm pixels kept out of the inpaint source, the source being the already-filled backdrop so no outline leaks in), plus half TARGET's measured glow by distance (`FIST_GLOW` 0.5), TARGET's ring pixels carried in at the edge (`FIST_EDGE_SIG` 3); only the bar panel (rows 14-50) is mirrored, TARGET's own rows 50-101 are kept.
+- **Tried, reverted:** alpha cap 0.96 (with the edge pass it smeared the flame), an outer-shell alpha fade (dark contour; `FIRE_SHELL_PX` 0), fill only under the figure (bright TARGET flame ring left in the backdrop), a local glow ratio (cool band left of the flame), an unsharp on the flame (`FIRE_INK` 0.8: grain back), a centred, smaller arm idle (the 1.5 px offset is static, not the idle).
+- **Measured (--fist pair, registered):** flame bands T/G (234,78,18)/(235,76,17), (245,126,30)/(245,121,26), (250,174,40)/(250,168,35), (253,217,61)/(254,214,55); glow at 3-6 px (154,71,30)/(156,75,29), 15-25 px (108,42,23)/(103,40,22). The fist sits (4,2) pair px (~1.5 screen px) right/down of TARGET's.
+- **Grader:** R1 FAIL (no visible change at frame scale, haze, soft curls), R2 FAIL (closer: column and rim gone; interior flatter, wider glow), R3 FAIL (closer; curl strokes soft, haze past the edge). No penalties after R1. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-fist6-before.png|420]] ![[agents/frames/builder/2026-10-09-fist6-after.png|420]]
+- Meshy: 0 credits.
 ## Stray yellow speck on the jackal's chest.
 
 2026-10-08 23:20 EDT, builder. Passed.
@@ -2255,6 +2266,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cliffs11-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs11-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 04:00 EDT, builder (run 9). Not passed; item left open.
+
+- The figure-fill smears named in the last Next pass are fixed in the backdrop (see Fist fire, run 9): the dark column over the fist, and a cream wisp left of the left ear (the fist area's inpaint pulled TARGET's ear outline in from past its right edge).
+- Measured on the --fist pair, left cliff T/G: mean (9.8,10.5,19.4)/(9.3,9.8,18.8), luminance p10/p90 2-28 / 2-28, Laplacian 1.11/1.06.
+- **Grader:** R13 FAIL ("left cliff lighter and hazier, facets soft"; asked for before/after --fist and --beast close-ups to judge the smears). VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cliffs13-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs13-after.png|420]]
+- Meshy: 0 credits.
 ## HUD and climb gauge inside the centred square.
 
 2026-10-09 01:28 EDT, builder (run 8). PASSED.
