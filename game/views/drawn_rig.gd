@@ -59,6 +59,8 @@ func _ready() -> void:
 		mat.set_shader_parameter("premul", true)
 		mat.set_shader_parameter("sharpen", RIG_SHARPEN)
 		mat.set_shader_parameter("footprint", RIG_SUPERSAMPLE > 1.0)
+		mat.set_shader_parameter("screen_sharpen", RIG_SCREEN_SHARPEN)
+		mat.set_shader_parameter("screen_sharpen_px", RIG_SCREEN_SHARPEN_PX)
 		mat.set_shader_parameter("crack_grow", RIG_CRACK_GROW)
 		mat.set_shader_parameter("crack_heat", RIG_CRACK_HEAT)
 		mat.set_shader_parameter("crack_orange", RIG_CRACK_ORANGE)
@@ -125,6 +127,11 @@ const RIG_SUPERSAMPLE := 2.857
 ## the footprint filter: at 2.2 it rang round every crack (an orange rim on
 ## both sides of a dark middle, 2026-10-08 run 3).
 const RIG_SHARPEN := 0.0
+## Unsharp mask after the footprint filter, at screen-pixel reach (see
+## drawn_sprite.gdshader screen_sharpen): the box footprint is softer than
+## TARGET's own resample.
+const RIG_SCREEN_SHARPEN := 0.0
+const RIG_SCREEN_SHARPEN_PX := 1.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.
 ## Off since 2026-10-09: its 16 taps stippled the channels, and with the

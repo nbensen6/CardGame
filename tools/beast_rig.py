@@ -565,7 +565,7 @@ def underlay_line(rgb, a, own_px, m):
     return out
 
 
-PRESHARPEN = 0.6
+PRESHARPEN = 0.0   # 0.6 until run 6: its dark rim narrowed each crack; registered error 8.4 -> 8.0 off
 PRESHARPEN_SIGMA = 1.5   # canvas px (2x TARGET)
 
 
@@ -682,12 +682,67 @@ def hot_lift(img, m):
     return out
 
 
+# Graders across six runs read TARGET's limb and chest cracks as wider and
+# more orange than the game's, though the registered pixels agree. Knobs for
+# a widening (each channel's edge takes part of its crack's colour) and a lift
+# of the channel middles toward orange, inside the body only (never the
+# outline, the head's lines or the fire). Off: at 0.85/0.7 (run 6, 2026-10-09)
+# graders saw no change and the registered error rose 8.0 -> 9.5.
+WIDEN = 0.0          # blend of the 1-px grown crack onto the rock beside it
+ORANGE = 0.0         # channel middles toward g = 0.42 r
+WIDEN_HEAD_Y = 300   # TARGET row; above it is the head, left as drawn
+WIDEN_SIZE = 3
+
+
+def crack_widen(img, m):
+    if not (WIDEN or ORANGE):
+        return img
+    inner = ndi.distance_transform_edt(m) > RIM + 3
+    inner[:WIDEN_HEAD_Y] = False
+    r, g, b = img[..., 0], img[..., 1], img[..., 2]
+    mx, mn = img.max(2), img.min(2)
+    sat = (mx - mn) / np.maximum(mx, 1)
+    crack = inner & (r > 150) & (sat > 0.6) & (b < 110)
+    out = img.copy()
+    if WIDEN:
+        w = crack.astype(float)
+        num = np.dstack([ndi.maximum_filter(img[..., k] * w, size=WIDEN_SIZE) for k in range(3)])
+        near = ndi.maximum_filter(w, size=WIDEN_SIZE) > 0
+        lum = img @ np.array([0.3, 0.59, 0.11])
+        nl = num @ np.array([0.3, 0.59, 0.11])
+        put = inner & near & ~crack & (nl > lum + 20)
+        out[put] = out[put] * (1 - WIDEN) + num[put] * WIDEN
+    if ORANGE:
+        mid = crack & (r > 190)
+        out[..., 1] = np.where(mid, np.maximum(out[..., 1], out[..., 1] + ORANGE * np.maximum(0.42 * r - out[..., 1], 0)), out[..., 1])
+    return out
+
+
+# The fight's colour path (3D LUT through ACES) crushes the darkest greens
+# and blues to 0: TARGET's plate (44,11,8) drew (40,0,0), so the rock read
+# redder and darker round every crack. tools/jackal_tone_fix.json holds a
+# per-channel pre-map measured off the rest frame (tools/jackal_tone.py, the
+# registered body, TARGET over game), applied to every layer.
+TONE_FIX = ROOT / "tools/jackal_tone_fix.json"
+
+
+def tone_fix(L):
+    if not TONE_FIX.exists():
+        return L
+    lut = np.array(json.loads(TONE_FIX.read_text())["lut"], float)
+    out = L.copy()
+    for k in range(3):
+        out[..., k] = np.interp(L[..., k], np.arange(256), lut[k])
+    return out
+
+
 def build():
     T = np.asarray(Image.open(TARGET).convert("RGB")).astype(float)
     m, line, walls = silhouette(T)
     body = paint_hidden(T, m, line, walls)
     body = crack_glow(body, m)
     body = hot_lift(body, m)
+    body = crack_widen(body, m)
     fire_rgb, fire_a = fire_layer(T, m)
     lab = labels(m)
     alpha, own = layer_alpha(lab, m)
@@ -716,7 +771,7 @@ def build():
                 rgb, a = sink_target(rgb, a, crop_box(T))
             else:
                 rgb, a = sink(rgb), sink(a)
-        layers[name] = upscale(rgb, a)
+        layers[name] = tone_fix(upscale(rgb, a))
 
     # The rest frame: every layer over the last, as the rig draws it.
     H, W = layers["torso"].shape[:2]

@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-08T21:25
+updated: 2026-10-08T22:45
 working_on: "Cracks: wide hot cores and a long sternum seam."
 ---
 
@@ -13,15 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-08 21:25 EDT
+2026-10-08 22:45 EDT
 
-- **Did:** sharpened the jackal to TARGET's crispness, cleared stone smears, carried the seam down, fixed streaky feet.
-- **Worked?** No for the grader, yes by pixels: chest error 12.6 to 9.5, sharpness 4.7 to 8.5 (TARGET 8.4); grader still asks for wider cracks. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-09-cracks5-before.png]] then ![[frames/builder/2026-10-09-cracks5d-after.png]]
+- **Did:** filled the gap under the jackal's arm with TARGET's rock, aligned it to the pixel, fixed crushed darks.
+- **Worked?** Partly: chest error 9.8 to 8.0 against TARGET, but graders still want wider glowing cracks. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-09-cracks6-before.png]] then ![[frames/builder/2026-10-09-cracks6-after.png]]
 - **Ask:** nothing
-- **Found:** a fixed ember speck sits on the jackal's chest right of the sternum in the rest shot.
-- **Found:** the scene's lava pool ring draws hard red bars either side of the jackal's feet.
-- **Found:** widening the cracks as graders ask (tried this run) visibly departs from TARGET's own pixels.
+- **Found:** a 4-px yellow speck sits on the jackal's chest; it is a scene object, not the art (queued).
+- **Found:** the lava strip still draws red bars either side of the body outside the pocket.
 
 ## Notes
 

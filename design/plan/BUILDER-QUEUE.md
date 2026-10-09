@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R4 (2026-10-09 run 5): limb, shoulder and thigh cracks thinner and redder, Y and seam narrower; it asks for 2x width with #FFD040 cores, which the registered pixels contradict (the right forearm is TARGET's own cracks unchanged) and which a widen-and-heat pass this run turned into cartoon outlines; next, fix the lava strip's red bars round the body and the purple sky left of the torso, then re-grade.
+      Next pass: grader R6 (2026-10-09 run 6): wants a wide soft orange bloom round every crack and a 2-3x wider yellow-to-orange band from the Y to the navel; registered crack profiles now match TARGET to a few levels (chest error 9.8 -> 8.0) and a 1-px widen plus orange lift drew no grader change, so try the bloom ask (crack_glow/HOT_GLOW, judged on --beast) rather than more fidelity.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
@@ -124,6 +124,11 @@ run failed.
       In the `--square` pair TARGET's boss bar, energy box, pile counters, End Turn/Switch and the climb gauge all sit inside the square; the game anchors them to the full 1280 frame, so the square cuts the boss bar and leaves out the rest.
       **Done when** the `--square` and `--hand` pairs show every HUD element in TARGET's place.
       Test: state=3d beast=cinder_jackal ^hud-and-climb-gauge-inside-the-centred-s
+
+- [ ] **Stray yellow speck on the jackal's chest.**
+      A 4-px yellow dot sits right of the sternum (square ~x369, y232) in front of the jackal; it is not the jackal's art, not the embers or ledge rings (it stays with the jackal hidden and the embers off). TARGET has nothing there.
+      **Done when** the `--beast` pair shows no speck on the chest.
+      Test: state=3d beast=cinder_jackal ^stray-yellow-speck-on-the-jackal-s-chest
 
 ## Waiting on Nick
 

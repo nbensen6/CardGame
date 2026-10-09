@@ -2112,6 +2112,20 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cracks5-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks5d-after.png|420]]
 - Meshy: 0 credits.
 
+
+2026-10-08 22:45 EDT, builder (run 6). Not passed; item left open.
+
+- **Pocket under the fist arm.** TARGET's open gap between the raised arm and the torso (down to the lava) is near-black rock with lava glow; the fight showed purple sky. beast_rig.py `POCKETS` puts TARGET's own pixels there on the torso layer, stones lifted out by row interpolation (the glow changes with height, not across), faded on the open left side, at `POCKET_ALPHA` 0.94 so the shader's new `halo_from` (0.97) keeps the halo off its open edge. Registered, the pocket now matches TARGET within a few levels.
+- **Red bars over it were the heat band.** The shimmer cylinder is see-through and was drawn after the jackal, so wherever the jackal was under full alpha its glow lay on top. `heat.render_priority = -1` (combat_3d.gd). Putting the jackal at priority 1 instead hid the stones behind it; reverted.
+- **Half a pixel off TARGET's columns.** Registered on the chest, the shot fit TARGET best shifted -0.5 px in x: every 2-px crack was resampled across three columns. DRAWN_SHIFT_PX -82 -> -83.2 (canvas px). Chest error 9.8 -> 8.4, crack-pixel error 13.8 -> 10.7.
+- **Dark greens crushed.** The colour path took TARGET's darkest plate greens/blues to 0 ((44,11,8) drew (40,0,0)), so the rock read redder round every crack. New tools/jackal_tone.py measures the per-channel response on the body and writes tools/jackal_tone_fix.json, a pre-map faded to identity above 40; beast_rig.py `tone_fix` applies it to every layer.
+- **PRESHARPEN 0.6 -> 0**: its dark rim narrowed each crack (pec crack profile now matches TARGET's to ~10 levels). Chest error 8.4 -> 8.0.
+- **HOT_LIFT 18**: the yellow cores land ~14 green short after the resample; lifted before it (hot green 188 -> 199, TARGET 206).
+- Tried and reverted: a screen-space unsharp after the footprint filter (0.4: error 9.6, 0.8: 10.7), PRESHARPEN 1.0 (8.7), hole growth 2/4 and 1/3 (no change), `crack_widen` WIDEN 0.85 / ORANGE 0.7 with HOT_GLOW 0.35 (error 9.5; the grader saw no change).
+- Embers now draw before the jackal (render_priority -1): TARGET's sparks are in the sky.
+- **Grader:** R1 FAIL (pocket only), R2 FAIL (shift), R3 FAIL (hot lift), R4 FAIL (widen 0.5/orange 0.5/glow 0.3), R5 FAIL (tone fix, widen off), R6 FAIL (presharpen off). No penalties; every round said the cracks were unchanged and asked for wider, oranger, glowing cracks; R6 also claimed a different crack layout, which TARGET's own pixels cannot have. Final: VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks6-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks6-after.png|420]]
+- Meshy: 0 credits.
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.

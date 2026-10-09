@@ -4095,6 +4095,9 @@ func _ember_particles(size: float) -> CPUParticles3D:
 	mat.vertex_color_use_as_albedo = true
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.disable_fog = true
+	# Behind the drawn jackal, never on it: TARGET's sparks are in the sky,
+	# and one sat on its chest as a stray yellow dot (grader, 2026-10-09).
+	mat.render_priority = -1
 	# A soft round spark, not a square: up close a flat quad reads as a chip.
 	var dot := GradientTexture2D.new()
 	dot.width = 32

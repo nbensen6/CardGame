@@ -40,6 +40,8 @@ uniform float sharpen = 0.0;
 // screen size so its parts are drawn sharp; this brings it down without
 // skipping texels (thin cracks) or the blur of a mip chain. false = one tap.
 uniform bool footprint = false;
+uniform float screen_sharpen = 0.0;
+uniform float screen_sharpen_px = 1.0;
 // TARGET's lava cracks read as wide channels with yellow-hot cores; through
 // the resamples they thin to lines. crack_grow spreads each crack's colour
 // over the plate pixels next to it (radius in texture pixels), crack_heat
@@ -149,6 +151,17 @@ void fragment() {
 				}
 			}
 			t /= 9.0;
+			if (screen_sharpen > 0.0) {
+				// The box footprint is softer than the Lanczos resample TARGET
+				// is measured at: a small unsharp mask at screen-pixel reach
+				// puts the thin cracks' peaks back.
+				vec4 w = (textureLod(tex, UV + dx * screen_sharpen_px, 0.0) + textureLod(tex, UV - dx * screen_sharpen_px, 0.0)
+					+ textureLod(tex, UV + dy * screen_sharpen_px, 0.0) + textureLod(tex, UV - dy * screen_sharpen_px, 0.0)) * 0.25;
+				vec4 sh = t + (t - w) * screen_sharpen;
+				// Only inside solid rock: at the silhouette it would ring.
+				float solid = step(0.999, min(t.a, w.a));
+				t = mix(t, clamp(sh, vec4(0.0), vec4(1.0)), solid);
+			}
 		} else {
 			t = texture(tex, UV);
 		}
