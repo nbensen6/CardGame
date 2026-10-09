@@ -14,7 +14,7 @@ run failed.
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
 - [ ] **Scene lines soft: TARGET's crisp outline, cracks and slab edges.**
-      Next pass: grader 2026-10-09 run 16 R4 FAIL, no penalty but "no visible change": outline halo "wider", cracks "smeared", slabs "soft, speckled", cliff light softer; FIX "render the 3D view at native resolution, no blur; tighten the outline glow". Measured against that: the 3D view is native (no scaling, glow or TAA), the game's square has TARGET-at-720's edge energy, and the rim profiles match within ~10 levels (halo 0.6 -> 0.35 left the glow 3-5 px out darker than TARGET's: reverted). Kept: slab sprites mipmapped (smoother edges). FIX: the gap is TARGET's 1024 px against a 720 frame; cut the rig and slabs at TARGET's native pixels drawn 1:1 at a 1024-tall window and grade at `size=1820x1024`.
+      Next pass: grader 2026-10-09 run 17 R1-R6 FAIL, each "no visible change" (outline "wider hazy glow", cracks "fuzzy", slab facets "smeared"), the same at size=1820x1024 where the square is TARGET's own 1024 px. Measured: jackal best blur fit sigma 0 (720) / 0-0.4 (1024), fine-detail energy 1.0 of TARGET's, rim glow now TARGET's own pixels (within ~2 levels 1-6 px out). FIX: no render softness is left to find; next try per-feature contrast (crack edge darkening, slab facet contrast) measured on the --stones pair, or a Matched check to see whether fresh critics still name it.
       Both critics, MODERATE (2026-10-09): TARGET's painted lines are crisp (the jackal's cream outline, cracks, ear tips, the slab edges and chips, cliff edge light, card art and text); the game's read smeared, as if resampled, with a wider glow halo round the outline.
       **Done when** the `--square`, `--beast` and `--stones` pairs show no visible difference in line sharpness.
       Test: state=3d beast=cinder_jackal ^scene-lines-soft-target-s-crisp-outline
@@ -224,6 +224,11 @@ run failed.
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-gaugeright-after.png|420]] ^right-of-and-under-the-climb-gauge-lava
+
+- [ ] **Dark smudge on the sky left of the jackal's left ear.**
+      TARGET shows clean purple sky meeting the cliff top beside the ear's outer line; the game draws a dark grey-blue blot there, between the ear and the cliff.
+      **Done when** the `--square` and `--beast` pairs show no visible difference beside the left ear.
+      Test: state=3d beast=cinder_jackal ^dark-smudge-on-the-sky-left-of-the-jackal
 
 ## Waiting on Nick
 

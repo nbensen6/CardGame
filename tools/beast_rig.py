@@ -200,7 +200,7 @@ LEDGES = [0, 2, 3, 4]
 LINE = np.array([252, 201, 122], float)   # TARGET's rim, sampled
 # TARGET's soft glow outside the rim: about 9 TARGET px, drawn by the shader
 # from the moving figure's alpha (drawn_sprite.gdshader `halo`).
-HALO = 0.6
+HALO = 0.0
 HALO_PX = 9 * SCALE
 
 
@@ -216,6 +216,34 @@ def fill_small(x, most=3000):
         return x
     sizes = ndi.sum(np.ones_like(h), h, range(1, n + 1))
     return x | np.isin(h, [i + 1 for i, v in enumerate(sizes) if v < most])
+
+
+# TARGET px of TARGET's own pixels carried outside the cream rim, each by
+# the part it borders, at these alphas (1 px out, 2 px out). Its glow there is
+# warm over the sky and a dark edge over the rock; the shader's one halo
+# colour matched neither (queue "Scene lines soft", 2026-10-09).
+RIM_OUT = 8
+RIM_OUT_A = (1.0, 1.0, 0.95, 0.85, 0.7, 0.5, 0.3, 0.15)
+RIM_FIRE_CLEAR = 40
+
+
+def rim_ring(m, lab, walls):
+    d = ndi.distance_transform_edt(~m)
+    ring = (d > 0) & (d <= RIM_OUT + 0.5) & ~walls
+    ring[CUT:] = False
+    a = np.zeros(m.shape, float)
+    for k, v in enumerate(RIM_OUT_A[:RIM_OUT]):
+        a = np.where(ring & (d > k + 0.5) & (d <= k + 1.5), v, a)
+    names = ["torso"] + [p[0] for p in PARTS]
+    idmap = np.zeros(m.shape, int) - 1
+    for i, n in enumerate(names):
+        idmap[lab == n] = i
+    _, (iy, ix) = ndi.distance_transform_edt(idmap < 0, return_indices=True)
+    near = idmap[iy, ix]
+    part = np.full(m.shape, "", dtype=object)
+    for i, n in enumerate(names):
+        part[(near == i) & ring] = n
+    return a, part
 
 
 def silhouette(T):
@@ -939,6 +967,15 @@ def build():
     gap = enclosed_gaps(m)
     alpha["torso"] = alpha["torso"] | gap
     pocket_rgb, pocket_a = pockets(T, m)
+    ring_a, ring_part = rim_ring(m, lab, walls)
+    # Not over the gaps and pockets: they already carry TARGET's backdrop,
+    # and the ring's stepped edge drew a jagged line across them (grader
+    # run 17, the shoulder's V by the fist).
+    ring_a = np.where(gap | (pocket_a > 0), 0.0, ring_a)
+    # Nor in the fist fire's glow: the fire overlay lights that air past the
+    # tonemapper, and TARGET's pixels there drew a dark seam (same V).
+    near_fire = ndi.binary_dilation(fire_a > 0, iterations=RIM_FIRE_CLEAR)
+    ring_a = np.where(near_fire, 0.0, ring_a)
 
     layers = {}
     for name in ORDER:
@@ -946,6 +983,11 @@ def build():
             rgb, a = fire_rgb, fire_a
         else:
             rgb, a = underlay_line(body, alpha[name], own[name], m), alpha[name].astype(float)
+            if RIM_OUT:
+                mine = (ring_part == name) & (ring_a > a)
+                rgb = rgb.copy()
+                rgb[mine] = T[mine]
+                a = np.where(mine, ring_a, a)
             if name == "torso":
                 put = (pocket_a > 0) & (a < 1)
                 rgb = rgb.copy()

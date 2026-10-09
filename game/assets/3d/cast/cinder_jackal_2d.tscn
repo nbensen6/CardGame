@@ -15,7 +15,7 @@
 resource_local_to_scene = true
 shader = ExtResource("shader")
 shader_parameter/tex = ExtResource("rest")
-shader_parameter/halo = 0.6
+shader_parameter/halo = 0
 shader_parameter/halo_px = 18
 shader_parameter/halo_from = 0.97
 
@@ -428,7 +428,7 @@ z_index = 1
 z_as_relative = false
 texture = ExtResource("arm_r")
 centered = false
-position = Vector2(-84, -140)
+position = Vector2(-84, -150)
 
 [node name="head" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(0, -492)
@@ -438,7 +438,7 @@ z_index = 3
 z_as_relative = false
 texture = ExtResource("head")
 centered = false
-position = Vector2(-158, -468)
+position = Vector2(-170, -482)
 
 [node name="arm_l" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(-208, -472)

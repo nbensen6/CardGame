@@ -160,7 +160,7 @@ const RIG_SHARPEN := 0.0
 ## Unsharp mask after the footprint filter, at screen-pixel reach (see
 ## drawn_sprite.gdshader screen_sharpen): the box footprint is softer than
 ## TARGET's own resample.
-const RIG_SCREEN_SHARPEN := 0.2
+const RIG_SCREEN_SHARPEN := 0.25
 const RIG_SCREEN_SHARPEN_PX := 1.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.

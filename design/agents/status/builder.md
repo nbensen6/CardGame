@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T13:47
+updated: 2026-10-09T14:47
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 13:47 EDT
+2026-10-09 14:47 EDT
 
-- **Did:** cards, gauge-side frame, fan offset and intent chip matched to TARGET; queued a matched check.
-- **Worked?** Partly: cards, gauge right strip, fan, intent chip PASS; scene softness FAIL (720 vs TARGET's 1024 pixels). VERDICT: PASS (intent chip, last item)
-- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-intent-after.png]]
+- **Did:** jackal rim now carries TARGET's own glow pixels; cliffs and rig sharpened to TARGET's fine-detail level.
+- **Worked?** No: measured within noise of TARGET, but six grader rounds saw no visible change. VERDICT: FAIL
+- **Look at:** ![[frames/builder/2026-10-09-lines-before.png]] then ![[frames/builder/2026-10-09-lines-after.png]]
 - **Ask:** nothing
-- **Found:** graders read a box-filtered mip as "pale haze" even when colours match; Lanczos mips fixed the card art.
-- **Found:** the --hand close-up and the --square pair disagree by ~2 px on the fan's x; the square was taken as the test.
+- **Found:** tools/shot.sh does not re-import; after rebuilding rig PNGs a shot mis-places parts until `--import` runs.
+- **Found:** a dark smudge on the sky just left of the jackal's left ear (cliff top) that TARGET does not have.
 
 ## Notes
 

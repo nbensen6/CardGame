@@ -2586,6 +2586,17 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
 
+2026-10-09 14:45 EDT, builder (run 17). Not passed; item left open.
+
+- Kept: the jackal's layers carry TARGET's own pixels 8 TARGET px past the cream rim (beast_rig.py RIM_OUT, alpha 1 -> 0.15, each ring pixel on the part it borders; not over gaps, pockets or within 40 px of the fist fire), and the shader halo is off (HALO 0). Over the sky TARGET's glow is warm, over the rock it is a dark edge; one halo colour matched neither. Rim profile vs TARGET-at-720, 1-6 px out: was -15/-11 in R/G 2-3 px out over the sky, now within ~2.
+- Kept: backdrop unsharp 0.25 and rig screen sharpen 0.25 (fine-detail energy vs TARGET 0.92 -> 1.0 on the cliffs, 0.97 -> 1.01 on the jackal); slab cuts brought to screen size with Lanczos and drawn without mips (no measurable change; the trilinear path was not the softness).
+- Measured after: jackal best blur fit sigma 0 (no added blur), head error 3.5 -> 3.0, beast 3.6 -> 3.4. At size=1820x1024 the jackal fits TARGET's native pixels at sigma 0-0.4.
+- Tried and dropped: a tight extra halo ring in the shader (fixed the sky, overshot over rock), HALO 0.5.
+- Found: tools/shot.sh does not re-import, so after rebuilding PNGs (beast_rig.py) a shot draws the stale .ctex with the new .tscn offsets and the parts land 1-3 canvas px off. Run `--import` after any asset rebuild; earlier rig experiments may have been confounded by this.
+- Grader R1-R5 at 720 and R6 at 1820x1024: FAIL, "no visible change", same wording each round (wider hazy glow, fuzzy cracks, smeared slab facets). VERDICT: FAIL.
+- Meshy: 0 credits.
+
+
 2026-10-09 13:45 EDT, builder (run 16). Not passed; item left open.
 
 - Tried a 0.15 unsharp pass on a CanvasLayer under the HUD (screen texture) and Lanczos mips on the slab sprites. R1 FAIL (no visible change), R2 FAIL (slabs "grainy, stair-stepped"). Both reverted.

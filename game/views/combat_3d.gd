@@ -3998,6 +3998,8 @@ const BACKDROP_PAD := 420.0
 ## beast's depth from the lens: behind the jackal, in front of the far wall.
 const BACKDROP_DEPTH := 1.12
 const BACKDROP_REST_CLIMB := 0.15
+## The backdrop's unsharp mask (drawn_sprite.gdshader screen_sharpen).
+const BACKDROP_SHARPEN := 0.25
 const DRAWN_SPRITE := preload("res://assets/3d/drawn_sprite.gdshader")
 var _backdrop: MeshInstance3D = null
 ## TARGET's floor on the ground (tools/floor_cut.py, drawn_floor.gdshader):
@@ -4035,6 +4037,9 @@ func _add_backdrop(beast_id: String) -> void:
 	var mat := ShaderMaterial.new()
 	mat.shader = DRAWN_SPRITE
 	mat.set_shader_parameter("tex", tex)
+	# The cliffs' edge light read soft beside TARGET's (queue "Scene lines
+	# soft", 2026-10-09): their fine detail measured ~0.92 of TARGET's.
+	mat.set_shader_parameter("sharpen", BACKDROP_SHARPEN)
 	mat.render_priority = -3
 	var q := QuadMesh.new()
 	q.size = Vector2.ONE
@@ -7846,22 +7851,61 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 	var tex: Texture2D = STAIR_SLAB_TEX[clampi(k, 0, STAIR_SLAB_TEX.size() - 1)]
 	var sp := Sprite3D.new()
 	sp.name = "SlabPicture"
-	# Mipmapped (box filter): the cut is ~1.4x the slab's size on a 720
-	# screen, and without mips the edges stair-stepped and the faces read
-	# grainy beside TARGET's (graders 2026-10-09 run 16).
-	sp.texture = CardView._a1_mip(tex)
+	# The cut is TARGET's 1024 pixels; the slab reaches the screen at the
+	# square's size over 1024. Brought there once with Lanczos and drawn
+	# about 1:1 with plain linear filtering: the box-filtered trilinear
+	# mips read soft beside TARGET's crisp slab edges (queue "Scene lines
+	# soft", 2026-10-09), and no mips stair-stepped them (run 16).
+	var shrink := stair_slab_shrink()
+	var pic := _stair_slab_scaled(tex, shrink)
+	sp.texture = pic
 	sp.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	sp.shaded = false
 	sp.alpha_cut = SpriteBase3D.ALPHA_CUT_DISABLED
 	sp.transparent = true
 	sp.flip_h = side > 0.0
-	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(tex.get_width())
-	sp.offset = Vector2(0.0, -float(tex.get_height()) * (0.5 - STAIR_SLAB_TOP))
+	sp.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR if pic != tex else BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	if pic == tex:
+		sp.texture = CardView._a1_mip(tex)
+	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(pic.get_width())
+	sp.offset = Vector2(0.0, -float(pic.get_height()) * (0.5 - STAIR_SLAB_TOP))
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Behind a hunter standing on it, whatever the transparent sort says.
 	sp.sorting_offset = -HUNTER_HEIGHT
 	return sp
+## The slab cuts' screen scale: the centred square's side over TARGET's
+## 1024 (0.703 on a 720-row window). 1.0 or more keeps the native cut.
+static func stair_slab_shrink() -> float:
+	var h := 720.0
+	if DisplayServer.get_name() != "headless":
+		h = float(mini(DisplayServer.window_get_size().x, DisplayServer.window_get_size().y))
+	if h <= 0.0:
+		h = 720.0
+	return h / 1024.0
+
+
+static var _stair_slab_cache := {}
+
+
+## `tex` brought to `shrink` of its size with Lanczos (cached per texture).
+static func _stair_slab_scaled(tex: Texture2D, shrink: float) -> Texture2D:
+	if shrink >= 0.95:
+		return tex
+	var key := "%d:%.3f" % [tex.get_rid().get_id(), shrink]
+	if _stair_slab_cache.has(key):
+		return _stair_slab_cache[key]
+	var img := tex.get_image()
+	if img == null:
+		return tex
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	img.resize(maxi(1, roundi(img.get_width() * shrink)), maxi(1, roundi(img.get_height() * shrink)), Image.INTERPOLATE_LANCZOS)
+	var out := ImageTexture.create_from_image(img)
+	_stair_slab_cache[key] = out
+	return out
+
+
 func _slab_shadow_tex() -> Texture2D:
 	if _slab_shadow == null:
 		var g := Gradient.new()
