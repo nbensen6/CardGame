@@ -874,7 +874,10 @@ const BEAST_GLOW := Color(1.0, 0.62, 0.16)
 const ENERGY_GOLD := Color(1.0, 0.78, 0.34)
 const ENERGY_FACE := Color(0.42, 0.22, 0.07, 0.92)
 ## TARGET.png's Switch: a navy pill under the amber End Turn.
-const SWITCH_FACE := Color(0.10, 0.14, 0.30, 0.92)
+## TARGET's Switch pill, sampled: (28,41,63) with a lighter slate rim.
+const SWITCH_FACE := Color(0.112, 0.165, 0.25, 1.0)
+const SWITCH_RIM := Color(0.20, 0.29, 0.34, 1.0)
+const SWITCH_TEXT := Color(0.86, 0.89, 0.92)
 ## A pill's corner radius for the 46 px-tall turn buttons.
 const PILL_RADIUS := 23
 ## Every seat-lit panel, re-tinted when the held hunter changes.
@@ -1072,8 +1075,10 @@ func _apply_sts_hud() -> void:
 			plate.draw_center = false
 			plate.shadow_size = 0
 			plate.set_border_width_all(0)
-			plate.content_margin_top = 7.0
-			plate.content_margin_bottom = 7.0
+			# Thin, so the name and bar fill TARGET's plate once it is
+			# scaled into the square (builder 2026-10-09).
+			plate.content_margin_top = 3.0
+			plate.content_margin_bottom = 3.0
 			plate.content_margin_left = 12.0
 			plate.content_margin_right = 10.0
 			add_flat_panel(top, flat_panel_style(FLAT_FACE, FLAT_EDGE, 6, 1), 0.0)
@@ -1089,15 +1094,20 @@ func _apply_sts_hud() -> void:
 	_hp_bar.move_child(_hp, -1)          # the number reads over the notches
 	# End Turn, Switch and the energy counter: the A1 stone, glowing in the
 	# held hunter's seat colour like their cards (_retint_seat_panels).
-	_end_btn.custom_minimum_size = Vector2(150, 46)
+	# TARGET's pill: 91x34 in the 720 square (scaled into it by _place_square_hud).
+	_end_btn.custom_minimum_size = Vector2(122, 45)
 	_end_btn.add_theme_font_size_override("font_size", 19)
 	# TARGET's energy box: a brown face, a warm gold border, the big number.
 	add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 12, 3,
 		Color(1.0, 0.70, 0.25, 0.22), 5), 2.0)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
-		_switch_btn.add_theme_stylebox_override(state, sw_st[state])
-	_switch_btn.custom_minimum_size = Vector2(118, 46)
+		var st = sw_st[state]
+		if st is StyleBoxFlat and state != "disabled" and state != "pressed":
+			(st as StyleBoxFlat).border_color = SWITCH_RIM
+			(st as StyleBoxFlat).set_border_width_all(1)
+		_switch_btn.add_theme_stylebox_override(state, st)
+	_switch_btn.custom_minimum_size = Vector2(122, 45)
 	# TARGET's turn buttons are bare pills (checker r2 iter 07): the pill face
 	# in a1_button_styles is the whole look, nothing behind it.
 	_retint_seat_panels()
@@ -1108,6 +1118,8 @@ func _apply_sts_hud() -> void:
 	# side by side until then).
 	var controls := _end_btn.get_parent() as Control
 	controls.offset_top = -112.0
+	# TARGET's gap between the two pills (11 px in the 720 square, scaled 0.75).
+	controls.add_theme_constant_override("separation", 15)
 
 
 var _client: GameClient
@@ -1441,6 +1453,7 @@ func _ready() -> void:
 	RenderingServer.frame_pre_draw.connect(_position_intent_tag)
 	RenderingServer.frame_pre_draw.connect(_position_beast_plate)
 	RenderingServer.frame_pre_draw.connect(_position_unit_bars)
+	RenderingServer.frame_pre_draw.connect(_place_square_hud)
 	_client = Session.client
 	if _client == null:
 		return
@@ -2677,7 +2690,9 @@ func _set_intent(boss: Dictionary, s: Dictionary) -> void:
 	# icon at text size, a thin rim.
 	_intent.text = "[center]%s[/center]" % intent_badge_bbcode(txt, hostile)
 	# The A1 stone, its glow red while the beast is swinging (Nick, 2026-10-05).
-	_intent_tag.add_theme_stylebox_override("panel", a1_clear_style(12.0, 4.0))
+	# Tight padding: scaled into TARGET's chip box, the words then come out at
+	# TARGET's size (builder 2026-10-09).
+	_intent_tag.add_theme_stylebox_override("panel", a1_clear_style(8.0, 0.0))
 	# TARGET's chip: small, dark, a thin red edge (no glow).
 	if _intent_glow == null:
 		_intent_glow = add_flat_panel(_intent_tag, flat_panel_style(INTENT_FACE, INTENT_EDGE_HOSTILE, 5, 1), 0.0)
@@ -2884,6 +2899,107 @@ static func beast_plate_pos(feet: Vector2, plate: Vector2, vp: Vector2, hunters:
 			y = minf(y, hr.position.y - plate.y - 4.0)
 	y = clampf(y, 8.0, maxf(8.0, vp.y - plate.y - 300.0))
 	return Vector2(x, y)
+
+
+## TARGET's HUD, in TARGET's own 720 square (builder 2026-10-09, "HUD and
+## climb gauge inside the centred square"): each element's box as TARGET.png
+## draws it, measured on TARGET scaled to 720. The fight lays them into the
+## window's centred square, sized by the smaller of its width and height, so
+## the HUD holds TARGET's layout at any aspect (tall phones included).
+const HUD_SQUARE := {
+	"TopBar": Rect2(12, 11, 281, 23),
+	"IntentTag": Rect2(302, 12, 70, 21),
+	# LeftRail and Controls are placed by the box of their first child (the
+	# energy box, End Turn): the containers are taller than what they show.
+	"LeftRail": Rect2(14, 571, 82, 84),
+	"Controls": Rect2(614, 624, 91, 34),
+	"MenuBtn": Rect2(651, 12, 52, 28),
+	"Gauge": Rect2(642, 217, 66, 296),
+}
+## The log's toggle ends this far left of Menu (TARGET: "Log ▸" x 610-643).
+const HUD_LOG_RIGHT := 650.0
+const HUD_SQUARE_SIDE := 720.0
+
+
+## The window's centred square: where TARGET's picture lives.
+static func hud_square(vp: Vector2) -> Rect2:
+	var side := minf(vp.x, vp.y)
+	return Rect2((vp - Vector2(side, side)) * 0.5, Vector2(side, side))
+
+
+## Where a control `size` goes to fill TARGET box `box` (720 basis) inside
+## square `sq`, scaled uniformly and centred in the box: [position, scale].
+static func hud_fit(box: Rect2, size: Vector2, sq: Rect2) -> Array:
+	var k := sq.size.x / HUD_SQUARE_SIDE
+	var want := box.size * k
+	var s := 1.0
+	if size.x > 0.0 and size.y > 0.0:
+		s = minf(want.x / size.x, want.y / size.y)
+	var pos := sq.position + box.position * k + (want - size * s) * 0.5
+	return [pos, s]
+
+
+func _place_square_hud() -> void:
+	if _hud == null or not is_inside_tree():
+		return
+	var sq := hud_square(get_viewport().get_visible_rect().size)
+	var k := sq.size.x / HUD_SQUARE_SIDE
+	for key in HUD_SQUARE:
+		var c: Control = null
+		if key == "Gauge":
+			c = _gauge.get_parent() as Control if _gauge != null and is_instance_valid(_gauge) else null
+		else:
+			c = _hud.get_node_or_null(key) as Control
+		if c == null:
+			continue
+		_pin_top_left(c)
+		if key == "Controls":
+			c.z_index = 11   # TARGET draws End Turn over the fan's last card (a card is 0..10)
+		var box: Rect2 = HUD_SQUARE[key]
+		if key == "TopBar":
+			# As wide as TARGET's plate at the height that fits its row.
+			var s0 := box.size.y * k / maxf(c.size.y, 1.0)
+			c.size = Vector2(maxf(box.size.x * k / s0, c.get_combined_minimum_size().x), c.size.y)
+		var lead: Control = null
+		if key == "LeftRail":
+			lead = _energy_orb
+		elif key == "Controls":
+			lead = _end_btn
+		if lead != null and lead.get_parent() == c and lead.size.x > 0.0:
+			if key == "Controls":
+				# The pills at their own width, not the column's.
+				c.size = Vector2(lead.get_combined_minimum_size().x, c.size.y)
+			var fl := hud_fit(box, lead.size, sq)
+			var sl := float(fl[1])
+			c.scale = Vector2.ONE * sl
+			c.position = ((fl[0] as Vector2) - lead.position * sl).round()
+			continue
+		var fit := hud_fit(box, c.size, sq)
+		c.scale = Vector2.ONE * float(fit[1])
+		c.position = (fit[0] as Vector2).round()
+	# The log: its toggle on TARGET's "Log", at Menu's scale, the panel
+	# opening under it.
+	var log_box := _hud.get_node_or_null("LogBox") as Control
+	var menu := _hud.get_node_or_null("MenuBtn") as Control
+	if log_box != null and menu != null:
+		_pin_top_left(log_box)
+		var s := menu.scale.x
+		log_box.scale = Vector2.ONE * s
+		log_box.position = Vector2(sq.position.x + HUD_LOG_RIGHT * k - log_box.size.x * s,
+			menu.position.y).round()
+
+
+## Anchors to the top-left corner, keeping where the control is, so its
+## position is a plain screen position from then on.
+static func _pin_top_left(c: Control) -> void:
+	if c.anchor_left != 0.0 or c.anchor_right != 0.0 or c.anchor_top != 0.0 or c.anchor_bottom != 0.0:
+		var r := c.get_rect()
+		c.anchor_left = 0.0
+		c.anchor_right = 0.0
+		c.anchor_top = 0.0
+		c.anchor_bottom = 0.0
+		c.position = r.position
+		c.size = r.size
 
 
 func _position_beast_plate() -> void:
@@ -9866,7 +9982,8 @@ func _show_switch_target(players: Array) -> void:
 	# about is a keybind nobody uses.
 	_switch_btn.text = "Switch  ⇥"
 	_switch_btn.tooltip_text = "Swap hunter.  Tab, or 1 / 2 to pick one directly."
-	_switch_btn.add_theme_color_override("font_color", _slot_color(other))
+	# TARGET's label is a bright near-white, not the seat colour.
+	_switch_btn.add_theme_color_override("font_color", SWITCH_TEXT)
 
 
 func _slot_color(slot: int) -> Color:

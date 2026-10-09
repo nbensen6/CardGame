@@ -2146,6 +2146,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (seam "a little brighter, further down"; asks 2x wider cracks again). No penalties. VERDICT: FAIL. Not widened: the registered pixels already equal TARGET's.
 - Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-09 01:10 EDT, builder (run 8). Not passed; item left open.
+
+- **The drawn jackal was 0.5% small.** Registered against TARGET's square with a scale fit, the body wanted 1.005x about the chest: the fist was 1.5 px right and 1 px low, the right forearm 1 px high, so every line and crack there sat doubled against TARGET's. New `DrawnRig.zoom_view` and `DRAWN_ZOOM` (combat_3d.gd) grow the billboard 0.5% about canvas (867, 631) after the height fit; holds and slabs stay put. Beast-region error 7.4 -> 6.1; fist 13.0 -> 9.4, forearm 7.9 -> 6.4.
+- Measured after: crack pixels TARGET (218,114,45) / game (211,110,40); 25x50 block means within 0-7 levels on the whole body (only the lava band left of the body is -25, the scene).
+- **Grader:** R1 FAIL ("no visible change"; 2x wider cracks, seam down the abdomen, glow into the rock). Not widened: zoomed crops of chest and belly show TARGET's own cracks.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks8-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks8-after.png|420]]
+- Meshy: 0 credits.
+
 ## Fist fire: compact curling blaze wrapped on the fist.
 
 2026-10-08 18:51 EDT, builder. Not passed; item left open.
@@ -2200,3 +2209,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-cliffs-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs-after.png|420]]
 - Meshy: 0 credits.
 
+
+## HUD and climb gauge inside the centred square.
+
+2026-10-09 01:28 EDT, builder (run 8). PASSED.
+
+- New `HUD_SQUARE` in combat_3d.gd: each HUD element's box as TARGET.png draws it in a 720 square (boss plate, Attack chip, energy box, End Turn, Menu, climb gauge). `_place_square_hud` runs every frame (frame_pre_draw, after the plate and chip rules) and lays each into the window's centred square, sized by min(width, height), with a uniform scale; the log toggle follows Menu's scale and ends at TARGET's "Log".
+- LeftRail and Controls are placed by their first child (energy box, End Turn): the containers are taller than what they show.
+- Boss plate margins 7 -> 3 and the chip padding 12/4 -> 8/0 so the words reach TARGET's size once scaled; End Turn and Switch 122x45 (TARGET's pill aspect), 15 px between them; End Turn draws over the fan's last card as in TARGET (z 11).
+- Switch pill: TARGET's sampled navy (28,41,63) with a slate rim, near-white label.
+- Grader: R1 FAIL (Switch high/short, dark), R2 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-hudsquare-before.png|420]] ![[agents/frames/builder/2026-10-09-hudsquare-after.png|420]]
+- Meshy: 0 credits.

@@ -33,7 +33,7 @@ run failed.
       ![[agents/frames/builder/2026-10-08-softslabs-after.png|420]] ^stones-thin-soft-slabs-lower-and-spread
 
 - [ ] **Cracks: wide hot cores and a long sternum seam.**
-      Next pass: grader R1 (2026-10-09 run 7): limb, belly and Y cracks "thinner, redder, less bloom"; FIX 2x wider #FFD040 cracks with glow. Registered TARGET/game per region now match (crack %, hot %, mean colour within 1-3 levels; stem pixels equal), so widening would move away from TARGET: next run, look for a scene-level cause (sky, cliffs, light round the jackal) rather than the art.
+      Next pass: grader 2026-10-09 run 8: "no visible change; 2x wider #FFD040 cracks, seam down the abdomen, glow into rock". Run 8 fixed a real 0.5% scale miss (fist/forearm lines ~2 px off; registered error 7.4 -> 6.1); 25x50 block means now within 0-7 levels of TARGET everywhere on the body except the lava band. Zoomed crops of chest and belly are TARGET\'s own cracks; nothing in the art is left to widen.
       Both critics, MODERATE: TARGET's cracks are wide with yellow-hot cores and a bright yellow seam running down from the sternum; the game's are thinner, redder, with a small dim Y.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the cracks and the sternum seam.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
@@ -123,10 +123,11 @@ run failed.
       **Done when** the `--beast` pair shows no visible difference where the legs meet the lava.
       Test: state=3d beast=cinder_jackal ^jackal-s-feet-in-the-lava-no-red-bars-or
 
-- [ ] **HUD and climb gauge inside the centred square.**
-      In the `--square` pair TARGET's boss bar, energy box, pile counters, End Turn/Switch and the climb gauge all sit inside the square; the game anchors them to the full 1280 frame, so the square cuts the boss bar and leaves out the rest.
-      **Done when** the `--square` and `--hand` pairs show every HUD element in TARGET's place.
-      Test: state=3d beast=cinder_jackal ^hud-and-climb-gauge-inside-the-centred-s
+- [ ] 👀 **HUD and climb gauge inside the centred square.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and climb gauge inside the centred square.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-hudsquare-after.png|420]] ^hud-and-climb-gauge-inside-the-centred-s
 
 - [ ] 👀 **Stray yellow speck on the jackal's chest.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Stray yellow speck on the jackal's chest.|details]]
