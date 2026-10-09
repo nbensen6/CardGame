@@ -136,11 +136,6 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-cracks7-after.png|420]] ^stray-yellow-speck-on-the-jackal-s-chest
 
-- [ ] **Cards: TARGET's taller cards running off the bottom, more tilt.**
-      TARGET's cards are ~1.15x taller for their width (middle card top at y560 of the 720 square, "Deal 1 damage" at y664, bottoms off the frame) and the outer cards lean ~8 degrees; the game's cards are shorter (bottom borders show at ~y705) and lean ~5-6 degrees.
-      **Done when** the `--square` and `--hand` pairs show the cards the same height, running off the bottom, with TARGET's tilt.
-      Test: state=3d beast=cinder_jackal ^cards-target-s-taller-cards-running-off-t
-
 ## Waiting on Nick
 
 The builder skips this section. Answer here or in Home; the item then moves
