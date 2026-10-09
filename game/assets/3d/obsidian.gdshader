@@ -32,6 +32,12 @@ uniform float slab_var : hint_range(0.0, 1.0) = 0.0;
 // floor reads as TARGET's dark hexagonal flagstones with warm seams; 0 keeps
 // the random Voronoi crack network.
 uniform float hex_tiles : hint_range(0.0, 1.0) = 0.0;
+// TARGET's seam (builder 2026-10-09, measured on TARGET.png): a near-black gap
+// a couple of px wide with a dull red lip on its NEAR side only, between
+// flat even faces. lip_gain 0 keeps the old glowing crack.
+uniform vec4 lip_color : source_color = vec4(0.6, 0.12, 0.06, 1.0);
+uniform float lip_gain : hint_range(0.0, 4.0) = 0.0;
+uniform float lip_px : hint_range(0.5, 6.0) = 1.5;
 
 // Rim heat — "Lava flows around the arena", 2026-09-30. Where lava rings the
 // floor (combat_3d._add_lava sets these), the glass nearest it glows orange
@@ -139,6 +145,15 @@ void fragment() {
 	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 1.5)
 		+ rim_color.rgb * rim_gain * heat
 		+ tone.rgb * slab * (1.0 - crack);
+	if (lip_gain > 0.0) {
+		// The lip: a band just outside the gap, on the side nearer the lens
+		// (lower on screen, where the edge distance grows downward).
+		float band = (1.0 - crack) * (1.0 - smoothstep(wdt + px * lip_px * 0.5, wdt + px * lip_px, e));
+		float near_side = step(0.0, dFdy(e));
+		float lip = band * near_side;
+		EMISSION = mix(EMISSION, lip_color.rgb * lip_gain * (1.0 + heat), lip);
+		ALBEDO *= 1.0 - lip;
+	}
 }
 
 void light() {

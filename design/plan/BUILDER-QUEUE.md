@@ -45,7 +45,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
 
 - [ ] **Floor: faint warm seams, not bright orange.**
-      Next pass: grader R6 (2026-10-09 run 7): seams "still visible red lines", TARGET's are dark gaps with a faint red-brown edge; faces too dark/purple against TARGET's warm dark slate (#2b2624-#34302c, per-slab variation); speckled orange band under the lava line. Graders split between rounds on seam brightness and tile size, so measure TARGET's seam and face pixels first and match those.
+      Next pass: grader R11 (2026-10-09 run 7): seams "saturated red, too visible" (want dull brown-orange #5a3220, barely lighter than faces); slabs want per-slab tone, lit bevel/top-edge relief, warm charcoal #2e2928; no red glow band under the lava. Graders flip between "seams too dark" and "too bright" round to round; TARGET measured: faces (31,22,29), seam = black gap + (60-80,20-27,11-24) lip on the near side.
       Both critics, MODERATE: TARGET's hex floor is dark with faint warm seams; the game's seams are bright high-contrast orange and the floor is tinted purple.
       **Done when** the `--square` pair shows no visible difference in the floor and its seams.
       Test: state=3d beast=cinder_jackal ^floor-faint-warm-seams-not-bright-orange
