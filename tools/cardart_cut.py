@@ -23,14 +23,14 @@ OUT = ROOT / "game/assets/cardart"
 
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,
 # window width in TARGET px when the card's window is not WIN_W])
-CARDS = {"scramble": (649.6, 882.6, 5.0, 132.3), "leap": (376.1, 882.0, -5.0, 132.3)}
+CARDS = {"scramble": (647.3, 882.4, 5.0, 137.0), "leap": (373.8, 882.2, -5.0, 137.0)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
 # Shipped from this cut: scramble only (window error 35.9 -> 30.1 on the
 # --hand square). Leap's cut registered worse (24.2 -> 34.4) and the older
 # reflected cut stays; run with a name to cut one card.
 SATURATE = {"leap": 1.2}
 EDGE_FIX = {"leap"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
 WIN_W = 122.0                      # TARGET px: the window inside the gold line (run 14: the frame now trims a 2 px bleed)
-ASPECT = (0.856 * 690) / (0.456 * 984)   # card_view.A1_ART (run 14: the art starts inside the trim)
+ASPECT = (0.889 * 690) / (0.456 * 984)   # card_view.A1_ART (run 16: 0.039 .. 0.928)
 SCALE = 1.4                        # output px per TARGET px: ~2x the window on screen, so the card's mip 1 lands 1:1 and the art stays as crisp as TARGET's (run 14)
 
 
@@ -85,7 +85,9 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
         if bad_x:
             edge = max(bad_x) + 1 if side == 0 else min(bad_x) - 1
             sl = slice(0, edge) if side == 0 else slice(edge + 1, W_)
-            crop[:, sl] = crop[:, edge:edge + 1]
+            # inpainted, not a copied column: a copied column read as a
+            # smeared green stripe down Leap's left side (run 16)
+            hole[:, sl] = True
     top_bad = [y for y in range(0, 6) if lum[y, int(W_ * 0.3):int(W_ * 0.7)].mean() < 75]
     if top_bad and name in EDGE_FIX:
         e = max(top_bad) + 1
@@ -96,7 +98,7 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
     out = Image.fromarray(crop).resize((int(round(w * SCALE)), int(round(h * SCALE))), Image.LANCZOS)
     # The card draws this through a mip and a bilinear tap; a light unsharp
     # mask gives back the edge contrast TARGET's window has (run 14).
-    out = out.filter(ImageFilter.UnsharpMask(radius=1.4, percent=70, threshold=1))
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.6, percent=130, threshold=1))   # run 16: the graders still read both windows soft at 70
     # Drawn small through the card's filters, Leap's sky and leaves lose a
     # little colour against TARGET's crisp window; give it back (run 14).
     if name in SATURATE:

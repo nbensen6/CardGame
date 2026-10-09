@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T12:26
+updated: 2026-10-09T13:30
 working_on: "Right of and under the climb gauge: lava and floor, not a dark box."
 ---
 
@@ -13,15 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 12:26 EDT
+2026-10-09 13:30 EDT
 
-- **Did:** jackal drawn square on to the camera, fist flame past the tonemapper, see-through gauge; eleven items graded PASS.
-- **Worked?** Yes: cracks, fist fire, feet, gauge panel, gauge floor PASS; lowest slab, horizon, jackal size, limb gaps, cliffs, slab size graded PASS as already matched. Under-gauge: VERDICT: FAIL (right strip is TARGET's frame).
-- **Look at:** ![[frames/builder/2026-10-09-run15-before.png]] then ![[frames/builder/2026-10-09-undergauge-after.png]]
+- **Did:** cards registered to TARGET: wider side band, fan pulled in, steel pills, crisp Leap and Scramble art.
+- **Worked?** Yes, after five rounds. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-cards6-after.png]]
 - **Ask:** nothing
-- **Found:** the square's right 12 px (and left 13) are TARGET.png's own dark picture frame; graders read it as scene. The game carries the scene on there.
-- **Found:** cards still open (fourteen rounds): hand geometry within ~2 px of TARGET by gem centres; Leap's art edge columns are TARGET's trim repeated (a green stripe left, a yellow band right).
-- **Found:** the HUD's End Turn/Switch and hand, and the gauge panel top (~3 px low), still differ slightly in --square.
+- **Found:** graders read a box-filtered mip as "pale haze" even when the colours match; other painted art may need the Lanczos mip chain too.
+- **Found:** TARGET's Tongue Snap glyph strokes are a little thicker and lighter than the icon's.
 
 ## Notes
 

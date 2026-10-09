@@ -9565,9 +9565,14 @@ func _beast_shake() -> void:
 ## the only thing you scan a fanned hand for.
 const FAN_OVERLAP := 0.77     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
 ## Where TARGET centres the hand, as a fraction of the centred square's width.
-const HAND_SQUARE_CX := 0.5006   # TARGET's middle cost disc at x 315 of 720 (builder 2026-10-09 run 14)
+const HAND_SQUARE_CX := 0.5042   # TARGET's cost discs registered per card on the --hand pair (builder 2026-10-09 run 16)
 const FAN_TILT := 0.085       # radians per card away from centre: TARGET's tops measure -9.9/-5.1/0/5.4/9.7 deg (run 14)
 const FAN_DROP := 9.8        # px each card sinks per step from centre, making the arc
+## Px each card beyond the inner pair is drawn back toward the centre: TARGET's
+## disc spacing is 405/420/424/412 px on the --hand pair, tighter at the ends,
+## so its first card's rules run under the second (builder 2026-10-09 run 16).
+const FAN_PULL := 2.0
+const FAN_MID_TILT := 0.002
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
 ## Enough to clear the screen edge. The fan deliberately lets the bottom of a
 ## card fall off the bottom of the screen - that is what "out of the way"
@@ -9683,7 +9688,8 @@ func _layout_hand() -> void:
 		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
-		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx,
+		var pull := -signf(off) * FAN_PULL * maxf(absf(off) - 1.0, 0.0)
+		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx + pull,
 				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE)
 		c.position = rest - Vector2(0.0, lift)
 		# A raised card keeps its resting spot as hover area (CardView.hover_hold):
@@ -9694,7 +9700,11 @@ func _layout_hand() -> void:
 			(c as CardView).hover_hold = (_hand_row.get_global_transform() * pose) if raised else null
 		# A hovered card straightens up as it rises, so the face you are reading
 		# is square to you rather than tilted.
-		c.rotation = 0.0 if raised else off * FAN_TILT
+		# The middle card's rest tilt is a hair off zero: an unrotated Control is
+		# snapped to the pixel grid, and at the fan's 0.65 scale that snap
+		# dropped its keyword underline ("Climb" plain on the middle card,
+		# TARGET underlines it; run 16).
+		c.rotation = 0.0 if raised else (off * FAN_TILT if off != 0.0 else FAN_MID_TILT)
 		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
 		# instead of swelling in all directions and shoving its neighbours.
 		c.scale = Vector2.ONE * (FAN_HOVER_SCALE if raised else HAND_REST_SCALE)

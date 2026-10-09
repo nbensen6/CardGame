@@ -2033,6 +2033,20 @@ Run 2026-10-07 16:46 EDT.
 - Meshy: 0 credits.
 
 
+2026-10-09 13:30 EDT, builder (run 16). PASS; item marked 👀.
+
+- **Fan registered per card** on the --hand pair by cost-disc centroids: HAND_SQUARE_CX 0.5006 -> 0.5042 and a new FAN_PULL (2 px inward for each card past the inner pair; TARGET's disc spacing is 405/420/424/412, tighter at the ends). Discs now within 3 hand-pair px (<1 screen px).
+- **Card side band.** On the --hand pair TARGET's cream and gold side lines sit 28 px apart against our 20, and every left-hand line ~15 px further left while the right edges matched. The frame's dark band 21 -> 31 src px, the nine-patch runs out past the card sides (card_view A1_SIDE_OUT 12, A1_LEFT_OUT 23 src px), the art window (A1_ART 0.072 -> 0.039), rules box (A1_TEXT 0.08 -> 0.047), icon layer and type box run left with it. Card 1's rules now run under Leap ("Deal 1 damage", no full stop) as in TARGET.
+- **Trim:** the gold line brighter (156,172,96) with yellow beads (250,238,140) 13 on / 22 period so the dots survive the hand scale, a teal inner keyline, the cream line 9 -> 12 src px.
+- **Body under the window:** the taller hand card's nine-patch stretched the see-through window below the art box and the scene showed through a ~10 px near-black strip over the rules; an olive body rect now sits under it.
+- **Middle card underline:** the unrotated middle card was pixel-snapped and lost its "Climb" underline; it rests at FAN_MID_TILT 0.002 rad.
+- **Type pill** TARGET's steel grey (fill (163,166,181), averaging ~(148,151,164) like TARGET's), ~13% taller, ~1 px lower, ~4% narrower.
+- **Art.** Leap and Scramble re-cut at the wider window (137 TARGET px, centre 2.3 px left); Leap's edge columns inpainted rather than copied (the copied column read as a green stripe); unsharp 70 -> 130%; the cut art's mip chain built with Lanczos (`_sharp_mip`) instead of the box filter. Graders R1-R4 kept calling Leap "pale haze, no blue sky" while a block grid of blue-sky coverage matched TARGET's to a few percent and the game was if anything bluer; a control with TARGET's own Leap pixels was called "blue sky", so the word was softness, not colour. The Lanczos mips fixed it.
+- **Grader:** R1-R4 FAIL (no penalties), control FAIL (paste seams, as expected), R5 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-cards6-before.png|420]] ![[agents/frames/builder/2026-10-09-cards6-after.png|420]]
+- Meshy: 0 credits.
+
+
 ## HUD and cards: TARGET's look, no glow.
 
 2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).

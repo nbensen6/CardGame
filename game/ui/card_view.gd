@@ -492,7 +492,7 @@ func _build_face(data: Dictionary) -> void:
 	elif id != "" and ResourceLoader.exists(own):
 		# Mipmapped: a 620 px painting drawn ~90 px wide skipped texels and
 		# read paler and grainier than TARGET's own art (2026-10-09).
-		art.texture = _a1_mip(load(own))
+		art.texture = _sharp_mip(load(own))
 		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	elif ICONS.has(String(data.get("icon", ""))):
 		# No painting yet: the shared icon, small and centred, so the card is
@@ -503,7 +503,7 @@ func _build_face(data: Dictionary) -> void:
 		if SHIP_A1:
 			# inside the A1 art window, clear of the title plate
 			# TARGET draws the glyph big: ~0.7 of the card's width (2026-10-09).
-			_layer(art, 0.15, 0.12, 0.85, 0.465)   # clear of the pill, which sits higher now (run 14)
+			_layer(art, 0.11, 0.11, 0.83, 0.465)   # clear of the pill (run 14); TARGET's glyph ~6% bigger and ~3 px left (run 16)
 		else:
 			_layer(art, 0.18, 0.12, 0.82, 0.52)
 		_build_upper(data)
@@ -647,9 +647,9 @@ const A1_PATCH := [130, 130, 80, 80]   # left, top, right, bottom
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.072, 0.132, 0.928 - 0.072, 0.588 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
-const A1_TYPE := Rect2(0.112, 0.558, 0.900 - 0.112, 0.618 - 0.558)   # TARGET's pill sits ~5 px higher at hand size (run 14)
-const A1_TEXT := Rect2(0.08, 0.623, 0.92 - 0.08, 0.95 - 0.623)
+const A1_ART := Rect2(0.039, 0.132, 0.928 - 0.039, 0.588 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
+const A1_TYPE := Rect2(0.090, 0.558, 0.878 - 0.090, 0.618 - 0.558)   # TARGET's pill sits ~5 px higher at hand size (run 14); ~3 px left of ours (run 16)
+const A1_TEXT := Rect2(0.047, 0.623, 0.92 - 0.047, 0.95 - 0.623)   # run 16: runs left with the frame (A1_LEFT_OUT); TARGET centres the rules ~2 px left of ours
 
 ## TARGET's card edge: a thin dull-gold line, the same on every seat.
 const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
@@ -669,22 +669,27 @@ const COST_DISC_C := Vector2(0.08, 0.084)   # TARGET's gem centre ~13 px under t
 
 ## TARGET's art window behind an icon: near-black (cardframe_target.py ART_BG).
 const A1_WINDOW := Color(10.0 / 255.0, 11.0 / 255.0, 9.0 / 255.0)
+## TARGET's rules box: dark olive (cardframe_target.py BODY).
+const A1_BODY := Color(36.0 / 255.0, 39.0 / 255.0, 31.0 / 255.0)
 ## How far the art runs past the window under the frame, px of the card.
 const A1_ART_BLEED := 2.0
 
 
 ## TARGET's type pill: pale grey, a darker edge.
-const TYPE_PILL_FILL := Color(0.80, 0.80, 0.82)
-const TYPE_PILL_EDGE := Color(0.35, 0.35, 0.38)
+const TYPE_PILL_FILL := Color(0.64, 0.65, 0.71)   # TARGET's pill averages (150,152,166), a cool steel grey (run 16)
+const TYPE_PILL_EDGE := Color(0.43, 0.44, 0.49)
 
 
 ## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
 static func a1_type_pill(ty: Rect2) -> Rect2:
 	# TARGET's pill: ~46x11 px on a 92 px card in the 720 square (builder
 	# 2026-10-09), half the card's width and a fat bevelled lozenge.
-	var pw := ty.size.x * 0.56
-	var ph := maxf(ty.size.y * 1.22, 10.0)
-	return Rect2(ty.get_center().x - pw * 0.5, ty.get_center().y - ph * 0.5, pw, ph)
+	# Run 16, registered on the --hand pair: TARGET's is ~4% narrower, ~13%
+	# taller and ~1 px lower than the run-14 pill.
+	var pw := ty.size.x * 0.54
+	var ph := maxf(ty.size.y * 1.30, 10.0)
+	var cy := ty.get_center().y + ty.size.y * 0.14
+	return Rect2(ty.get_center().x - pw * 0.5, cy - ph * 0.5, pw, ph)
 
 
 ## TARGET's cost gem, painted once: a green face, the lower half a shade
@@ -812,6 +817,48 @@ static func _a1_mip(tex: Texture2D) -> Texture2D:
 	return out
 
 
+## A painting's mip chain built with Lanczos, not the default box filter: the
+## hand draws the art at about its mip 1, and the box-filtered level read as
+## a soft haze beside TARGET's crisp window - a grader called TARGET's own
+## Leap pixels "blue sky" and ours, measured the same colour, "pale haze"
+## (run 16).
+static var _sharp_mipped := {}
+
+
+static func _sharp_mip(tex: Texture2D) -> Texture2D:
+	if tex == null:
+		return tex
+	if _sharp_mipped.has(tex):
+		return _sharp_mipped[tex]
+	var src := tex.get_image()
+	if src == null:
+		return tex
+	src = src.duplicate()
+	if src.is_compressed():
+		src.decompress()
+	if src.has_mipmaps():
+		src.clear_mipmaps()
+	src.convert(Image.FORMAT_RGBA8)
+	var w := src.get_width()
+	var h := src.get_height()
+	var data := PackedByteArray()
+	var lw := w
+	var lh := h
+	while true:
+		var lvl := src.duplicate()
+		if lw != w or lh != h:
+			lvl.resize(lw, lh, Image.INTERPOLATE_LANCZOS)
+		data.append_array(lvl.get_data())
+		if lw == 1 and lh == 1:
+			break
+		lw = maxi(1, lw >> 1)
+		lh = maxi(1, lh >> 1)
+	var img := Image.create_from_data(w, h, true, Image.FORMAT_RGBA8, data)
+	var out: Texture2D = ImageTexture.create_from_image(img)
+	_sharp_mipped[tex] = out
+	return out
+
+
 func _a1_patch(tex: Texture2D) -> NinePatchRect:
 	var np := NinePatchRect.new()
 	np.texture = _a1_mip(tex)
@@ -835,9 +882,22 @@ static func a1_patch_fit(card: Vector2) -> Array:
 func _a1_fit(np: NinePatchRect) -> void:
 	var card := size if size.x > 0.0 else custom_minimum_size
 	var fit := a1_patch_fit(card)
-	np.position = Vector2.ZERO
+	np.position = Vector2(-(A1_SIDE_OUT + A1_LEFT_OUT) * fit[0].x, 0.0)
 	np.scale = fit[0]
-	np.size = fit[1]
+	np.size = fit[1] + Vector2(2.0 * A1_SIDE_OUT + A1_LEFT_OUT, 0.0)
+
+
+## Source px the frame runs out past the card's sides. TARGET's cards are wider
+## than their art and rules by a wider dark band: on the --hand pair its cream
+## and gold side lines sit 28 px apart against our 20, the gold lines in the
+## same place (builder 2026-10-09 run 16). The frame's band is drawn that much
+## wider (cardframe_target.py) and the patch runs out by it, so everything
+## inside the gold line keeps its place.
+const A1_SIDE_OUT := 12.0
+## And the left side runs out further still, the art window with it: TARGET's
+## left-hand lines sit ~15 px left of ours on every card of the --hand pair
+## while the discs and the right edge match (run 16).
+const A1_LEFT_OUT := 23.0
 
 
 ## TARGET's gold line sits a few px INSIDE a dark border, not on the card's
@@ -873,6 +933,16 @@ func _build_a1() -> void:
 	# in TARGET, not the art rect's aliased staircase (run 14). An icon's
 	# clear ground shows TARGET's near-black window.
 	var ar := a1_box(A1_ART, w, h)
+	# The card's body under the see-through window: on the taller hand card
+	# the nine-patch stretches the frame's window below the art box, and the
+	# scene showed through that strip as a near-black band over the rules
+	# (TARGET: olive straight under the art; run 16).
+	var body := ColorRect.new()
+	body.color = A1_BODY
+	body.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(body)
+	move_child(body, 1)
+	_place(body, Rect2(ar.position.x, ar.end.y - 1.0, ar.size.x, h * 0.5))
 	var win := ColorRect.new()
 	win.color = A1_WINDOW
 	win.mouse_filter = Control.MOUSE_FILTER_IGNORE

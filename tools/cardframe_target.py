@@ -49,16 +49,16 @@ def rounded(draw, inset, fill):
 # dull-gold line with a green-grey line inside it, then a dark keyline round
 # the art window. The name band covers the band along the top, so the top
 # edge reads as the cream line alone, as in TARGET.
-EDGE = [((14, 10, 6), 3), ((226, 228, 170), 9), ((14, 16, 18), 21),
-        ((168, 190, 120), 9), ((118, 140, 102), 5), ((16, 22, 18), 3)]
+EDGE = [((14, 10, 6), 3), ((240, 240, 188), 12), ((14, 16, 18), 31),
+        ((156, 172, 96), 10), ((72, 132, 102), 5), ((16, 22, 18), 3)]
 # The beads: TARGET's inner gold line is dotted, bright yellow beads with
 # darker olive-gold gaps (the "trim" seen at 720 down every card's sides).
-BEAD = (232, 224, 150)   # the beads: yellow-cream dots on TARGET's green inner line
+BEAD = (250, 238, 140)   # the beads: yellow-cream dots on TARGET's green inner line
 BAND_DASH = (58, 92, 56)   # faint green dashes inside the dark band
 BAND_DASH_W = 4
 BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
-BEAD_W = 9               # px across: the gold line's width
-BEAD_ON, BEAD_PERIOD = 9, 14   # px along: bead length, bead period
+BEAD_W = 10               # px across: the gold line's width
+BEAD_ON, BEAD_PERIOD = 13, 22   # px along: ~3 screen px a bead, so the dots survive the hand's 0.13 scale (run 16)
 CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its apex
 CHEV_LIT = (68, 65, 80)
 CHEV_DARK = (42, 39, 50)

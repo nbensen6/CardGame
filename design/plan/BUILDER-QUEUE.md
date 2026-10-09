@@ -56,11 +56,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-feet3-after.png|420]] ^cliffs-dark-slate-closing-in-not-blue-an
 
-- [ ] **Cards: big bright art, light trim, no pips.**
-      Next pass: grader 2026-10-09 run 14 R14 FAIL, no penalties: "Leap top pale haze, no blue sky (wants ~(110,170,230)); trim a plain line, not TARGET's dotted gold-green band at the Scramble|Flick seam; Leap overlaps card 1 less (TARGET clips 'damage' with no full stop); Scramble a little soft". Measured on the --square pair: Leap and Scramble windows within ~8 levels of TARGET registered, pills within 1 px, fan within ~0.5 deg; a control frame with TARGET's own hand PASSES. FIX if anything: card 1's rules running under Leap as in TARGET (card overlap or text width), then the trim's beads a touch brighter.
-      Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
-      **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
-      Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips
+- [ ] 👀 **Cards: big bright art, light trim, no pips.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Cards: big bright art, light trim, no pips.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-cards6-after.png|420]] ^cards-big-bright-art-light-trim-no-pips
 
 - [ ] 👀 **HUD and cards: TARGET's look, no glow.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD and cards: TARGET's look, no glow.|details]]
