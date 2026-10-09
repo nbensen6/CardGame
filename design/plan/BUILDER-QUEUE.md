@@ -201,11 +201,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ^climb-gauge-panel-see-through-the-lava-s
 
-- [ ] **Right of and under the climb gauge: lava and floor, not a dark box.**
-      Next pass: grader 2026-10-09 run 15 R1 FAIL: under the panel's foot MET; the seam above End Turn since removed (floor_cut KEEP_RIGHT_X: TARGET's own floor rows right of the buttons, below-gauge error 4.41 -> 2.49), not yet graded. Right strip NOT MET: square x708-720 is TARGET.png's own dark picture frame (TARGET x>1000), dark over the sky (14,11,24) and dimming the lava to (82,29,16), where the game carries the lava on at (183,50,0). FIX: decide whether the square's right 12 px carry TARGET's frame (dim the backdrop and floor columns there to TARGET's).
-      Between the gauge panel and the square's right edge (square ~x707-720, y215-420) and under the panel's foot (~x645-720, y510-600) the game shows a flat dark strip and block; TARGET shows its lava band, glow and floor carrying on there.
-      **Done when** the `--square` pair shows no visible difference right of and below the climb gauge.
-      Test: state=3d beast=cinder_jackal ^right-of-and-under-the-climb-gauge-lava
+- [ ] 👀 **Right of and under the climb gauge: lava and floor, not a dark box.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Right of and under the climb gauge: lava and floor, not a dark box.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-gaugeright-after.png|420]] ^right-of-and-under-the-climb-gauge-lava
 
 ## Waiting on Nick
 

@@ -15,9 +15,9 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-09 13:30 EDT
 
-- **Did:** cards registered to TARGET: wider side band, fan pulled in, steel pills, crisp Leap and Scramble art.
-- **Worked?** Yes, after five rounds. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-cards6-after.png]]
+- **Did:** cards registered to TARGET (side band, fan, pills, crisp art); TARGET's picture frame down the square's sides.
+- **Worked?** Yes: cards PASS after five rounds, gauge right strip PASS first round. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-09-cards6-before.png]] then ![[frames/builder/2026-10-09-cards6-after.png]], ![[frames/builder/2026-10-09-gaugeright-after.png]]
 - **Ask:** nothing
 - **Found:** graders read a box-filtered mip as "pale haze" even when the colours match; other painted art may need the Lanczos mip chain too.
 - **Found:** TARGET's Tongue Snap glyph strokes are a little thicker and lighter than the icon's.

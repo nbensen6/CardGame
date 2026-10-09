@@ -8677,6 +8677,7 @@ func _close_overlay() -> void:
 ## no input.
 const PICTURE_RIM := 14.0 / 1024.0
 const PICTURE_RIM_COLOR := Color(14.0 / 255.0, 12.0 / 255.0, 22.0 / 255.0)
+const PICTURE_SIDE_RIM_ALPHA := 0.8
 
 
 func _add_picture_rim() -> void:
@@ -8684,10 +8685,13 @@ func _add_picture_rim() -> void:
 	layer.name = "PictureRim"
 	layer.layer = 5
 	add_child(layer)
-	for edge in ["top", "bottom"]:
+	for edge in ["top", "bottom", "left", "right"]:
 		var r := ColorRect.new()
 		r.name = "Rim_" + edge
 		r.color = PICTURE_RIM_COLOR
+		if edge == "left" or edge == "right":
+			# TARGET's side frame lets the lava line glow through, dimmed.
+			r.color.a = PICTURE_SIDE_RIM_ALPHA
 		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		layer.add_child(r)
 	_place_picture_rim()
@@ -8706,6 +8710,18 @@ func _place_picture_rim() -> void:
 	top.size = Vector2(vs.x, band)
 	bot.position = Vector2(0.0, vs.y - band)
 	bot.size = Vector2(vs.x, band)
+	# TARGET's picture frame runs down both sides of the square too: its
+	# right 12 px are (13,11,24) over the sky and floor, the lava dimmed
+	# through it (builder 2026-10-09 run 16). Drawn at the centred square's
+	# edges, which are the screen's edges on a square or tall window.
+	var side := minf(vs.x, vs.y)
+	var x0 := (vs.x - side) * 0.5
+	var lft := layer.get_node("Rim_left") as ColorRect
+	var rgt := layer.get_node("Rim_right") as ColorRect
+	lft.position = Vector2(x0, 0.0)
+	lft.size = Vector2(band, vs.y)
+	rgt.position = Vector2(x0 + side - band, 0.0)
+	rgt.size = Vector2(band, vs.y)
 
 
 ## Overlays must live in their OWN CanvasLayer, above the HUD's.

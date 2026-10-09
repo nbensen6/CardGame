@@ -2576,3 +2576,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-gaugepanel-after.png|420]] ![[agents/frames/builder/2026-10-09-undergauge-after.png|420]]
 - Meshy: 0 credits.
 - **Seam above End Turn**, after R1: floor_cut mirrored and sheared the rows below CARDS_ROW at every x, and a dark wedge of TARGET's floor landed above End Turn. Right of the buttons (TARGET x >= 912, `KEEP_RIGHT_X`) the rows stay TARGET's own. Below-gauge error 3.92 -> 2.49. Not regraded this run.
+
+2026-10-09 13:34 EDT, builder (run 16). PASS; item marked 👀.
+
+- **Decided:** the square's side 12 px carry TARGET's own picture frame. combat_3d `_add_picture_rim` now draws left and right bands too, at the centred square's edges (the screen's edges on a square or tall window), PICTURE_RIM wide, (14,12,22) at alpha 0.8 so the lava line glows through dimmed as in TARGET.
+- **Grader:** R1 PASS (minor: the band's edge is straight where TARGET's is soft). VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-gaugeright-before.png|420]] ![[agents/frames/builder/2026-10-09-gaugeright-after.png|420]]
+- Meshy: 0 credits.
