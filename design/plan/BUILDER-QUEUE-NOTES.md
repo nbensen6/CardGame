@@ -2532,3 +2532,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: PASS (minor: top slab's left end a touch thin, fourth slab a few px wider on --chest, faces a touch soft).
 - Frames: ![[agents/frames/builder/2026-10-09-run15-before.png|420]] ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]]
 - Meshy: 0 credits.
+
+## Floor by the climb gauge: no orange glow smear at the lava line.
+
+2026-10-09 12:10 EDT, builder (run 15). PASS.
+
+- The smear was the floor texture's gauge hole: inpainted, it pulled the lava band's orange down onto the floor and stopped the seams short of the gauge. floor_cut.py `GAUGE_MIRROR`: the floor beside it is mirrored in, seams and all. (The backdrop's band also no longer interpolates from TARGET's dark side frame, and the gauge shade stays inside the panel: the feet item, same run.)
+- Grader: R1 FAIL (judged at --floor scale, "no visible change"), R2 PASS with a 6x close-up of the spot. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-cracks15-after.png|420]] ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]]
+- Meshy: 0 credits.

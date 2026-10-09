@@ -189,10 +189,16 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-slabsmear-after.png|420]] ^floor-left-of-the-frog-no-brown-smear-un
 
-- [ ] **Floor by the climb gauge: no orange glow smear at the lava line.**
-      Just left of the climb gauge at the lava line (square ~x615-640, y380-395) the game shows a soft orange glow running down onto the dark floor; TARGET's floor rows there are dark with the lava line sharp above them.
-      **Done when** the `--square` and `--floor` pairs show no visible difference left of the climb gauge at the lava line.
-      Test: state=3d beast=cinder_jackal ^floor-by-the-climb-gauge-no-orange-glow-
+- [ ] 👀 **Floor by the climb gauge: no orange glow smear at the lava line.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Floor by the climb gauge: no orange glow smear at the lava line.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-gaugefloor-after.png|420]] ^floor-by-the-climb-gauge-no-orange-glow-
+
+- [ ] **Climb gauge panel: see-through, the lava showing through it.**
+      TARGET's gauge panel is translucent: the lava band, its glow and the floor seams read through it (square ~x640-705, y330-400). The game's panel is near-opaque dark there, with a darker top-right corner.
+      **Done when** the `--square` pair shows no visible difference inside the climb gauge panel.
+      Test: state=3d beast=cinder_jackal ^climb-gauge-panel-see-through-the-lava-s
 
 ## Waiting on Nick
 

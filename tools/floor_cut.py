@@ -44,6 +44,7 @@ CARDS_ROW = 790           # TARGET row the hand starts at: below it, rows repeat
 CARRY = 40                # rows under it whose seams are carried on, not mirrored
 SHEAR = 2.3               # px right per row the carried seams slide
 GROW = 4
+GAUGE_MIRROR = True   # the floor under the climb gauge mirrored in from its left, not inpainted
 SLAB_GROW = 2
 SLAB_SHADE = 0.85   # the floor's tone under the lowest slab, its shadow
 SIDE_FEATHER = 40
@@ -113,6 +114,16 @@ def build() -> None:
     rp = img[ring].astype(float)
     tone = np.median(rp[rp.sum(1) < np.percentile(rp.sum(1), 60)], axis=0)
     out = out * (1 - k) + (tone * SLAB_SHADE) * k
+    # The climb gauge's hole: inpainted, it pulled the lava band's orange
+    # down onto the floor as a glow smear left of the gauge, and the floor's
+    # seams stopped short of it (queue "Floor by the climb gauge", run 15).
+    # The floor beside it is mirrored in instead, seams and all.
+    if GAUGE_MIRROR:
+        gx0, gy0, gx1, gy1 = HOLES[1]
+        a0, a1 = gx0 - GROW, min(W, gx1 + GROW)
+        rows = slice(0, max(0, gy1 - TOP + GROW))
+        span = a1 - a0
+        out[rows, a0:a1] = out[rows, a0 - span:a0][:, ::-1]
     # TARGET's soft shadow under the Frog, sampled: (28,23,33) on the plinth.
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
     (sx, sy), (rx, ry) = SHADOW
