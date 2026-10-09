@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 4:52 AM ET",
-  "last_commit": "fe518ba",
+  "updated": "Fri Oct 9, 6:52 AM ET",
+  "last_commit": "6f051cb",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; cracks, fire, cliffs still open",
+      "value": "Idle; cracks, fire, cliffs, cards open",
       "state": "idle"
     },
     {
@@ -32,6 +32,120 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 6:07 AM",
+      "title": "Cards nudged up, Scramble art re-cut",
+      "bullets": [
+        "Hand sits a little higher now",
+        "Scramble picture now framed like yours",
+        "Grader fails: trim, Leap sky, fan"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards4-after-hand.png",
+          "caption": "Cards after"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards4-after-square.png",
+          "caption": "Whole screen"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:53 AM",
+      "title": "Brown smear under bottom slab gone",
+      "bullets": [
+        "Smear under the lowest stone removed",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-slabsmear-after-frog.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:49 AM",
+      "title": "Floor seams match by the Frog",
+      "bullets": [
+        "Floor under the hand now has seams",
+        "Odd wedge by the rock removed",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-pedwedge-before-frog.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-pedwedge-after-frog.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:44 AM",
+      "title": "Frog health bar matches yours",
+      "bullets": [
+        "Bar size, edge and numbers match",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-hpbar-before-frog.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-hpbar-after-frog.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:41 AM",
+      "title": "Frog now uses your drawing",
+      "bullets": [
+        "Heavy pixel outline replaced with clean line",
+        "Frog taken straight from your picture",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-frogcel-before-frog.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-frogcel-after-frog.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:29 AM",
+      "title": "Chest cracks cleaner, belly less black",
+      "bullets": [
+        "Crack lines no longer doubled up",
+        "Dark belly rock no longer crushed black",
+        "Arm outlines passed; cracks still open"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks11-after-chest.png",
+          "caption": "Chest after"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks11-after-square.png",
+          "caption": "Whole screen"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 4:24 AM",
