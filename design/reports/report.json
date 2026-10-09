@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 4:51 PM ET",
-  "last_commit": "5b41132",
+  "updated": "Fri Oct 9, 6:51 PM ET",
+  "last_commit": "543a35c",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 4:23 PM",
+      "value": "Idle: last run ended 6:24 PM",
       "state": "idle"
     },
     {
@@ -31,6 +31,54 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 6:23 PM",
+      "title": "Dark rim gone from slabs",
+      "bullets": [
+        "Stepped dark outline around stones removed",
+        "Grader still sees scene as soft",
+        "Edges measure close; cause may be elsewhere"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-crisp-after.png",
+          "caption": "Game after"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:36 PM",
+      "title": "Slabs, jackal and cliffs sharpened",
+      "bullets": [
+        "Fine detail now matches your drawing closer",
+        "Grader saw no visible change",
+        "Sharpness item stays open"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-lines19-after-stones.png",
+          "caption": "Yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 5:30 PM",
+      "title": "Clean slab edges, no fringe",
+      "bullets": [
+        "Pale fringe and notches on slabs removed",
+        "Stray yellow speck under middle slab fixed",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-sliplip-zoom-middle.png",
+          "caption": "Zoomed slab"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 4:22 PM",
