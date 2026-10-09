@@ -232,3 +232,5 @@ appends here, never to the queue.
 - [ ] **Seeded slab shapes.** Slab outlines use randi(), so every launch draws different stones; seed them per slab.
 - [ ] **Bigger fist flame.** Grow the rig canvas upward for a TARGET-sized plume while keeping _fit_height on the figure, not the canvas.
 - [ ] **`vs_target.py --beast` and `--hand` crops are fitted to the beast, not the square.** Map their shot boxes through the --square test (x 280+0.703t, y 0.703t) as `--stones` now is, so the close-ups agree with the 1:1 test.
+
+- (2026-10-09 run 8) A red-edged slab stands on the floor at the 16:9 frame's right edge, outside the centred square.

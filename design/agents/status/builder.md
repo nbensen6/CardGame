@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T00:27
-working_on: "Cards: big bright art, light trim, no pips."
+updated: 2026-10-09T02:46
+working_on: "Cliffs: dark slate closing in, not blue and far back."
 ---
 
 # builder
@@ -13,15 +13,16 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 00:27 EDT
+2026-10-09 02:46 EDT
 
-- **Did:** hid the chest speck, hung TARGET's own cliffs behind the jackal, dimmed floor seams, rebuilt cards in TARGET's frame.
-- **Worked?** Partly: chest speck VERDICT: PASS; cracks, fist, floor, cliffs and cards each moved closer, last VERDICT: FAIL on each.
-- **Look at:** ![[frames/builder/2026-10-09-cracks7-before.png]] then ![[frames/builder/2026-10-09-cards-after.png]]
+- **Did:** HUD and hand into TARGET's square; TARGET's own floor, pedestal and full lava band; card art and edges; darker cliffs.
+- **Worked?** Partly: HUD, hand, lava line, floor and pedestal VERDICT: PASS; cracks, cards and cliffs VERDICT: FAIL, each closer.
+- **Look at:** ![[frames/builder/2026-10-09-cracks8-before.png]] then ![[frames/builder/2026-10-09-cliffs11-after.png]]
 - **Ask:** nothing
-- **Found:** Scramble's card art has crates and a figure TARGET's does not; Leap's art lacks TARGET's pale sky.
-- **Found:** the HUD (energy box, piles, End Turn/Switch, climb gauge) still sits outside the centred square (queued already).
-- **Found:** a dark red block stands on the floor at the frame's right edge, outside the square.
+- **Found:** the Frog sprite has a heavy pixelated outline TARGET's lacks (queued).
+- **Found:** the HP bar under the Frog is larger and bolder than TARGET's (queued).
+- **Found:** a red-edged slab stands on the floor at the 16:9 frame's right edge, outside the square.
+- **Found:** the backdrop's figure fill shows as a dark column over the fist and a smudge right of the head where the animated jackal does not cover TARGET's silhouette.
 
 ## Notes
 
