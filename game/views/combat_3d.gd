@@ -7859,6 +7859,11 @@ const STAIR_SLAB_SPAN := 1.0
 ## Draw the slab cuts through drawn_sprite.gdshader (true) or as a plain
 ## unshaded sprite of a pre-shrunk copy (false).
 const STAIR_SLAB_DRAWN := true
+## Each slab's sub-pixel landing against TARGET, in screen px at the rest
+## view (x right, y down): registered on the --square pair, builder run 18
+## (the middle slabs sat half a pixel low and their lower edges read fat).
+const STAIR_SLAB_NUDGE := [Vector2(0.0, 0.0), Vector2(0.0, -0.5), Vector2(-0.5, -0.5),
+	Vector2(-0.5, 0.0), Vector2(0.0, 0.0), Vector2(0.0, 0.0)]
 
 
 ## Slab `k`'s picture as a camera-facing sprite, `r` its half-width, mirrored
@@ -7900,6 +7905,11 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 		sp.texture = CardView._a1_mip(tex)
 	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(pic.get_width())
 	sp.offset = Vector2(0.0, -float(pic.get_height()) * (0.5 - STAIR_SLAB_TOP))
+	if STAIR_SLAB_DRAWN and k < STAIR_SLAB_NUDGE.size():
+		# Screen px to the cut's px (the cut is TARGET's 1024 px; the
+		# square shows it at shrink), y up in a sprite's offset.
+		var n: Vector2 = STAIR_SLAB_NUDGE[k] / maxf(shrink, 0.01)
+		sp.offset += Vector2(n.x * (-1.0 if sp.flip_h else 1.0), -n.y)
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	# Behind a hunter standing on it, whatever the transparent sort says.
 	sp.sorting_offset = -HUNTER_HEIGHT

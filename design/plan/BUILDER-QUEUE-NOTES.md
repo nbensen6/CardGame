@@ -2668,6 +2668,7 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader R1 FAIL (no change: the fix had not reached the frame), R2 FAIL (undersides light: matte took the lip as half-transparent), R3 FAIL (specks MET; middle slab's lower edge soft). VERDICT: FAIL.
 - Meshy: 0 credits.
 - 2026-10-09 16:05 EDT, later in run 18: the slab cuts are drawn through drawn_sprite.gdshader now (STAIR_SLAB_DRAWN): TARGET's 1024 px, its colour table in place of SCREEN_COMP, a Lanczos-2 footprint at the screen (lanczos_edges, billboard in the shader). Slab error vs TARGET 3.6 -> 2.6 levels, detail 0.95-0.99, warm 12 -> 5. Grader R4 FAIL: specks MET, middle slab's lower edge pale and stair-stepped.
+- Later in run 18: per-slab sub-pixel nudge (STAIR_SLAB_NUDGE, registered on the --square pair): slab 1 error 6.95 -> 4.7, slab 2 10.9 -> 7.4, ring past the edges within +-4.5 levels. Grader R5 FAIL (middle slab's lower edge). VERDICT: FAIL.
 
 ## Warm floor showing beside the last card.
 
