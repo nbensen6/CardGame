@@ -30,6 +30,7 @@ import gauge_unblend  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "game/assets/3d/cast/cinder_jackal_backdrop.png"
+REST = ROOT / "game/assets/3d/cast/cinder_jackal_2d.png"   # the rig at rest (tools/beast_rig.py)
 
 CUT = rig.CUT          # TARGET's lava line
 FADE = 18              # rows past the cut: TARGET's bright lava band runs to ~546 (2026-10-09)
@@ -78,10 +79,13 @@ HUD = [(424, 16, 532, 50), (10, 14, 418, 96), (862, 22, 998, 54)]   # the last t
 FIST_REBUILD = True
 FIST_AREA = (40, 14, 440, 360)     # TARGET px (x0, y0, x1, y1)
 FIST_RING = (6, 60)
+FIST_NEAR = 0                     # TARGET px from the flame the glow band is rebuilt
 FIST_GLOW = 0.5                    # of the measured median lift (full read as a red band left of the flame)
 FIST_RATIO = False                 # local glow strength: made a cool band left of the flame
 FIST_RATIO_SIG = 10.0              # TARGET px the glow's local strength is spread over
 FIST_EDGE_SIG = 3.0                # TARGET px of the carried-in edge
+RIM_KEEP = 0                       # TARGET px past the drawn outline where TARGET's own pixels start, near the fire
+RIM_KEEP_FIRE = 60                 # TARGET px from the fire that holds for
 BAR_BOTTOM = 50                    # TARGET row: the boss bar panel's last + 1                # TARGET px outside the flame the fit reads
 
 
@@ -98,7 +102,12 @@ def fist_backdrop(out, img, fig, wide, fire_a, m):
         hud[hy0:hy1, hx0:hx1] = True
     # Only what TARGET hides behind the figure and the flame: round them,
     # TARGET's own glow pixels are the best backdrop there is.
-    repl = area & wide
+    # The glow band round the figure (wide, FILL_GROW out) only near the
+    # flame: by the left ear it replaced TARGET's own sky 4-14 px past the
+    # outline with the cool fill's dark cliff, and past the rig's rim ring
+    # that showed as a dark smudge (queue 2026-10-09). Away from the flame
+    # TARGET's own pixels stay, as everywhere outside FIST_AREA.
+    repl = area & (fig | (wide & ndi.binary_dilation(flame, iterations=FIST_NEAR))) if FIST_NEAR > 0 else area & fig
     # cool slate: warm pixels near the flame kept out of the source
     r, g, b = img[..., 0], img[..., 1], img[..., 2]
     warm = ((r - b) > 25) | ((r > 120) & (r > b + 10))
@@ -284,6 +293,29 @@ def build():
         out[keep] = img[keep]
     if FIST_REBUILD:
         out = fist_backdrop(out, img.astype(float), fig, wide, fire_a[:rows], m[:rows])
+    # Within 40 px of the fist fire the rig carries no rim ring
+    # (beast_rig.RIM_OUT), so the figure fill's edge showed there as ragged
+    # tan flecks beside the shoulder (grader 2026-10-09). Past the drawn
+    # outline that fill is only TARGET's own glow: keep TARGET's pixels.
+    if RIM_KEEP >= 0:
+        fa = fire_a[:rows] > 0.5
+        near_fire = ndi.binary_dilation(fa, iterations=RIM_KEEP_FIRE) & ~fa
+        # What the rig actually draws at rest (its composite's alpha, 2x
+        # TARGET from rig.BOX), not the silhouette masks: beside the fist
+        # the rig's arm stops ~5 px inside TARGET's outline, and a dark fill
+        # there read as a notch between two outlines (run 18).
+        rest = np.asarray(Image.open(REST).convert("RGBA"))[..., 3].astype(float) / 255.0
+        bx0, by0 = rig.BOX[0], rig.BOX[1]
+        rh, rw = rest.shape[0] // rig.SCALE, rest.shape[1] // rig.SCALE
+        rest = rest[:rh * rig.SCALE, :rw * rig.SCALE].reshape(rh, rig.SCALE, rw, rig.SCALE).mean((1, 3))
+        cover = np.zeros(fig.shape, bool)
+        ry1, rx1 = min(by0 + rh, rows), min(bx0 + rw, cover.shape[1])
+        cover[by0:ry1, bx0:rx1] = rest[:ry1 - by0, :rx1 - bx0] > 0.9
+        drawn = cover
+        if RIM_KEEP > 0:
+            drawn = ndi.binary_dilation(drawn, iterations=RIM_KEEP)
+        keep = fig & ~drawn & near_fire & ~other
+        out[keep] = img[keep]
     lo, hi = SIDE_BORDER
     out[:, :lo] = out[:, lo:lo + 1]
     out[:, hi:] = out[:, hi - 1:hi]

@@ -13,6 +13,7 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png --fist     the raised fist and its flame, cut from the same square
     python tools/vs_target.py shot.png out.png --chest    the sternum Y and the chest cracks, cut from the same square
     python tools/vs_target.py shot.png out.png --frog     the Frog on its pedestal, cut from the same square
+    python tools/vs_target.py shot.png out.png --ear      the left ear and the sky and cliff top beside it, cut from the same square
     python tools/vs_target.py shot.png out.png --floor    the floor from the lava line to the hand, cut from the same square
 
 `--square` is the 1:1 test (Nick, 2026-10-08): TARGET.png is square, the game
@@ -58,6 +59,9 @@ REGIONS = {
     # (builder 2026-10-09: a grader asked for a zoomed chest crop, the 1x
     # pairs being too small to judge the cracks' width and sharpness)
     "--chest": {"target": (0.40, 0.28, 0.64, 0.52), "shot": (0.21875 + 0.40 * 0.5625, 0.28, 0.21875 + 0.64 * 0.5625, 0.52)},
+    # the left ear, the sky and cliff top beside it (builder 2026-10-09: the
+    # 1x pairs were too small to see a smudge there either way)
+    "--ear": {"target": (0.28, 0.04, 0.48, 0.30), "shot": (0.21875 + 0.28 * 0.5625, 0.04, 0.21875 + 0.48 * 0.5625, 0.30)},
     "--floor": {"target": (0.0, 0.52, 1.0, 0.78), "shot": (0.21875, 0.52, 0.78125, 0.78)},
 }
 

@@ -152,6 +152,13 @@ void fragment() {
 			vec2 dx = dFdx(UV);
 			vec2 dy = dFdy(UV);
 			t = vec4(0.0);
+			vec4 box = vec4(0.0);
+			for (int i = -1; i <= 1; i++) {
+				for (int j = -1; j <= 1; j++) {
+					box += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
+				}
+			}
+			box /= 9.0;
 			if (footprint_lanczos) {
 				// Lanczos-2 at 0, +-0.5, +-1, +-1.5 screen px (the +-1 taps weigh 0).
 				float lw[4] = float[](1.0, 0.5731, 0.0, -0.0637);
@@ -166,13 +173,12 @@ void fragment() {
 				}
 				t = clamp(t / wsum, vec4(0.0), vec4(1.0));
 				t.rgb = min(t.rgb, vec3(t.a));
+				// At the silhouette the negative lobes rang a dark fringe
+				// over the backdrop (the shoulder by the fist, run 18): the
+				// box there.
+				t = mix(box, t, step(0.999, min(t.a, box.a)));
 			} else {
-				for (int i = -1; i <= 1; i++) {
-					for (int j = -1; j <= 1; j++) {
-						t += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
-					}
-				}
-				t /= 9.0;
+				t = box;
 			}
 			if (screen_sharpen > 0.0) {
 				// The box footprint is softer than the Lanczos resample TARGET

@@ -225,10 +225,16 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-gaugeright-after.png|420]] ^right-of-and-under-the-climb-gauge-lava
 
-- [ ] **Dark smudge on the sky left of the jackal's left ear.**
-      TARGET shows clean purple sky meeting the cliff top beside the ear's outer line; the game draws a dark grey-blue blot there, between the ear and the cliff.
-      **Done when** the `--square` and `--beast` pairs show no visible difference beside the left ear.
-      Test: state=3d beast=cinder_jackal ^dark-smudge-on-the-sky-left-of-the-jackal
+- [ ] 👀 **Dark smudge on the sky left of the jackal's left ear.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Dark smudge on the sky left of the jackal's left ear.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-earsmudge-after.png|420]] ^dark-smudge-on-the-sky-left-of-the-jackal
+
+- [ ] **Faint dark streaks in the fist's glow, left of the neck.**
+      TARGET's warm glow on the cliff face between the fist and the jackal's neck is smooth; the game shows faint mottled darker streaks and a thin dark seam running down through it.
+      **Done when** the `--square`, `--fist` and `--ear` pairs show no visible difference in that glow.
+      Test: state=3d beast=cinder_jackal ^faint-dark-streaks-in-the-fist-s-glow
 
 ## Waiting on Nick
 

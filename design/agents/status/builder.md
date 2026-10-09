@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T14:47
+updated: 2026-10-09T15:36
 working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 14:47 EDT
+2026-10-09 15:36 EDT
 
-- **Did:** jackal rim now carries TARGET's own glow pixels; cliffs and rig sharpened to TARGET's fine-detail level.
-- **Worked?** No: measured within noise of TARGET, but six grader rounds saw no visible change. VERDICT: FAIL
-- **Look at:** ![[frames/builder/2026-10-09-lines-before.png]] then ![[frames/builder/2026-10-09-lines-after.png]]
+- **Did:** removed the sky smudge by the left ear; slab cuts undo the 3D colour grade.
+- **Worked?** Partly: ear smudge VERDICT: PASS; scene sharpness VERDICT: FAIL (three rounds, "no visible change", slab tone measured 10 -> 3 levels).
+- **Look at:** ![[frames/builder/2026-10-09-earsmudge-before.png]] then ![[frames/builder/2026-10-09-earsmudge-after.png]]
 - **Ask:** nothing
-- **Found:** tools/shot.sh does not re-import; after rebuilding rig PNGs a shot mis-places parts until `--import` runs.
-- **Found:** a dark smudge on the sky just left of the jackal's left ear (cliff top) that TARGET does not have.
+- **Found:** faint dark streaks and a thin seam in the fist's glow left of the neck (queued).
+- **Found:** the rig's arm beside the fist stops ~5 TARGET px inside TARGET's outline; the backdrop now carries TARGET's outline there, but a swing would show it.
 
 ## Notes
 

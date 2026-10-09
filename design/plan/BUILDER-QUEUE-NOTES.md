@@ -2632,3 +2632,16 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-intent-before.png|420]] ![[agents/frames/builder/2026-10-09-intent-after.png|420]]
 - Meshy: 0 credits.
 - Later in run 16: R3 (a 0.25 unsharp pass alone) FAIL, "no visible change", reverted. R4 (slab sprites mipmapped with the box filter, kept: the jaggies on the lowest slab's edges smooth out in the --stones close-up) FAIL, no penalty. Tried the jackal's halo 0.6 -> 0.35: the glow 3-5 px outside the rim fell below TARGET's (33 vs 48), reverted.
+
+## Dark smudge on the sky left of the jackal's left ear.
+
+2026-10-09 15:36 EDT, builder (run 18). PASS; item marked 👀.
+
+- Cause: tools/backdrop_cut.py's fist rebuild replaced everything within FILL_GROW (14 px) of the figure inside FIST_AREA with its cool inpaint; FIST_AREA reaches x 440, so beside the left ear TARGET's own sky 4-14 px past the outline became dark cliff, and past the rig's fading rim ring it showed as a blot. Now only the figure itself is replaced there (FIST_NEAR 0): ear region error vs TARGET 3.47 -> 1.29 levels, fist glow 3.13 -> 2.76.
+- Beside the shoulder by the fist (no rim ring within 40 px of the fire) the rig's arm stops ~5 TARGET px inside TARGET's outline, so the figure fill showed as a dark notch / tan flecks. The backdrop now keeps TARGET's pixels wherever the rig's rest composite does not draw, within 60 px of the fire (RIM_KEEP): shoulder error 4.96 -> 2.41.
+- drawn_sprite.gdshader: the Lanczos footprint falls back to the box at the silhouette (its negative lobes could ring dark there).
+- Added `--ear` to tools/vs_target.py (the left ear and the sky beside it, cut from the same square).
+- Grader R1 FAIL (no visible change at --beast scale), R2 FAIL (shoulder flecks, rock haze), R3 PASS. VERDICT: PASS.
+- Frames: ![[agents/frames/builder/2026-10-09-earsmudge-before.png|420]] ![[agents/frames/builder/2026-10-09-earsmudge-after.png|420]]
+- Meshy: 0 credits.
+
