@@ -2147,13 +2147,6 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-08-fistfire2-before.png|420]] ![[agents/frames/builder/2026-10-08-fistfire2-after.png|420]]
 - Meshy: 0 credits.
 
-## Stray yellow speck on the jackal's chest.
-
-2026-10-08 23:20 EDT, builder. Passed.
-
-- The speck was the weak-point sigil (glow mesh plus an omni light) at the Height 5 climb point lifted 1.7 hunter heights. TARGET draws no mark, so a drawn beast hides the sigil's children; the node stays as the strike flash's anchor.
-- Grader: VERDICT: PASS.
-- Meshy: 0 credits.
 
 2026-10-08 23:55 EDT, builder (run 7). Not passed; item left open.
 
@@ -2164,4 +2157,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL (judged on --beast, flame cut off), R2 FAIL with --fist: shape and place MET; asks for crisper edges and stronger inner curls, no bloom. VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-fist5-before.png|420]] ![[agents/frames/builder/2026-10-09-fist5-after.png|420]]
 - Meshy: 0 credits.
+## Stray yellow speck on the jackal's chest.
 
+2026-10-08 23:20 EDT, builder. Passed.
+
+- The speck was the weak-point sigil (glow mesh plus an omni light) at the Height 5 climb point lifted 1.7 hunter heights. TARGET draws no mark, so a drawn beast hides the sigil's children; the node stays as the strike flash's anchor.
+- Grader: VERDICT: PASS.
+- Meshy: 0 credits.
