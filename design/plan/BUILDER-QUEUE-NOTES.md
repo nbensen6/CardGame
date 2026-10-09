@@ -2586,6 +2586,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Scene lines soft: TARGET's crisp outline, cracks and slab edges.
 
+2026-10-09 15:24 EDT, builder (run 18). Not passed; item left open.
+
+- Found and fixed: the slab cuts are 3D sprites, so the fight's Environment (ACES, contrast 1.10, saturation 1.18) ran over TARGET's pixels; the jackal and HUD are not affected. Per channel the slabs came out gain 1.13-1.22 x TARGET minus 12-26: tops ~10 levels bright, the pale top-edge light lost. tools/cut_slabs.py now undoes it (SCREEN_COMP, two fitted passes): slab error vs TARGET-at-720 10.0 -> 3.3 levels.
+- Slab fine detail (Laplacian vs TARGET) 0.84-0.98 -> 0.98-1.03 with a per-slab unsharp in the cut (SHARPEN 100..40). The first pixel past TARGET's slab edge was +21 levels (slab half a pixel fat); matte pulled in (ALPHA_IN 4 at 4x): now within +-2.3 on every ring.
+- Jackal billboard footprint: Lanczos-2 kernel in place of the box (drawn_sprite.gdshader footprint_lanczos, RIG_SCREEN_SHARPEN 0). Outline band error 7.95 -> 7.88, beast 2.45 -> 2.41: small. Sub-pixel registration of head, torso, fist, arm and legs: 0,0. Cream band's 1 px outer ring +3.5 levels, 2-6 px out -1: no measurable halo.
+- Grader R1-R3: FAIL, each "no visible change" in the item's area (the slab tone change measures 7 levels). VERDICT: FAIL.
+- Meshy: 0 credits.
+
+
 2026-10-09 14:45 EDT, builder (run 17). Not passed; item left open.
 
 - Kept: the jackal's layers carry TARGET's own pixels 8 TARGET px past the cream rim (beast_rig.py RIM_OUT, alpha 1 -> 0.15, each ring pixel on the part it borders; not over gaps, pockets or within 40 px of the fist fire), and the shader halo is off (HALO 0). Over the sky TARGET's glow is warm, over the rock it is a dark edge; one halo colour matched neither. Rim profile vs TARGET-at-720, 1-6 px out: was -15/-11 in R/G 2-3 px out over the sky, now within ~2.

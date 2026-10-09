@@ -13,7 +13,7 @@ prints each slab's TARGET box. Re-run is safe.
 """
 import os
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 from scipy import ndimage as nd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -21,6 +21,35 @@ SRC = os.path.join(ROOT, "design/art/targets/TARGET.png")
 OUT = os.path.join(ROOT, "game/assets/3d/slabs")
 PAD = 4
 SCALE = 1  # TARGET's own pixels: the game draws them at ~0.7x, so no upsample
+# The slabs are 3D sprites, so the fight's Environment (ACES tonemap, contrast
+# 1.10, saturation 1.18 in combat_3d.tscn) runs over them; the jackal and the
+# HUD are 2D and do not get it. Measured on the --stones pair (builder
+# 2026-10-09 run 18) each channel came out as gain * TARGET + offset, the
+# slab tops ~10 levels brighter and their pale top-edge light lost. So each
+# cut carries the inverse: what the Environment turns back into TARGET.
+# Each pass is per channel polynomial coefficients (highest power first) of
+# shot = f(drawn) on 0..255, fitted on the shot after the passes before it;
+# the cut undoes them last pass first.
+SHARPEN = [100, 100, 80, 80, 45, 40]  # per slab, lowest first
+SHARPEN_RADIUS = 1.0
+ALPHA_IN = 4
+SCREEN_COMP = [
+    [(1.1275, -11.864), (1.16293, -17.915), (1.21524, -26.145)],
+    [(-0.0044, 2.34034, -96.72835), (-0.00373, 2.09371, -75.0884), (-0.00336, 1.93158, -59.15251)],
+]
+
+
+def undo_screen(rgb):
+    """The drawn colour the fight's Environment turns into `rgb` (0..255)."""
+    xs = np.linspace(-60, 320, 3801)
+    out = rgb.astype(float)
+    for comp in reversed(SCREEN_COMP):
+        for c in range(3):
+            ys = np.polyval(comp[c], xs)
+            # monotone over the slabs' tones; clip to where it rises
+            keep = np.concatenate([[True], np.diff(ys) > 0])
+            out[..., c] = np.interp(out[..., c], ys[keep], xs[keep])
+    return out
 
 
 def main():
@@ -59,13 +88,28 @@ def main():
         soft = np.where(core, 1.0, soft * region)
         soft = nd.gaussian_filter(soft, 1.2)
         alpha = np.clip((soft - 0.3) / 0.4, 0, 1)
+        # Measured on the shot (run 18): the first pixel past TARGET's slab
+        # edge came out ~20 levels bright, the slab drawn ~half a pixel fat.
+        # Pull the matte in by ALPHA_IN 4x pixels.
+        if ALPHA_IN > 0:
+            alpha = nd.grey_erosion(alpha, size=(2 * ALPHA_IN + 1, 2 * ALPHA_IN + 1))
         # bleed: transparent pixels take the nearest slab pixel's colour
         solid = alpha > 0.5
         _, (iy, ix) = nd.distance_transform_edt(~solid, return_indices=True)
         rgb = big[iy, ix]
-        img = np.dstack([rgb, alpha * 255]).astype(np.uint8)
+        rgb = undo_screen(rgb)
+        img = np.dstack([np.clip(np.round(rgb), 0, 255), alpha * 255]).astype(np.uint8)
         im = Image.fromarray(img, "RGBA")
         im = im.resize((crop.width * SCALE, crop.height * SCALE), Image.LANCZOS)
+        # The game shrinks the cut to ~0.7x and the sprite's linear filter
+        # lands it off the pixel grid: measured on the --stones pair the
+        # slab's fine detail came out ~11% under TARGET's. Pre-sharpen the
+        # colour (not the alpha) by that much.
+        if SHARPEN[k] > 0:
+            r, g, b, al = im.split()
+            rgb_s = Image.merge("RGB", (r, g, b)).filter(
+                ImageFilter.UnsharpMask(radius=SHARPEN_RADIUS, percent=SHARPEN[k], threshold=0))
+            im = Image.merge("RGBA", (*rgb_s.split(), al))
         im.save(os.path.join(OUT, "slab_%d.png" % k))
         print("slab_%d box=(%d,%d,%d,%d) centre=(%.1f,%.1f)" % (
             k, x0, y0, x1, y1, (x0 + x1) / 2, (y0 + y1) / 2))

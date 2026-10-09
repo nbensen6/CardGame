@@ -59,6 +59,7 @@ func _ready() -> void:
 		mat.set_shader_parameter("premul", true)
 		mat.set_shader_parameter("sharpen", RIG_SHARPEN)
 		mat.set_shader_parameter("footprint", RIG_SUPERSAMPLE > 1.0)
+		mat.set_shader_parameter("footprint_lanczos", RIG_LANCZOS)
 		mat.set_shader_parameter("screen_sharpen", RIG_SCREEN_SHARPEN)
 		mat.set_shader_parameter("screen_sharpen_px", RIG_SCREEN_SHARPEN_PX)
 		mat.set_shader_parameter("crack_grow", RIG_CRACK_GROW)
@@ -160,7 +161,10 @@ const RIG_SHARPEN := 0.0
 ## Unsharp mask after the footprint filter, at screen-pixel reach (see
 ## drawn_sprite.gdshader screen_sharpen): the box footprint is softer than
 ## TARGET's own resample.
-const RIG_SCREEN_SHARPEN := 0.25
+const RIG_SCREEN_SHARPEN := 0.0
+## The footprint as a Lanczos-2 kernel, not a box (drawn_sprite.gdshader
+## footprint_lanczos): TARGET's square is a Lanczos resample.
+const RIG_LANCZOS := true
 const RIG_SCREEN_SHARPEN_PX := 1.0
 ## TARGET's cracks are wide channels with yellow cores; the shader grows
 ## each crack over the plate next to it and heats its brightest pixels.

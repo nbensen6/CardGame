@@ -40,6 +40,13 @@ uniform float sharpen = 0.0;
 // screen size so its parts are drawn sharp; this brings it down without
 // skipping texels (thin cracks) or the blur of a mip chain. false = one tap.
 uniform bool footprint = false;
+// The footprint's kernel: false a box (one screen pixel), true Lanczos-2 over
+// +-1.5 screen pixels in half-pixel taps, the resample TARGET is measured at
+// (tools/vs_target.py brings TARGET to the square with Lanczos). The box left
+// every line ~half a pixel softer than TARGET's: the cream outline's edges
+// and the cracks' cores lower, a glow one pixel past the outline ("Scene
+// lines soft", builder 2026-10-09 run 18).
+uniform bool footprint_lanczos = false;
 uniform float screen_sharpen = 0.0;
 uniform float screen_sharpen_px = 1.0;
 // TARGET's lava cracks read as wide channels with yellow-hot cores; through
@@ -145,12 +152,28 @@ void fragment() {
 			vec2 dx = dFdx(UV);
 			vec2 dy = dFdy(UV);
 			t = vec4(0.0);
-			for (int i = -1; i <= 1; i++) {
-				for (int j = -1; j <= 1; j++) {
-					t += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
+			if (footprint_lanczos) {
+				// Lanczos-2 at 0, +-0.5, +-1, +-1.5 screen px (the +-1 taps weigh 0).
+				float lw[4] = float[](1.0, 0.5731, 0.0, -0.0637);
+				float wsum = 0.0;
+				for (int i = -3; i <= 3; i++) {
+					for (int j = -3; j <= 3; j++) {
+						float w = lw[abs(i)] * lw[abs(j)];
+						if (w == 0.0) continue;
+						t += w * textureLod(tex, UV + dx * (float(i) * 0.5) + dy * (float(j) * 0.5), 0.0);
+						wsum += w;
+					}
 				}
+				t = clamp(t / wsum, vec4(0.0), vec4(1.0));
+				t.rgb = min(t.rgb, vec3(t.a));
+			} else {
+				for (int i = -1; i <= 1; i++) {
+					for (int j = -1; j <= 1; j++) {
+						t += textureLod(tex, UV + dx * (float(i) / 3.0) + dy * (float(j) / 3.0), 0.0);
+					}
+				}
+				t /= 9.0;
 			}
-			t /= 9.0;
 			if (screen_sharpen > 0.0) {
 				// The box footprint is softer than the Lanczos resample TARGET
 				// is measured at: a small unsharp mask at screen-pixel reach
