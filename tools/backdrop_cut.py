@@ -33,6 +33,7 @@ OUT = ROOT / "game/assets/3d/cast/cinder_jackal_backdrop.png"
 CUT = rig.CUT          # TARGET's lava line
 FADE = 18              # rows past the cut: TARGET's bright lava band runs to ~546 (2026-10-09)
 LAVA_ROWS = (515, None)   # TARGET rows of the lava band and its glow
+DARK_INV = ([0, 1, 3, 7, 13, 19, 24, 30, 255], [0, 9.3, 10, 12, 15, 20, 25, 30, 255])
 FADE_LEN = 6           # the last rows, fading out
 SIDE_FEATHER = 28      # TARGET px at the left and right edges
 PAD = 420              # TARGET px mirrored on past each side of the square
@@ -177,6 +178,10 @@ def build():
     ys = np.arange(H)
     bottom = np.clip((rows - ys) / FADE_LEN, 0, 1)
     a *= bottom[:, None]
+    # The colour table crushes TARGET's darkest values (inputs 0-8 draw 0, 10
+    # draws ~3; measured on the fight, builder 2026-10-09): pre-map through
+    # the inverse, as tools/floor_cut.py does, so the slate's dark facets show.
+    out = np.interp(out, DARK_INV[0], DARK_INV[1])
     rgba = np.dstack([np.clip(out, 0, 255), a * 255]).astype(np.uint8)
     Image.fromarray(rgba, "RGBA").save(OUT)
     print("backdrop:", OUT.relative_to(ROOT), rgba.shape[1], "x", rgba.shape[0])

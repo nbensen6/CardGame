@@ -2234,6 +2234,16 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 
 
+
+2026-10-09 03:25 EDT, builder (run 8). Not passed; item left open.
+
+- **The darkest slate was crushed.** The colour table draws TARGET's inputs 0-8 as 0 (measured on the cliffs and the floor); backdrop_cut.py now pre-maps through the inverse (`DARK_INV`). Registered error left 2.42 -> 0.83, right 3.69 -> 2.20.
+- **A red line across the sky** (y ~25 at 1280) was drawn_sprite.gdshader's texture wrapping: halo and footprint taps past the backdrop's top edge read its bottom rows (the lava). `tex` is `repeat_disable` now.
+- Tried and reverted: carrying rows across the fist's fill box (it also crossed the HUD band and painted purple over the left cliff).
+- Grader: R11 FAIL ("no change"), R12 FAIL. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cliffs11-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs11-after.png|420]]
+- Meshy: 0 credits.
+
 ## HUD and climb gauge inside the centred square.
 
 2026-10-09 01:28 EDT, builder (run 8). PASSED.

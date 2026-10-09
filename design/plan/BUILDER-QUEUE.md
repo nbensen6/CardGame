@@ -51,7 +51,7 @@ run failed.
       ![[agents/frames/builder/2026-10-09-floorart-after.png|420]] ^floor-faint-warm-seams-not-bright-orange
 
 - [ ] **Cliffs: dark slate closing in, not blue and far back.**
-      Next pass: grader R10 (2026-10-09 run 7): "blurred, near-black, no facet highlights; right cliff a boxy slab". The cliffs are now TARGET's own pixels on a backdrop (tools/backdrop_cut.py), registered error ~2.5 levels against 30 before, edge Laplacian ~0.78x TARGET's; graders mostly judge the 16:9 extension outside the square and the fill where TARGET's climb gauge stood. Next: sharpen the backdrop to TARGET's edge energy, and make the out-of-square extension read as faceted slate.
+      Next pass: grader R12 (2026-10-09 run 8): \"right wall hazy, left wall murky, dark smudge right of the head, mid-ground outcrops dim\". Registered square error is now ~0.8 (left) / 2.2 (right) levels, so the backdrop IS TARGET's pixels; the visible differences are the figure-fill smears in the backdrop (a dark column over the fist, a smudge above-right of the head) showing where the animated jackal does not cover TARGET's silhouette. Next: fill those from cliff/sky rows, not a wide inpaint (a row-carry over the HUD band failed, it painted purple across the cliff).
       Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
       **Done when** the `--square` pair shows no visible difference in the cliffs.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an

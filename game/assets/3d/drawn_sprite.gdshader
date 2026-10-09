@@ -12,7 +12,7 @@ shader_type spatial;
 render_mode unshaded, fog_disabled, cull_back, depth_prepass_alpha;
 
 // Raw sRGB: the LUT is indexed by the value the screen should show.
-uniform sampler2D tex : filter_linear_mipmap;
+uniform sampler2D tex : filter_linear_mipmap, repeat_disable;   // no wrap: halo and footprint taps past the top edge pulled the lava rows down from the bottom (a red line across the sky, 2026-10-09)
 #include "res://assets/3d/drawn_sprite_lut3d.gdshaderinc"
 
 // tools/drawn_lut.py paints a ramp with this to measure the curve.
