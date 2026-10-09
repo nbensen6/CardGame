@@ -2489,3 +2489,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: R1 FAIL (wedge, speck), R2 FAIL (band, notch), R3 FAIL (aliased edge, fade before gauge), R4 PASS. VERDICT: PASS (minor: lower edge a touch soft, glow stops a touch early at the gauge).
 - Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-09 11:41 EDT, builder (run 15), "Cliffs: dark slate closing in". PASS.
+
+- No new cliff change this run: graded, as run 9's Next pass asked, with before and after --fist and --beast close-ups (before: the 2026-10-09 run-7 frame). The backdrop work since (TARGET's own cliffs, fist_backdrop, this run's gauge shade kept inside the panel) carries it.
+- Grader: VERDICT: PASS (minor: left cliff facet edges a touch soft by the fist, fist glow spills a little further left).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
+- Meshy: 0 credits.

@@ -50,11 +50,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-floorart-after.png|420]] ^floor-faint-warm-seams-not-bright-orange
 
-- [ ] **Cliffs: dark slate closing in, not blue and far back.**
-      Next pass: grader R13 (2026-10-09 run 9): "left cliff by the fist lighter and hazier, facet edges soft, glow washes the cliff". Registered on the --fist pair the left cliff matches TARGET (mean (10,11,19)/(9,10,19), Laplacian 1.11/1.06). The column over the fist and the wisp by the left ear are gone (backdrop_cut.fist_backdrop). Next: grade with before and after --fist and --beast close-ups, as the grader asked.
-      Both critics, MODERATE: TARGET's cliffs are dark faceted slate on both sides with restrained cool edge highlights; the game's are bluer, lighter, further back and busier, with extra peaks behind the jackal.
-      **Done when** the `--square` pair shows no visible difference in the cliffs.
-      Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
+- [ ] 👀 **Cliffs: dark slate closing in, not blue and far back.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Cliffs: dark slate closing in, not blue and far back.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-feet3-after.png|420]] ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
       Next pass: grader 2026-10-09 run 14 R14 FAIL, no penalties: "Leap top pale haze, no blue sky (wants ~(110,170,230)); trim a plain line, not TARGET's dotted gold-green band at the Scramble|Flick seam; Leap overlaps card 1 less (TARGET clips 'damage' with no full stop); Scramble a little soft". Measured on the --square pair: Leap and Scramble windows within ~8 levels of TARGET registered, pills within 1 px, fan within ~0.5 deg; a control frame with TARGET's own hand PASSES. FIX if anything: card 1's rules running under Leap as in TARGET (card overlap or text width), then the trim's beads a touch brighter.
