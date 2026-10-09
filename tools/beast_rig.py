@@ -154,7 +154,7 @@ FIRE_SMOOTH = True
 # strokes (Laplacian in the flame 11.8 against TARGET's 15.1); NL-means
 # averages like patches along each tongue, so the grain goes and the strokes
 # stay.
-FIRE_DENOISE = "nlm"
+FIRE_DENOISE = "none"   # run 15: the flame reaches the screen past the LUT (drawn_fire_overlay), so its grain is not blown up; "nlm" softened the curl strokes
 FIRE_NLM_H = 6
 FIRE_MEDIAN = 5          # canvas px; "median": a median takes the grain and keeps the strokes' edges
 # The colour path loses ~10-20 green in the flame's lemon core where red
@@ -959,7 +959,9 @@ def build():
             # (builder, 2026-10-09 run 9). An edge-keeping smooth inside the
             # flame takes the grain out and keeps the tongues' edges.
             L = layers[name]
-            if FIRE_DENOISE == "median":
+            if FIRE_DENOISE == "none":
+                sm = L[..., :3].astype(float)
+            elif FIRE_DENOISE == "median":
                 u8 = np.clip(L[..., :3], 0, 255).astype(np.uint8)
                 sm = cv2.medianBlur(u8, FIRE_MEDIAN).astype(float)
             elif FIRE_DENOISE == "nlm":

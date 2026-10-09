@@ -39,7 +39,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] **Fist fire: compact curling blaze wrapped on the fist.**
-      Next pass: grader 2026-10-09 run 13 R3 FAIL, no penalties, shape/size/place MET ("almost matches" on --square/--beast); on --fist still "core paler (cream near the knuckles, wants ~255,200,40), curl strokes soft, a few px of orange haze past the edge, fist ~1 px right/down". Registered, the core is ~10-15 green short of TARGET and the cream rim reads whiter: the scene's ACES path cannot reach TARGET's lemon/cream there (green tops out ~234 vs 244); a 3D LUT at EMAX 4 broke every colour. Next: a colour path that reaches TARGET's yellows (e.g. the drawn beast outside the tonemapper), then the ~1 px arm offset.
+      Next pass: grader 2026-10-09 run 15 R3 FAIL, no penalties, --square MET, colour "clearly improved" (the flame now reaches the screen past ACES, drawn_fire_overlay); on --fist still "bottom-left tongue a thin hairline curl (TARGET: a solid pointed orange tongue), fist rim whiter with a faint second edge, inner curl strokes soft, a few px of orange haze right of the flame, fist ~1 px right/down". FIX: the tongue first (its tip is half fire layer, half backdrop: key it whole into the fire layer), then the rim.
       Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-

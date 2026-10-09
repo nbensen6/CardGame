@@ -2275,6 +2275,16 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Frames: ![[agents/frames/builder/2026-10-09-fist7-before.png|420]] ![[agents/frames/builder/2026-10-09-fist7-after.png|420]]
 - Meshy: 0 credits.
 
+2026-10-09 11:54 EDT, builder (run 15). Not passed; item left open.
+
+- **The flame past the tonemapper.** New assets/3d/drawn_fire_overlay.gdshader and DrawnRig `FIRE_OVERLAY`: a CanvasLayer (layer 0, under the HUD) draws the rig viewport's own pixels where they are flame-coloured (bright, warm, blue under ~0.6, so the fist's cream rim too) inside the fire's corner of the rig canvas (uv x<0.40, y<0.62, feathered). Each frame DrawnRig projects the billboard's four corners through the camera and passes the screen-to-UV homography, so it follows the camera and the swing; a 3x3 footprint box filter like the billboard's. Those pixels reach the screen as the PNG: no ACES, no LUT.
+- **FIRE_DENOISE "none"**: the NL-means smooth was there because the LUT blew the flame's grain up ~4x; past the LUT it only softened the curl strokes.
+- **Measured** (TARGET at 720, registered, fist+flame box): mean abs error 6.32 -> 5.37; core 9.5 -> 4.4, lower-left lobe 11.5 -> 5.7.
+- **Tried and reverted:** the billboard's halo off round the fire (halo_off rect): no measurable change.
+- **Grader:** R1 FAIL (rim serrated where the overlay half-covered it), R2 FAIL (same; overlay widened to the cream rim), R3 FAIL ("core clearly improved"; thin bottom-left tongue, rim, curl strokes, haze). No penalties. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-fireover-before.png|420]] ![[agents/frames/builder/2026-10-09-fireover-after.png|420]]
+- Meshy: 0 credits.
+
 ## Stray yellow speck on the jackal's chest.
 
 2026-10-08 23:20 EDT, builder. Passed.
@@ -2336,6 +2346,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R13 FAIL ("left cliff lighter and hazier, facets soft"; asked for before/after --fist and --beast close-ups to judge the smears). VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-cliffs13-before.png|420]] ![[agents/frames/builder/2026-10-09-cliffs13-after.png|420]]
 - Meshy: 0 credits.
+
+2026-10-09 11:41 EDT, builder (run 15), "Cliffs: dark slate closing in". PASS.
+
+- No new cliff change this run: graded, as run 9's Next pass asked, with before and after --fist and --beast close-ups (before: the 2026-10-09 run-7 frame). The backdrop work since (TARGET's own cliffs, fist_backdrop, this run's gauge shade kept inside the panel) carries it.
+- Grader: VERDICT: PASS (minor: left cliff facet edges a touch soft by the fist, fist glow spills a little further left).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
+- Meshy: 0 credits.
+
 ## HUD and climb gauge inside the centred square.
 
 2026-10-09 01:28 EDT, builder (run 8). PASSED.
@@ -2487,12 +2505,5 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Aliased right-fist edge:** WALLS[1] now follows TARGET's line as it slants out ((807,500)-(812,536)); backdrop_cut.py `KEEP_TARGET` keeps TARGET's own pixels behind the fist's foot, so the cut-out's pixel steps sit over TARGET's own line.
 - **Band dark before the climb gauge:** the lava rows interpolated from TARGET's dark side frame, and the gauge shade's blur spilled ~10 px left of the panel. Side frame left out of the interpolation; the shade kept inside the panel's border.
 - Grader: R1 FAIL (wedge, speck), R2 FAIL (band, notch), R3 FAIL (aliased edge, fade before gauge), R4 PASS. VERDICT: PASS (minor: lower edge a touch soft, glow stops a touch early at the gauge).
-- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
-- Meshy: 0 credits.
-
-2026-10-09 11:41 EDT, builder (run 15), "Cliffs: dark slate closing in". PASS.
-
-- No new cliff change this run: graded, as run 9's Next pass asked, with before and after --fist and --beast close-ups (before: the 2026-10-09 run-7 frame). The backdrop work since (TARGET's own cliffs, fist_backdrop, this run's gauge shade kept inside the panel) carries it.
-- Grader: VERDICT: PASS (minor: left cliff facet edges a touch soft by the fist, fist glow spills a little further left).
 - Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-feet3-after.png|420]]
 - Meshy: 0 credits.

@@ -79,6 +79,8 @@ func _ready() -> void:
 			var m := rig.find_child("hold_" + n.substr(6), true, false) as Node2D
 			if m != null:
 				_holds[c] = m
+	if FIRE_OVERLAY and rig.find_child("fire", true, false) != null:
+		_make_fire_overlay(tex)
 
 
 ## Slide the drawing and its holds by `px` canvas pixels (x right, y up),
@@ -196,7 +198,106 @@ func trim_box(box: AABB) -> AABB:
 		Vector3(absf(b.x - a.x), box.size.y, box.size.z))
 
 
+## The fist's flame drawn in 2D over the fight, past the tonemapper (see
+## assets/3d/drawn_fire_overlay.gdshader): ACES could not show TARGET's
+## lemon flame core through the billboard's LUT (builder 2026-10-09, queue
+## "Fist fire", graders R1-R13: "core paler, cream near the knuckles").
+## Under the HUD's layer, so cards and panels stay on top.
+const FIRE_OVERLAY := true
+const FIRE_OVERLAY_LAYER := 0
+var _fire_layer: CanvasLayer
+var _fire_rect: ColorRect
+
+
+func _make_fire_overlay(tex: Texture2D) -> void:
+	_fire_layer = CanvasLayer.new()
+	_fire_layer.name = "FireOverlay"
+	_fire_layer.layer = FIRE_OVERLAY_LAYER
+	_fire_rect = ColorRect.new()
+	_fire_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_fire_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://assets/3d/drawn_fire_overlay.gdshader")
+	mat.set_shader_parameter("rig_tex", tex)
+	_fire_rect.material = mat
+	_fire_layer.add_child(_fire_rect)
+	add_child(_fire_layer)
+
+
+## Map screen UV to the billboard's UV: the homography through its four
+## projected corners (a Y-billboard under a pitched camera is a keystone).
+func _update_fire_overlay() -> void:
+	if _fire_rect == null:
+		return
+	var body := get_node_or_null("Body") as Sprite3D
+	var cam := get_viewport().get_camera_3d() if is_inside_tree() else null
+	var show := body != null and cam != null and body.is_visible_in_tree() and body.texture != null
+	_fire_layer.visible = show
+	if not show:
+		return
+	var vp := get_viewport().get_visible_rect().size
+	var w := float(body.texture.get_width()) * body.pixel_size
+	var h := float(body.texture.get_height()) * body.pixel_size
+	var centre := body.global_transform * Vector3(body.offset.x * body.pixel_size, body.offset.y * body.pixel_size, 0.0)
+	var right := cam.global_transform.basis.x
+	right.y = 0.0
+	right = right.normalized() * body.global_transform.basis.get_scale().x
+	var up := Vector3.UP * body.global_transform.basis.get_scale().y
+	var src: Array[Vector2] = []
+	for k in [Vector2(-0.5, 0.5), Vector2(0.5, 0.5), Vector2(0.5, -0.5), Vector2(-0.5, -0.5)]:
+		var wp: Vector3 = centre + right * (k.x * w) + up * (k.y * h)
+		if cam.is_position_behind(wp):
+			_fire_layer.visible = false
+			return
+		src.append(cam.unproject_position(wp) / vp)
+	var dst: Array[Vector2] = [Vector2(0, 0), Vector2(1, 0), Vector2(1, 1), Vector2(0, 1)]
+	var hm := homography(src, dst)
+	if hm.is_empty():
+		_fire_layer.visible = false
+		return
+	var mat := _fire_rect.material as ShaderMaterial
+	# mat3 columns: GLSL mat3 * vec3 with column-major Basis rows as columns.
+	mat.set_shader_parameter("screen_to_uv", Basis(Vector3(hm[0], hm[3], hm[6]), Vector3(hm[1], hm[4], hm[7]), Vector3(hm[2], hm[5], hm[8])))
+	var a := body.modulate.a
+	mat.set_shader_parameter("strength", a)
+
+
+## The 3x3 homography (row-major, h[8] = 1) taking four points to four
+## points; empty if they are degenerate. Static so a test can check it.
+static func homography(src: Array[Vector2], dst: Array[Vector2]) -> PackedFloat64Array:
+	var m := []
+	for i in 4:
+		var x := src[i].x
+		var y := src[i].y
+		var u := dst[i].x
+		var v := dst[i].y
+		m.append([x, y, 1.0, 0.0, 0.0, 0.0, -u * x, -u * y, u])
+		m.append([0.0, 0.0, 0.0, x, y, 1.0, -v * x, -v * y, v])
+	for col in 8:
+		var piv := col
+		for r in range(col + 1, 8):
+			if absf(m[r][col]) > absf(m[piv][col]):
+				piv = r
+		if absf(m[piv][col]) < 1e-12:
+			return PackedFloat64Array()
+		var tmp = m[col]
+		m[col] = m[piv]
+		m[piv] = tmp
+		for r in 8:
+			if r == col:
+				continue
+			var f: float = m[r][col] / m[col][col]
+			for c2 in range(col, 9):
+				m[r][c2] -= f * m[col][c2]
+	var out := PackedFloat64Array()
+	for i in 8:
+		out.append(m[i][8] / m[i][i])
+	out.append(1.0)
+	return out
+
+
 func _process(_dt: float) -> void:
+	_update_fire_overlay()
 	for c in _holds:
 		var m: Node2D = _holds[c]
 		(c as Node3D).position = canvas_to_local(m.global_position, pixel_size, floor_px, mid_px) \
