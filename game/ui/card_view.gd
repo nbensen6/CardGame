@@ -641,13 +641,13 @@ const A1_GLOW := preload("res://assets/ui/card_frame_t_glow.png")
 const A1_SRC := Vector2(690, 984)
 ## Nine-patch margins in source px: left/top hold the socket, the others the
 ## carved corner.
-const A1_PATCH := [130, 130, 60, 60]   # left, top, right, bottom
+const A1_PATCH := [130, 130, 80, 80]   # left, top, right, bottom
 ## Boxes measured off the generation by tools/cardframe_a1.py, normalised
 ## against the card. The socket is centre + radius (radius as a fraction of
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.021, 0.132, 0.979 - 0.021, 0.63 - 0.132)   # TARGET's art runs out to the trim (2026-10-09)
+const A1_ART := Rect2(0.072, 0.132, 0.928 - 0.072, 0.63 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
 const A1_TYPE := Rect2(0.112, 0.60, 0.900 - 0.112, 0.66 - 0.60)
 const A1_TEXT := Rect2(0.08, 0.665, 0.92 - 0.08, 0.95 - 0.665)
 
@@ -656,14 +656,21 @@ const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
 ## How dark the A1 stone is drawn: TARGET's card frame is near-black.
 const A1_STONE_SHADE := Color(1, 1, 1)
 ## TARGET's cost disc: green, a darker rim, a lighter cap.
-const COST_DISC_FILL := Color(0.19, 0.64, 0.33)   # TARGET's gem face, sampled (48,162,85)
-const COST_DISC_EDGE := Color(0.06, 0.26, 0.10)
-const COST_DISC_CAP := Color(0.42, 0.80, 0.42, 0.55)
+const COST_DISC_FILL := Color(0.19, 0.65, 0.34)   # TARGET's gem face, sampled (48,165,86)
+const COST_DISC_EDGE := Color(0.15, 0.30, 0.18)   # its darker lip at the edge (38,69,43)
+const COST_DISC_CAP := Color(0.17, 0.57, 0.29)   # the lower half a shade darker (45,148,75)
+const COST_DISC_RIM := Color(0.46, 0.94, 0.62)  # the lit rim round the upper half (92,215,136)
 ## The disc's diameter as a fraction of the card's width, and its centre as
 ## fractions of the card: TARGET's disc is about a third of the card across
 ## and its centre sits on the frame's top-left corner.
-const COST_DISC_D := 0.28
-const COST_DISC_C := Vector2(0.08, 0.075)   # TARGET's gem centre ~13 px under the card top in the 720 square (2026-10-09)
+const COST_DISC_D := 0.31   # TARGET's disc, registered by area on all five cards in the 720 square (run 14)
+const COST_DISC_C := Vector2(0.08, 0.084)   # TARGET's gem centre ~13 px under the card top in the 720 square (2026-10-09)
+
+
+## TARGET's art window behind an icon: near-black (cardframe_target.py ART_BG).
+const A1_WINDOW := Color(10.0 / 255.0, 11.0 / 255.0, 9.0 / 255.0)
+## How far the art runs past the window under the frame, px of the card.
+const A1_ART_BLEED := 2.0
 
 
 ## TARGET's type pill: pale grey, a darker edge.
@@ -678,6 +685,46 @@ static func a1_type_pill(ty: Rect2) -> Rect2:
 	var pw := ty.size.x * 0.56
 	var ph := maxf(ty.size.y * 1.22, 10.0)
 	return Rect2(ty.get_center().x - pw * 0.5, ty.get_center().y - ph * 0.5, pw, ph)
+
+
+## TARGET's cost gem, painted once: a green face, the lower half a shade
+## darker, a lit rim round the upper half at 0.8-0.9 of the radius, a dark lip
+## and a soft shadow at the edge (sampled radially off TARGET's Leap disc,
+## run 14). Flat panels drew a dashed ring at hand size.
+static var _disc_tex: Texture2D = null
+
+
+static func a1_disc_texture() -> Texture2D:
+	if _disc_tex != null:
+		return _disc_tex
+	var n := 128
+	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
+	var c := (n - 1) * 0.5
+	var r := n * 0.45
+	for y in range(n):
+		for x in range(n):
+			var dx := (x - c) / r
+			var dy := (y - c) / r
+			var d := sqrt(dx * dx + dy * dy)
+			var up := clampf(-dy / maxf(d, 0.001), -1.0, 1.0)   # 1 at the top
+			var col := COST_DISC_FILL
+			# lower half a shade darker
+			col = col.lerp(COST_DISC_CAP, clampf(-up, 0.0, 1.0) * 0.55)
+			# the lit rim, upper side
+			var ring := clampf(1.0 - absf(d - 0.85) / 0.09, 0.0, 1.0)
+			col = col.lerp(COST_DISC_RIM, ring * clampf(up * 0.6 + 0.45, 0.0, 1.0))
+			# dark lip at the very edge
+			col = col.lerp(COST_DISC_EDGE, clampf((d - 0.93) / 0.07, 0.0, 1.0))
+			var a := clampf((1.0 - d) * r * 0.5 + 0.5, 0.0, 1.0)
+			# soft shadow just outside
+			if d > 1.0:
+				var sh := clampf(1.0 - (d - 1.0) / 0.10, 0.0, 1.0) * 0.45
+				col = Color(0.02, 0.06, 0.03)
+				a = maxf(a, sh)
+			img.set_pixel(x, y, Color(col.r, col.g, col.b, a))
+	img.generate_mipmaps()
+	_disc_tex = ImageTexture.create_from_image(img)
+	return _disc_tex
 
 
 ## The cost disc's rect in px of a card w x h. Static so a test can pin it.
@@ -815,19 +862,32 @@ func _build_a1() -> void:
 	var base := _a1_patch(A1_BASE)
 	# TARGET's frame is near-black, not grey stone.
 	base.self_modulate = A1_STONE_SHADE
-	move_child(base, 1)
 	_a1_fit(base)
 	_frame_rect = base
 	_panel = null
 	_pill = null
 
-	# 2 - the art, re-cut to the window.
+	# 2 - the art window. The frame's window is see-through and the art is
+	# drawn UNDER the frame, a little larger than the window, so the frame's
+	# filtered edge trims it: on a tilted card the window edge is smooth, as
+	# in TARGET, not the art rect's aliased staircase (run 14). An icon's
+	# clear ground shows TARGET's near-black window.
 	var ar := a1_box(A1_ART, w, h)
+	var win := ColorRect.new()
+	win.color = A1_WINDOW
+	win.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(win)
+	move_child(win, 1)
+	_place(win, ar.grow(1.0))
 	if _art_full != null:
-		_art_full.offset_left = ar.position.x + 1.0
-		_art_full.offset_top = ar.position.y + 1.0
-		_art_full.offset_right = ar.end.x - 1.0 - w
-		_art_full.offset_bottom = ar.end.y - 1.0 - h
+		var g := A1_ART_BLEED
+		_art_full.offset_left = ar.position.x - g
+		_art_full.offset_top = ar.position.y - g
+		_art_full.offset_right = ar.end.x + g - w
+		_art_full.offset_bottom = ar.end.y + g - h
+		move_child(base, _art_full.get_index() + 1)
+	else:
+		move_child(base, 2)
 
 	# 3 - the glow, the ONLY coloured thing on the frame.
 	var glow := _a1_patch(A1_GLOW)
@@ -851,10 +911,11 @@ func _build_a1() -> void:
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	nm.clip_text = true
-	nm.add_theme_color_override("font_color", Color(0.96, 0.93, 0.88))
+	nm.add_theme_color_override("font_color", Color(0.95, 0.91, 0.78))   # TARGET's name ink is warm cream (run 14)
 	nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
 	nm.add_theme_constant_override("outline_size", 3)
-	_place(nm, tr.grow_individual(-2.0, 0.0, -3.0, 0.0))
+	# TARGET's name sits ~3 px higher in its band at hand size (run 14).
+	_place(nm, tr.grow_individual(-2.0, 0.0, -3.0, 0.0).grow_individual(0.0, 4.0, 0.0, -4.0))
 
 	# 5 - the type bar, with rarity at its right end.
 	var ty := a1_box(A1_TYPE, w, h)
@@ -900,35 +961,27 @@ func _build_a1() -> void:
 		var dr := a1_cost_disc(w, h)
 		var so := Vector3(dr.get_center().x, dr.get_center().y, dr.size.x * 0.5)
 		var d := so.z * 2.0
-		var disc := Panel.new()
+		var disc := TextureRect.new()
 		disc.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var dsb := StyleBoxFlat.new()
-		dsb.bg_color = COST_DISC_FILL
-		dsb.border_color = COST_DISC_EDGE
-		dsb.set_border_width_all(maxi(1, int(round(d * 0.06))))
-		dsb.set_corner_radius_all(int(ceil(so.z)) + 1)
-		dsb.anti_aliasing = true
-		disc.add_theme_stylebox_override("panel", dsb)
-		_place(disc, dr)
-		# A lighter cap on the upper half, TARGET's gem shading.
-		var cap := Panel.new()
-		cap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var csb := StyleBoxFlat.new()
-		csb.bg_color = COST_DISC_CAP
-		csb.set_corner_radius_all(int(ceil(so.z * 0.8)))
-		cap.add_theme_stylebox_override("panel", csb)
-		_place(cap, Rect2(dr.position + Vector2(d * 0.16, d * 0.1), Vector2(d * 0.68, d * 0.42)))
-		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.72))
+		disc.texture = a1_disc_texture()
+		disc.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		disc.stretch_mode = TextureRect.STRETCH_SCALE
+		disc.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		# the painted face is 0.9 of the texture; the rest is its shadow
+		_place(disc, dr.grow(dr.size.x / 0.9 * 0.05))
+		# TARGET's digit is about a third of the disc tall, white, a thin
+		# dark-green outline (run 14).
+		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.53))
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cl.add_theme_color_override("font_color", Color(1, 1, 1))
-		cl.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.9))
+		cl.add_theme_color_override("font_color", Color(0.96, 1.0, 0.96))
+		cl.add_theme_color_override("font_outline_color", Color(0.03, 0.18, 0.08, 0.95))
 		cl.add_theme_constant_override("outline_size", 2)
 		# Heavy, so a 10px digit still reads at hand size (the grader, on the
 		# first pass: "barely readable").
 		var heavy := FontVariation.new()
 		heavy.base_font = cl.get_theme_font("font")
-		heavy.variation_embolden = 0.5
+		heavy.variation_embolden = 0.3
 		cl.add_theme_font_override("font", heavy)
 		_place(cl, Rect2(so.x - so.z, so.y - so.z + 0.5, d, d))
 

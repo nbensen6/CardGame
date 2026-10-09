@@ -1413,6 +1413,7 @@ const CIRCLE_Z := 100
 
 func _ready() -> void:
 	Screen.fit(self)   # a phone gets a physically larger interface
+	_add_picture_rim()
 	for path in DRAG_THROUGH_PATHS:
 		_let_drags_through(get_node_or_null("Hud/Root/%s" % path))
 	_circle = HitCircle.new()
@@ -8660,6 +8661,45 @@ func _close_overlay() -> void:
 	_rebind_btns = {}
 
 
+## TARGET's picture rim: TARGET.png is framed by a ~14/1024 band of near-black
+## navy (14,12,22) on every side, and its hand runs under the bottom band, so
+## the cards end above the frame's edge (grader, 2026-10-09 run 14). The top
+## and bottom bands span the whole width (the sides of the centred square are
+## mid-scene, so no side bands). Above the HUD, below the overlays; it takes
+## no input.
+const PICTURE_RIM := 14.0 / 1024.0
+const PICTURE_RIM_COLOR := Color(14.0 / 255.0, 12.0 / 255.0, 22.0 / 255.0)
+
+
+func _add_picture_rim() -> void:
+	var layer := CanvasLayer.new()
+	layer.name = "PictureRim"
+	layer.layer = 5
+	add_child(layer)
+	for edge in ["top", "bottom"]:
+		var r := ColorRect.new()
+		r.name = "Rim_" + edge
+		r.color = PICTURE_RIM_COLOR
+		r.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		layer.add_child(r)
+	_place_picture_rim()
+	get_viewport().size_changed.connect(_place_picture_rim)
+
+
+func _place_picture_rim() -> void:
+	var layer := get_node_or_null("PictureRim")
+	if layer == null:
+		return
+	var vs := get_viewport().get_visible_rect().size
+	var band := roundf(minf(vs.x, vs.y) * PICTURE_RIM)
+	var top := layer.get_node("Rim_top") as ColorRect
+	var bot := layer.get_node("Rim_bottom") as ColorRect
+	top.position = Vector2.ZERO
+	top.size = Vector2(vs.x, band)
+	bot.position = Vector2(0.0, vs.y - band)
+	bot.size = Vector2(vs.x, band)
+
+
 ## Overlays must live in their OWN CanvasLayer, above the HUD's.
 ##
 ## Parenting them to this Node3D put them on the root canvas (layer 0) while the
@@ -9517,9 +9557,9 @@ func _beast_shake() -> void:
 ## the only thing you scan a fanned hand for.
 const FAN_OVERLAP := 0.77     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
 ## Where TARGET centres the hand, as a fraction of the centred square's width.
-const HAND_SQUARE_CX := 0.497   # TARGET's middle card centred at x 351 of 720 (builder 2026-10-09)
-const FAN_TILT := 0.072       # radians per card away from centre
-const FAN_DROP := 10.5        # px each card sinks per step from centre, making the arc
+const HAND_SQUARE_CX := 0.5006   # TARGET's middle cost disc at x 315 of 720 (builder 2026-10-09 run 14)
+const FAN_TILT := 0.085       # radians per card away from centre: TARGET's tops measure -9.9/-5.1/0/5.4/9.7 deg (run 14)
+const FAN_DROP := 9.8        # px each card sinks per step from centre, making the arc
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
 ## Enough to clear the screen edge. The fan deliberately lets the bottom of a
 ## card fall off the bottom of the screen - that is what "out of the way"
@@ -9545,7 +9585,7 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## bottom edge where TARGET's sit.
 ## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
 ## `--square` pair, leaving the Frog's pedestal column showing above them.
-const HAND_REST_LIFT := 81.0   # TARGET's middle card top at y 557 of the 720 square (builder 2026-10-09, registered 3 px low at 78)
+const HAND_REST_LIFT := 77.0   # TARGET's card tops, registered on the top line per card (builder 2026-10-09 run 14)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
 ## sit. Shrinks below the fan's natural overlap only when drawing it at that

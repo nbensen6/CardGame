@@ -43,11 +43,20 @@ def rounded(draw, inset, fill):
                            radius=max(2, RADIUS - inset), fill=fill)
 
 
-# TARGET's edge, outside in, measured across its Scramble card's left side
-# (1 TARGET px = 5 source px): a dark rim, a cream line, a gold line, then
-# green, dark green, green.
-EDGE = [((14, 8, 4), 4), ((226, 230, 162), 5), ((126, 132, 62), 4),
-        ((60, 80, 50), 6)]
+# TARGET's edge, outside in, measured across its Leap and Tongue Snap cards'
+# sides at 1024 (1 TARGET-1024 px = ~5.3 source px; builder 2026-10-09 run
+# 14): a thin dark rim, a cream line, a dark slate band ~6 px wide, then a
+# dull-gold line with a green-grey line inside it, then a dark keyline round
+# the art window. The name band covers the band along the top, so the top
+# edge reads as the cream line alone, as in TARGET.
+EDGE = [((14, 10, 6), 3), ((226, 228, 170), 10), ((14, 16, 18), 22),
+        ((212, 206, 134), 8), ((104, 120, 80), 4), ((16, 20, 14), 3)]
+# The beads: TARGET's inner gold line is dotted, bright yellow beads with
+# darker olive-gold gaps (the "trim" seen at 720 down every card's sides).
+BEAD = (150, 150, 92)    # the GAP colour, painted over the gold line: TARGET's beads are fine and low-contrast
+BEAD_W = 8               # px across: the gold line's width
+BEAD_ON, BEAD_PERIOD = 6, 15   # px along: gap length, bead period
+BAND_FROM = 11           # the name band starts inside the cream line, px
 ART_BG = (10, 11, 9)     # TARGET's art window behind an icon: near-black
 
 
@@ -61,12 +70,30 @@ def build():
     rounded(d, inset, BODY + (255,))
     a = np.asarray(im).copy()
     top = inset
+    # beads in the band: the band runs from b0 to b1 px in from the edge
+    b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1]
+    lo, hi = b0, b0 + BEAD_W
+    on = (np.arange(H) % BEAD_PERIOD) < BEAD_ON
+    for x in list(range(lo, hi)) + list(range(W - hi, W - lo)):
+        rows = np.nonzero(on)[0]
+        rows = rows[(rows > RADIUS) & (rows < H - RADIUS)]
+        a[rows, x, :3] = BEAD
+    onx = (np.arange(W) % BEAD_PERIOD) < BEAD_ON
+    for y in range(H - hi, H - lo):
+        cols = np.nonzero(onx)[0]
+        cols = cols[(cols > RADIUS) & (cols < W - RADIUS)]
+        a[y, cols, :3] = BEAD
     bb = int(BAND_BOTTOM * H)
-    a[top:bb, top:W - top, :3] = BAND
-    a[bb - 3:bb, top:W - top, :3] = (34, 32, 40)
+    a[BAND_FROM:bb, BAND_FROM:W - BAND_FROM, :3] = BAND
+    a[bb - 3:bb, BAND_FROM:W - BAND_FROM, :3] = (34, 32, 40)
     # The art window, behind the art: an icon's clear ground shows black.
     ab = int(ART_BOTTOM * H)
     a[bb:ab, top:W - top, :3] = ART_BG
+    # The window is see-through: card_view.gd draws the art (on a black
+    # ground) UNDER this frame, so the frame's filtered edge overlaps the
+    # art's and a tilted card's window edge is smooth, not a staircase
+    # (run 14).
+    a[bb:ab, top:W - top, 3] = 0
     Image.fromarray(a, "RGBA").save(OUT / "card_frame_t_base.png")
     Image.new("RGBA", (W, H), (0, 0, 0, 0)).save(OUT / "card_frame_t_glow.png")
     print("wrote card_frame_t_base.png, card_frame_t_glow.png", W, "x", H, "edge", inset)
