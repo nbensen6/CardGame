@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 2:51 PM ET",
-  "last_commit": "e337a4c",
+  "updated": "Fri Oct 9, 4:51 PM ET",
+  "last_commit": "5b41132",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 2:43 PM",
+      "value": "Idle: last run ended 4:23 PM",
       "state": "idle"
     },
     {
@@ -24,14 +24,143 @@
     }
   ],
   "needs_you": [
-    "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?",
-    "Scene sharpness failed the grader six times, though measurements match. Look and call it close enough, or keep pushing?"
+    "Playtest still shows the old failures (climb route, hunter marker). Want them fixed or ignored for now?"
   ],
   "latest": {
     "path": "design/match-log/iter-25.png",
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:22 PM",
+      "title": "Energy box matches your drawing",
+      "bullets": [
+        "Box size, colour and border now match",
+        "Orange glow still too thin",
+        "Next: wider, softer glow round it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-energy-square.png",
+          "caption": "Yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:16 PM",
+      "title": "Stones nudged into exact place",
+      "bullets": [
+        "Stones shifted a fraction of a pixel",
+        "Stone bottoms still a bit off"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-slabspeck-stones.png",
+          "caption": "Stones: yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:13 PM",
+      "title": "Floor beside the cards fixed",
+      "bullets": [
+        "Warm floor gap by last card gone",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-handfloor-hand.png",
+          "caption": "Hand: yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 4:05 PM",
+      "title": "Stones and sky colours closer",
+      "bullets": [
+        "Stones and backdrop use jackal's colours",
+        "Stone mismatch cut by about a third",
+        "Sharpness and stone edges still open"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-lines18b-stones.png",
+          "caption": "Stones: yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:57 PM",
+      "title": "Orange specks under stones removed",
+      "bullets": [
+        "Stones keep a grey lip underneath",
+        "Warm specks under the slabs gone",
+        "Stone edges still slightly soft"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-slabspeck-stones-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/pair-slabspeck-stones.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:42 PM",
+      "title": "Fist glow seam cleaned up",
+      "bullets": [
+        "Line by the flaming fist gone",
+        "Stray fleck on shoulder removed",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-fistseam-fist.png",
+          "caption": "Fist: yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:36 PM",
+      "title": "Ear smudge gone",
+      "bullets": [
+        "Dark smudge beside the ear removed",
+        "Sky behind ear now matches yours",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-earsmudge-ear.png",
+          "caption": "Ear: yours vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 3:24 PM",
+      "title": "Sharper stone edges and jackal",
+      "bullets": [
+        "Stone edges copied from your drawing",
+        "Jackal resized with a crisper method",
+        "Grader still calls the scene soft"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-lines18-beast.png",
+          "caption": "Jackal: yours vs game"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 2:43 PM",
