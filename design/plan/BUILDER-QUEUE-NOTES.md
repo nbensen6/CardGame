@@ -2440,3 +2440,39 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - **Grader:** R1 FAIL ("no visible change"; belly web dim, seam narrow below the fork, red glow right of slab 2, same as runs 10-13). VERDICT: FAIL.
 - Frames: ![[agents/frames/builder/2026-10-09-run15-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
 - Meshy: 0 credits.
+
+## Lowest slab: float it above and left of the Frog.
+
+2026-10-09 11:20 EDT, builder (run 15). PASS.
+
+- Already in TARGET's place from earlier runs (the jackal, slabs, lava line and backdrop work of 2026-10-08/09); graded against the 2026-10-09 run-7 frame (cracks7-before), before the centred-square and backdrop work.
+- Grader: VERDICT: PASS (minor only).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
+- Meshy: 0 credits.
+
+## Floor horizon: the lava line at TARGET's height.
+
+2026-10-09 11:20 EDT, builder (run 15). PASS.
+
+- Already in TARGET's place from earlier runs (the jackal, slabs, lava line and backdrop work of 2026-10-08/09); graded against the 2026-10-09 run-7 frame (cracks7-before), before the centred-square and backdrop work.
+- Grader: VERDICT: PASS (minor only).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
+- Meshy: 0 credits.
+
+## Jackal: TARGET's size in the square.
+
+2026-10-09 11:20 EDT, builder (run 15). PASS.
+
+- Already in TARGET's place from earlier runs (the jackal, slabs, lava line and backdrop work of 2026-10-08/09); graded against the 2026-10-09 run-7 frame (cracks7-before), before the centred-square and backdrop work.
+- Grader: VERDICT: PASS (minor only).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
+- Meshy: 0 credits.
+
+## Gaps between the jackal's limbs: near-black, not purple sky.
+
+2026-10-09 11:20 EDT, builder (run 15). PASS.
+
+- Already in TARGET's place from earlier runs (the jackal, slabs, lava line and backdrop work of 2026-10-08/09); graded against the 2026-10-09 run-7 frame (cracks7-before), before the centred-square and backdrop work.
+- Grader: VERDICT: PASS (minor only).
+- Frames: ![[agents/frames/builder/2026-10-09-cracks7-before.png|420]] ![[agents/frames/builder/2026-10-09-run15-after.png|420]]
+- Meshy: 0 credits.

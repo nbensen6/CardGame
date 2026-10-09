@@ -92,10 +92,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-08-pedestal-after.png|420]] ^frog-s-rock-and-the-floor-target-s-pedes
 
-- [ ] **Lowest slab: float it above and left of the Frog.**
-      TARGET's lowest slab floats well above the Frog and to its left (square pair ~x190-290, y372-410); the game's sits beside the Frog at its own height.
-      **Done when** the `--square` and `--stones` pairs show the lowest slab in TARGET's place, clear of the Frog.
-      Test: state=3d beast=cinder_jackal ^lowest-slab-float-it-above-and-left-of
+- [ ] 👀 **Lowest slab: float it above and left of the Frog.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Lowest slab: float it above and left of the Frog.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-run15-after.png|420]] ^lowest-slab-float-it-above-and-left-of
 
 - [ ] 👀 **Hand: centred and as wide as TARGET's.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Hand: centred and as wide as TARGET's.|details]]
@@ -103,21 +104,24 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-handfit-after.png|420]] ^hand-centred-and-as-wide-as-target-s
 
-- [ ] **Floor horizon: the lava line at TARGET's height.**
-      In the `--square` pair TARGET's lava line and floor horizon sit about 55% down the square (~y380 game px); the game's sit ~40-55 px lower, so the bottom slab, drawn in TARGET's place, overlaps the lava band instead of the dark floor.
-      **Done when** the `--square` and `--stones` pairs show the lava line at TARGET's height, the bottom slab over dark floor.
-      Test: state=3d beast=cinder_jackal ^floor-horizon-the-lava-line-at-target-s-h
+- [ ] 👀 **Floor horizon: the lava line at TARGET's height.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Floor horizon: the lava line at TARGET's height.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-run15-after.png|420]] ^floor-horizon-the-lava-line-at-target-s-h
 
-- [ ] **Jackal: TARGET's size in the square.**
-      In the `--square` pair the game's jackal is drawn ~1.2x TARGET's (shoulders fill the square's width; ears to lava ~335 px against ~275), so slabs placed in TARGET's square sit lower on its body than TARGET's.
-      **Done when** the `--square` pair shows the jackal the same height, width and place as TARGET's.
-      Test: state=3d beast=cinder_jackal ^jackal-target-s-size-in-the-square
+- [ ] 👀 **Jackal: TARGET's size in the square.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Jackal: TARGET's size in the square.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-run15-after.png|420]] ^jackal-target-s-size-in-the-square
 
 
-- [ ] **Gaps between the jackal's limbs: near-black, not purple sky.**
-      Between the legs and under the arms TARGET shows near-black navy rock; the game shows the purple sky through them.
-      **Done when** the `--square` and `--beast` pairs show no visible difference in the gaps between the jackal's limbs.
-      Test: state=3d beast=cinder_jackal ^gaps-between-the-jackal-s-limbs-near-bla
+- [ ] 👀 **Gaps between the jackal's limbs: near-black, not purple sky.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Gaps between the jackal's limbs: near-black, not purple sky.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-09-run15-after.png|420]] ^gaps-between-the-jackal-s-limbs-near-bla
 
 - [ ] **Jackal's feet in the lava: no red bars or white specks.**
       Where the legs meet the lava TARGET's glow fades softly; the game shows hard red bars and white specks at the cut.
