@@ -131,6 +131,9 @@ FIRE_LEAN = 0.32
 # edge pushed it into a tall pale plume off the fist; TARGET's is a compact
 # orange-yellow blaze curling round the top and back of the fist.
 FIRE_RAW = True
+FIRE_HAZE = 0.92       # alpha of TARGET's own glow round the flame, at the flame
+FIRE_HAZE_PX = 55.0    # TARGET px it fades over
+FIRE_MAX_A = 1.0       # 0.95 (under halo_from, no halo) tried 2026-10-09: no visible change, error up
 FIRE_HUG = 22
 FIRE_CORE = 24
 FIRE_HOT = np.array([255, 244, 196], float)
@@ -407,8 +410,24 @@ def fire_layer(T, m):
         flame = hid & (r > 170) & (r - b > 90) & (g > 60)
         col = np.where(flame[..., None], T, col)
         a = np.where(flame, 1.0, a)
+    if FIRE_RAW and FIRE_HAZE > 0:
+        # TARGET's flame lights the dark cliff round it: a dark red glow
+        # between and beyond the tongues. Keyed out, the fight's slate showed
+        # there and the shader's cream halo ringed the tongues. Carry TARGET's
+        # own glow pixels, fading out FIRE_HAZE_PX from the flame, below the
+        # halo's alpha so it casts none.
+        flame_a = a > 0.5
+        dd = ndi.distance_transform_edt(~flame_a)
+        warm = np.clip((r - b - 8) / 60.0, 0, 1)
+        fall = np.clip(1.0 - dd / FIRE_HAZE_PX, 0, 1) ** 1.2
+        haze = FIRE_HAZE * warm * fall * (inside & ~m) * (~flame_a)
+        haze = ndi.gaussian_filter(haze, 1.0) * (~flame_a) * box
+        a = np.maximum(a, haze)
     if FIRE_RAW:
-        return np.clip(col, 0, 255), a
+        # Just under the shader's halo_from: TARGET's flame casts no cream
+        # halo (its own dark red glow is the haze above); at alpha 1 the
+        # tongues threw the body line's soft orange halo round themselves.
+        return np.clip(col, 0, 255), np.minimum(a, FIRE_MAX_A)
     # Lean the plume back off the fist: above the base, column x samples the
     # column FIRE_LEAN px per row further right.
     sx = xx + FIRE_LEAN * np.clip(FIRE_BASE - yy, 0, None)

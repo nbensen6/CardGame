@@ -2154,3 +2154,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - The speck was the weak-point sigil (glow mesh plus an omni light) at the Height 5 climb point lifted 1.7 hunter heights. TARGET draws no mark, so a drawn beast hides the sigil's children; the node stays as the strike flash's anchor.
 - Grader: VERDICT: PASS.
 - Meshy: 0 credits.
+
+2026-10-08 23:55 EDT, builder (run 7). Not passed; item left open.
+
+- **New `--fist` close-up** in tools/vs_target.py: `--beast` cut the flame off at its left edge, so graders judged it from a sliver.
+- **The flame's own glow.** The hard key dropped TARGET's dark red glow round and between the tongues, so the fight's slate showed there. beast_rig.py `FIRE_HAZE` 0.92 / `FIRE_HAZE_PX` 55: TARGET's own warm pixels round the flame, fading with distance. Fist-box error 24.8 -> 22.3.
+- **Tried, reverted:** fire alpha 0.95 so it casts no shader halo (no visible change, error 23.8); haze over 35 px with a stricter warm key (23.3).
+- **Measured:** flame edge Laplacian TARGET 6.5 / game 7.4 (as sharp); high-frequency grain 3.5 / 3.1 (TARGET has the same grain).
+- **Grader:** R1 FAIL (judged on --beast, flame cut off), R2 FAIL with --fist: shape and place MET; asks for crisper edges and stronger inner curls, no bloom. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-fist5-before.png|420]] ![[agents/frames/builder/2026-10-09-fist5-after.png|420]]
+- Meshy: 0 credits.
+

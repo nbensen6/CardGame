@@ -39,7 +39,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cracks-wide-hot-cores-and-a-long-sternum
 
 - [ ] **Fist fire: compact curling blaze wrapped on the fist.**
-      Next pass: grader R4: still a soft round dome, no separate pointed tongues with dark gaps, no red-orange tips; the rig's rest frame is TARGET's pixels exactly, and a shot with the scene's bloom off shows the tongues and gaps, so make the jackal stop blooming (glow_hdr_threshold 1.7 changed nothing; find why) rather than redrawing the flame.
+      Next pass: grader R2 (2026-10-09 run 7, with the new --fist pair): shape, size and place MET; still "blurred, wide orange bloom, dark fringe, faint inner curls" against TARGET's near-black cliff. Measured edge sharpness equals TARGET's; the slate cliffs behind the fist (Cliffs item) and the drip column left of it are the next things to fix, then re-grade with --fist.
       Both critics, MODERATE: TARGET's flame is a compact orange-yellow blaze curling round the top and back of the fist; the game's is a tall pale plume rising above and behind it.
       **Done when** the `--square` and `--beast` pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal ^fist-fire-compact-curling-blaze-wrapped-
