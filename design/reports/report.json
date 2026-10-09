@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 12:51 AM ET",
-  "last_commit": "d1b8706",
+  "updated": "Fri Oct 9, 2:53 AM ET",
+  "last_commit": "c26747d",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle; speck passed, 5 looks still open",
+      "value": "Idle; 5 passed, 3 closer",
       "state": "idle"
     },
     {
@@ -31,6 +31,78 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 2:46 AM",
+      "title": "Cliffs darker, red sky line gone",
+      "bullets": [
+        "Cliffs keep your darkest slate tones",
+        "Thin red line across sky removed",
+        "Still not quite your cliffs yet"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cliffs11-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cliffs11-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 2:37 AM",
+      "title": "Your floor and frog pedestal",
+      "bullets": [
+        "Your own floor drawn onto the ground",
+        "Dark plinth under the frog, no glow",
+        "Full lava band behind the jackal"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-pedestal2-after.png",
+          "caption": "Floor and plinth"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 2:00 AM",
+      "title": "Cards use your Leap, Scramble art",
+      "bullets": [
+        "Bigger art windows, gems and lines",
+        "Taller cards running off the bottom",
+        "Cards close, still not a match"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cards3-after.png",
+          "caption": "New cards"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 1:32 AM",
+      "title": "HUD and hand fit your square",
+      "bullets": [
+        "Boss bar, energy, buttons inside your square",
+        "Hand now your size and centred",
+        "Jackal lines nudged closer to yours"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-hudsquare-after.png",
+          "caption": "HUD in square"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-09-cracks8-after.png",
+          "caption": "Jackal lines"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 12:26 AM",
