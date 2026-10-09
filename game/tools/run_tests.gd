@@ -22231,7 +22231,8 @@ func _test_a1_frame_tinted_per_seat() -> void:
 			CardView.a1_box(CardView.A1_TYPE, w, h), CardView.a1_box(CardView.A1_TEXT, w, h)]
 		for i in range(boxes.size()):
 			_expect(Rect2(0, 0, w, h).encloses(boxes[i]), "a1: box %d inside the card" % i)
-			if i > 0:
+			# TARGET's type pill sits ON the art's lower edge (box 2 over box 1).
+			if i > 0 and i != 2:
 				_expect(boxes[i - 1].end.y <= boxes[i].position.y,
 					"a1: box %d does not overlap the one above" % i)
 		var fit: Array = CardView.a1_patch_fit(box)

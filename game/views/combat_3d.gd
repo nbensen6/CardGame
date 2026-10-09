@@ -9252,7 +9252,9 @@ func _beast_shake() -> void:
 ## before it, including the right end of its name plate - so half the hand
 ## had its title hidden. The overlap has to leave the NAME readable, which is
 ## the only thing you scan a fanned hand for.
-const FAN_OVERLAP := 0.80     # TARGET overlaps its cards (2026-10-08); of a card's width - how far the next one sits along
+const FAN_OVERLAP := 0.74     # of a card's width - how far the next one sits along; measured on TARGET's --square pair (builder 2026-10-09)
+## Where TARGET centres the hand, as a fraction of the centred square's width.
+const HAND_SQUARE_CX := 0.524
 const FAN_TILT := 0.085       # radians per card away from centre
 const FAN_DROP := 7.0         # px each card sinks per step from centre, making the arc
 const FAN_TUCK := 26.0        # px the whole hand sits below its band, out of the way
@@ -9352,6 +9354,15 @@ func _layout_hand() -> void:
 	# the hand reads as a row of paintings. A handheld keeps the shallow tuck:
 	# no hover means whatever is hidden at rest is hidden forever.
 	var tuck := FAN_TUCK if Screen.is_handheld() else FAN_TUCK + 52.0
+	# TARGET centres its hand a little right of the centred square's middle
+	# (HAND_SQUARE_CX), clear of the energy box: move the fan there from the
+	# scroll band's own centre.
+	var square_dx := 0.0
+	if scroller != null and is_inside_tree():
+		var vs := get_viewport().get_visible_rect().size
+		var side := minf(vs.x, vs.y)
+		var want := vs.x * 0.5 + (HAND_SQUARE_CX - 0.5) * side
+		square_dx = want - (scroller.get_global_rect().position.x + room * 0.5)
 	for i in range(n):
 		var c := cards[i] as Control
 		if c == null:
@@ -9361,7 +9372,7 @@ func _layout_hand() -> void:
 		c.pivot_offset = Vector2(w * 0.5, c.custom_minimum_size.y * 1.35)
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
-		var rest := Vector2(hand_card_x(i, n, w, step, room),
+		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx,
 				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE)
 		c.position = rest - Vector2(0.0, lift)
 		# A raised card keeps its resting spot as hover area (CardView.hover_hold):

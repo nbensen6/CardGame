@@ -57,6 +57,7 @@ run failed.
       Test: state=3d beast=cinder_jackal ^cliffs-dark-slate-closing-in-not-blue-an
 
 - [ ] **Cards: big bright art, light trim, no pips.**
+      Next pass: grader R4 (2026-10-09 run 7): trim, text size and no pips MET; still: Scramble art has extra crates/wedge/figure (TARGET: blue golem on bright yellow sky only), Leap art darker with no pale-blue sky, type pill smaller/thinner than TARGET's, fan tilts less. FIX: repaint/crop those two art images to TARGET's, a taller bevelled pill, more fan tilt.
       Both critics, MODERATE: TARGET's cards have big bright art over the top half, light gold-green trim and large text; the game's have small inset art, a dark olive frame, small text and extra blue pips.
       **Done when** the `--square` and `--hand` pairs show no visible difference in the cards (TARGET.png's cards, not TARGET-UI's).
       Test: state=3d beast=cinder_jackal ^cards-big-bright-art-light-trim-no-pips

@@ -623,8 +623,11 @@ func _build_upper(data: Dictionary) -> void:
 
 ## The switch, like SHOW_COST: false draws the carved-obsidian border again.
 const SHIP_A1 := true
-const A1_BASE := preload("res://assets/ui/card_frame_a1_base.png")
-const A1_GLOW := preload("res://assets/ui/card_frame_a1_glow.png")
+# TARGET's own card (tools/cardframe_target.py, builder 2026-10-09): a thin
+# cream line and green chain band, a dark name band, the art edge to edge
+# under it, olive rules box. The carved A1 stone is card_frame_a1_*.png.
+const A1_BASE := preload("res://assets/ui/card_frame_t_base.png")
+const A1_GLOW := preload("res://assets/ui/card_frame_t_glow.png")
 ## The source pair's size, px. The nine-patch is drawn at this size and scaled
 ## down to the card, so the corners (and the socket in the top-left one) keep
 ## their shape and only the straight runs between them stretch.
@@ -636,15 +639,15 @@ const A1_PATCH := [130, 130, 60, 60]   # left, top, right, bottom
 ## against the card. The socket is centre + radius (radius as a fraction of
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
-const A1_TITLE := Rect2(0.205, 0.045, 0.945 - 0.205, 0.130 - 0.045)
-const A1_ART := Rect2(0.095, 0.150, 0.905 - 0.095, 0.560 - 0.150)
-const A1_TYPE := Rect2(0.112, 0.585, 0.900 - 0.112, 0.640 - 0.585)
-const A1_TEXT := Rect2(0.112, 0.665, 0.900 - 0.112, 0.925 - 0.665)
+const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
+const A1_ART := Rect2(0.028, 0.132, 0.972 - 0.028, 0.63 - 0.132)
+const A1_TYPE := Rect2(0.112, 0.60, 0.900 - 0.112, 0.66 - 0.60)
+const A1_TEXT := Rect2(0.08, 0.665, 0.92 - 0.08, 0.95 - 0.665)
 
 ## TARGET's card edge: a thin dull-gold line, the same on every seat.
 const A1_RIM := Color(0.62, 0.50, 0.26, 0.6)
 ## How dark the A1 stone is drawn: TARGET's card frame is near-black.
-const A1_STONE_SHADE := Color(0.52, 0.54, 0.42)
+const A1_STONE_SHADE := Color(1, 1, 1)
 ## TARGET's cost disc: green, a darker rim, a lighter cap.
 const COST_DISC_FILL := Color(0.16, 0.58, 0.24)
 const COST_DISC_EDGE := Color(0.06, 0.26, 0.10)
@@ -652,7 +655,7 @@ const COST_DISC_CAP := Color(0.42, 0.80, 0.42, 0.55)
 ## The disc's diameter as a fraction of the card's width, and its centre as
 ## fractions of the card: TARGET's disc is about a third of the card across
 ## and its centre sits on the frame's top-left corner.
-const COST_DISC_D := 0.30
+const COST_DISC_D := 0.27
 const COST_DISC_C := Vector2(0.08, 0.045)
 
 
@@ -785,8 +788,10 @@ func _build_a1() -> void:
 
 	# 4 - the name, starting clear of the socket.
 	var tr := a1_box(A1_TITLE, w, h)
-	var nm := _label(String(_data.get("name", "")), 13 if w < 170 else 15)
+	var nm := _label(String(_data.get("name", "")), 15 if w < 170 else 17)
 	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	# TARGET centres the name in its band.
+	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	nm.clip_text = true
 	nm.add_theme_color_override("font_color", Color(0.96, 0.93, 0.88))
@@ -816,11 +821,11 @@ func _build_a1() -> void:
 		tl.add_theme_color_override("font_color", Color(0.16, 0.15, 0.15))
 		tl.add_theme_constant_override("outline_size", 0)
 		_place(tl, pr)
-	_place(_rarity_pips(_data), Rect2(ty.end.x - 26.0, ty.get_center().y - 3.0, 22.0, 6.0))
+	# No rarity pips: TARGET's cards carry none (builder 2026-10-09).
 
 	# 6 - the rules, wrapped inside the text box.
 	var xr := a1_box(A1_TEXT, w, h)
-	_rules = _rich_body(_data, 12, int(xr.size.y) - 6)
+	_rules = _rich_body(_data, 14, int(xr.size.y) - 6)
 	_rules.text = "[center]" + _rules.text + "[/center]"
 	_place(_rules, xr.grow_individual(-4.0, -4.0, -4.0, -2.0))
 	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
@@ -858,7 +863,7 @@ func _build_a1() -> void:
 		# first pass: "barely readable").
 		var heavy := FontVariation.new()
 		heavy.base_font = cl.get_theme_font("font")
-		heavy.variation_embolden = 0.9
+		heavy.variation_embolden = 0.5
 		cl.add_theme_font_override("font", heavy)
 		_place(cl, Rect2(so.x - so.z, so.y - so.z + 0.5, d, d))
 

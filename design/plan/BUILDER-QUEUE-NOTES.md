@@ -1985,6 +1985,17 @@ Run 2026-10-07 16:46 EDT.
 - Grader round 2: PASS. sprite_match `3 of 5 off` (PNGs untouched; same as the rig run). Meshy 0.
 - Harness: screenshot.gd now prints `CLIMB<h> screen=` beside each STONE.
 
+## Cards: big bright art, light trim, no pips.
+
+2026-10-09 00:30 EDT, builder (run 7). Not passed; item left open.
+
+- **TARGET's own card frame.** New tools/cardframe_target.py draws card_frame_t_base.png (dark rim, cream line, gold line, dark-green band; dark name band; near-black art window; olive rules box), measured off TARGET's Scramble card; the glow layer is clear. card_view.gd A1_BASE/A1_GLOW point at it, the stone shade is off, the art runs edge to edge under the name band down to 0.63, the type pill sits on the art's lower edge, names centred and larger, rules 14 px, the cost disc a little smaller, no rarity pips.
+- **Hand in TARGET's place:** combat_3d HAND_SQUARE_CX 0.524 (the fan centres there in the centred square) and FAN_OVERLAP 0.80 -> 0.74.
+- Tests: the a1 box-order test allows the type pill over the art.
+- **Grader:** R1 FAIL (hand 90 px left, olive body, dashed trim), R2 FAIL (art inset, titles small), R3 FAIL (thick green border), R4 FAIL: trim, text, no pips MET; Scramble/Leap art content and the type pill remain. No penalties after R1. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-cards-before.png|420]] ![[agents/frames/builder/2026-10-09-cards-after.png|420]]
+- Meshy: 0 credits.
+
 ## HUD and cards: TARGET's look, no glow.
 
 2026-10-07 23:17 EDT. Brief: the queue item verbatim (remove seat glow everywhere; match TARGET piece by piece).
