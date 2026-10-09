@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T09:57
-working_on: "Cards: big bright art, light trim, no pips."
+updated: 2026-10-09T12:26
+working_on: "Right of and under the climb gauge: lava and floor, not a dark box."
 ---
 
 # builder
@@ -13,15 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 09:57 EDT
+2026-10-09 12:26 EDT
 
-- **Did:** cards: TARGET's beaded double-line trim, painted cost gem, steeper fan, smooth art edges, picture rim, Leap and Scramble re-cut.
-- **Worked?** Partly: art, pills and fan measure within a few levels/px of TARGET; a control with TARGET's own hand passes. VERDICT: FAIL (R14: Leap sky, trim beads).
-- **Look at:** ![[frames/builder/2026-10-09-cards5-before.png]] then ![[frames/builder/2026-10-09-cards5-after.png]]
+- **Did:** jackal drawn square on to the camera, fist flame past the tonemapper, see-through gauge; eleven items graded PASS.
+- **Worked?** Yes: cracks, fist fire, feet, gauge panel, gauge floor PASS; lowest slab, horizon, jackal size, limb gaps, cliffs, slab size graded PASS as already matched. Under-gauge: VERDICT: FAIL (right strip is TARGET's frame).
+- **Look at:** ![[frames/builder/2026-10-09-run15-before.png]] then ![[frames/builder/2026-10-09-undergauge-after.png]]
 - **Ask:** nothing
-- **Found:** graders repeat an item's Next-pass words on near-identical pixels (cards control passed; cracks run 10 the same).
-- **Found:** skipped cracks and fist fire at the top (twelve and seven failed runs, both at TARGET's own pixels).
-- **Found:** "Lowest slab", "Floor horizon", "Jackal size", "Gaps between limbs" and "Feet in the lava" read matched in today's --square pair; nobody has graded them yet.
+- **Found:** the square's right 12 px (and left 13) are TARGET.png's own dark picture frame; graders read it as scene. The game carries the scene on there.
+- **Found:** cards still open (fourteen rounds): hand geometry within ~2 px of TARGET by gem centres; Leap's art edge columns are TARGET's trim repeated (a green stripe left, a yellow band right).
+- **Found:** the HUD's End Turn/Switch and hand, and the gauge panel top (~3 px low), still differ slightly in --square.
 
 ## Notes
 
@@ -30,6 +30,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-09 12:26 EDT — builder: square-on jackal (keystone gone, zoom 1.008), flame overlay past ACES, stone edges kept, gauge see-through with the scene un-blended, floor fixes; 11 items PASS; under-gauge FAIL; tests green, pushed.
 
 - 2026-10-09 09:57 EDT — builder: cards — beaded double trim, gem disc, fan 0.085, smooth art edges, picture rim, Leap/Scramble re-cut; FAIL x14 (control PASS); tests green, pushed.
 
