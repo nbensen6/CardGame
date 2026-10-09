@@ -134,7 +134,9 @@ void fragment() {
 		heat *= smoothstep(0.5 * rim_radius, 1.2 * rim_radius, seen);
 	}
 
-	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 4.0)
+	// heat x1.5, not x4 (builder 2026-10-09): far seams by the lava aliased
+	// into a speckled bright band TARGET does not have.
+	EMISSION = crack_color.rgb * crack_gain * (crack + halo * 0.12) * (1.0 + heat * 1.5)
 		+ rim_color.rgb * rim_gain * heat
 		+ tone.rgb * slab * (1.0 - crack);
 }

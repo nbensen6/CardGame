@@ -3257,14 +3257,18 @@ const BIOME := {
 		# Overnight pass 12: that still rendered maroon (~49,31,34) with red
 		# seams; A's tiles are dark plum-charcoal (~30,21,30) with orange seams.
 		# This renders ~(33,19,27); crack_color below turns the seams orange.
-		"floor_tone": Color(0.205, 0.2, 0.22),
+		"floor_tone": Color(0.21, 0.195, 0.212),
 		# Cliffs and floor in picture A's flat style (Nick, 2026-10-04): big
 		# slabs in flat steps of tone with seams that glow, not hairlines on
 		# one sheet. Obsidian shader uniforms, see _dress_floor().
 		# Hex tiles (builder 2026-10-08, TARGET.png): TARGET's floor is big dark
 		# hexagonal flagstones whose seams glow a faint warm orange across the
 		# whole floor, not a random crack web that fades out near the lens.
-		"floor_params": {"crack_cell": 6.0, "crack_px": 2.8, "crack_gain": 0.4, "slab_var": 0.2, "crack_color": Color(1.0, 0.62, 0.2), "hex_tiles": 1.0},
+		# Floor item (builder 2026-10-09): TARGET's seams are DARK lines between
+		# even (31,21,29) slabs; gain 0.4 drew bright orange seams. Uneven
+		# Voronoi slabs (TARGET's are not a regular grid), thin dim amber
+		# seams, dark faces (base_color), rim heat cut (see _add_lava).
+		"floor_params": {"crack_cell": 3.8, "crack_px": 2.0, "crack_width": 0.012, "crack_gain": 0.38, "base_color": Color(0.018, 0.016, 0.016), "shadow_color": Color(0.4, 0.4, 0.4), "slab_var": 0.1, "crack_color": Color(0.9, 0.42, 0.16), "hex_tiles": 0.0},
 		# ...and dark slate cliffs in three flat tones instead of the painted,
 		# lava-lit rock. See wall_style() / _dress_wall().
 		"wall": "flat",
@@ -3916,7 +3920,9 @@ func _add_lava(beast_id: String) -> void:
 				fm.set_shader_parameter("rim_center", Vector2(_rig.global_position.x, _rig.global_position.z))
 				fm.set_shader_parameter("rim_radius", ring.x * r)
 				fm.set_shader_parameter("rim_width", LAVA_RIM_HEAT * r)
-				fm.set_shader_parameter("rim_gain", 2.0 * glow)
+				# 0.6 (floor item, builder 2026-10-09): TARGET's floor under the
+				# lava rim is dark; at 2.0 it washed orange.
+				fm.set_shader_parameter("rim_gain", 0.6 * glow)
 	_lava = Node3D.new()
 	_lava.name = "Lava"
 	_rig.add_child(_lava)

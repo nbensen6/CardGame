@@ -2148,7 +2148,7 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 
 
-2026-10-08 23:55 EDT, builder (run 7). Not passed; item left open.
+2026-10-08 23:22 EDT, builder (run 7). Not passed; item left open.
 
 - **New `--fist` close-up** in tools/vs_target.py: `--beast` cut the flame off at its left edge, so graders judged it from a sliver.
 - **The flame's own glow.** The hard key dropped TARGET's dark red glow round and between the tongues, so the fight's slate showed there. beast_rig.py `FIRE_HAZE` 0.92 / `FIRE_HAZE_PX` 55: TARGET's own warm pixels round the flame, fading with distance. Fist-box error 24.8 -> 22.3.
@@ -2164,3 +2164,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - The speck was the weak-point sigil (glow mesh plus an omni light) at the Height 5 climb point lifted 1.7 hunter heights. TARGET draws no mark, so a drawn beast hides the sigil's children; the node stays as the strike flash's anchor.
 - Grader: VERDICT: PASS.
 - Meshy: 0 credits.
+
+## Floor: faint warm seams, not bright orange.
+
+2026-10-08 23:34 EDT, builder (run 7). Not passed; item left open.
+
+- **Measured TARGET's floor** (square at 720): faces an even (31,21,29), seams darker lines (p10 ~(19,14,19)) with a faint warm edge, warm pixels 2-4%. The game's seams were bright orange (p95 ~(120,48,44), warm 7-16%).
+- **Changed** (combat_3d BIOME quarry_ember `floor_params`): crack_gain 0.4 -> 0.38 with a dim amber crack_color (0.9,0.42,0.16) and thin crack_width 0.012 / crack_px 2.0; crack_cell 6 -> 3.8; hex_tiles 1 -> 0 (TARGET's slabs are uneven polygons); base_color near-black and a neutral shadow_color (the bluish shadow tint lit the floor purple); floor_tone (0.21,0.195,0.212). Floor rim heat `rim_gain` 2.0 -> 0.6 x glow; obsidian.gdshader heat multiplies the seams x1.5, not x4 (a speckled bright band under the lava).
+- Test "floor is laid in hex tiles" rewritten to assert dim seams.
+- **Grader:** R1 FAIL (seams black, cells too big), R2 FAIL (seams too faint, cells too big), R3 FAIL (near seams too red/sharp, rim glow), R4 FAIL (seams darker than faces), R5 FAIL (crimson seams, speckled band), R6 FAIL (seams still lit lines; faces too dark, purple). No penalties in any round; each said the floor moved toward TARGET. VERDICT: FAIL.
+- Frames: ![[agents/frames/builder/2026-10-09-floor-before.png|420]] ![[agents/frames/builder/2026-10-09-floor-after.png|420]]
+- Meshy: 0 credits.
+

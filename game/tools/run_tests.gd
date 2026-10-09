@@ -32154,4 +32154,6 @@ func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
 	_expect(Combat3D.PEDESTAL_TOP.get_luminance() > Combat3D.PEDESTAL_FRONT.get_luminance() * 2.0,
 		"TARGET's pedestal top is a pale plum over near-black sides")
 	var fp: Dictionary = Combat3D.BIOME[String(Combat3D.BEAST_BIOME["cinder_jackal"])]["floor_params"]
-	_expect(float(fp.get("hex_tiles", 0.0)) > 0.5, "the jackal's floor is laid in hex tiles")
+	# TARGET's floor (builder 2026-10-09): uneven flat slabs with thin dim
+	# warm seams, not a bright orange hex grid.
+	_expect(float(fp.get("crack_gain", 1.0)) < 0.5, "the jackal's floor seams are dim, not bright orange")
