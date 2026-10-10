@@ -9,16 +9,6 @@ TARGET.png when none is open. Nick may reorder, add, delete and tick.
 Every item names the shot that must change. If the shot does not change, the
 run failed.
 
-- [ ] **Middle Tongue Snap card: TARGET's place.**
-      The middle card (its cost gem and art) sits ~1.8 px right of TARGET's at 720; the other four cards are within 1 px. Found by the builder, run 7 (2026-10-10).
-      **Done when** the --square and --hand pairs show no visible difference in the middle card's place.
-      Test: state=3d beast=cinder_jackal ^middle-tongue-snap-card-target-s-place
-
-- [ ] **End Turn: TARGET's label width and outline.**
-      TARGET's "End Turn" is ~2% wider with a slightly heavier dark outline toward the lower right; the game's is a touch narrow and its outline lighter. Grader MINOR, run 7 (2026-10-10).
-      **Done when** the --square and --switch pairs show no visible difference in the End Turn label.
-      Test: state=3d beast=cinder_jackal ^end-turn-target-s-label-width-and-outlin
-
 ## Now — the Cinder Jackal fight
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
@@ -400,6 +390,16 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       Ask: nothing
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-topbar-after.png|420]] ^top-bar-target-s-boss-name-hp-segments-a
+
+- [ ] **Middle Tongue Snap card: TARGET's place.**
+      The middle card (its cost gem and art) sits ~1.8 px right of TARGET's at 720; the other four cards are within 1 px. Found by the builder, run 7 (2026-10-10).
+      **Done when** the --square and --hand pairs show no visible difference in the middle card's place.
+      Test: state=3d beast=cinder_jackal ^middle-tongue-snap-card-target-s-place
+
+- [ ] **End Turn: TARGET's label width and outline.**
+      TARGET's "End Turn" is ~2% wider with a slightly heavier dark outline toward the lower right; the game's is a touch narrow and its outline lighter. Grader MINOR, run 7 (2026-10-10).
+      **Done when** the --square and --switch pairs show no visible difference in the End Turn label.
+      Test: state=3d beast=cinder_jackal ^end-turn-target-s-label-width-and-outlin
 
 ## Waiting on Nick
 
