@@ -22,6 +22,7 @@ Matched check 2026-10-10 (run 5): no MAJOR or MODERATE from either critic; share
       ![[agents/frames/builder/2026-10-10-switch-after.png|420]] ^switch-button-target-s-pale-blue-label
 
 - [ ] **Card type pills and titles: TARGET's soft painted lettering.**
+      Next pass: run 5 (2026-10-10) grader FAIL x4, "pill and title text still crisper than TARGET's soft painted lettering; pill ~10% narrower" (VERDICT: FAIL, not further from TARGET); measured after: pill rows 917-928 vs TARGET 917-927, widths within 2 px on all five cards, title glyph cores (232,228,210) vs TARGET (237,230,210). FIX: the softness left is the 720 render upsampled; try a 1 px blur pass on the card face (a SubViewport or a shader on the name/pill labels) only if a Matched check names it again.
       TARGET's Attack/Skill pills under the card art and the card titles are soft, painted, lighter-weight lettering; the game's are crisper and a touch heavier. Both critics MINOR (2026-10-10 run 5).
       **Done when** the --square and --hand pairs show no visible difference in the card pills and titles.
       Test: state=3d beast=cinder_jackal

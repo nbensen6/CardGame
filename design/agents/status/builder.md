@@ -3,7 +3,7 @@ tags:
   - agent-status
 agent: builder
 updated: 2026-10-10T00:20
-working_on: "Card type pills and titles: TARGET's soft painted lettering."
+working_on: ""
 ---
 
 # builder
@@ -15,11 +15,12 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-10 00:20 EDT
 
-- **Did:** Matched check queued two shared MINORs; Switch button label, outline and icon brought to TARGET.
-- **Worked?** Yes. Switch button VERDICT: PASS (round 2; round 1 FAIL only because no pair showed the button, so `--switch` was added)
-- **Look at:** ![[frames/builder/2026-10-10-switch-before.png]] then ![[frames/builder/2026-10-10-switch-after.png]]
+- **Did:** Matched check queued two shared MINORs; Switch button matched; card pills and titles closer, still graded soft.
+- **Worked?** Partly. Switch button VERDICT: PASS (round 2); card pills and titles VERDICT: FAIL (round 4, not further from TARGET)
+- **Look at:** ![[frames/builder/2026-10-10-switch-before.png]] then ![[frames/builder/2026-10-10-pills-after.png]]
 - **Ask:** nothing
 - **Found:** Switch pill's 1 px rim a touch lighter than TARGET's softer edge (grader MINOR).
+- **Found:** card body text still a touch heavier than TARGET's at 720 (grader out of scope).
 - **Found:** both critics found no MAJOR or MODERATE; the remaining open items all measure at TARGET's own pixels.
 
 ## Notes
@@ -30,7 +31,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## Log
 
-- 2026-10-10 00:20 EDT — builder: Matched check (run 5) queued Switch button and card pill lettering; Switch PASS; tests green, pushed.
+- 2026-10-10 00:20 EDT — builder: Matched check (run 5) queued Switch button and card pill lettering; Switch PASS; card pills/titles FAIL x4 (glossy pill skin, title ink, thinner lettering pushed); tests green, pushed.
 
 - 2026-10-09 12:26 EDT — builder: square-on jackal (keystone gone, zoom 1.008), flame overlay past ACES, stone edges kept, gauge see-through with the scene un-blended, floor fixes; 11 items PASS; under-gauge FAIL; tests green, pushed.
 

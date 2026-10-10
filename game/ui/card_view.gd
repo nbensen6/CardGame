@@ -685,17 +685,45 @@ const A1_ART_BLEED := 2.0
 ## TARGET's type pill: pale grey, a darker edge.
 const TYPE_PILL_FILL := Color(0.64, 0.65, 0.71)   # TARGET's pill averages (150,152,166), a cool steel grey (run 16)
 const TYPE_PILL_EDGE := Color(0.43, 0.44, 0.49)
+const TYPE_PILL_TEX := preload("res://assets/ui/type_pill_t.png")
 
 
 ## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
+## The theme's face is a semibold; TARGET's rules are a regular weight.
+const A1_RULES_EMBOLDEN := -0.3
+## TARGET's rules ink: glyph cores ~(232,231,209). The hand draws ~0.9 of
+## the ink it is given, so this is that over 0.9.
+const A1_RULES_INK := Color(1.0, 1.0, 0.91)
+
+
+## The theme face unhinted: hinting snaps stems to whole pixels, which is
+## what makes small card lettering read typeset next to TARGET's painted
+## letters (run 5, 2026-10-10). Built once.
+static var _painted_base: Font = null
+
+
+static func a1_painted_base(base: Font) -> Font:
+	if _painted_base != null:
+		return _painted_base
+	_painted_base = base
+	if base is FontFile:
+		var f := (base as FontFile).duplicate() as FontFile
+		f.hinting = TextServer.HINTING_NONE
+		f.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_ONE_QUARTER
+		_painted_base = f
+	return _painted_base
+
+
 static func a1_type_pill(ty: Rect2) -> Rect2:
 	# TARGET's pill: ~46x11 px on a 92 px card in the 720 square (builder
 	# 2026-10-09), half the card's width and a fat bevelled lozenge.
 	# Run 16, registered on the --hand pair: TARGET's is ~4% narrower, ~13%
 	# taller and ~1 px lower than the run-14 pill.
-	var pw := ty.size.x * 0.54
-	var ph := maxf(ty.size.y * 1.30, 10.0)
-	var cy := ty.get_center().y + ty.size.y * 0.14
+	# Run 5 (2026-10-10), with the glossy capsule: TARGET's is 63x12 px at
+	# 1024 against the run-16 rect's 65x15, so ~3% narrower and ~20% thinner.
+	var pw := ty.size.x * 0.525
+	var ph := maxf(ty.size.y * 1.05, 8.0)
+	var cy := ty.get_center().y + ty.size.y * 0.20
 	return Rect2(ty.get_center().x - pw * 0.5, cy - ph * 0.5, pw, ph)
 
 
@@ -1003,9 +1031,22 @@ func _build_a1() -> void:
 	nm.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	nm.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	nm.clip_text = true
-	nm.add_theme_color_override("font_color", Color(0.95, 0.91, 0.78))   # TARGET's name ink is warm cream (run 14)
-	nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.85))
-	nm.add_theme_constant_override("outline_size", 3)
+	# TARGET's name ink: glyph cores ~(237,230,210), over the hand's ~0.9
+	# (run 5, 2026-10-10; warm cream since run 14).
+	nm.add_theme_color_override("font_color", Color(1.0, 0.98, 0.90))
+	nm.add_theme_color_override("font_outline_color", Color(0, 0, 0, 0.6))
+	# TARGET's name has no hard dark ring and a lighter stroke than the
+	# theme's semibold (run 5).
+	nm.add_theme_constant_override("outline_size", 1)
+	var nf := FontVariation.new()
+	nf.base_font = a1_painted_base(nm.get_theme_font("font"))
+	nf.variation_embolden = -0.15
+	nm.add_theme_font_override("font", nf)
+	# ...and a faint cream bloom round it, as TARGET's painted names carry.
+	nm.add_theme_color_override("font_shadow_color", Color(1.0, 0.9, 0.7, 0.18))
+	nm.add_theme_constant_override("shadow_offset_x", 0)
+	nm.add_theme_constant_override("shadow_offset_y", 0)
+	nm.add_theme_constant_override("shadow_outline_size", 3)
 	# TARGET's name sits ~3 px higher in its band at hand size (run 14).
 	_place(nm, tr.grow_individual(-2.0, 0.0, -3.0, 0.0).grow_individual(0.0, 4.0, 0.0, -4.0))
 
@@ -1015,27 +1056,27 @@ func _build_a1() -> void:
 	if kind != "":
 		# TARGET's type: a small centred grey pill, title case, dark ink.
 		var pr := a1_type_pill(ty)
-		var pill := Panel.new()
+		# TARGET's lozenge is a glossy steel capsule lit from the top left,
+		# painted once off its own pixels (tools/builder/type_pill.py).
+		var pill := TextureRect.new()
 		pill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var psb := StyleBoxFlat.new()
-		psb.bg_color = TYPE_PILL_FILL
-		psb.border_color = TYPE_PILL_EDGE
-		psb.set_border_width_all(1)
-		# TARGET's lozenge is bevelled: a lit top edge, a dark lower lip.
-		psb.border_width_top = 2
-		psb.border_width_bottom = 2
-		psb.border_color = TYPE_PILL_EDGE
-		psb.shadow_color = Color(0, 0, 0, 0.45)
-		psb.shadow_size = 2
-		psb.shadow_offset = Vector2(0, 1)
-		psb.set_corner_radius_all(int(ceil(pr.size.y * 0.5)))
-		psb.anti_aliasing = true
-		pill.add_theme_stylebox_override("panel", psb)
+		pill.texture = TYPE_PILL_TEX
+		pill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		pill.stretch_mode = TextureRect.STRETCH_SCALE
+		pill.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		_place(pill, pr)
 		var tl := _label(kind.capitalize(), 10)
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		tl.add_theme_color_override("font_color", Color(0.16, 0.15, 0.15))
+		# TARGET's pill ink: a dark blue-grey (~41,42,51), a regular weight.
+		tl.add_theme_color_override("font_color", Color(0.15, 0.15, 0.19))
+		var pf := FontVariation.new()
+		pf.base_font = a1_painted_base(tl.get_theme_font("font"))
+		pf.variation_embolden = -0.15
+		tl.add_theme_font_override("font", pf)
+		# TARGET's pill word is painted on: softer edges, a little less
+		# contrast than a typeset label (graders, run 5).
+		tl.modulate = Color(1, 1, 1, 0.9)
 		tl.add_theme_constant_override("outline_size", 0)
 		_place(tl, pr)
 	# No rarity pips: TARGET's cards carry none (builder 2026-10-09).
@@ -1050,8 +1091,12 @@ func _build_a1() -> void:
 	var tall := FontVariation.new()
 	tall.base_font = _rules.get_theme_font("normal_font")
 	tall.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(0.0, 1.08), Vector2.ZERO)
-	tall.variation_embolden = 0.15
+	# A regular weight, not heavier: TARGET's rules carry ~15% less ink than
+	# the semibold face at +0.15 drew (Matched check 2026-10-10 run 5).
+	tall.variation_embolden = A1_RULES_EMBOLDEN
 	_rules.add_theme_font_override("normal_font", tall)
+	# TARGET's rules ink is a brighter cream than the shared body colour.
+	_rules.add_theme_color_override("default_color", A1_RULES_INK)
 	_place(_rules, xr.grow_individual(-4.0, -7.0, -4.0, 0.0))   # TARGET's lines sit ~2 px lower (run 3)
 	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
 

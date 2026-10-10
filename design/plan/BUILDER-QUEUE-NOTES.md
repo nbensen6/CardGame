@@ -7,6 +7,13 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Card type pills and titles: TARGET's soft painted lettering.
+- 2026-10-10 run 5: queued from the Matched check (both critics MINOR).
+- Measured on TARGET-at-1024, card 3: pill x 479-541, y 917-927, a glossy steel capsule lit top-left (left column 234 -> 114, right 167 -> 177, dark lower lip), ink (41,42,51). Game before: a flat StyleBoxFlat pill with a hard 1-2 px rim, 3 px taller.
+- Built: pill skin painted off TARGET's own column profiles (`tools/builder/type_pill.py` -> `assets/ui/type_pill_t.png`), rect 0.525 x 1.05 of the type band, centre +0.20; pill ink (0.15,0.15,0.19) at 0.9 alpha, embolden -0.15; titles brighter cream (1.0,0.98,0.90), outline 3 -> 1, embolden -0.15, faint cream bloom; rules embolden +0.15 -> -0.3 and ink (1.0,1.0,0.91) (the hand draws ~0.9 of its ink); card faces' title and pill use an unhinted copy of the theme face.
+- Tried and backed out: title embolden -0.4 (cores went dim, 213), pill ink alpha 0.82 (lighter than TARGET's at zoom).
+- Grader FAIL x4: asks for softer, lower-contrast, wider pills; pixels say widths are within 2 px and TARGET's ink is the darker. Left open. No Meshy used.
+
 ## Switch button: TARGET's pale blue label and green icon.
 - 2026-10-10 run 5: queued from the Matched check (both critics MINOR). Fill measured within 3 levels of TARGET's (28,41,63); the real differences were the label and icon.
 - Measured on TARGET-at-1024: word 912-959 x 970-981, glyph cores (211,237,248); game before 915-959 x 967-978, neutral (206,212,219), icon a multicoloured portrait.
