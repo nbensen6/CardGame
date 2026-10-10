@@ -64,15 +64,25 @@ EDGE = [((14, 10, 6), 2), ((228, 230, 188), 9), ((38, 40, 31), 33),
 # (~(26,28,26)); a warm near-black keyline (~(22,13,6)) sits right before
 # the inner rule; and the stitch beside the inner rule is yellow-olive
 # (~(149,152,99)), not mint.
-EDGE = [((14, 10, 6), 2), ((236, 236, 196), 6), ((26, 28, 26), 31), ((22, 13, 6), 5),
-        ((222, 210, 158), 7), ((80, 104, 76), 10), ((40, 66, 48), 0),
+EDGE_TOP = [((14, 10, 6), 2), ((236, 236, 196), 6), ((26, 28, 26), 31), ((22, 13, 6), 5),
+            ((222, 210, 158), 7), ((80, 104, 76), 10), ((40, 66, 48), 0),
+            ((10, 14, 12), 3)]
+# Run 8 (2026-10-10), with each card registered on TARGET's rails first
+# (combat_3d HAND_CARD_NUDGE), profiled across the rails at 720 at quarter-px
+# steps: TARGET's side outer rule peaks ~135-160 (ours ~100), and the band
+# drops to ~10-20 right before the inner rule (ours ~35). Wider, brighter
+# outer rule; darker, wider keyline; the inner rules keep their place. Above
+# the name band's foot the frame keeps EDGE_TOP: TARGET's top edge is the thin
+# line alone.
+EDGE = [((14, 10, 6), 2), ((250, 248, 212), 8), ((26, 28, 26), 25), ((4, 2, 2), 9),
+        ((250, 232, 166), 7), ((56, 84, 56), 10), ((40, 66, 48), 0),
         ((10, 14, 12), 3)]
-BEAD = (176, 180, 116)   # the dashes: yellow-olive on the inner rule's dark green (was mint (196,222,178))
+BEAD = (104, 140, 92)   # the dashes: olive green beside the gold rule (run 8; was yellow-olive (176,180,116))
 # ...but TARGET lights its cards from the left: on a card's RIGHT side the
 # stitch is teal (~(126,157,132)) and the outer rule a dim warm brown
 # (~(100,88,72)), measured at 720 on Tongue Flick's right edge (run 7).
-BEAD_R = (132, 164, 138)
-OUTER_R = (104, 92, 76)
+BEAD_R = (170, 205, 170)
+OUTER_R = (128, 112, 92)
 BAND_DASH = (26, 28, 26)   # TARGET's band carries no green dashes: band colour
 BAND_DASH_W = 4
 BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
@@ -102,6 +112,16 @@ def build():
         inset += w
     rounded(d, inset, BODY + (255,))
     a = np.asarray(im).copy()
+    im_t = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d_t = ImageDraw.Draw(im_t)
+    inset_t = 0
+    for col, w in EDGE_TOP:
+        rounded(d_t, inset_t, col + (255,))
+        inset_t += w
+    rounded(d_t, inset_t, BODY + (255,))
+    assert inset_t == inset
+    bb0 = int(BAND_BOTTOM * H)
+    a[:bb0] = np.asarray(im_t)[:bb0]
     top = inset
     # beads in the band: the band runs from b0 to b1 px in from the edge
     b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] + EDGE[3][1]
@@ -148,7 +168,7 @@ def build():
     # band, inner rule and stitch) runs on up past the name and curls round
     # the top-right corner (Matched check 2026-10-10 run 7, Tongue Flick).
     # Kept inside the 80 px right patch margin.
-    rail_w = sum(w for _, w in EDGE[:6])
+    rail_w = sum(w for _, w in EDGE[:-2])
     a[:bb, W - rail_w:, :] = rails[:bb, W - rail_w:, :]
     rx0, rx1 = W - rail_w, W - rail_w - CHEV_R
     for y in range(BAND_FROM, bb - 3):

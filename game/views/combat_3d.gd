@@ -9902,6 +9902,12 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## bottom edge where TARGET's sit.
 ## -20 (builder 2026-10-08): TARGET's card tops sit ~30px lower in the
 ## `--square` pair, leaving the Frog's pedestal column showing above them.
+## Per-card x trim for TARGET's five-card hand, in TARGET's 720-square px:
+## registered on each card's frame rails against TARGET (builder 2026-10-10
+## run 8: Tongue Snap 0.75 px left, Leap 0.75 px right, the middle Tongue Snap 0.75 px right,
+## Scramble and Tongue Flick a quarter to a half px left). Other hand sizes
+## use no trim.
+const HAND_CARD_NUDGE := [0.75, -0.75, -0.75, 0.25, 0.4]
 const HAND_REST_LIFT := 77.0   # TARGET's card tops, registered on the top line per card (builder 2026-10-09 run 14)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
@@ -9983,6 +9989,12 @@ func _layout_hand() -> void:
 		var side := minf(vs.x, vs.y)
 		var want := vs.x * 0.5 + (HAND_SQUARE_CX - 0.5) * side
 		square_dx = want - (scroller.get_global_rect().position.x + room * 0.5)
+	# HAND_CARD_NUDGE is in TARGET's 720-square px: convert to the row's units.
+	var nudge_px := 1.0
+	if is_inside_tree():
+		var vs2 := get_viewport().get_visible_rect().size
+		var gs := _hand_row.get_global_transform().get_scale().x
+		nudge_px = minf(vs2.x, vs2.y) / 720.0 / maxf(gs, 0.001)
 	for i in range(n):
 		var c := cards[i] as Control
 		if c == null:
@@ -9993,7 +10005,10 @@ func _layout_hand() -> void:
 		var raised := card_is_raised(c, _hand_hover, _timing_card)
 		var lift: float = FAN_RISE if raised else 0.0
 		var pull := -signf(off) * FAN_PULL * maxf(absf(off) - 1.0, 0.0)
-		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx + pull,
+		var nudge := 0.0
+		if n == HAND_CARD_NUDGE.size():
+			nudge = float(HAND_CARD_NUDGE[i]) * nudge_px
+		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx + pull + nudge,
 				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE)
 		c.position = rest - Vector2(0.0, lift)
 		# A raised card keeps its resting spot as hover area (CardView.hover_hold):

@@ -2858,6 +2858,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: FAIL x2.
 - Meshy: none.
 
+- 2026-10-10 run 8: profiled every visible rail across its own line at quarter-px steps at 720 (TARGET Lanczos-down to 720, the game's square as drawn). The cards themselves sat off TARGET's rails by up to 0.75 px: new combat_3d HAND_CARD_NUDGE [0.75, -0.75, -0.75, 0.25, 0.4] (720-square px, five-card hand only) registers each card; after it every rail registers at offset 0. Hand error at 720 11.35 -> 10.02 from the nudge alone.
+- tools/cardframe_target.py: outer rule 6 -> 8 px at (250,248,212) (TARGET's side rule peaks 135-160 at 720, ours ~100); band 31 -> 25; keyline 5 -> 9 px at (4,2,2) (TARGET drops to 10-22 right before the inner rule, ours ~35); inner rule (250,232,166); stitch olive (104,140,92) on a darker base (56,84,56); right-side stitch (170,205,170) and outer (128,112,92). Above the name band's foot the frame keeps the old EDGE_TOP (the wider outer rule made the top edge heavier than TARGET's thin line). Hand error 10.02 -> 9.70.
+- Tried and dropped: inner and outer rules 10 px (10.15), a dark gap between gold and stitch with a narrow olive stitch (10.06), a darker stitch base with brighter dashes (9.83), mipmaps on the frame import (no change in the frame).
+- Grader: VERDICT: FAIL x2 (reads a single pale band and narrow light seams; at 1024 TARGET's rails are one crisp px, the game's 720 render cannot be).
+- Meshy: none.
+
 ## Fourth slab from the top: TARGET's left end.
 
 - 2026-10-10 run 7: queued from the Matched check (critic B MODERATE, critic A MINOR).
