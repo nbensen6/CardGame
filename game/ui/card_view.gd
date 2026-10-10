@@ -29,11 +29,11 @@ const RAIL_TEXT_LINES := 2
 
 ## A value a buff or scaling changed from what the card prints — Slay the Spire
 ## greens these, and it's the only way a player sees a passive is doing something.
-const LIVE_COLOR := "7fd45c"
+const LIVE_COLOR := "95c37a"   # TARGET's muted green (builder 2026-10-10 run 3; was 7fd45c)
 ## The half of a timed card you only get by landing it.
 const NAILED_COLOR := "ffd35c"
 ## A rules term with a tooltip behind it. Never used decoratively.
-const KEYWORD_COLOR := "f0b45a"
+const KEYWORD_COLOR := "e4a955"   # TARGET's tan gold (builder 2026-10-10 run 3; was f0b45a)
 
 ## A full card's own box, big (no_cost) vs normal, desktop vs handheld — named
 ## so setup() (which picks the box) and _rich_body() (which has to size the
@@ -1023,9 +1023,16 @@ func _build_a1() -> void:
 	# 6 - the rules, wrapped inside the text box.
 	var xr := a1_box(A1_TEXT, w, h)
 	# 15, not 14: TARGET's rules run ~6% wider (2026-10-09).
+	# 15, stretched 1.08 tall: TARGET's rules are ~8% taller at the same line
+	# width, and a touch heavier (builder 2026-10-10 run 3).
 	_rules = _rich_body(_data, 15, int(xr.size.y) - 6)
 	_rules.text = "[center]" + _rules.text + "[/center]"
-	_place(_rules, xr.grow_individual(-4.0, -4.0, -4.0, -2.0))
+	var tall := FontVariation.new()
+	tall.base_font = _rules.get_theme_font("normal_font")
+	tall.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(0.0, 1.08), Vector2.ZERO)
+	tall.variation_embolden = 0.15
+	_rules.add_theme_font_override("normal_font", tall)
+	_place(_rules, xr.grow_individual(-4.0, -7.0, -4.0, 0.0))   # TARGET's lines sit ~2 px lower (run 3)
 	_rules.mouse_filter = Control.MOUSE_FILTER_PASS
 
 	# 7 - the cost: TARGET's big green disc, hung over the top-left corner.

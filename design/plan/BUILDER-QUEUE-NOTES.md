@@ -2751,3 +2751,9 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Registered on the --hand pair: tongue_snap (507, 871, 0 deg, 137 px window, from TARGET's centre card), flick (788, 891, +9 deg, 133 px). New per-card cut options: PILL_ROW (flick keys TARGET's pill only below 0.86 of the window; the 0.7 line inpainted the guard and grip) and KEEP_TOP (flick keeps its top rows; the dark-band inpaint smeared the sword tip). Tried flick tilt 7/5/1.5/11: lower tilts leaned the blade further from TARGET.
 - Grader: VERDICT: PASS (MINOR only: zigzag a touch cooler, sword tip and grip a touch blunter).
 - Meshy: none.
+
+## Card body text: TARGET's weight and size.
+
+- 2026-10-10 run 3: TARGET's rules are ~8% taller at the same line width and a touch heavier. The A1 rules label now draws through a FontVariation stretched 1.08 tall (variation_transform; an x-squeeze at size 16 did not narrow the advances and overflowed) with embolden 0.15, and sits 3 px lower in its box. KEYWORD_COLOR f0b45a -> e4a955 (d8b879 read too pale to the grader), LIVE_COLOR 7fd45c -> 95c37a (TARGET's muted green).
+- Gotcha: the keyword underline is 1 px and vanished at some box offsets (top inset -5.5 and -6 lost it on the centre card; -5 and -7 keep it).
+- Grader round 1 FAIL (Climb too pale, block 2 px high); round 2 VERDICT: PASS (MINOR only: TARGET's text a touch softer, its cream a shade warmer).

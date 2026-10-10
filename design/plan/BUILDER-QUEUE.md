@@ -19,10 +19,11 @@ run failed.
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-cardart-after.png|420]] ^card-art-tongue-flick-s-sword-and-tongue
 
-- [ ] **Card body text: TARGET's weight and size.**
-      TARGET's "Deal 1 damage." / "Climb N." is heavier, a touch larger and brighter cream; the game's is thinner and smaller. Critic B MODERATE (2026-10-10 run 3).
-      **Done when** the --square and --hand pairs show no visible difference in the card body text.
+- [ ] 👀 **Card body text: TARGET's weight and size.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card body text: TARGET's weight and size.|details]]
+      Ask: nothing
       Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-bodytext-after.png|420]] ^card-body-text-target-s-weight-and-size
 
 - [ ] **Slab tops: TARGET's chipped facets and drawn edges.**
       TARGET's slab tops carry stepped, chipped facets and drawn edge lines (the fifth and bottom slabs most); the game's read smoother with slightly rounded edges. Critic A MODERATE (2026-10-10 run 3).
