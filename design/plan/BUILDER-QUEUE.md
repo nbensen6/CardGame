@@ -13,6 +13,8 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 2): no MAJOR or MODERATE from either critic; shared MINOR: slab edges a touch soft (the open sharpness item, nothing new queued)
+
 Matched check 2026-10-10: no MAJOR or MODERATE from either critic; shared MINOR: slab and jackal edges a touch soft (the open sharpness item)
 
 Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open item); shared MINOR: slab underside specks, warm floor beside the hand (queued)
