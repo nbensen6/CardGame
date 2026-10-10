@@ -1,10 +1,10 @@
 {
-  "updated": "Sat Oct 10, 4:51 AM ET",
-  "last_commit": "7a6ad0d",
+  "updated": "Sat Oct 10, 6:51 AM ET",
+  "last_commit": "0c59afb",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 4:40 AM",
+      "value": "Idle: last run ended 6:13 AM",
       "state": "idle"
     },
     {
@@ -31,6 +31,42 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 10, 6:13 AM",
+      "title": "Full-frame check: only tiny differences",
+      "bullets": [
+        "No big or medium differences found",
+        "Remaining notes: slight softness, fifth slab",
+        "Nothing new to build right now"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-check11-square.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 5:14 AM",
+      "title": "Fist flame and frog rock pass",
+      "bullets": [
+        "Fist flame now graded a match",
+        "Frog's rock now graded a match",
+        "Four others still fail on close-ups"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-check10-fist.png",
+          "caption": "Fist flame"
+        },
+        {
+          "path": "design/agents/frames/builder/pair-check10-frog.png",
+          "caption": "Frog's rock"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 10, 4:40 AM",
