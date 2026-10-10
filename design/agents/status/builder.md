@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T03:35
+updated: 2026-10-10T05:16
 working_on: ""
 ---
 
@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 04:40 EDT
+2026-10-10 05:16 EDT
 
-- **Did:** Card rails and Tongue Flick's corner matched TARGET; Matched check run; pill words cut from TARGET.
-- **Worked?** Yes, all three. VERDICT: PASS (frames); VERDICT: PASS (corner); VERDICT: PASS (Leap's pill).
-- **Look at:** ![[frames/builder/2026-10-10-pillword-before.png]] then ![[frames/builder/2026-10-10-pillword-after.png]]
+- **Did:** Matched check run 10: both critics MINOR only; re-graded six open items, two passed.
+- **Worked?** Partly. VERDICT: PASS (Fist flame); VERDICT: PASS (Frog's rock); VERDICT: FAIL (Energy box, Tongue Flick, Climb keyword, Climb gauge: graders read the 1024 close-ups, the 720 profiles match).
+- **Look at:** ![[frames/builder/2026-10-10-check10-after.png]]
 - **Ask:** nothing
-- **Found:** the leftmost Tongue Snap's pill reads "Attack" where TARGET's reads "Assack"; Tongue Flick sits ~1-2 px low against TARGET.
+- **Found:** the hand is the softest part of the frame (Laplacian 0.88 of TARGET-at-720, error ~10 levels); the rest registers at 0.97-1.03.
 
 ## Notes
 

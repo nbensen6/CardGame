@@ -33,6 +33,7 @@ Builder 2026-10-10 run 4 (both critics MINOR). Left open.
 - Grader rounds 1-3 FAIL ("left tongues duller, softer edges, wider halo"), each against measurement; round 3: not further from TARGET. Same pattern as the "Scene lines soft" control.
 - Meshy: none used.
 - VERDICT: FAIL
+- 2026-10-10 run 10: re-graded on the Matched check frame, nothing rebuilt. VERDICT: PASS (MINOR only: faint haze on the left tongues' outer edge, top tip a hair thick). Meshy: none.
 
 ## Card titles and cost coins: TARGET's size.
 
@@ -2910,6 +2911,7 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Energy-area error at 720: 9.8 -> 7.3.
 - Grader: VERDICT: FAIL x4 (glow, border, pile tone; the profiles above disagree).
 - Meshy: none.
+- 2026-10-10 run 10: re-graded on the Matched check frame. VERDICT: FAIL (border paler/thinner, glow fainter, piles darker). Row 600 and column 45 profiles at 720 match TARGET's gold peak (255,207,112 vs 114), glow ramp and fill (91,45,10) within a few levels; the game's dark inner edge sits 1 px inside TARGET's with a 1 px lighter band after it. Nothing rebuilt. Meshy: none.
 
 ## Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.
 
@@ -2928,3 +2930,7 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: PASS (MINOR only: End Turn ~2% narrow with a lighter outline; the name ~1.5 px long).
 - Meshy: none.
 - 2026-10-10 run 7, second pass: tried a gold cap on the rail's top (error 9.63 -> 9.66, the grader read a dark square block) and a quarter-arc inner rule with the band run into it (9.95, read as a rounded box); both reverted. TARGET's corner is two gold strokes with a dark channel between them. Grader: VERDICT: FAIL x2 more.
+
+## Frog's rock: TARGET's dark, flat faces.
+
+- 2026-10-10 run 10: re-graded on the Matched check frame, nothing rebuilt. VERDICT: PASS (MINOR only: top face a touch flatter, right rim strip a touch more saturated). Meshy: none.

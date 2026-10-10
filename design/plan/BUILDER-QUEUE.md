@@ -13,6 +13,8 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 10): no MAJOR or MODERATE from either critic; shared MINOR: overall softness on the jackal outline and facets, slab edges and card text (the open facets, slab and pills items, nothing new queued); Frog's rock and Fist flame re-graded PASS
+
 Matched check 2026-10-10 (run 9): no MAJOR or MODERATE from either critic; shared MINOR: Leap's type pill lettering (queued below), jackal edge softness and slab surfaces (the open facets and slab items) (one item queued above)
 
 - [ ] 👀 **Leap's type pill: TARGET's smeared lettering.**
@@ -42,7 +44,7 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       ![[agents/frames/builder/2026-10-10-flickcorner-after.png|420]] ^tongue-flick-s-top-right-corner-target-s
 
 - [ ] **Energy box: TARGET's border and glow.**
-      Next pass: run 7 (2026-10-10) grader FAIL x4, "glow tighter and fainter; border paler and thinner; pile icons darker" (VERDICT: FAIL, not further from TARGET); measured at 720: gold line now 2 px at (255,207,112) vs TARGET (255,207,113) with TARGET's dark inner edge, glow ramps left and right within ~3-10 levels, the glow under the box now fades as TARGET's (the backdrop had painted it out), box and pile rows on TARGET's exactly (571-652, 670-699), pile icon means within 2 levels; energy-area error at 720 9.8 -> 7.3. FIX: none left to build that the measurements show; re-check only in the Matched check.
+      Next pass: run 10 (2026-10-10) grader FAIL, "border paler and thinner with a dark inner rim; glow fainter; pile icons darker olive" (VERDICT: FAIL); measured at 720 the gold line, its dark inner edge and the glow ramps match TARGET within a few levels on rows and columns; the grader reads the 1024 close-up, where the game is upscaled from 720. Neither critic named the box in run 10. FIX: none measurable at 720; re-check only in the Matched check.
       TARGET's energy box border is a warmer gold with a slightly stronger amber glow and its pile icons are a touch lighter; the game's border is paler and thinner, its glow weaker and its pile icons darker. Both critics MINOR (2026-10-10 run 7).
       **Done when** the --square pair shows no visible difference in the energy box and piles.
       Test: state=3d beast=cinder_jackal ^energy-box-target-s-border-and-glow
@@ -62,19 +64,19 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
 Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword size, window edge); shared MINOR: Climb keyword glyphs, climb gauge orb and icons, card text softness (the open pills item) (three items queued above)
 
 - [ ] **Tongue Flick: TARGET's clean art window edge and sword.**
-      Next pass: run 6 (2026-10-10) grader FAIL x3, "window edge steps ~5 px across the pill; blade a touch narrow, pale and long" (VERDICT: FAIL, not further from TARGET); measured after: the card's mean error vs TARGET-at-720 21.3 -> 11.7 levels, window bottom edge within 1-2 px of TARGET's either side of the pill (1024 px), sword registers at offset 0/0 scale 1.00, guard and grip rows within 1 px, blade row profiles within ~5 levels, pill sliver gone. FIX: none left to build on this card; the title band's left end sits 2-3 px low over the tip (frame geometry), re-check only in the Matched check.
+      Next pass: run 10 (2026-10-10) grader FAIL, "grip reaches the pill where TARGET's stops above it" (VERDICT: FAIL); a 4x crop at 720 shows the grip and pill within ~1 px of TARGET's, the pill word a touch smaller. Neither critic named it in run 10. FIX: none above a pixel; re-check only in the Matched check.
       TARGET's black art window ends in a clean straight line along the card's tilt, just under the guard, and the pill sits on it; the game's edge is stair-stepped left and right of the Attack pill, a pale sliver of TARGET's own pill shows at the pill's left tip, and the sword reads a touch long with the guard and pill a few px low. Critic B MODERATE, critic A MINOR (2026-10-10 run 6).
       **Done when** the --square and --hand pairs show no visible difference in Tongue Flick's art window and sword.
       Test: state=3d beast=cinder_jackal ^tongue-flick-target-s-clean-art-window-e
 
 - [ ] **"Climb" keyword: TARGET's glyphs.**
-      Next pass: run 6 (2026-10-10) grader FAIL x2, "Leap's word steps letter by letter; letters a touch narrow, b bowl smaller, underline thinner" (VERDICT: FAIL, not further from TARGET); measured after: glyph cores (200,178,133) vs TARGET (198-200,176-178,130-136) on all three cards (was saturated orange 191,144,74), word width within 2 px, bright-stroke area within ~15%, underline now separate from the letters with TARGET's dark gap. FIX: the per-letter step on tilted cards survives unhinted, MSDF and unsnapped controls; next try rendering the rules into an upright SubViewport and tilting its texture, only if a Matched check names it again.
+      Next pass: run 10 (2026-10-10) grader FAIL, "paler tan, thinner, uneven baseline on Leap, weaker underline" (VERDICT: FAIL, frame unchanged since run 6); neither critic named it in run 10. FIX: render the rules upright in a SubViewport and tilt the texture, only if a Matched check names it again.
       TARGET's gold "Climb" on Tongue Snap and Scramble is clean, even lettering; the game's reads narrower and slightly skewed (the "b" drawn differently). Both critics MINOR (2026-10-10 run 6).
       **Done when** the --square and --hand pairs show no visible difference in the "Climb" keyword.
       Test: state=3d beast=cinder_jackal ^climb-keyword-target-s-glyphs
 
 - [ ] **Climb gauge: TARGET's soft orb and bottom icons.**
-      Next pass: run 6 (2026-10-10) grader FAIL x3, "core a touch small and smooth against TARGET's rimmed core; stem through the halo thicker; pip rings a touch small" (VERDICT: FAIL, not further from TARGET); measured after: orb band colours within ~5 levels of TARGET at every radius 0-34 px (1024), ring edges at TARGET's radii, centre within 0.5 px, orb error 7.1 -> 5.8; pip rings at TARGET's radius (13-15 px) and colour within ~5 levels; pip glyphs cut from TARGET; rail seam 2 px like TARGET's, its fringe ~20 levels brighter. FIX: none left to build above a pixel; re-check only in the Matched check.
+      Next pass: run 10 (2026-10-10) grader FAIL, "halo tighter, core harder, blue ring more saturated" (VERDICT: FAIL, unchanged since run 6); both critics found no gauge difference in run 10. FIX: none measurable; re-check only in the Matched check.
       TARGET's top orb has a broad, soft halo and a soft white core and its two bottom portrait icons are muted; the game's orb halo is tighter, its core a small hard hexagon, and the blue-ringed icon reads more colourful. Both critics MINOR (2026-10-10 run 6).
       **Done when** the --square pair shows no visible difference in the climb gauge's orb and icons.
       Test: state=3d beast=cinder_jackal ^climb-gauge-target-s-soft-orb-and-botto
@@ -113,11 +115,11 @@ Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item)
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-coins-after.png|420]] ^card-titles-and-cost-coins-target-s-siz
 
-- [ ] **Fist flame: TARGET's defined top tongues.**
-      Next pass: run 4 (2026-10-10) grader FAIL x3, "left tongues duller, top tongues softer, wider halo" (VERDICT: FAIL, not further from TARGET); measured after the fix, the rest frame's flame registers at offset 0, mean error 2.1 (top) and 1.8 (left) levels, left-lobe colour within 1 level and 5-95th percentile luminance within -4/+3 of TARGET-at-720, Laplacian sharpness 1.02-1.04. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
-      TARGET's flame over the raised fist ends in distinct bright tongues; the game's top tongues and left edge are a little less defined and less bright. Both critics MINOR (2026-10-10 run 4).
-      **Done when** the --square and --beast pairs show no visible difference in the fist's flame.
-      Test: state=3d beast=cinder_jackal ^fist-flame-target-s-defined-top-tongues
+- [ ] 👀 **Fist flame: TARGET's defined top tongues.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fist flame: TARGET's defined top tongues.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-check10-after.png|420]] ^fist-flame-target-s-defined-top-tongues
 
 - [ ] 👀 **Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.|details]]
@@ -137,11 +139,11 @@ Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item)
       **Done when** the --square and --stones pairs show no visible difference in the slab surfaces.
       Test: state=3d beast=cinder_jackal ^slab-tops-target-s-chipped-facets-and-dr
 
-- [ ] **Frog's rock: TARGET's dark, flat faces.**
-      Next pass: measured run 3 (2026-10-10): every face of the pedestal (top, front, both sides, the right rim) is within 1 level per channel of TARGET's in the --square pair. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
-      TARGET's pedestal is dark and blends into the floor; the game's top face reads lighter and its corners and top rim carry warm orange highlights. Both critics MINOR (2026-10-10 run 3).
-      **Done when** the --square pair shows no visible difference in the pedestal.
-      Test: state=3d beast=cinder_jackal ^frog-s-rock-target-s-dark-flat-faces
+- [ ] 👀 **Frog's rock: TARGET's dark, flat faces.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Frog's rock: TARGET's dark, flat faces.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-check10-after.png|420]] ^frog-s-rock-target-s-dark-flat-faces
 
 Matched check 2026-10-10 (run 3): critic A MODERATE on slab tops, critic B MODERATE on card art and body text; shared MINOR: Frog's rock (four items queued above)
 
