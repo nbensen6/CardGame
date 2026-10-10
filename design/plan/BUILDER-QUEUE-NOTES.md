@@ -2882,3 +2882,11 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Energy-area error at 720: 9.8 -> 7.3.
 - Grader: VERDICT: FAIL x4 (glow, border, pile tone; the profiles above disagree).
 - Meshy: none.
+
+## Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.
+
+- 2026-10-10 run 7: queued from the Matched check (both critics MINOR).
+- Registered on the zigzag's own pixels at 1024: it sat 5 px right and 1 px low on the middle card (the card itself is 1.8 px right). The Tongue Snap cut's centre moves (507, 871) -> (510.5, 872.5): now 1 px, the card's own.
+- The cut's unsharp mask drops 130 -> 60 for tongue_snap (USM): at 130 the zigzag drew crisper and thinner than TARGET's. Zigzag error at its best alignment 21.0 -> 15.0 (0 gave 15.8). The sword was already done in run 6 (USM 40).
+- Grader: VERDICT: PASS (MINOR only: the blade's right half a touch greyer, the zigzag tips a touch softer).
+- Meshy: none.

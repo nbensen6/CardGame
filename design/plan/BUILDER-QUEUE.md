@@ -44,10 +44,11 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       **Done when** the --square pair shows no visible difference in that lettering.
       Test: state=3d beast=cinder_jackal ^hud-lettering-target-s-weight-on-the-pl
 
-- [ ] **Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.**
-      TARGET's zigzag is a little thicker and brighter and its sword's crossguard a touch larger; the game's zigzag is thinner and greyer. Both critics MINOR (2026-10-10 run 7).
-      **Done when** the --square and --hand pairs show no visible difference in the zigzag and sword strokes.
-      Test: state=3d beast=cinder_jackal ^tongue-snap-s-zigzag-and-tongue-flick-s
+- [ ] 👀 **Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-zigzag-after.png|420]] ^tongue-snap-s-zigzag-and-tongue-flick-s
 
 Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword size, window edge); shared MINOR: Climb keyword glyphs, climb gauge orb and icons, card text softness (the open pills item) (three items queued above)
 

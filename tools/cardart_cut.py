@@ -24,12 +24,12 @@ OUT = ROOT / "game/assets/cardart"
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,
 # window width in TARGET px when the card's window is not WIN_W])
 CARDS = {"scramble": (647.3, 882.4, 5.0, 137.0), "leap": (373.8, 882.2, -5.0, 137.0),
-         "tongue_snap": (507.0, 871.0, 0.0, 137.0), "flick": (781.3, 893.7, 9.0, 138.3)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
+         "tongue_snap": (510.5, 872.5, 0.0, 137.0), "flick": (781.3, 893.7, 9.0, 138.3)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
 # Shipped from this cut: scramble only (window error 35.9 -> 30.1 on the
 # --hand square). Leap's cut registered worse (24.2 -> 34.4) and the older
 # reflected cut stays; run with a name to cut one card.
 SATURATE = {"leap": 1.2}
-USM = {"flick": 40}   # run 6 (2026-10-10): at 130 the halo lit the blade's grey right face as bright as its left (188 vs TARGET's 163)
+USM = {"flick": 40, "tongue_snap": 60}   # run 6-7: at 130 the halo lit the blade's grey right face as bright as its left, and drew the zigzag crisper and thinner than TARGET's (zigzag error 21 -> 15)
 EDGE_FIX = {"leap", "tongue_snap", "flick"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
 KEEP_TOP = {"flick"}         # the sword's tip reaches the name band: inpainting the top rows smeared it
 PILL_ROW = {"flick": 0.86}   # the sword's guard and grip sit low, over the 0.7 line: key only the pill's own rows
