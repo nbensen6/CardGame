@@ -13,14 +13,15 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 23:27 EDT
+2026-10-09 23:36 EDT
 
-- **Did:** Matched check queued four items; card borders redrawn to TARGET's rules; cost gems cut from TARGET.
-- **Worked?** Yes. Card frames VERDICT: PASS (round 3); titles and coins VERDICT: PASS (round 2)
-- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-coins-after.png]]
+- **Did:** Matched check queued four items; card borders, cost gems and fist-flame flicker brought to TARGET.
+- **Worked?** Yes. Card frames VERDICT: PASS (round 3); titles and coins VERDICT: PASS (round 2); fist flame Partly, measured within 2 levels but VERDICT: FAIL (round 3)
+- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-fistflame-after.png]]
 - **Ask:** nothing
 - **Found:** dashed inner rule a touch greener and the title bar's right notch a touch smaller than TARGET's (grader MINOR).
 - **Found:** jackal facets measured equal to TARGET's own pixels; nothing to build (left open for the Matched check).
+- **Found:** the grader keeps calling the flame's left tongues duller where pixels match within 1 level.
 
 ## Notes
 

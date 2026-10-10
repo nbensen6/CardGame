@@ -7,6 +7,19 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Fist flame: TARGET's defined top tongues.
+
+Builder 2026-10-10 run 4 (both critics MINOR). Left open.
+
+- Measured: frame 0 of the fire's 8-frame flicker strip IS TARGET's flame (shot at `anim=idle@0`: flame error 2.1 levels); frames 1-7 are warps of it, ~0.73 of its sharpness, and the rest frame usually caught one of them (error 4.7, the "soft tongues").
+- `tools/fire_sharpen.py`: unsharp mask on frames 1-7, amount bisected so each matches frame 0's Laplacian (amounts 0.19-0.21; safe to re-run).
+- The idle flicker now runs 0,1,0,7 (the two frames nearest TARGET's, mean diff 1.1 from frame 0) instead of 0-7, so the rest frame holds TARGET's flame half the time and never strays far from it.
+- Overlay `drawn_fire_overlay.gdshader`: footprint box half-width 1/3 to 1/6 (`footprint_k`), flame sharpness 0.92 to ~1.0.
+- After: flame top error 4.7 to 2.1, left 2.4 to 1.8, fist 2.6 to 2.2; colours within 1 level.
+- Grader rounds 1-3 FAIL ("left tongues duller, softer edges, wider halo"), each against measurement; round 3: not further from TARGET. Same pattern as the "Scene lines soft" control.
+- Meshy: none used.
+- VERDICT: FAIL
+
 ## Card titles and cost coins: TARGET's size.
 
 Builder 2026-10-10 run 4 (both critics MINOR).

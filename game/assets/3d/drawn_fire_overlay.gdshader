@@ -26,6 +26,10 @@ uniform float strength = 1.0;
 // Rig texels per screen pixel: the 3x3 box over each pixel's footprint
 // (the billboard's own filter, drawn_sprite.gdshader `footprint`).
 uniform bool footprint = true;
+// The box's half-width, in footprints. 1/3 (the billboard's) softened the
+// flame's tongues to 0.92 of TARGET's Laplacian sharpness; 1/6 lands them at
+// ~1.0 (Matched check 2026-10-10 run 4, "Fist flame" item).
+uniform float footprint_k = 0.1667;
 
 vec2 to_uv(vec2 s) {
 	vec3 q = screen_to_uv * vec3(s, 1.0);
@@ -44,7 +48,7 @@ void fragment() {
 		t = vec4(0.0);
 		for (int i = -1; i <= 1; i++) {
 			for (int j = -1; j <= 1; j++) {
-				t += texture(rig_tex, uv + dx * (float(i) / 3.0) + dy * (float(j) / 3.0));
+				t += texture(rig_tex, uv + dx * (float(i) * footprint_k) + dy * (float(j) * footprint_k));
 			}
 		}
 		t /= 9.0;

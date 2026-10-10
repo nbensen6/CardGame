@@ -34,6 +34,7 @@ Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item)
       ![[agents/frames/builder/2026-10-10-coins-after.png|420]] ^card-titles-and-cost-coins-target-s-siz
 
 - [ ] **Fist flame: TARGET's defined top tongues.**
+      Next pass: run 4 (2026-10-10) grader FAIL x3, "left tongues duller, top tongues softer, wider halo" (VERDICT: FAIL, not further from TARGET); measured after the fix, the rest frame's flame registers at offset 0, mean error 2.1 (top) and 1.8 (left) levels, left-lobe colour within 1 level and 5-95th percentile luminance within -4/+3 of TARGET-at-720, Laplacian sharpness 1.02-1.04. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
       TARGET's flame over the raised fist ends in distinct bright tongues; the game's top tongues and left edge are a little less defined and less bright. Both critics MINOR (2026-10-10 run 4).
       **Done when** the --square and --beast pairs show no visible difference in the fist's flame.
       Test: state=3d beast=cinder_jackal
