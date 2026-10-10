@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 8:52 PM ET",
-  "last_commit": "53105ec",
+  "updated": "Fri Oct 9, 10:52 PM ET",
+  "last_commit": "ec217c7",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 8:36 PM",
+      "value": "Idle: last run ended 10:27 PM",
       "state": "idle"
     },
     {
@@ -31,6 +31,70 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 10:27 PM",
+      "title": "Frog's rock already matches drawing",
+      "bullets": [
+        "Measured every face of the rock",
+        "All within a hair of your drawing",
+        "Nothing to build; recheck in next check"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-match3-square.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 10:25 PM",
+      "title": "Card text matches your drawing",
+      "bullets": [
+        "Rules text now taller and slightly bolder",
+        "Keyword gold and number green toned down",
+        "Passed review on the second try"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-bodytext-hand.png",
+          "caption": "Card text, drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 10:19 PM",
+      "title": "Two cards get your drawn art",
+      "bullets": [
+        "Tongue Flick shows your sword now",
+        "Tongue Snap shows your zigzag now",
+        "Queued four small fixes from a check"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-cardart-hand.png",
+          "caption": "Card art, drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 9:12 PM",
+      "title": "Full check: still only nits",
+      "bullets": [
+        "Neither critic found anything big",
+        "Only nit: slab edges a bit soft",
+        "Soft edges already on the to-do list"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-check-rest.png",
+          "caption": "Game, full screen"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 8:36 PM",
