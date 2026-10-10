@@ -21,10 +21,11 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       **Done when** the --square and --hand pairs show no visible difference in the card frame borders.
       Test: state=3d beast=cinder_jackal ^card-frames-target-s-dark-band-gold-line
 
-- [ ] **Fourth slab from the top: TARGET's left end.**
-      The mid-left slab just under the right-hand pair starts ~5-8 px further left in the game than in TARGET, so it reads wider, with a slightly thicker bottom lip. Critic B MODERATE, critic A MINOR (2026-10-10 run 7).
-      **Done when** the --square and --stones pairs show no visible difference in that slab's length and lip.
-      Test: state=3d beast=cinder_jackal ^fourth-slab-from-the-top-target-s-left-e
+- [ ] 👀 **Fourth slab from the top: TARGET's left end.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fourth slab from the top: TARGET's left end.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-slab4-after.png|420]] ^fourth-slab-from-the-top-target-s-left-e
 
 - [ ] **Tongue Flick's top-right corner: TARGET's curled gold rim.**
       In TARGET the frame's gold rim curls back round Tongue Flick's top-right corner and the right edge bends slightly; the game's corner is a flat square cut. Critic B MODERATE (2026-10-10 run 7).

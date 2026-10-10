@@ -8033,8 +8033,12 @@ const STAIR_SLAB_EDGE_POW := 2.0
 ## Each slab's sub-pixel landing against TARGET, in screen px at the rest
 ## view (x right, y down): registered on the --square pair, builder run 18
 ## (the middle slabs sat half a pixel low and their lower edges read fat).
-const STAIR_SLAB_NUDGE := [Vector2(0.0, 0.0), Vector2(0.0, -0.5), Vector2(-0.5, -0.5),
-	Vector2(-0.5, 0.0), Vector2(0.0, 0.0), Vector2(0.0, 0.0)]
+## Run 7 (2026-10-10), registered on TARGET's interior pixels at 1024: slab
+## 2 drew 2% large and 1 px left (its left end read wider), slab 3 a touch small.
+const STAIR_SLAB_NUDGE := [Vector2(0.0, 0.0), Vector2(0.0, -0.5), Vector2(0.2, -0.85),
+	Vector2(-0.85, 0.35), Vector2(0.0, 0.0), Vector2(0.0, 0.0)]
+## Each slab's size trim against TARGET (run 7).
+const STAIR_SLAB_SCALE := [1.0, 1.0, 0.98, 1.01, 1.0, 1.0]
 
 
 ## Slab `k`'s picture as a camera-facing sprite, `r` its half-width, mirrored
@@ -8079,6 +8083,8 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 	elif pic == tex:
 		sp.texture = CardView._a1_mip(tex)
 	sp.pixel_size = r * 2.0 * STAIR_SLAB_SPAN / float(pic.get_width())
+	if k < STAIR_SLAB_SCALE.size():
+		sp.pixel_size *= STAIR_SLAB_SCALE[k]
 	sp.offset = Vector2(0.0, -float(pic.get_height()) * (0.5 - STAIR_SLAB_TOP))
 	if STAIR_SLAB_DRAWN and k < STAIR_SLAB_NUDGE.size():
 		# Screen px to the cut's px (the cut is TARGET's 1024 px; the

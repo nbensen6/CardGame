@@ -2857,3 +2857,11 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Hand error at 720: 15.21 -> 14.49.
 - Grader: VERDICT: FAIL x2.
 - Meshy: none.
+
+## Fourth slab from the top: TARGET's left end.
+
+- 2026-10-10 run 7: queued from the Matched check (critic B MODERATE, critic A MINOR).
+- Registered on TARGET's slab interiors at 1024 (scale and offset search): slab 2 (fourth from the top) drew 2% large and 1 px left, slab 3 a touch small. New STAIR_SLAB_SCALE trims each slab's size ([1, 1, 0.98, 1.01, 1, 1]) and STAIR_SLAB_NUDGE moves slab 2 by (+0.2, -0.35) and slab 3 by (-0.35, +0.35) screen px.
+- Measured after at 720: slab 2's box (317,310)-(373,323) exactly TARGET's (was 315..373, 324); every slab's box within 1 px except slab 3's right end, where the grey mask bridges into the rim; both register at offset 0/0, scale 0.98-0.99. Stones error at 720 3.07 -> 3.00.
+- Grader: VERDICT: PASS (MINOR only: the front-face step a touch softer, the underside 1-2 px).
+- Meshy: none.
