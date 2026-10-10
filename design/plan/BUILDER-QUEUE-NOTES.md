@@ -2886,6 +2886,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: FAIL x1 (the gold inner curl at the rail's top, a thinner top rule).
 - Meshy: none.
 
+- 2026-10-10 run 9: zoomed TARGET's corner 15x at 1024. Its structure: the top rule slopes into a darker shoulder and a broad rounded curl (a far larger radius than the other corners) with a tan knot where a short gold hook turns in and drops onto the stitch; the stitch's upper run is short, starting below the hook; a small deep notch ends the name band beside it; the band's foot runs into the rail and breaks the stitch before it carries on down.
+- tools/cardframe_target.py, all inside the 80 px right patch margin: CURL_R 50 / CURL_W 5 cut-back corner in CURL_GOLD, SHOULDER on the top rule, HOOK polyline and KNOT ellipse, NOTCH_R_LIT/DARK notch (NOTCH_TOP/FOOT/DEPTH), STITCH_GAP under the hook and BREAK at the band's foot. The run 7 lit right-hand chevron is painted over with band colour.
+- Grader: FAIL x3 (a square gold cap; then a thick wide arch with the stitch running to the top; then a wide double arch with no knot), then PASS (MINOR only, at 7-15x: knot ~1 px large, notch a touch faint).
+- Grader: VERDICT: PASS.
+- Meshy: none.
+
 ## Energy box: TARGET's border and glow.
 
 - 2026-10-10 run 7: queued from the Matched check (both critics MINOR).

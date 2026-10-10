@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 04:21 EDT
+2026-10-10 04:32 EDT
 
-- **Did:** Rebuilt the card rails: gold inner rule, olive-bead stitch, teal right rail, solid rail on the middle card.
-- **Worked?** Yes. VERDICT: PASS (MINOR only, visible at 3x zoom).
-- **Look at:** ![[frames/builder/2026-10-10-frames2-before.png]] then ![[frames/builder/2026-10-10-frames2-after.png]]
+- **Did:** Card rails matched TARGET, then Tongue Flick's top-right corner given TARGET's curl, hook, knot and notch.
+- **Worked?** Yes, both. VERDICT: PASS (frames, MINOR only); VERDICT: PASS (corner, MINOR only at 7-15x).
+- **Look at:** ![[frames/builder/2026-10-10-flickcorner-before.png]] then ![[frames/builder/2026-10-10-flickcorner-after.png]]
 - **Ask:** nothing
-- **Found:** the outer rule reads a touch grey-cream against TARGET's gold-cream at 3x zoom.
+- **Found:** the outer rule reads a touch grey-cream against TARGET's gold-cream at 3x zoom; Tongue Flick sits ~1-2 px low against TARGET.
 
 ## Notes
 

@@ -95,6 +95,20 @@ CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its ape
 CHEV_R = 60              # px: the right-hand bevel's depth
 CHEV_LIT = (68, 65, 80)
 CHEV_DARK = (42, 39, 50)
+NOTCH_R_LIT = (20, 18, 26)
+NOTCH_R_DARK = (14, 12, 18)
+CAP_DROP = 24
+NOTCH_TOP, NOTCH_FOOT, NOTCH_DEPTH = 30, 22, 40
+BREAK = 22
+CURL_R, CURL_W = 50, 5
+CURL_GOLD = (206, 178, 118)
+SHOULDER, SHOULDER_GOLD = 18, (112, 98, 70)
+STITCH_GAP = 10
+HOOK = [(W - 18, 26), (W - 32, 36), (W - 42, 46), (W - 48, 60)]
+HOOK_W = 6
+HOOK_GOLD = (228, 198, 134)
+KNOT = (W - 38, 16, W - 18, 29)
+KNOT_GOLD = (214, 180, 126)
 BAND_FROM = 11           # the name band starts inside the cream line, px
 ART_BG = (10, 11, 9)     # TARGET's art window behind an icon: near-black
 # A clear margin round the frame, px. The Compatibility renderer has no 2D
@@ -183,6 +197,54 @@ def build(flat=False):
         xe = int(rx1 + (rx0 - rx1) * k)
         if xe < rx0:
             a[y, xe:rx0, :3] = CHEV_LIT if y < mid else CHEV_DARK
+    # Run 9: on TARGET's Tongue Flick the right-hand notch is a small deep
+    # shadow, not a lit bevel; the stitch runs up beside it and its top hooks
+    # over into the outer rim at the corner, closing off the dark band.
+    # TARGET's notch is shallow and sits high; the band's foot runs right
+    # into the rail, breaking the stitch for a few px before it carries on
+    # down the card (measured at 1024 on Tongue Flick).
+    a[BAND_FROM:bb - 3, rx1:rx0, :3] = BAND
+    n0, n1 = BAND_FROM + NOTCH_TOP, bb - NOTCH_FOOT
+    nm = (n0 + n1) // 2
+    for y in range(n0, n1):
+        k = abs(y - nm) / max(1, nm - n0)
+        xe = int(rx0 - NOTCH_DEPTH * (1.0 - k))
+        if xe < rx0:
+            a[y, xe:rx0, :3] = NOTCH_R_LIT if y < nm else NOTCH_R_DARK
+    a[bb - BREAK:bb + 2, W - hi:W - b0, :3] = BAND
+    a[bb - 3:bb + 2, W - hi:W - b0, :3] = (34, 32, 40)
+    # (run 9, round 3: TARGET's stitch stops short below the curl, no cap)
+    a[RADIUS:RADIUS + CAP_DROP + STITCH_GAP, W - hi:W - b0, :3] = (20, 21, 18)
+    # ...and TARGET's top rule does not turn the corner square: it slopes
+    # down into a broad rounded curl, so the rim's top-right corner is cut
+    # back on a far larger radius than the others (zoomed 15x on TARGET).
+    def rr(inset, r):
+        m = Image.new("L", (W, H), 0)
+        ImageDraw.Draw(m).rounded_rectangle((inset, inset, W - 1 - inset, H - 1 - inset),
+                                            radius=max(2, r), fill=255)
+        return np.asarray(m) > 127
+    m0, m1, m2 = rr(0, CURL_R), rr(2, CURL_R - 2), rr(2 + CURL_W, CURL_R - 2 - CURL_W)
+    q = np.zeros((H, W), bool)
+    q[:CURL_R + 4, W - CURL_R - 4:] = True
+    a[q & ~m0, 3] = 0
+    a[q & m0 & ~m1, :3] = (14, 10, 6)
+    a[q & m1 & ~m2, :3] = CURL_GOLD
+    # a darker shoulder where the bright top rule meets the curl
+    xs = slice(W - CURL_R - SHOULDER, W - CURL_R + 12)
+    tp = a[:CURL_R, xs, :3]
+    lit = tp.astype(int).sum(2) > 300
+    tp[lit] = SHOULDER_GOLD
+    # TARGET's hook: a short gold stroke turns in from the curl and drops
+    # onto the stitch's top.
+    hk = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(hk).line(HOOK, fill=255, width=HOOK_W)
+    hm = (np.asarray(hk) > 127) & m2
+    a[hm, :3] = HOOK_GOLD
+    # and the bright warm knot on the curl's outer bend
+    kn = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(kn).ellipse(KNOT, fill=255)
+    km = (np.asarray(kn) > 127) & m0
+    a[km, :3] = KNOT_GOLD
     # The art window, behind the art: an icon's clear ground shows black.
     ab = int(ART_BOTTOM * H)
     a[bb:ab, top:W - top, :3] = ART_BG

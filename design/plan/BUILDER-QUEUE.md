@@ -27,11 +27,11 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-slab4-after.png|420]] ^fourth-slab-from-the-top-target-s-left-e
 
-- [ ] **Tongue Flick's top-right corner: TARGET's curled gold rim.**
-      Next pass: run 7 (2026-10-10) grader FAIL x3, "no second gold stroke hooking back inside the rim; band should end in a sharp notch with a dark gap before the curl; right edge bows out" (VERDICT: FAIL, not further from TARGET); kept: the right rail runs up past the name band. Tried and reverted: a gold cap at a third of the band (error 9.63 -> 9.66, read as a dark square block) and a quarter-arc inner rule with the band run into it (9.95, read as a rounded box). FIX: TARGET's corner is two gold strokes with a dark channel between: draw the outer rim at a tighter radius and a second stroke that starts at the band's notch, hooks inward and runs down inside the right edge; check at 8x on TARGET's 1024 pixels before grading.
-      In TARGET the frame's gold rim curls back round Tongue Flick's top-right corner and the right edge bends slightly; the game's corner is a flat square cut. Critic B MODERATE (2026-10-10 run 7).
-      **Done when** the --square and --hand pairs show no visible difference at that corner.
-      Test: state=3d beast=cinder_jackal ^tongue-flick-s-top-right-corner-target-s
+- [ ] 👀 **Tongue Flick's top-right corner: TARGET's curled gold rim.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Tongue Flick's top-right corner: TARGET's curled gold rim.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-flickcorner-after.png|420]] ^tongue-flick-s-top-right-corner-target-s
 
 - [ ] **Energy box: TARGET's border and glow.**
       Next pass: run 7 (2026-10-10) grader FAIL x4, "glow tighter and fainter; border paler and thinner; pile icons darker" (VERDICT: FAIL, not further from TARGET); measured at 720: gold line now 2 px at (255,207,112) vs TARGET (255,207,113) with TARGET's dark inner edge, glow ramps left and right within ~3-10 levels, the glow under the box now fades as TARGET's (the backdrop had painted it out), box and pile rows on TARGET's exactly (571-652, 670-699), pile icon means within 2 levels; energy-area error at 720 9.8 -> 7.3. FIX: none left to build that the measurements show; re-check only in the Matched check.
