@@ -2806,3 +2806,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - 2026-10-10 run 3: TARGET's rules are ~8% taller at the same line width and a touch heavier. The A1 rules label now draws through a FontVariation stretched 1.08 tall (variation_transform; an x-squeeze at size 16 did not narrow the advances and overflowed) with embolden 0.15, and sits 3 px lower in its box. KEYWORD_COLOR f0b45a -> e4a955 (d8b879 read too pale to the grader), LIVE_COLOR 7fd45c -> 95c37a (TARGET's muted green).
 - Gotcha: the keyword underline is 1 px and vanished at some box offsets (top inset -5.5 and -6 lost it on the centre card; -5 and -7 keep it).
 - Grader round 1 FAIL (Climb too pale, block 2 px high); round 2 VERDICT: PASS (MINOR only: TARGET's text a touch softer, its cream a shade warmer).
+
+## Tongue Flick: TARGET's clean art window edge and sword.
+
+- 2026-10-10 run 6: queued from the Matched check (critic B MODERATE, critic A MINOR).
+- The art rect's own bottom edge drew as a hard staircase on the tilted card (the compatibility renderer does not antialias a rotated quad): the card's own art now draws through `game/ui/aa_rect.gdshader`, which fades alpha over the last screen pixel inside the rect, and no longer clips.
+- Recut flick (tools/cardart_cut.py): a pale sliver of TARGET's pill survived at the window's foot (FOOT_CLEAR clears it); the sword registered 7 px left, 2 px low and 4% large on a masked rotation/scale/offset search, so the cut centre moved (788, 891) -> (781.3, 893.7) and the window 133 -> 138.3 TARGET px; the unsharp mask drops to 40 on flick (at 130 the halo lit the blade's grey right face as bright as its left: 188 vs TARGET's 163).
+- Measured after: card mean error vs TARGET-at-720 21.3 -> 11.7; sword offset 0/0 scale 1.00; window edge within 1-2 px both sides of the pill; nothing else in the square changed (1072 px changed, all on this card).
+- Tried and dropped: protecting the grip from the pill inpaint (left a dark blob under the grip).
+- Grader: VERDICT: FAIL x3 (edge step across the pill, blade a touch narrow and long). The edge measurements above disagree with the step.
+- Meshy: none.

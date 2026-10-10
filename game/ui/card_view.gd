@@ -680,6 +680,7 @@ const A1_WINDOW := Color(10.0 / 255.0, 11.0 / 255.0, 9.0 / 255.0)
 const A1_BODY := Color(36.0 / 255.0, 39.0 / 255.0, 31.0 / 255.0)
 ## How far the art runs past the window under the frame, px of the card.
 const A1_ART_BLEED := 2.0
+const AA_RECT := preload("res://ui/aa_rect.gdshader")
 
 
 ## TARGET's type pill: pale grey, a darker edge.
@@ -1005,6 +1006,18 @@ func _build_a1() -> void:
 		_art_full.offset_top = ar.position.y - g
 		_art_full.offset_right = ar.end.x + g - w
 		_art_full.offset_bottom = ar.end.y + g - h
+		# On a tilted hand card the art's bottom edge, where it meets the
+		# olive body, drew as a hard staircase; TARGET's is a clean line
+		# (run 6, 2026-10-10).
+		var aa := ShaderMaterial.new()
+		aa.shader = AA_RECT
+		_art_full.material = aa
+		_art_full.clip_contents = false
+		var art_ref := _art_full
+		var sync := func() -> void:
+			aa.set_shader_parameter("rect_size", art_ref.size)
+		sync.call()
+		_art_full.resized.connect(sync)
 		move_child(base, _art_full.get_index() + 1)
 	else:
 		move_child(base, 2)

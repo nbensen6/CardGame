@@ -24,14 +24,16 @@ OUT = ROOT / "game/assets/cardart"
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,
 # window width in TARGET px when the card's window is not WIN_W])
 CARDS = {"scramble": (647.3, 882.4, 5.0, 137.0), "leap": (373.8, 882.2, -5.0, 137.0),
-         "tongue_snap": (507.0, 871.0, 0.0, 137.0), "flick": (788.0, 891.0, 9.0, 133.0)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
+         "tongue_snap": (507.0, 871.0, 0.0, 137.0), "flick": (781.3, 893.7, 9.0, 138.3)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
 # Shipped from this cut: scramble only (window error 35.9 -> 30.1 on the
 # --hand square). Leap's cut registered worse (24.2 -> 34.4) and the older
 # reflected cut stays; run with a name to cut one card.
 SATURATE = {"leap": 1.2}
+USM = {"flick": 40}   # run 6 (2026-10-10): at 130 the halo lit the blade's grey right face as bright as its left (188 vs TARGET's 163)
 EDGE_FIX = {"leap", "tongue_snap", "flick"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
 KEEP_TOP = {"flick"}         # the sword's tip reaches the name band: inpainting the top rows smeared it
 PILL_ROW = {"flick": 0.86}   # the sword's guard and grip sit low, over the 0.7 line: key only the pill's own rows
+FOOT_CLEAR = {"flick": 6}    # TARGET px: the top of TARGET's pill cut off at the window's foot; the key missed it and a pale sliver showed past the card's own pill (run 6, 2026-10-10)
 WIN_W = 122.0                      # TARGET px: the window inside the gold line (run 14: the frame now trims a 2 px bleed)
 ASPECT = (0.889 * 690) / (0.456 * 984)   # card_view.A1_ART (run 16: 0.039 .. 0.928)
 SCALE = 1.4                        # output px per TARGET px: ~2x the window on screen, so the card's mip 1 lands 1:1 and the art stays as crisp as TARGET's (run 14)
@@ -74,6 +76,11 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
         if (mx[y] < 70).mean() > 0.6:
             dark_top[y] = True
     hole |= dark_top
+    if name in FOOT_CLEAR:
+        n = int(round(FOOT_CLEAR[name] * crop.shape[0] / h))
+        foot = np.zeros_like(hole)
+        foot[-n:] = (mx[-n:] > 60) & (mx[-n:] - mn[-n:] < 40)
+        hole |= ndi.binary_dilation(foot, iterations=1)
     # TARGET's own trim or name band caught at the window's edges (a column
     # or row within 8 px of the edge that is dark or carries the gold line):
     # replaced by the nearest clean column / row, so no border shows inside
@@ -101,7 +108,7 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
     out = Image.fromarray(crop).resize((int(round(w * SCALE)), int(round(h * SCALE))), Image.LANCZOS)
     # The card draws this through a mip and a bilinear tap; a light unsharp
     # mask gives back the edge contrast TARGET's window has (run 14).
-    out = out.filter(ImageFilter.UnsharpMask(radius=1.6, percent=130, threshold=1))   # run 16: the graders still read both windows soft at 70
+    out = out.filter(ImageFilter.UnsharpMask(radius=1.6, percent=USM.get(name, 130), threshold=1))   # run 16: the graders still read both windows soft at 70
     # Drawn small through the card's filters, Leap's sky and leaves lose a
     # little colour against TARGET's crisp window; give it back (run 14).
     if name in SATURATE:

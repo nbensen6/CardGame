@@ -13,6 +13,24 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword size, window edge); shared MINOR: Climb keyword glyphs, climb gauge orb and icons, card text softness (the open pills item) (three items queued above)
+
+- [ ] **Tongue Flick: TARGET's clean art window edge and sword.**
+      Next pass: run 6 (2026-10-10) grader FAIL x3, "window edge steps ~5 px across the pill; blade a touch narrow, pale and long" (VERDICT: FAIL, not further from TARGET); measured after: the card's mean error vs TARGET-at-720 21.3 -> 11.7 levels, window bottom edge within 1-2 px of TARGET's either side of the pill (1024 px), sword registers at offset 0/0 scale 1.00, guard and grip rows within 1 px, blade row profiles within ~5 levels, pill sliver gone. FIX: none left to build on this card; the title band's left end sits 2-3 px low over the tip (frame geometry), re-check only in the Matched check.
+      TARGET's black art window ends in a clean straight line along the card's tilt, just under the guard, and the pill sits on it; the game's edge is stair-stepped left and right of the Attack pill, a pale sliver of TARGET's own pill shows at the pill's left tip, and the sword reads a touch long with the guard and pill a few px low. Critic B MODERATE, critic A MINOR (2026-10-10 run 6).
+      **Done when** the --square and --hand pairs show no visible difference in Tongue Flick's art window and sword.
+      Test: state=3d beast=cinder_jackal ^tongue-flick-target-s-clean-art-window-e
+
+- [ ] **"Climb" keyword: TARGET's glyphs.**
+      TARGET's gold "Climb" on Tongue Snap and Scramble is clean, even lettering; the game's reads narrower and slightly skewed (the "b" drawn differently). Both critics MINOR (2026-10-10 run 6).
+      **Done when** the --square and --hand pairs show no visible difference in the "Climb" keyword.
+      Test: state=3d beast=cinder_jackal ^climb-keyword-target-s-glyphs
+
+- [ ] **Climb gauge: TARGET's soft orb and bottom icons.**
+      TARGET's top orb has a broad, soft halo and a soft white core and its two bottom portrait icons are muted; the game's orb halo is tighter, its core a small hard hexagon, and the blue-ringed icon reads more colourful. Both critics MINOR (2026-10-10 run 6).
+      **Done when** the --square pair shows no visible difference in the climb gauge's orb and icons.
+      Test: state=3d beast=cinder_jackal ^climb-gauge-target-s-soft-orb-and-botto
+
 Matched check 2026-10-10 (run 5): no MAJOR or MODERATE from either critic; shared MINOR: Switch button label, card pill text and titles (two items queued above)
 
 - [ ] 👀 **Switch button: TARGET's pale blue label and green icon.**
