@@ -1,10 +1,10 @@
 {
-  "updated": "Sat Oct 10, 12:51 AM ET",
-  "last_commit": "8798b85",
+  "updated": "Sat Oct 10, 2:52 AM ET",
+  "last_commit": "af67ca3",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 12:34 AM",
+      "value": "Idle: last run ended 2:32 AM",
       "state": "idle"
     },
     {
@@ -31,6 +31,173 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:27 AM",
+      "title": "Top bar lettering now matches",
+      "bullets": [
+        "Log, Menu and health text retoned",
+        "Menu word now your drawing's width",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-hudtext-top.png",
+          "caption": "Drawing above, game below"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:24 AM",
+      "title": "Zigzag art lines up now",
+      "bullets": [
+        "Tongue Snap zigzag moved and thinned",
+        "Sword checked against your drawing too",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-zigzag-art.png",
+          "caption": "Drawing top, game bottom"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:20 AM",
+      "title": "Energy box closer to drawing",
+      "bullets": [
+        "Moved to your drawing's spot",
+        "Thin gold rim and soft glow",
+        "Still a few shades off"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-energy-energy.png",
+          "caption": "Drawing left, game right"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:12 AM",
+      "title": "Card corner rail extended",
+      "bullets": [
+        "Right edge now runs to corner",
+        "Curled gold rim still missing",
+        "Two tries reverted, next plan named"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-corner-flick.png",
+          "caption": "Drawing left, game right"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:09 AM",
+      "title": "Fourth stone now right length",
+      "bullets": [
+        "Shortened to match your drawing",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-slab4-stones.png",
+          "caption": "Drawing left, game right"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 2:05 AM",
+      "title": "Card borders get dark band",
+      "bullets": [
+        "Dark band, gold line, green stitch",
+        "Close but not passed yet",
+        "Full check queued new fixes"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-frames-edges.png",
+          "caption": "Drawing then game, pairs"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-match7.png",
+          "caption": "Full check"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 1:56 AM",
+      "title": "Card labels toned again",
+      "bullets": [
+        "Attack/Skill pill color and ink adjusted",
+        "Zigzag art bottom cleaned up",
+        "Still slightly off from drawing"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-pills-cards.png",
+          "caption": "Drawing top, game bottom"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 1:50 AM",
+      "title": "Climb gauge orb smoother",
+      "bullets": [
+        "Glow rings sized like your drawing",
+        "Bottom icons hold their shapes",
+        "Very close, not passed yet"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-gauge-gauge.png",
+          "caption": "Drawing left, game right"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 1:39 AM",
+      "title": "Climb word warmer and bolder",
+      "bullets": [
+        "Pale tan color, heavier letters",
+        "Underline dulled to match drawing",
+        "Letters still step on tilted card"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-climbkw-words.png",
+          "caption": "Drawing top, game bottom"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 1:27 AM",
+      "title": "Tongue Flick art edges cleaned",
+      "bullets": [
+        "Picture window edges now smooth",
+        "Sword recut to your drawing's spot",
+        "Full check found nine new items"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/pair-flickedge-flick.png",
+          "caption": "Drawing left, game right"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-match6.png",
+          "caption": "Full check"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 10, 12:33 AM",
