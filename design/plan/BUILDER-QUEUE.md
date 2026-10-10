@@ -34,6 +34,7 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       Test: state=3d beast=cinder_jackal ^tongue-flick-s-top-right-corner-target-s
 
 - [ ] **Energy box: TARGET's border and glow.**
+      Next pass: run 7 (2026-10-10) grader FAIL x4, "glow tighter and fainter; border paler and thinner; pile icons darker" (VERDICT: FAIL, not further from TARGET); measured at 720: gold line now 2 px at (255,207,112) vs TARGET (255,207,113) with TARGET's dark inner edge, glow ramps left and right within ~3-10 levels, the glow under the box now fades as TARGET's (the backdrop had painted it out), box and pile rows on TARGET's exactly (571-652, 670-699), pile icon means within 2 levels; energy-area error at 720 9.8 -> 7.3. FIX: none left to build that the measurements show; re-check only in the Matched check.
       TARGET's energy box border is a warmer gold with a slightly stronger amber glow and its pile icons are a touch lighter; the game's border is paler and thinner, its glow weaker and its pile icons darker. Both critics MINOR (2026-10-10 run 7).
       **Done when** the --square pair shows no visible difference in the energy box and piles.
       Test: state=3d beast=cinder_jackal ^energy-box-target-s-border-and-glow

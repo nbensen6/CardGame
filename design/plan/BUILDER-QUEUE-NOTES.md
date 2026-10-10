@@ -2872,3 +2872,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - tools/cardframe_target.py: the name band stops at the right-hand rail (the first six EDGE stripes, 61 px) and the rail's own pixels, rounded corner included, run up past the name; the right-hand chevron notch moves in with the band's end; the dim right-side outer rule starts below the band so the corner stays bright gold. Inside the 80 px right patch margin.
 - Grader: VERDICT: FAIL x1 (the gold inner curl at the rail's top, a thinner top rule).
 - Meshy: none.
+
+## Energy box: TARGET's border and glow.
+
+- 2026-10-10 run 7: queued from the Matched check (both critics MINOR).
+- Measured at 720: TARGET's gold line is 2 px (peak (255,207,113)) with a dark edge (~(78,31,1)) just inside; the game's was ~3.5 px of yellower gold with no dark edge. ENERGY_BORDER 3 -> 2, ENERGY_GOLD (1, .81, .44), and a 1 px ENERGY_INNER outline panel inside it (a child of the gold panel, over the backdrop's face).
+- The box drew 1 px low: HUD_SQUARE LeftRail y 571 -> 570; the pile badges then sat 1 px high, so they move down 1.1 units.
+- tools/energy_backdrop.py painted everything from TARGET y 936 down flat near-black to hide TARGET's piles, cutting off TARGET's glow under the box; PILES now starts at 942.
+- Energy-area error at 720: 9.8 -> 7.3.
+- Grader: VERDICT: FAIL x4 (glow, border, pile tone; the profiles above disagree).
+- Meshy: none.

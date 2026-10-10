@@ -876,9 +876,11 @@ const HUD_STONE_LIFT := Color(1.0, 1.0, 1.0)
 ## The beast's own colour on its plate and intent, so it never reads as a seat.
 const BEAST_GLOW := Color(1.0, 0.62, 0.16)
 ## TARGET.png's energy box: a gold hairline round a brown face (r2 iter 07).
-const ENERGY_GOLD := Color(1.0, 0.78, 0.34)
+const ENERGY_GOLD := Color(1.0, 0.81, 0.44)   # TARGET's line peaks (255,207,113) at 720 (run 7; was (1, .78, .34))
 const ENERGY_FACE := Color(0.36, 0.18, 0.04, 1.0)
-const ENERGY_BORDER := 3
+const ENERGY_BORDER := 2   # TARGET's gold is 2 px with a dark inner edge, not 3 (run 7)
+## TARGET's dark edge just inside the gold line (~(78,31,1) at 720, run 7).
+const ENERGY_INNER := Color(0.30, 0.12, 0.0, 0.9)
 const ENERGY_HALO := Color(1.0, 0.55, 0.12, 0.45)
 const ENERGY_HALO_SIZE := 0
 const ENERGY_PAD := 0.0
@@ -1209,6 +1211,20 @@ func _apply_sts_hud() -> void:
 	# The face is TARGET's own, mottled, in the backdrop; the panel draws
 	# only the gold line over it.
 	(energy_face.get_theme_stylebox("panel") as StyleBoxFlat).draw_center = false
+	# ...and TARGET's dark edge just inside it, over the backdrop's face.
+	var inner_st := flat_panel_style(Color(0, 0, 0, 0), ENERGY_INNER, 16 - ENERGY_BORDER, 1)
+	inner_st.draw_center = false
+	var inner := Panel.new()
+	inner.name = "EnergyInnerEdge"
+	inner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	inner.add_theme_stylebox_override("panel", inner_st)
+	energy_face.add_child(inner)
+	inner.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var eb := float(ENERGY_BORDER) + 1.2
+	inner.offset_left = eb
+	inner.offset_top = eb
+	inner.offset_right = -eb
+	inner.offset_bottom = -eb
 	add_energy_backdrop(_energy_orb, energy_face.get_parent() as Control)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
@@ -3059,7 +3075,7 @@ const HUD_SQUARE := {
 	"IntentTag": Rect2(302, 12, 70, 21),
 	# LeftRail and Controls are placed by the box of their first child (the
 	# energy box, End Turn): the containers are taller than what they show.
-	"LeftRail": Rect2(14, 571, 82, 84),
+	"LeftRail": Rect2(14, 570, 82, 84),   # run 7: drew 1 px low at 571
 	"Controls": Rect2(614, 624, 91, 34),
 	# "Menu"'s own letters, the button drawn with no padding (TARGET x 661-697).
 	"MenuBtn": Rect2(655, 10.6, 48, 30),
@@ -10528,7 +10544,7 @@ func _render_energy(p: Dictionary) -> void:
 				var pb: Control = PileBadge.new()
 				pb.set("label", names[k])
 				pb.size = Vector2(30, 34)
-				pb.position = Vector2(2.0 + k * 34.0, 0.0)
+				pb.position = Vector2(2.0 + k * 34.0, 1.1)   # TARGET's row 1 px lower once the box rose to its place (run 7)
 				pb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 				_piles.add_child(pb)
 				_pile_badges.append(pb)

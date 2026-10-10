@@ -32,7 +32,7 @@ CARD_TOP, CARD_LEFT, CARD_LEAN = 826, 149, 26.0 / 187.0
 # the gold line's corner radius on TARGET (its diagonal crosses at ~6 px)
 RADIUS = 20.0
 # the pile icons and their labels
-PILES = (16, 936, 142, 1004)
+PILES = (16, 942, 142, 1004)   # run 7: from 936 cut TARGET's glow under the box off (it fades to ~940; the icons start ~941)
 DARK = np.array([9, 2, 0], float)
 GLOW = np.array([95, 55, 12], float)
 FACE = np.array([91, 45, 10], float)
