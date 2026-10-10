@@ -22,14 +22,16 @@ Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item)
       ![[agents/frames/builder/2026-10-10-cardedge-after.png|420]] ^card-frames-target-s-thin-smooth-border
 
 - [ ] **Jackal facets and hairline cracks: TARGET's crisp planes.**
+      Next pass: measured run 4 (2026-10-10): the jackal is TARGET's own pixels; against TARGET-at-720 the shoulders, belly, right forearm and face register at mean error 2.3-3.2 levels and Laplacian sharpness 1.00-1.05 of TARGET's. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
       TARGET's shoulders, biceps and forearms are flat facet planes with hard tone breaks and its thin side cracks on the belly and forearms are sharp; the game's read slightly airbrushed and those cracks blurrier and dimmer. Critic B MODERATE, both MINOR on the cracks (2026-10-10 run 4).
       **Done when** the --square and --beast pairs show no visible difference in the jackal's facets and hairline cracks.
       Test: state=3d beast=cinder_jackal
 
-- [ ] **Card titles and cost coins: TARGET's size.**
-      TARGET's card names and cost coins are a touch smaller than the game's. Both critics MINOR (2026-10-10 run 4).
-      **Done when** the --square and --hand pairs show no visible difference in the card titles and coins.
+- [ ] 👀 **Card titles and cost coins: TARGET's size.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card titles and cost coins: TARGET's size.|details]]
+      Ask: nothing
       Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-coins-after.png|420]] ^card-titles-and-cost-coins-target-s-siz
 
 - [ ] **Fist flame: TARGET's defined top tongues.**
       TARGET's flame over the raised fist ends in distinct bright tongues; the game's top tongues and left edge are a little less defined and less bright. Both critics MINOR (2026-10-10 run 4).

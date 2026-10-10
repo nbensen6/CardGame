@@ -7,6 +7,17 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Card titles and cost coins: TARGET's size.
+
+Builder 2026-10-10 run 4 (both critics MINOR).
+
+- Measured first: title widths, cap heights and baselines already match TARGET within 1-2 px; the coin discs match in diameter. The real differences were the gem's look and the digit.
+- The gem is now TARGET's own: `tools/costdisc_target.py` samples TARGET's five hand gems in polar bins, masks each digit, takes the per-bin median (raised rim, lit lower-right crescent, groove, top-left sheen) and fits a plane to the face inside 0.62 of the radius. Writes `cost_disc_t.png`; `a1_disc_texture()` loads it (the painted gem stays as a fallback).
+- The digit: greyed white (0.89,0.93,0.89), a 3 px dark-green outline, embolden 0.12 (was 0.3), size `so.z * 0.54`. Gem centre 1 px higher (`COST_DISC_C.y` 0.084 to 0.077).
+- Round 1 FAIL (digits 13% too big and too white); round 2 PASS.
+- Meshy: none used.
+- VERDICT: PASS. Left MINOR: a faint shadow under the gem's lower edge; the Scramble gem ~1 px low.
+
 ## Card frames: TARGET's thin, smooth border lines.
 
 Builder 2026-10-09 23:21 EDT (Matched check run 4 queued it: critic B MODERATE, A MINOR).

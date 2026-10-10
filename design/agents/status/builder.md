@@ -13,13 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 23:21 EDT
+2026-10-09 23:27 EDT
 
-- **Did:** Matched check queued four items; card borders redrawn to TARGET's thin cream and dashed rules, edges anti-aliased.
-- **Worked?** Yes, third round. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-cardedge-after.png]]
+- **Did:** Matched check queued four items; card borders redrawn to TARGET's rules; cost gems cut from TARGET.
+- **Worked?** Yes. Card frames VERDICT: PASS (round 3); titles and coins VERDICT: PASS (round 2)
+- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-coins-after.png]]
 - **Ask:** nothing
 - **Found:** dashed inner rule a touch greener and the title bar's right notch a touch smaller than TARGET's (grader MINOR).
+- **Found:** jackal facets measured equal to TARGET's own pixels; nothing to build (left open for the Matched check).
 
 ## Notes
 

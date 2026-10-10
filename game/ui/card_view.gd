@@ -671,7 +671,7 @@ const COST_DISC_RIM := Color(0.46, 0.94, 0.62)  # the lit rim round the upper ha
 ## fractions of the card: TARGET's disc is about a third of the card across
 ## and its centre sits on the frame's top-left corner.
 const COST_DISC_D := 0.31   # TARGET's disc, registered by area on all five cards in the 720 square (run 14)
-const COST_DISC_C := Vector2(0.08, 0.084)   # TARGET's gem centre ~13 px under the card top in the 720 square (2026-10-09)
+const COST_DISC_C := Vector2(0.08, 0.077)   # TARGET's gem centre ~12 px under the card top in the 720 square (2026-10-09; 1 px higher, Matched check 2026-10-10 run 4)
 
 
 ## TARGET's art window behind an icon: near-black (cardframe_target.py ART_BG).
@@ -706,8 +706,23 @@ static func a1_type_pill(ty: Rect2) -> Rect2:
 static var _disc_tex: Texture2D = null
 
 
+## TARGET's own gem, cut digit-free from its five hand gems by
+## tools/costdisc_target.py (Matched check 2026-10-10 run 4: the painted gem
+## below lacked TARGET's raised rim and lit lower-right crescent).
+const COST_DISC_T := preload("res://assets/ui/cost_disc_t.png")
+
+
 static func a1_disc_texture() -> Texture2D:
 	if _disc_tex != null:
+		return _disc_tex
+	var cut: Image = COST_DISC_T.get_image() if COST_DISC_T != null else null
+	if cut != null:
+		cut = cut.duplicate()
+		if cut.is_compressed():
+			cut.decompress()
+		cut.convert(Image.FORMAT_RGBA8)
+		cut.generate_mipmaps()
+		_disc_tex = ImageTexture.create_from_image(cut)
 		return _disc_tex
 	var n := 128
 	var img := Image.create(n, n, false, Image.FORMAT_RGBA8)
@@ -1055,17 +1070,19 @@ func _build_a1() -> void:
 		_place(disc, dr.grow(dr.size.x / 0.9 * 0.05))
 		# TARGET's digit is about a third of the disc tall, white, a thin
 		# dark-green outline (run 14).
-		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.53))
+		# TARGET's digit is ~0.4 of the gem tall, a touch taller than run 14's
+		# (Matched check 2026-10-10 run 4, measured on its five hand gems).
+		var cl := _label(str(int(_data.get("cost", 0))), a1_cost_font_size(so.z * 0.54))
 		cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cl.add_theme_color_override("font_color", Color(0.96, 1.0, 0.96))
-		cl.add_theme_color_override("font_outline_color", Color(0.03, 0.18, 0.08, 0.95))
-		cl.add_theme_constant_override("outline_size", 2)
+		cl.add_theme_color_override("font_color", Color(0.89, 0.93, 0.89))   # TARGET: a greyed white, pressed in
+		cl.add_theme_color_override("font_outline_color", Color(0.02, 0.13, 0.06, 1.0))
+		cl.add_theme_constant_override("outline_size", 3)
 		# Heavy, so a 10px digit still reads at hand size (the grader, on the
 		# first pass: "barely readable").
 		var heavy := FontVariation.new()
 		heavy.base_font = cl.get_theme_font("font")
-		heavy.variation_embolden = 0.3
+		heavy.variation_embolden = 0.12   # TARGET's stroke is thin; the outline carries it
 		cl.add_theme_font_override("font", heavy)
 		_place(cl, Rect2(so.x - so.z, so.y - so.z + 0.5, d, d))
 
