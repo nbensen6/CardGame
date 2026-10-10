@@ -746,7 +746,8 @@ const HUD_FILL := Color(0.04, 0.045, 0.06, 0.62)
 const HUD_EDGE := Color(0.78, 0.74, 0.66, 0.28)
 ## The ember of the climb gauge's ledges and sigil (a reading, not a frame).
 const EMBER_RIM := Color(0.96, 0.47, 0.16)
-const END_TURN_FILL := Color(0.80, 0.52, 0.13)
+## TARGET's End Turn face ~(202,132,35) at 720 (builder run 14; was 0.80, 0.52, 0.13).
+const END_TURN_FILL := Color(0.84, 0.546, 0.137)
 const HUD_DISPLAY_FONT := preload("res://assets/fonts/KenneyFutureNarrow.ttf")
 const BeastBar := preload("res://ui/beast_bar.gd")
 const UnitBar := preload("res://ui/unit_bar.gd")
@@ -1093,7 +1094,13 @@ func _retint_seat_panels() -> void:
 	_end_btn.add_theme_color_override("font_color", Color(1, 0.97, 0.9))
 	var end_st := a1_button_styles(t, true)
 	for state in end_st:
-		_end_btn.add_theme_stylebox_override(state, end_st[state])
+		var est = end_st[state]
+		# TARGET's label sits ~0.6 px right of the pill's centre at 720
+		# (builder run 14, the --switch pair).
+		if est is StyleBox and not (est is StyleBoxEmpty):
+			(est as StyleBox).content_margin_left += 1.0
+			(est as StyleBox).content_margin_right -= 1.0
+		_end_btn.add_theme_stylebox_override(state, est)
 
 
 ## The beast's bar, Slay the Spire red with the number inside it.
@@ -1250,6 +1257,14 @@ func _apply_sts_hud() -> void:
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
 		(b as Button).add_theme_constant_override("outline_size", 5)
+	# TARGET's "End Turn" runs ~1.5% wider than size 19 draws it, its brown
+	# outline a touch heavier (builder run 14, the --switch pair).
+	var end_font := FontVariation.new()
+	end_font.base_font = _end_btn.get_theme_font("font")
+	end_font.variation_transform = Transform2D(Vector2(1.015, 0), Vector2(0, 1), Vector2.ZERO)
+	end_font.spacing_space = 2
+	_end_btn.add_theme_font_override("font", end_font)
+	_end_btn.add_theme_constant_override("outline_size", 6)
 	_switch_btn.add_theme_color_override("font_outline_color", SWITCH_OUTLINE)
 	# TARGET's Switch lettering is thinner-edged than End Turn's.
 	_switch_btn.add_theme_constant_override("outline_size", 3)

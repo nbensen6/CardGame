@@ -13,6 +13,14 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 14): critic B MODERATE on the lowest slab's front face (shallower); shared MINOR: jackal line softness (the open facets and lines items); End Turn label graded PASS (one item queued below)
+
+- [ ] **Lowest slab: TARGET's front-face depth.**
+      Next pass: run 14 (2026-10-10) measured at 1024 before any change: the lowest slab's top and bottom edges match TARGET's within 1 px on every column from x 285 to 435, and the front-face greys within a few levels; the slab is TARGET's own pixels. FIX: none measurable; re-check only in the Matched check.
+      TARGET's big lowest slab, above and left of the frog, has a deep front face, its lower-left corner low; critic B read the game's face shallower, the corner ~28 close-up px high. Critic B MODERATE, critic A no difference (2026-10-10 run 14).
+      **Done when** the --square and --stones pairs show no visible difference in the lowest slab's front face.
+      Test: state=3d beast=cinder_jackal ^lowest-slab-target-s-front-face-depth
+
 Matched check 2026-10-10 (run 13): both critics MODERATE on the middle Tongue Snap's name and coin sitting high; shared MINOR: softness on the jackal, slab edges and card text (the open facets, slab and lines items) (one item queued below)
 
 - [ ] **Middle Tongue Snap: TARGET's height for its name and cost coin.**
@@ -420,14 +428,21 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       ![[agents/frames/builder/2026-10-10-topbar-after.png|420]] ^top-bar-target-s-boss-name-hp-segments-a
 
 - [ ] **Middle Tongue Snap card: TARGET's place.**
+      Next pass: run 14 (2026-10-10) measured at 720: all five cards register against TARGET at offsets within 0.25 px (middle card dx -0.25, dy 0); the 1.8 px shift is gone. FIX: none measurable; re-check only in the Matched check.
       The middle card (its cost gem and art) sits ~1.8 px right of TARGET's at 720; the other four cards are within 1 px. Found by the builder, run 7 (2026-10-10).
       **Done when** the --square and --hand pairs show no visible difference in the middle card's place.
       Test: state=3d beast=cinder_jackal ^middle-tongue-snap-card-target-s-place
 
-- [ ] **End Turn: TARGET's label width and outline.**
-      TARGET's "End Turn" is ~2% wider with a slightly heavier dark outline toward the lower right; the game's is a touch narrow and its outline lighter. Grader MINOR, run 7 (2026-10-10).
-      **Done when** the --square and --switch pairs show no visible difference in the End Turn label.
-      Test: state=3d beast=cinder_jackal ^end-turn-target-s-label-width-and-outlin
+- [ ] 👀 **End Turn: TARGET's label width and outline.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#End Turn: TARGET's label width and outline.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-endturn-after.png|420]] ^end-turn-target-s-label-width-and-outlin
+
+- [ ] **Switch pill: TARGET's rimless edge.**
+      TARGET's navy Switch pill has no visible light rim (its edge ~(32,43,60)); the game's draws a thin light-blue rim (~(44,65,80)). Grader out-of-scope note, run 14 (2026-10-10).
+      **Done when** the --square and --switch pairs show no visible difference in the Switch pill's edge.
+      Test: state=3d beast=cinder_jackal ^switch-pill-target-s-rimless-edge
 
 ## Waiting on Nick
 

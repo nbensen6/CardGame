@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T08:22
+updated: 2026-10-10T09:20
 working_on: ""
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 08:22 EDT
+2026-10-10 09:20 EDT
 
-- **Did:** Matched check run 13 queued the middle card's name and coin; lowered both to TARGET's height.
-- **Worked?** Partly. Title clipping fixed, coin within half a pixel by measurement; VERDICT: FAIL (round 3, coin still read high).
-- **Look at:** ![[frames/builder/2026-10-10-check13-before.png]] then ![[frames/builder/2026-10-10-midsnap-after.png]]
+- **Did:** Matched check run 14 queued the lowest slab; End Turn label widened, outline heavier, face warmer.
+- **Worked?** Yes. End Turn graded PASS; the slab item measures within 1 px of TARGET, nothing to build. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-10-endturn-before.png]] then ![[frames/builder/2026-10-10-endturn-after.png]]
 - **Ask:** nothing
-- **Found:** a half-pixel card offset erases the 1 px Climb underline; trim cards in whole pixels or move parts.
-- **Found:** the grader reads the --hand pair downscaled and misplaces sub-2 px shifts there.
+- **Found:** the Switch pill draws a light-blue rim TARGET lacks (queued).
+- **Found:** FontVariation's transform widens glyphs but not their advances; spacing is what widens a label.
 
 ## Notes
 

@@ -2954,3 +2954,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 ## Frog's rock: TARGET's dark, flat faces.
 
 - 2026-10-10 run 10: re-graded on the Matched check frame, nothing rebuilt. VERDICT: PASS (MINOR only: top face a touch flatter, right rim strip a touch more saturated). Meshy: none.
+
+## End Turn: TARGET's label width and outline.
+
+- Run 14 (2026-10-10): measured on the --switch pair: TARGET's pill face ~(202,132,35), the game's (192,125,31); TARGET's label 364 close-up px wide, centred ~4 px right of the game's 356.
+- END_TURN_FILL 0.80,0.52,0.13 -> 0.84,0.546,0.137 (face now (202,131,33)); End Turn font a FontVariation, glyphs x1.015 plus spacing_space 2 (the transform alone does not move advances); outline 5 -> 6; label margins +1/-1 so it sits on TARGET's centre. After: label 365 px wide, x 184-549 vs TARGET's 184-548.
+- Grader R1 PASS ("MINOR only: lettering a touch large, outline crisper than TARGET's blur"). VERDICT: PASS.
+
+## Lowest slab: TARGET's front-face depth.
+
+- Run 14 (2026-10-10): queued from critic B's MODERATE; critic A named no slab-shape difference. Measured at 1024 (game square Lanczos up): top and bottom edges per column within 1 px of TARGET's from x 285 to 435; no fix to build.
