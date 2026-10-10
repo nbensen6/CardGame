@@ -39,11 +39,15 @@ match log. You write only `design/reports/`.
      question. Empty list if there is nothing.
    - `latest`: the newest `design/match-log/iter-NN.png`.
    - `updated`: now, Eastern. `last_commit`: HEAD's short hash.
+   If a builder commit is new, refresh Home's side-by-side from the newest
+   builder after frame it added:
+   `python3 tools/vs_target.py <after>.png design/agents/frames/builder/latest-square.png --square`.
 5. `python3 tools/report/build_report.py`, then open
    `design/reports/report.html` once to check it renders.
 6. Publish with the Artifact tool: `action: "read"` on the URL above, then
    publish `design/reports/report.html` with that `url`. Never create a new
    artifact. If the Artifact tool is missing, say so in one line and still do 7.
-7. Commit only `design/reports/report.json` (the HTML is gitignored) as
+7. Commit only `design/reports/report.json` (the HTML is gitignored), plus
+   `latest-square.png` when step 4 refreshed it, as
    `reporter: <one line>`, `git pull --rebase origin main && git push origin
    main`. Never force-push.

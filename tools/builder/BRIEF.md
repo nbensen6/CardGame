@@ -148,7 +148,9 @@ gets to the concept." "Build the concept 1:1."
 
 6. **Commit to `main` and push.** Message starts `builder:`. `git pull
    --rebase origin main` first. Frames go in `design/agents/frames/builder/`,
-   1280x720 or smaller.
+   1280x720 or smaller. Every run you push also refreshes Home's
+   side-by-side from this run's after frame, committed with the frames:
+   `python3 tools/vs_target.py <after>.png design/agents/frames/builder/latest-square.png --square`.
 
 7. **Write `design/agents/status/builder.md`**, overwrite `## This run`. The
    heading is exactly `## This run`; the time goes on the first line under it:
@@ -159,7 +161,7 @@ gets to the concept." "Build the concept 1:1."
 
        - **Did:** one sentence, 20 words or fewer, no file paths.
        - **Worked?** Yes / No / Partly, and why, with the grader's VERDICT.
-       - **Look at:** ![[frames/builder/<date>-<slug>-before.png]] then ![[frames/builder/<date>-<slug>-after.png]]
+       - **Look at:** ![[agents/frames/builder/<date>-<slug>-before.png]] then ![[agents/frames/builder/<date>-<slug>-after.png]]
        - **Ask:** nothing
        - **Found:** anything you noticed and did not fix, one line each.
 
