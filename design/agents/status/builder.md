@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 03:35 EDT
+2026-10-10 04:21 EDT
 
-- **Did:** Registered each hand card on TARGET's frame rails and rebalanced the rail tones; hand error 11.35 to 9.70.
-- **Worked?** Partly. VERDICT: FAIL (x2, not further from TARGET): the grader still reads one pale band; at 720 every measured rail profile now matches TARGET's.
-- **Look at:** ![[frames/builder/2026-10-10-frames8-before.png]] then ![[frames/builder/2026-10-10-frames8-after.png]]
+- **Did:** Rebuilt the card rails: gold inner rule, olive-bead stitch, teal right rail, solid rail on the middle card.
+- **Worked?** Yes. VERDICT: PASS (MINOR only, visible at 3x zoom).
+- **Look at:** ![[frames/builder/2026-10-10-frames2-before.png]] then ![[frames/builder/2026-10-10-frames2-after.png]]
 - **Ask:** nothing
-- **Found:** the grader compares at TARGET's 1024, where its rails are one crisp px; a 720 render draws them at ~0.7 px and cannot be as crisp.
+- **Found:** the outer rule reads a touch grey-cream against TARGET's gold-cream at 3x zoom.
 
 ## Notes
 

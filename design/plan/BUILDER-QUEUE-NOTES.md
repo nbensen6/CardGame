@@ -2864,6 +2864,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: FAIL x2 (reads a single pale band and narrow light seams; at 1024 TARGET's rails are one crisp px, the game's 720 render cannot be).
 - Meshy: none.
 
+- 2026-10-10 run 9: profiled the rails at 720 against TARGET Lanczos-down: the inner rule drew ~20% dim (peak 177 vs 224) and the green after it fell off a pixel early; the outer rule spilled a pixel into the band and read grey.
+- tools/cardframe_target.py: outer rule 8 -> 7 px at (255,248,204); band (20,21,18) 26 px; inner rule 8 px (255,240,168); stitch 9 px, beads (228,220,136) on a green ground (48,100,68), 9 px across. Right-hand rail (TARGET's shadow side) gets its own pale cream rule INNER_R (232,236,196) and teal beads BEAD_R (150,196,170) on GAP_R (24,64,56).
+- TARGET's upright middle card shows a solid gold rule with a green fringe at the Leap seam, while its tilted cards show beads: the generator also writes card_frame_t_flat.png (no left-side beads), and combat_3d's fan calls CardView.set_frame_flat() on the untilted middle card.
+- Graded FAIL x2 (outer rule tan, stitch yellow and solid; then right rail yellow not teal, seam beaded where TARGET is solid), then PASS (MINOR only: outer rule a touch grey-cream at 3x, the stitch's top-right kink, a separate open item).
+- Grader: VERDICT: PASS.
+- Meshy: none.
+
 ## Fourth slab from the top: TARGET's left end.
 
 - 2026-10-10 run 7: queued from the Matched check (critic B MODERATE, critic A MINOR).

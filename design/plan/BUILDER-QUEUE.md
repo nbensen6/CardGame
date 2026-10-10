@@ -15,11 +15,11 @@ run failed.
 
 Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; critic B MODERATE on the fourth slab's left end and Tongue Flick's top-right corner; shared MINOR: energy box, HUD lettering, zigzag and sword strokes, gauge orb (open item), outline and slab-edge softness (open items) (six items queued above)
 
-- [ ] **Card frames: TARGET's dark band, gold line and green stitch.**
-      Next pass: run 8 (2026-10-10) grader FAIL x2, "rails read as one pale band; seams narrower and lighter; stitch paler than TARGET's olive" (VERDICT: FAIL, not further from TARGET); built: each card registered on TARGET's rails (HAND_CARD_NUDGE), outer rule brighter, darker keyline, olive stitch; hand error at 720 11.35 -> 9.70; at 720 the quarter-px rail profiles now match on every measured edge, the remaining gap is TARGET's 1024 crispness against a 720 render. FIX: next try a darker stitch base with high-contrast olive dashes (scored 10.06 at 720 vs 9.70, so measure both), and a sharper frame sampler (the frame imports with no mipmaps; check how the hand is drawn before changing it).
-      TARGET's card edge is a double rail: a thick dark outer band, a thin gold line, a dark gap, then the green dashed stitch, and a thick dark band shows between overlapping cards (Scramble's left edge, between Leap and Tongue Snap); the game draws one thinner pale cream-green dashed band with the gold line and dark gap mostly missing. Both critics MODERATE (2026-10-10 run 7).
-      **Done when** the --square and --hand pairs show no visible difference in the card frame borders.
-      Test: state=3d beast=cinder_jackal ^card-frames-target-s-dark-band-gold-line
+- [ ] 👀 **Card frames: TARGET's dark band, gold line and green stitch.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card frames: TARGET's dark band, gold line and green stitch.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-frames2-after.png|420]] ^card-frames-target-s-dark-band-gold-line
 
 - [ ] 👀 **Fourth slab from the top: TARGET's left end.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Fourth slab from the top: TARGET's left end.|details]]

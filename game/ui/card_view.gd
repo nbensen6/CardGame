@@ -641,6 +641,9 @@ const SHIP_A1 := true
 # cream line and green chain band, a dark name band, the art edge to edge
 # under it, olive rules box. The carved A1 stone is card_frame_a1_*.png.
 const A1_BASE := preload("res://assets/ui/card_frame_t_base.png")
+## The same frame with a solid gold inner rule on the left: TARGET's upright
+## middle card shows no beads on that rail, its tilted cards do (run 9).
+const A1_BASE_FLAT := preload("res://assets/ui/card_frame_t_flat.png")
 const A1_GLOW := preload("res://assets/ui/card_frame_t_glow.png")
 ## The source pair's size, px. The nine-patch is drawn at this size and scaled
 ## down to the card, so the corners (and the socket in the top-left one) keep
@@ -915,6 +918,21 @@ static func _sharp_mip(tex: Texture2D) -> Texture2D:
 	var out: Texture2D = ImageTexture.create_from_image(img)
 	_sharp_mipped[tex] = out
 	return out
+
+
+## Swap the frame for its solid-rail variant (the hand's upright middle card).
+func set_frame_flat(on: bool) -> void:
+	var np := _frame_rect as NinePatchRect
+	if np == null or not np.has_meta("a1_src"):
+		return
+	var src: Texture2D = np.get_meta("a1_src")
+	if src != A1_BASE and src != A1_BASE_FLAT:
+		return
+	var want: Texture2D = A1_BASE_FLAT if on else A1_BASE
+	if src == want:
+		return
+	np.texture = _a1_mip(want)
+	np.set_meta("a1_src", want)
 
 
 func _a1_patch(tex: Texture2D) -> NinePatchRect:

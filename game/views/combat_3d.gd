@@ -10024,6 +10024,8 @@ func _layout_hand() -> void:
 		# dropped its keyword underline ("Climb" plain on the middle card,
 		# TARGET underlines it; run 16).
 		c.rotation = 0.0 if raised else (off * FAN_TILT if off != 0.0 else FAN_MID_TILT)
+		if c is CardView:
+			(c as CardView).set_frame_flat(off == 0.0 and not raised)
 		# Grow from the BOTTOM CENTRE, so a lifted card rises out of the fan
 		# instead of swelling in all directions and shoving its neighbours.
 		c.scale = Vector2.ONE * (FAN_HOVER_SCALE if raised else HAND_REST_SCALE)

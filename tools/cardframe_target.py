@@ -74,21 +74,23 @@ EDGE_TOP = [((14, 10, 6), 2), ((236, 236, 196), 6), ((26, 28, 26), 31), ((22, 13
 # outer rule; darker, wider keyline; the inner rules keep their place. Above
 # the name band's foot the frame keeps EDGE_TOP: TARGET's top edge is the thin
 # line alone.
-EDGE = [((14, 10, 6), 2), ((250, 248, 212), 8), ((26, 28, 26), 25), ((4, 2, 2), 9),
-        ((250, 232, 166), 7), ((56, 84, 56), 10), ((40, 66, 48), 0),
+EDGE = [((14, 10, 6), 2), ((255, 248, 204), 7), ((20, 21, 18), 26), ((4, 2, 2), 9),
+        ((255, 240, 168), 8), ((48, 100, 68), 9), ((40, 66, 48), 0),
         ((10, 14, 12), 3)]
-BEAD = (104, 140, 92)   # the dashes: olive green beside the gold rule (run 8; was yellow-olive (176,180,116))
+BEAD = (228, 220, 136)   # the dashes: olive green beside the gold rule (run 8; was yellow-olive (176,180,116))
 # ...but TARGET lights its cards from the left: on a card's RIGHT side the
 # stitch is teal (~(126,157,132)) and the outer rule a dim warm brown
 # (~(100,88,72)), measured at 720 on Tongue Flick's right edge (run 7).
-BEAD_R = (170, 205, 170)
+BEAD_R = (150, 196, 170)
+INNER_R = (232, 236, 196)
+GAP_R = (24, 64, 56)
 OUTER_R = (128, 112, 92)
 BAND_DASH = (26, 28, 26)   # TARGET's band carries no green dashes: band colour
 BAND_DASH_W = 4
 BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
-BEAD_W = 10               # px across: the dashed half of the inner rule
-BEAD_SKIP = 7             # px: the solid cream half before it
-BEAD_ON, BEAD_PERIOD = 10, 17   # px along: ~3 screen px a bead, so the dots survive the hand's 0.13 scale (run 16)
+BEAD_W = 9               # px across: the dashed half of the inner rule
+BEAD_SKIP = 8             # px: the solid cream half before it
+BEAD_ON, BEAD_PERIOD = 12, 17   # px along: ~3 screen px a bead, so the dots survive the hand's 0.13 scale (run 16)
 CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its apex
 CHEV_R = 60              # px: the right-hand bevel's depth
 CHEV_LIT = (68, 65, 80)
@@ -103,7 +105,7 @@ ART_BG = (10, 11, 9)     # TARGET's art window behind an icon: near-black
 PAD = 10
 
 
-def build():
+def build(flat=False):
     im = Image.new("RGBA", (W, H), (0, 0, 0, 0))
     d = ImageDraw.Draw(im)
     inset = 0
@@ -126,8 +128,13 @@ def build():
     # beads in the band: the band runs from b0 to b1 px in from the edge
     b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] + EDGE[3][1]
     lo, hi = b0 + BEAD_SKIP, b0 + BEAD_SKIP + BEAD_W
+    # run 9: TARGET's right-hand rail (the shadow side) is a pale cream rule
+    # with teal beads on a dark teal ground, not the left side's gold.
+    r0 = RADIUS
+    a[r0:H - RADIUS, W - b0 - BEAD_SKIP:W - b0, :3] = INNER_R
+    a[r0:H - RADIUS, W - hi:W - lo, :3] = GAP_R
     on = (np.arange(H) % BEAD_PERIOD) < BEAD_ON
-    for x in list(range(lo, hi)) + list(range(W - hi, W - lo)):
+    for x in ([] if flat else list(range(lo, hi))) + list(range(W - hi, W - lo)):
         rows = np.nonzero(on)[0]
         rows = rows[(rows > RADIUS) & (rows < H - RADIUS)]
         a[rows, x, :3] = BEAD if x < W // 2 else BEAD_R
@@ -186,10 +193,17 @@ def build():
     a[bb:ab, top:W - top, 3] = 0
     out = Image.new("RGBA", (W + 2 * PAD, H + 2 * PAD), (0, 0, 0, 0))
     out.paste(Image.fromarray(a, "RGBA"), (PAD, PAD))
+    if flat:
+        # run 9: the hand's upright middle card. TARGET draws its left rail
+        # (the seam under Leap) as a solid gold rule with a green fringe; the
+        # beads only show on the fan's tilted cards.
+        out.save(OUT / "card_frame_t_flat.png")
+        return
     out.save(OUT / "card_frame_t_base.png")
     Image.new("RGBA", out.size, (0, 0, 0, 0)).save(OUT / "card_frame_t_glow.png")
     print("wrote card_frame_t_base.png, card_frame_t_glow.png", W, "x", H, "edge", inset)
 
 
 if __name__ == "__main__":
+    build(flat=True)
     build()
