@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T23:21
-working_on: "Card frames: TARGET's thin, smooth border lines."
+updated: 2026-10-10T00:20
+working_on: "Card type pills and titles: TARGET's soft painted lettering."
 ---
 
 # builder
@@ -13,15 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 23:36 EDT
+2026-10-10 00:20 EDT
 
-- **Did:** Matched check queued four items; card borders, cost gems and fist-flame flicker brought to TARGET.
-- **Worked?** Yes. Card frames VERDICT: PASS (round 3); titles and coins VERDICT: PASS (round 2); fist flame Partly, measured within 2 levels but VERDICT: FAIL (round 3)
-- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-fistflame-after.png]]
+- **Did:** Matched check queued two shared MINORs; Switch button label, outline and icon brought to TARGET.
+- **Worked?** Yes. Switch button VERDICT: PASS (round 2; round 1 FAIL only because no pair showed the button, so `--switch` was added)
+- **Look at:** ![[frames/builder/2026-10-10-switch-before.png]] then ![[frames/builder/2026-10-10-switch-after.png]]
 - **Ask:** nothing
-- **Found:** dashed inner rule a touch greener and the title bar's right notch a touch smaller than TARGET's (grader MINOR).
-- **Found:** jackal facets measured equal to TARGET's own pixels; nothing to build (left open for the Matched check).
-- **Found:** the grader keeps calling the flame's left tongues duller where pixels match within 1 level.
+- **Found:** Switch pill's 1 px rim a touch lighter than TARGET's softer edge (grader MINOR).
+- **Found:** both critics found no MAJOR or MODERATE; the remaining open items all measure at TARGET's own pixels.
 
 ## Notes
 
@@ -30,6 +29,8 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Found:** The pedestal's faint warm edge bands (TARGET ~(17,3,3)) render pure navy-black in game.
 
 ## Log
+
+- 2026-10-10 00:20 EDT — builder: Matched check (run 5) queued Switch button and card pill lettering; Switch PASS; tests green, pushed.
 
 - 2026-10-09 12:26 EDT — builder: square-on jackal (keystone gone, zoom 1.008), flame overlay past ACES, stone edges kept, gauge see-through with the scene un-blended, floor fixes; 11 items PASS; under-gauge FAIL; tests green, pushed.
 

@@ -13,6 +13,19 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 5): no MAJOR or MODERATE from either critic; shared MINOR: Switch button label, card pill text and titles (two items queued above)
+
+- [ ] 👀 **Switch button: TARGET's pale blue label and green icon.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Switch button: TARGET's pale blue label and green icon.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-switch-after.png|420]] ^switch-button-target-s-pale-blue-label
+
+- [ ] **Card type pills and titles: TARGET's soft painted lettering.**
+      TARGET's Attack/Skill pills under the card art and the card titles are soft, painted, lighter-weight lettering; the game's are crisper and a touch heavier. Both critics MINOR (2026-10-10 run 5).
+      **Done when** the --square and --hand pairs show no visible difference in the card pills and titles.
+      Test: state=3d beast=cinder_jackal
+
 Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item); critic B MODERATE on slab surfaces, card frames, jackal facets; shared MINOR: jackal hairline cracks, card titles and coins, fist flame top, pedestal (four items queued above)
 
 - [ ] 👀 **Card frames: TARGET's thin, smooth border lines.**

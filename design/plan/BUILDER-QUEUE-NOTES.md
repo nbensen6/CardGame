@@ -7,6 +7,13 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Switch button: TARGET's pale blue label and green icon.
+- 2026-10-10 run 5: queued from the Matched check (both critics MINOR). Fill measured within 3 levels of TARGET's (28,41,63); the real differences were the label and icon.
+- Measured on TARGET-at-1024: word 912-959 x 970-981, glyph cores (211,237,248); game before 915-959 x 967-978, neutral (206,212,219), icon a multicoloured portrait.
+- Built: label colour (0.84,0.95,1.0), navy outline size 3, font 15 thinned with FontVariation embolden -0.2, margins 7/9 (left 18), pill 122x47, End Turn/Switch gap 17; icon cut from TARGET.png itself (`assets/ui/switch_icon.png`, unpremultiplied off the pill fill) in place of the other hunter's portrait.
+- Added `--switch` to `tools/vs_target.py` (End Turn and Switch from the same square): the first grader could not see the button on --square and --hand leaves it out.
+- Grader round 1 FAIL (button not visible in the pairs given); round 2 VERDICT: PASS, MINOR left: pill rim a touch lighter, icon a touch brighter. No Meshy used.
+
 ## Fist flame: TARGET's defined top tongues.
 
 Builder 2026-10-10 run 4 (both critics MINOR). Left open.

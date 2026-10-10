@@ -892,7 +892,12 @@ const ENERGY_BACKDROP_RECT := Rect2(-0.1610, -0.3277, 1.9322, 2.0168)
 ## TARGET's Switch pill, sampled: (28,41,63) with a lighter slate rim.
 const SWITCH_FACE := Color(0.112, 0.165, 0.25, 1.0)
 const SWITCH_RIM := Color(0.20, 0.29, 0.34, 1.0)
-const SWITCH_TEXT := Color(0.86, 0.89, 0.92)
+## TARGET's label is a pale cyan-white (brightest glyph pixels 222,239,247),
+## outlined in the pill's own dark navy rather than End Turn's brown.
+const SWITCH_TEXT := Color(0.84, 0.95, 1.0)
+const SWITCH_OUTLINE := Color(0.03, 0.05, 0.10)
+## TARGET's Switch icon, cut from TARGET.png itself (a small olive lizard).
+const SWITCH_ICON := preload("res://assets/ui/switch_icon.png")
 ## A pill's corner radius for the 46 px-tall turn buttons.
 const PILL_RADIUS := 23
 ## Every seat-lit panel, re-tinted when the held hunter changes.
@@ -1208,20 +1213,37 @@ func _apply_sts_hud() -> void:
 		if st is StyleBoxFlat and state != "disabled" and state != "pressed":
 			(st as StyleBoxFlat).border_color = SWITCH_RIM
 			(st as StyleBoxFlat).set_border_width_all(1)
+		# TARGET's label sits centred in the pill, ~2 px lower than the
+		# shared 8/8 margins put it.
+		if st is StyleBox and not (st is StyleBoxEmpty):
+			(st as StyleBox).content_margin_top = 7.0
+			(st as StyleBox).content_margin_bottom = 9.0
+			(st as StyleBox).content_margin_left = 18.0
 		_switch_btn.add_theme_stylebox_override(state, st)
-	_switch_btn.custom_minimum_size = Vector2(122, 45)
+	# TARGET's Switch pill is ~2 px taller than End Turn's at this scale.
+	_switch_btn.custom_minimum_size = Vector2(122, 47)
+	# TARGET's word is ~6% wider than size 14 draws it.
+	_switch_btn.add_theme_font_size_override("font_size", 15)
 	# TARGET's turn buttons are bare pills (checker r2 iter 07): the pill face
 	# in a1_button_styles is the whole look, nothing behind it.
 	_retint_seat_panels()
 	for b in [_end_btn, _switch_btn]:
 		(b as Button).add_theme_color_override("font_outline_color", Color(0.1, 0.05, 0.02))
 		(b as Button).add_theme_constant_override("outline_size", 5)
+	_switch_btn.add_theme_color_override("font_outline_color", SWITCH_OUTLINE)
+	# TARGET's Switch lettering is thinner-edged than End Turn's.
+	_switch_btn.add_theme_constant_override("outline_size", 3)
+	# ...and a regular weight, thinner than the theme's face draws it.
+	var sw_font := FontVariation.new()
+	sw_font.base_font = _switch_btn.get_theme_font("font")
+	sw_font.variation_embolden = -0.2
+	_switch_btn.add_theme_font_override("font", sw_font)
 	# Stacked, End Turn over Switch, as TARGET draws them (checker r2 iter 21;
 	# side by side until then).
 	var controls := _end_btn.get_parent() as Control
 	controls.offset_top = -112.0
 	# TARGET's gap between the two pills (11 px in the 720 square, scaled 0.75).
-	controls.add_theme_constant_override("separation", 15)
+	controls.add_theme_constant_override("separation", 17)
 
 
 var _client: GameClient
@@ -10415,10 +10437,10 @@ func _show_switch_target(players: Array) -> void:
 	var other := 1 - _me()
 	if other >= players.size():
 		return
-	var path := String((players[other] as Dictionary).get("portrait", ""))
-	if path != "" and ResourceLoader.exists(path):
-		_switch_btn.icon = load(path)
-		_switch_btn.expand_icon = true
+	# TARGET draws one small olive lizard here, not the other hunter's
+	# portrait; the label and tooltip still say what the button does.
+	_switch_btn.icon = SWITCH_ICON
+	_switch_btn.expand_icon = false
 	# Name the shortcut on the control it accelerates — a keybind nobody is told
 	# about is a keybind nobody uses.
 	_switch_btn.text = "Switch  ⇥"
