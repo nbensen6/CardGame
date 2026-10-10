@@ -2816,3 +2816,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Tried and dropped: protecting the grip from the pill inpaint (left a dark blob under the grip).
 - Grader: VERDICT: FAIL x3 (edge step across the pill, blade a touch narrow and long). The edge measurements above disagree with the step.
 - Meshy: none.
+
+## "Climb" keyword: TARGET's glyphs.
+
+- 2026-10-10 run 6: queued from the Matched check (both critics MINOR).
+- Ink KEYWORD_COLOR e4a955 -> dcc596: TARGET's three Climb words share a pale tan core ~(200,178,135); the game drew (191,144,74). Measured after: (200,178,133).
+- Keywords print [b], and the rules label's bold font is now the rules face emboldened +0.3 (A1_KEYWORD_EMBOLDEN), not the theme's bold; _rich_body gives every rules label the same bold. 0.45 overshot TARGET's bright-stroke area.
+- The underline has its own colour ([u color=#7d6a46], KEYWORD_LINE): TARGET's is a duller tan below a one-pixel dark gap. A glyph outline (tried) filled that gap and merged the line into the letters; dropped.
+- New CardView.kw_markup(id, word) builds the markup; _kw and the tests use it.
+- Leap's word steps up letter by letter on the -5 deg card (each glyph and its underline segment flat). Tried: the unhinted rules face, snap_controls_to_pixels off, MSDF; none changed it. Left as is.
+- Grader: VERDICT: FAIL x2 (one read the strokes too heavy, the next too light; both name Leap's step).
+- Meshy: none.

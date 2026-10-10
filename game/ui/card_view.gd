@@ -33,7 +33,12 @@ const LIVE_COLOR := "95c37a"   # TARGET's muted green (builder 2026-10-10 run 3;
 ## The half of a timed card you only get by landing it.
 const NAILED_COLOR := "ffd35c"
 ## A rules term with a tooltip behind it. Never used decoratively.
-const KEYWORD_COLOR := "e4a955"   # TARGET's tan gold (builder 2026-10-10 run 3; was f0b45a)
+const KEYWORD_COLOR := "dcc596"   # TARGET's pale tan: glyph cores ~(205,182,138) (builder 2026-10-10 run 6; was e4a955, f0b45a)
+## TARGET's keyword underline: a dull dark tan, not the ink (run 6).
+const KEYWORD_LINE := "7d6a46"
+## TARGET's keyword strokes are heavier than its rules: the hand card's [b]
+## is the rules face emboldened by this much more (run 6).
+const A1_KEYWORD_EMBOLDEN := 0.3
 
 ## A full card's own box, big (no_cost) vs normal, desktop vs handheld — named
 ## so setup() (which picks the box) and _rich_body() (which has to size the
@@ -1102,12 +1107,20 @@ func _build_a1() -> void:
 	_rules = _rich_body(_data, 15, int(xr.size.y) - 6)
 	_rules.text = "[center]" + _rules.text + "[/center]"
 	var tall := FontVariation.new()
-	tall.base_font = _rules.get_theme_font("normal_font")
+	# unhinted: hinting snapped each glyph to the pixel grid, and on a tilted
+	# card "Climb" stepped up letter by letter (run 6, 2026-10-10)
+	tall.base_font = a1_painted_base(_rules.get_theme_font("normal_font"))
 	tall.variation_transform = Transform2D(Vector2(1.0, 0.0), Vector2(0.0, 1.08), Vector2.ZERO)
 	# A regular weight, not heavier: TARGET's rules carry ~15% less ink than
 	# the semibold face at +0.15 drew (Matched check 2026-10-10 run 5).
 	tall.variation_embolden = A1_RULES_EMBOLDEN
 	_rules.add_theme_font_override("normal_font", tall)
+	var kw_bold := FontVariation.new()
+	kw_bold.base_font = tall.base_font
+	kw_bold.variation_transform = tall.variation_transform
+	kw_bold.variation_embolden = A1_RULES_EMBOLDEN + A1_KEYWORD_EMBOLDEN
+	_rules.add_theme_font_override("bold_font", kw_bold)
+	_rules.add_theme_font_size_override("bold_font_size", _rules.get_theme_font_size("normal_font_size"))
 	# TARGET's rules ink is a brighter cream than the shared body colour.
 	_rules.add_theme_color_override("default_color", A1_RULES_INK)
 	_place(_rules, xr.grow_individual(-4.0, -7.0, -4.0, 0.0))   # TARGET's lines sit ~2 px lower (run 3)
@@ -1403,7 +1416,7 @@ func _build_mock_frame(spec: Dictionary) -> void:
 		# Printed on parchment: the live/nailed/keyword colours are tuned for a
 		# dark panel and vanish on a light one.
 		t = t.replace(LIVE_COLOR, "2e6f1c").replace(NAILED_COLOR, "8a5a00") \
-			.replace(KEYWORD_COLOR, "8a3f0c")
+			.replace(KEYWORD_COLOR, "8a3f0c").replace(KEYWORD_LINE, "8a3f0c")
 	_rules.text = t
 	_rules.add_theme_color_override("default_color", ink)
 	_place(_rules, tr.grow_individual(-4.0, -5.0, -4.0, -2.0))
@@ -2287,6 +2300,12 @@ func _rich_body(data: Dictionary, size: int, height: int) -> RichTextLabel:
 	r.custom_minimum_size = Vector2(0, height)
 	r.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	r.add_theme_font_size_override("normal_font_size", size)
+	# Keywords print [b]: the same face, heavier, not the theme's bold font.
+	var kb := FontVariation.new()
+	kb.base_font = r.get_theme_font("normal_font")
+	kb.variation_embolden = A1_KEYWORD_EMBOLDEN
+	r.add_theme_font_override("bold_font", kb)
+	r.add_theme_font_size_override("bold_font_size", size)
 	r.add_theme_color_override("default_color", Color(0.9, 0.86, 0.76))
 	return r
 
@@ -2420,8 +2439,14 @@ static func _kw(word: String, id: String, kws: Array, rich: bool) -> String:
 		return word
 	for k in kws:
 		if String((k as Dictionary).get("id", "")) == id:
-			return "[url=kw:%s][u][color=#%s]%s[/color][/u][/url]" % [id, KEYWORD_COLOR, word]
+			return kw_markup(id, word)
 	return word
+
+
+## One keyword word as the card prints it: a tappable link, TARGET's pale tan
+## ink in a heavier stroke, and a duller tan underline (run 6).
+static func kw_markup(id: String, word: String) -> String:
+	return "[url=kw:%s][u color=#%s][b][color=#%s]%s[/color][/b][/u][/url]" % [id, KEYWORD_LINE, KEYWORD_COLOR, word]
 
 
 const BANNER := preload("res://assets/ui/banner.png")

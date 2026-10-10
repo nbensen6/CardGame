@@ -22,6 +22,7 @@ Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword
       Test: state=3d beast=cinder_jackal ^tongue-flick-target-s-clean-art-window-e
 
 - [ ] **"Climb" keyword: TARGET's glyphs.**
+      Next pass: run 6 (2026-10-10) grader FAIL x2, "Leap's word steps letter by letter; letters a touch narrow, b bowl smaller, underline thinner" (VERDICT: FAIL, not further from TARGET); measured after: glyph cores (200,178,133) vs TARGET (198-200,176-178,130-136) on all three cards (was saturated orange 191,144,74), word width within 2 px, bright-stroke area within ~15%, underline now separate from the letters with TARGET's dark gap. FIX: the per-letter step on tilted cards survives unhinted, MSDF and unsnapped controls; next try rendering the rules into an upright SubViewport and tilting its texture, only if a Matched check names it again.
       TARGET's gold "Climb" on Tongue Snap and Scramble is clean, even lettering; the game's reads narrower and slightly skewed (the "b" drawn differently). Both critics MINOR (2026-10-10 run 6).
       **Done when** the --square and --hand pairs show no visible difference in the "Climb" keyword.
       Test: state=3d beast=cinder_jackal ^climb-keyword-target-s-glyphs

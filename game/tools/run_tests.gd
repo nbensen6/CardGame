@@ -24274,7 +24274,7 @@ func _test_backlog86_face_text_power_effect_heal_links_to_the_heal_keyword_not_p
 	# keyword) -- the bug this proves is the RECURRING WORD after the colon
 	# ("Heal") linking to "power" too instead of its own "heal" id.
 	var rich_out: String = CardView.face_text(data, true)
-	var heal_link: String = "[url=kw:heal][u][color=#%s]Heal[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	var heal_link: String = CardView.kw_markup("heal", "Heal")
 	_expect(rich_out.contains(heal_link),
 		"tapping the recurring Heal word on a power_effect=heal card must link to the heal keyword, not fall through to power [got=%s]" % rich_out)
 	_expect(rich_out.count("[url=kw:power]") == 1,
@@ -24508,7 +24508,7 @@ func _test_backlog86_face_text_falls_back_to_authored_text_with_no_preview() -> 
 		"a card with no live preview at all (an offer on the reward screen, not a card in hand) prints its authored text verbatim")
 	var marked := {"text": "Poison 2.", "keywords": [{"id": "poison"}]}
 	_expect(CardView.face_text(marked, true) ==
-		"[url=kw:poison][u][color=#%s]Poison[/color][/u][/url] 2." % CardView.KEYWORD_COLOR,
+		CardView.kw_markup("poison", "Poison") + " 2.",
 		"the same no-preview fallback still marks up its keywords in rich mode, or a card offered as a reward would show plain text where one held in hand shows gold underlined terms")
 
 
@@ -24766,7 +24766,7 @@ func _test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keywor
 	# deliberate, per the comment above it ("this keyword is marked; move to
 	# the next"), but never actually checked against text with the word twice.
 	var out: String = CardView._markup("Climb 2. Climb 3.", [{"id": "height"}], true)
-	var wrapped: String = "[url=kw:height][u][color=#%s]Climb[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	var wrapped: String = CardView.kw_markup("height", "Climb")
 	_expect(out == "%s 2. Climb 3." % wrapped,
 		"only the first 'Climb' in the line becomes a tap target; a second, later use of the same word is left as plain text")
 
@@ -24774,8 +24774,8 @@ func _test_backlog86_markup_marks_only_the_first_occurrence_of_a_repeated_keywor
 func _test_backlog86_markup_marks_each_of_two_different_keywords_once() -> void:
 	var out: String = CardView._markup("Climb 2. Gain 4 Block.",
 		[{"id": "height"}, {"id": "player_block"}], true)
-	var climb: String = "[url=kw:height][u][color=#%s]Climb[/color][/u][/url]" % CardView.KEYWORD_COLOR
-	var block: String = "[url=kw:player_block][u][color=#%s]Block[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	var climb: String = CardView.kw_markup("height", "Climb")
+	var block: String = CardView.kw_markup("player_block", "Block")
 	_expect(out == "%s 2. Gain 4 %s." % [climb, block],
 		"two different keywords on one line each get their own tag, and marking the second doesn't disturb the first")
 
@@ -24823,7 +24823,7 @@ func _test_backlog86_keyword_words_is_empty_for_an_unknown_id() -> void:
 ## even miss, just a word that silently never turned gold.
 func _test_backlog86_markup_marks_a_keyword_added_after_keyword_words_was_written() -> void:
 	var out: String = CardView._markup("Deal 5 damage. Frail 2.", [{"id": "frail"}], true)
-	var frail: String = "[url=kw:frail][u][color=#%s]Frail[/color][/u][/url]" % CardView.KEYWORD_COLOR
+	var frail: String = CardView.kw_markup("frail", "Frail")
 	_expect(out == "Deal 5 damage. %s 2." % frail,
 		"Frail, added long after KEYWORD_WORDS was written, is now found and wrapped like any original keyword [got=%s]" % out)
 
