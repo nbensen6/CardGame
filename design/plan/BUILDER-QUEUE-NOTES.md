@@ -2735,4 +2735,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 
 ## Top bar: TARGET's boss name, HP segments and Log / Menu.
 
+2026-10-09 20:35 EDT, builder (run 22). PASS.
+
+- Name, Log and Menu in the default face thinned (FontVariation embolden -0.15), pale, no outline; name 17, "70/70" 17 with a 2 px outline, nudged left as TARGET's.
+- HP bar: TARGET's four fixed segments (dividers at 0.086 / 0.343 / 0.732 of the bar, measured) drawn in place of the HP notches; a blow still cracks the notch it crossed. Bar now x 179-404 at 1024 against TARGET's 179-405.
+- Log / Menu: the "dark panel" was the backdrop's mirrored fill over TARGET's Log / Menu rect; tools/backdrop_cut.py now inpaints only their letters and keeps TARGET's cliffs. Buttons drawn with no padding, Menu's box fitted to TARGET's letters, Log 2.8 px lower: both within 1 px of TARGET.
+- Grader R1 FAIL (segments), R2 FAIL (divider places, weight), R3 VERDICT: PASS.
+- Meshy: 0 credits.
+
 2026-10-09 19:28 EDT, builder (run 21): queued from a 3x zoom of the top bar while measuring the sharpness item (top-bar error 8.3 levels, the scene's 1.5-2.9).

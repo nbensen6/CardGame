@@ -13,11 +13,11 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 20:22 EDT
+2026-10-09 20:35 EDT
 
-- **Did:** energy box now sits in TARGET's own glow and near-black floor; the frame band no longer hides it.
-- **Worked?** Yes: VERDICT: PASS (after one FAIL round).
-- **Look at:** ![[frames/builder/2026-10-10-energy-before.png]] then ![[frames/builder/2026-10-10-energy-after.png]]
+- **Did:** energy box in TARGET's glow and dark floor; top bar's name, HP segments and Log / Menu matched to TARGET.
+- **Worked?** Yes: both items VERDICT: PASS (energy box after one FAIL round, top bar after two).
+- **Look at:** ![[frames/builder/2026-10-10-topbar-before.png]] then ![[frames/builder/2026-10-10-topbar-after.png]]
 - **Ask:** nothing
 - **Found:** nothing new.
 

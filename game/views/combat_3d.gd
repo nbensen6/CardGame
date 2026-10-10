@@ -1087,6 +1087,36 @@ func _retint_seat_panels() -> void:
 
 
 ## The beast's bar, Slay the Spire red with the number inside it.
+## TARGET's top bar lettering (sampled off TARGET.png): name, Log and Menu.
+const TOP_TEXT := Color(0.90, 0.88, 0.84)
+const TOP_TEXT_DIM := Color(0.80, 0.80, 0.78)
+const TOP_NAME_SIZE := 17
+## TARGET's segment round "70/70" runs ~0.19 of the bar past the number's
+## centre: this much clear past the number's own width, in bar px.
+const HP_TEXT_CLEAR := 10.0
+## ...and never narrower than this share of the bar: TARGET's divider-free
+## stretch round "70/70" (its dividers sit ~0.19 of the bar each side of the
+## number, so a notch at 0.31 or 0.77 of a 70 HP bar still shows).
+const HP_CLEAR_SHARE := 0.26
+## Between the name and the bar (TARGET: ~9 px in the 720 square).
+const TOP_NAME_GAP := 9
+const TOP_BUTTON_SIZE := 18
+const TOP_HP_SIZE := 17
+const TOP_HP_NUDGE := 4.0
+## TARGET's HP bar: four segments, dividers at these shares of the bar
+## (measured on TARGET.png: bar x 179-405, dividers at 198.5, 256.5, 344.5).
+const TOP_HP_DIVIDERS := [0.086, 0.343, 0.732]
+## Thinner than the default face's semibold: TARGET's are a regular weight.
+const TOP_FONT_EMBOLDEN := -0.15
+
+
+static func top_bar_font() -> Font:
+	var f := FontVariation.new()
+	f.base_font = ThemeDB.fallback_font
+	f.variation_embolden = TOP_FONT_EMBOLDEN
+	return f
+
+
 static func beast_bar_styles() -> Dictionary:
 	var bg := StyleBoxFlat.new()
 	bg.bg_color = UnitBar.TRACK
@@ -1127,11 +1157,34 @@ func _apply_sts_hud() -> void:
 	var bar_st := beast_bar_styles()
 	for k in bar_st:
 		_hp_bar.add_theme_stylebox_override(k, bar_st[k])
+	# TARGET's top bar type: a light regular sans, pale and unoutlined, on
+	# the plate and straight on the cliffs (builder 2026-10-10, "Top bar").
+	var plain := top_bar_font()
+	_title.add_theme_font_override("font", plain)
+	_title.add_theme_font_size_override("font_size", TOP_NAME_SIZE)
+	_title.add_theme_color_override("font_color", TOP_TEXT)
+	_title.add_theme_constant_override("outline_size", 0)
+	_hp.add_theme_constant_override("outline_size", 2)
+	_hp.add_theme_color_override("font_color", Color(0.98, 0.97, 0.95))
+	_hp.add_theme_font_size_override("font_size", TOP_HP_SIZE)
+	# TARGET's "70/70" sits a little left of the bar's centre.
+	_hp.offset_left = -TOP_HP_NUDGE
+	_hp.offset_right = -TOP_HP_NUDGE
+	(_hp_bar.get_parent() as BoxContainer).add_theme_constant_override("separation", TOP_NAME_GAP)
+	for b in [_menu_btn, _log_toggle]:
+		(b as Button).add_theme_font_override("font", plain)
+		(b as Button).add_theme_font_size_override("font_size", TOP_BUTTON_SIZE)
+		for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+			(b as Button).add_theme_color_override(c, TOP_TEXT_DIM)
+		(b as Button).add_theme_constant_override("outline_size", 0)
+		for st in ["normal", "hover", "pressed", "focus", "hover_pressed", "disabled"]:
+			(b as Button).add_theme_stylebox_override(st, StyleBoxEmpty.new())
 	_intent.add_theme_constant_override("outline_size", 5)
 	_intent.add_theme_font_size_override("normal_font_size", INTENT_FONT_SIZE)
 	_party.visible = PARTY_PANEL_SHOWN
 	_beast_bar = BeastBar.new()
 	_beast_bar.name = "BeastBarFx"
+	_beast_bar.set("dividers", TOP_HP_DIVIDERS)
 	_hp_bar.add_child(_beast_bar)
 	_hp_bar.move_child(_hp, -1)          # the number reads over the notches
 	# End Turn, Switch and the energy counter: the A1 stone, glowing in the
@@ -2686,6 +2739,10 @@ func _refresh() -> void:
 	_beast_bar.call("set_marks", int(boss["max_hp"]),
 		int(boss.get("weak_point_threshold", 0)), float(boss.get("hurt_pct", 0.0)))
 	_beast_bar.call("set_hp", int(boss["hp"]), int(boss["max_hp"]))
+	var hp_font := _hp.get_theme_font("font")
+	_beast_bar.set("clear_w", hp_font.get_string_size(_hp.text, HORIZONTAL_ALIGNMENT_LEFT, -1,
+		_hp.get_theme_font_size("font_size")).x + HP_TEXT_CLEAR)
+	_beast_bar.set("clear_w", maxf(float(_beast_bar.get("clear_w")), _hp_bar.size.x * HP_CLEAR_SHARE))
 	_set_intent(boss, s)
 	# Before _show_beast, which needs it ready for _build_ledge_marks.
 	_safe_ledges = safe_ledge_heights(boss.get("ledges", []))
@@ -2965,11 +3022,14 @@ const HUD_SQUARE := {
 	# energy box, End Turn): the containers are taller than what they show.
 	"LeftRail": Rect2(14, 571, 82, 84),
 	"Controls": Rect2(614, 624, 91, 34),
-	"MenuBtn": Rect2(651, 12, 52, 28),
+	# "Menu"'s own letters, the button drawn with no padding (TARGET x 661-697).
+	"MenuBtn": Rect2(655, 10.6, 48, 30),
 	"Gauge": Rect2(642, 217, 66, 296),
 }
 ## The log's toggle ends this far left of Menu (TARGET: "Log ▸" x 610-643).
-const HUD_LOG_RIGHT := 650.0
+const HUD_LOG_RIGHT := 645.0
+## TARGET's "Log" sits this far below "Menu"'s line (720 basis).
+const HUD_LOG_DY := 2.8
 const HUD_SQUARE_SIDE := 720.0
 
 
@@ -3038,7 +3098,7 @@ func _place_square_hud() -> void:
 		var s := menu.scale.x
 		log_box.scale = Vector2.ONE * s
 		log_box.position = Vector2(sq.position.x + HUD_LOG_RIGHT * k - log_box.size.x * s,
-			menu.position.y).round()
+			menu.position.y + HUD_LOG_DY * k).round()
 	_trim_left_rim_for_energy()
 
 

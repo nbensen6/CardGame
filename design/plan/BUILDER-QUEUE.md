@@ -257,10 +257,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-energy-after.png|420]] ^energy-box-target-s-orange-glow-on-near-
 
-- [ ] **Top bar: TARGET's boss name, HP segments and Log / Menu.**
-      TARGET: "The Cinder Jackal" in a larger, paler type; the HP bar starts further right with its "70/70" inside one segment, no divider through the text; "Log ▸" and "Menu" larger, straight on the backdrop. Game: smaller name, bar starts ~20 px left with two dividers running through "70/70", and Log / Menu sit on a dark panel (found by builder run 21, 2026-10-09).
-      **Done when** the --square pair and a zoom of the top bar show no visible difference in the boss bar and Log / Menu.
-      Test: state=3d beast=cinder_jackal ^top-bar-target-s-boss-name-hp-segments-a
+- [ ] 👀 **Top bar: TARGET's boss name, HP segments and Log / Menu.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Top bar: TARGET's boss name, HP segments and Log / Menu.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-topbar-after.png|420]] ^top-bar-target-s-boss-name-hp-segments-a
 
 ## Waiting on Nick
 

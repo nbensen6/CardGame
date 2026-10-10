@@ -59,7 +59,7 @@ BORDER = [(0, 0, 1024, 16)]
 SIDE_BORDER = (18, 1000)
 # Filled by mirroring the picture in (x0, y0, x1, y1, from): the top frame
 # and the boss bar from below, the climb gauge from its left.
-MIRROR = [(10, 14, 130, 96, "below"), (862, 22, 998, 54, "below"),
+MIRROR = [(10, 14, 130, 96, "below"),
           ]
 # TARGET's climb gauge over the right cliff (x0, y0, x1, y1). A stretched
 # or mirrored fill read as a pillar or a portal (graders 2026-10-09).
@@ -68,7 +68,13 @@ GAUGE_GLOW = 492                  # TARGET row where the lava glow starts
 GAUGE_UNBLEND = True              # the scene behind the see-through gauge recovered (tools/gauge_unblend.py), not a flat shade
 GAUGE_SHADE = (9.0, 12.0, 20.0)  # the right cliff's shadow tone, sampled
 # Over smooth sky an inpaint is clean: the intent chip and the top frame.
-HUD = [(424, 16, 532, 50), (10, 14, 418, 96), (862, 22, 998, 54)]   # the last two are mirrored over after
+HUD = [(424, 16, 532, 50), (10, 14, 418, 96)]   # the last one is mirrored over after
+# "Log ▸" and "Menu" sit straight on TARGET's cliffs, no panel: only their
+# letters are cut out (a tight inpaint), the cliffs round them are kept. A
+# mirrored rect there read as a dark panel with its slabs reversed (builder
+# 2026-10-10, "Top bar").
+LOG_MENU = (862, 22, 998, 54)
+LOG_MENU_GROW = 2
 
 
 # Round the raised fist (builder 2026-10-09, "Fist fire"): the figure fill and
@@ -221,6 +227,11 @@ def build():
         other[max(0, y0 - GROW):y1 + GROW, max(0, x0 - GROW):x1 + GROW] = True
     for (x0, y0, x1, y1) in BORDER:
         other[y0:y1, x0:x1] = True
+    lx0, ly0, lx1, ly1 = LOG_MENU
+    blk = T[ly0:ly1, lx0:lx1]
+    letters = (blk.mean(axis=2) > 70) & (blk.max(axis=2) - blk.min(axis=2) < 50)
+    letters = ndi.binary_dilation(letters, iterations=LOG_MENU_GROW)
+    other[ly0:ly1, lx0:lx1] |= letters
     rows = CUT + FADE
     img = T[:rows].astype(np.uint8)
     fig, other = fig[:rows], other[:rows]

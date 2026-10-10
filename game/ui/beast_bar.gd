@@ -24,6 +24,14 @@ var ghost_from := 0      # HP the ghost segment starts at (0 = no ghost)
 var t := 0.0             # seconds since the last blow landed
 var crack_hp := -1       # the notch the last blow crossed (-1 = none)
 var notches: Array = []  # [{hp, major}], from notch_marks()
+## Width of the HP number centred on the bar, with TARGET's clear margin
+## each side: no notch is drawn there, as TARGET runs no divider through "70/70" (builder 2026-10-10).
+var clear_w := 0.0
+## TARGET's segment dividers, as shares of the bar from its left end. When
+## set, the bar draws these as its segments in place of the HP notches
+## (builder 2026-10-10: TARGET's bar is four fixed segments, the number in
+## the third); a blow still flashes the notch it crossed.
+var dividers: Array = []
 
 
 func _ready() -> void:
@@ -110,8 +118,12 @@ func _draw() -> void:
 	if ghost_from > hp:
 		var top := ghost_value(ghost_from, hp, t)
 		draw_rect(Rect2(_x(hp), 1.0, _x(top) - _x(hp), size.y - 2.0), GHOST_COLOR)
-	for m in notches:
+	for f in dividers:
+		draw_rect(Rect2(roundf(size.x * float(f)) - 1.0, 0.0, 2.0, size.y), NOTCH_COLOR)
+	for m in ([] if not dividers.is_empty() else notches):
 		var x := roundf(_x(int(m["hp"])))
+		if absf(x - size.x * 0.5) <= clear_w * 0.5:
+			continue
 		if bool(m["major"]):
 			draw_rect(Rect2(x - 1.5, -3.0, 3.0, size.y + 6.0), NOTCH_COLOR)
 			draw_rect(Rect2(x - 0.5, -3.0, 1.0, size.y + 6.0), HURT_COLOR)
