@@ -2899,3 +2899,4 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Top-bar error at 720: 10.99 -> 10.57.
 - Grader: VERDICT: PASS (MINOR only: End Turn ~2% narrow with a lighter outline; the name ~1.5 px long).
 - Meshy: none.
+- 2026-10-10 run 7, second pass: tried a gold cap on the rail's top (error 9.63 -> 9.66, the grader read a dark square block) and a quarter-arc inner rule with the band run into it (9.95, read as a rounded box); both reverted. TARGET's corner is two gold strokes with a dark channel between them. Grader: VERDICT: FAIL x2 more.
