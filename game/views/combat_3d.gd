@@ -877,8 +877,17 @@ const ENERGY_GOLD := Color(1.0, 0.78, 0.34)
 const ENERGY_FACE := Color(0.36, 0.18, 0.04, 1.0)
 const ENERGY_BORDER := 3
 const ENERGY_HALO := Color(1.0, 0.55, 0.12, 0.45)
-const ENERGY_HALO_SIZE := 10
+const ENERGY_HALO_SIZE := 0
 const ENERGY_PAD := 0.0
+## TARGET's own glow round the energy box and the near-black floor down past
+## the piles, cut by tools/energy_backdrop.py (builder 2026-10-10: a StyleBox
+## shadow stopped sharply where TARGET's fades). The rect is in box sizes,
+## from the box's top-left corner; the script prints it.
+const ENERGY_BACKDROP := preload("res://assets/ui/energy_backdrop.png")
+## Where the left frame band hands over to the backdrop, as a share of its
+## height: past its feathered top edge.
+const ENERGY_BACKDROP_RIM_START := 6.0 / 240.0
+const ENERGY_BACKDROP_RECT := Rect2(-0.1610, -0.3277, 1.9322, 2.0168)
 ## TARGET.png's Switch: a navy pill under the amber End Turn.
 ## TARGET's Switch pill, sampled: (28,41,63) with a lighter slate rim.
 const SWITCH_FACE := Color(0.112, 0.165, 0.25, 1.0)
@@ -1004,6 +1013,27 @@ static func add_flat_panel(target: Control, st: StyleBoxFlat, pad: float = 0.0) 
 	return p
 
 
+## TARGET's glow and dark floor (ENERGY_BACKDROP) under the energy box's
+## flat panel, sized from the box so it holds at any HUD scale.
+static func add_energy_backdrop(box: Control, holder: Control) -> TextureRect:
+	var tr := TextureRect.new()
+	tr.name = "EnergyBackdrop"
+	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tr.texture = ENERGY_BACKDROP
+	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	tr.stretch_mode = TextureRect.STRETCH_SCALE
+	tr.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	holder.add_child(tr)
+	holder.move_child(tr, 0)
+	var pin := func() -> void:
+		var r := ENERGY_BACKDROP_RECT
+		tr.position = Vector2(r.position.x * box.size.x, r.position.y * box.size.y)
+		tr.size = Vector2(r.size.x * box.size.x, r.size.y * box.size.y)
+	box.resized.connect(pin)
+	pin.call()
+	return tr
+
+
 ## A stylebox that draws nothing but keeps the host's padding, so the A1
 ## stone behind it shows. `wash` tints the face (a Button's hover and press).
 static func a1_clear_style(margin_x: float, margin_y: float,
@@ -1113,8 +1143,12 @@ func _apply_sts_hud() -> void:
 	# Measured on the --square pair (builder run 18): TARGET's box is ~2 px
 	# smaller each side than the panel grown by 2 was, its gold line two
 	# pixels wide, and a soft orange glow runs ~10 px out over near-black.
-	add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 12, ENERGY_BORDER,
-		ENERGY_HALO, ENERGY_HALO_SIZE), ENERGY_PAD)
+	var energy_face := add_flat_panel(_energy_orb, flat_panel_style(ENERGY_FACE, ENERGY_GOLD, 16,
+		ENERGY_BORDER, ENERGY_HALO, ENERGY_HALO_SIZE), ENERGY_PAD)
+	# The face is TARGET's own, mottled, in the backdrop; the panel draws
+	# only the gold line over it.
+	(energy_face.get_theme_stylebox("panel") as StyleBoxFlat).draw_center = false
+	add_energy_backdrop(_energy_orb, energy_face.get_parent() as Control)
 	var sw_st := a1_button_styles(Color.WHITE, false)
 	for state in sw_st:
 		var st = sw_st[state]
@@ -3005,6 +3039,21 @@ func _place_square_hud() -> void:
 		log_box.scale = Vector2.ONE * s
 		log_box.position = Vector2(sq.position.x + HUD_LOG_RIGHT * k - log_box.size.x * s,
 			menu.position.y).round()
+	_trim_left_rim_for_energy()
+
+
+## TARGET's energy glow runs over its left frame band, so the band stops
+## where the energy backdrop (which carries TARGET's own band) begins.
+func _trim_left_rim_for_energy() -> void:
+	var layer := get_node_or_null("PictureRim")
+	var bd := _energy_orb.get_node_or_null("Flat/EnergyBackdrop") as Control if _energy_orb != null else null
+	if layer == null or bd == null or not bd.is_visible_in_tree():
+		return
+	var lft := layer.get_node("Rim_left") as ColorRect
+	# below the backdrop's feathered top edge, so no floor shows between
+	var r := bd.get_global_rect()
+	var top := r.position.y + r.size.y * ENERGY_BACKDROP_RIM_START
+	lft.size = Vector2(lft.size.x, clampf(top, 0.0, get_viewport().get_visible_rect().size.y))
 
 
 ## Anchors to the top-left corner, keeping where the control is, so its
@@ -8786,13 +8835,13 @@ func _close_overlay() -> void:
 	_rebind_btns = {}
 
 
-## TARGET's picture rim: TARGET.png is framed by a ~14/1024 band of near-black
+## TARGET's picture rim: TARGET.png is framed by a ~15.5/1024 band of near-black
 ## navy (14,12,22) on every side, and its hand runs under the bottom band, so
 ## the cards end above the frame's edge (grader, 2026-10-09 run 14). The top
 ## and bottom bands span the whole width (the sides of the centred square are
 ## mid-scene, so no side bands). Above the HUD, below the overlays; it takes
 ## no input.
-const PICTURE_RIM := 14.0 / 1024.0
+const PICTURE_RIM := 15.5 / 1024.0
 const PICTURE_RIM_COLOR := Color(14.0 / 255.0, 12.0 / 255.0, 22.0 / 255.0)
 const PICTURE_SIDE_RIM_ALPHA := 0.8
 

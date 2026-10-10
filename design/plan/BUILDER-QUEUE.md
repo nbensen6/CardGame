@@ -251,11 +251,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-09-fistseam-after.png|420]] ^faint-dark-streaks-in-the-fist-s-glow
 
-- [ ] **Energy box: TARGET's orange glow on near-black.**
-      Next pass: grader 2026-10-09 run 18 R1 FAIL: glow still a thin rim that stops sharply (TARGET's fades over ~10 px), the floor round and above the box lighter than TARGET's near-black, and the --hand cut does not show the box (add an --energy close-up). Measured after: box edges within 1 px of TARGET's, face (105,63,24) vs (103,60,23), region error 18.9 -> 10.5 levels; the halo is cut at square x 10 by something drawn over the frame's left edge. Tried and dropped: TARGET's own box and glow left in the floor art (the floor's projection lands ~3 px off down there: a doubled gold edge). FIX: find what clips the halo at x 10; widen and soften it (a radial glow texture behind the box rather than a StyleBox shadow); darken the floor round the box toward TARGET's.
-      TARGET's energy box sits in a wide soft orange glow over near-black floor; the game's box has only a thin rim glow and purple-grey floor slabs show round it and above it.
-      **Done when** the `--square` and `--hand` pairs show no visible difference round the energy box.
-      Test: state=3d beast=cinder_jackal ^energy-box-target-s-orange-glow-on-near-
+- [ ] 👀 **Energy box: TARGET's orange glow on near-black.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Energy box: TARGET's orange glow on near-black.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-energy-after.png|420]] ^energy-box-target-s-orange-glow-on-near-
 
 - [ ] **Top bar: TARGET's boss name, HP segments and Log / Menu.**
       TARGET: "The Cinder Jackal" in a larger, paler type; the HP bar starts further right with its "70/70" inside one segment, no divider through the text; "Log ▸" and "Menu" larger, straight on the backdrop. Game: smaller name, bar starts ~20 px left with two dividers running through "70/70", and Log / Menu sit on a dark panel (found by builder run 21, 2026-10-09).

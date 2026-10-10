@@ -14,6 +14,7 @@ builder looks at this pair rather than at an adjective.
     python tools/vs_target.py shot.png out.png --chest    the sternum Y and the chest cracks, cut from the same square
     python tools/vs_target.py shot.png out.png --frog     the Frog on its pedestal, cut from the same square
     python tools/vs_target.py shot.png out.png --ear      the left ear and the sky and cliff top beside it, cut from the same square
+    python tools/vs_target.py shot.png out.png --energy   the energy box and its glow, cut from the same square
     python tools/vs_target.py shot.png out.png --floor    the floor from the lava line to the hand, cut from the same square
 
 `--square` is the 1:1 test (Nick, 2026-10-08): TARGET.png is square, the game
@@ -63,6 +64,9 @@ REGIONS = {
     # 1x pairs were too small to see a smudge there either way)
     "--ear": {"target": (0.28, 0.04, 0.48, 0.30), "shot": (0.21875 + 0.28 * 0.5625, 0.04, 0.21875 + 0.48 * 0.5625, 0.30)},
     "--floor": {"target": (0.0, 0.52, 1.0, 0.78), "shot": (0.21875, 0.52, 0.78125, 0.78)},
+    # the energy box, its glow and the floor round it, bottom left of the
+    # square (builder 2026-10-10: a grader found --hand leaves the box out)
+    "--energy": {"target": (0.0, 0.72, 0.20, 0.98), "shot": (0.21875, 0.72, 0.21875 + 0.20 * 0.5625, 0.98)},
 }
 
 

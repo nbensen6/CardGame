@@ -2725,6 +2725,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader R1 FAIL (glow still narrow, floor round the box lighter; --hand cut leaves the box out). VERDICT: FAIL.
 - Meshy: 0 credits.
 
+2026-10-09 20:22 EDT, builder (run 22). PASS.
+
+- TARGET's own glow, face and near-black floor round the box are cut by `tools/energy_backdrop.py` (box, numeral, piles and first card painted out, edges feathered) and drawn behind the box as a TextureRect sized from the box; the StyleBox halo is gone and the panel draws only the gold line.
+- What clipped the halo at square x 10: the picture rim's left band (layer 5, over the HUD). TARGET's glow runs over its band, so the band now stops where the backdrop starts. The band itself is 15.5/1024 on all four sides of TARGET (was 14/1024).
+- Corner radius 12 -> 16 (TARGET's line crosses its corner diagonal at ~6 px). New `--energy` close-up in `tools/vs_target.py`.
+- Square error 5.40 -> 5.33 levels. Grader R1 FAIL (glow narrower, floor lighter: the rim band hid the left glow, a feather gap, the strip stopped short of the card); R2 VERDICT: PASS.
+- Meshy: 0 credits.
+
 ## Top bar: TARGET's boss name, HP segments and Log / Menu.
 
 2026-10-09 19:28 EDT, builder (run 21): queued from a 3x zoom of the top bar while measuring the sharpness item (top-bar error 8.3 levels, the scene's 1.5-2.9).
