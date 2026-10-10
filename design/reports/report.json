@@ -1,10 +1,10 @@
 {
-  "updated": "Sat Oct 10, 2:52 AM ET",
-  "last_commit": "af67ca3",
+  "updated": "Sat Oct 10, 4:51 AM ET",
+  "last_commit": "7a6ad0d",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 2:32 AM",
+      "value": "Idle: last run ended 4:40 AM",
       "state": "idle"
     },
     {
@@ -31,6 +31,78 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 10, 4:40 AM",
+      "title": "Card type words copied from drawing",
+      "bullets": [
+        "Pill words now cut from your drawing",
+        "Leap's smeared lettering now matches",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-pillword-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-pillword-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 4:32 AM",
+      "title": "Tongue Flick corner curl added",
+      "bullets": [
+        "Top-right corner gets the gold curl",
+        "Hook, knot and notch now match",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-flickcorner-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 4:21 AM",
+      "title": "Card frame borders now match",
+      "bullets": [
+        "Gold inner line and olive beads added",
+        "Teal right edge, solid middle card",
+        "Grader passed it"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-frames2-after.png",
+          "caption": "After"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-frames2-before.png",
+          "caption": "Before"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 3:25 AM",
+      "title": "Card frames lined up, first try",
+      "bullets": [
+        "Each card sits on drawing's border lines",
+        "Brighter outer edge, darker inner line",
+        "Finished in the next run"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-frames8-after.png",
+          "caption": "After"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 10, 2:27 AM",
