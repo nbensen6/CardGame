@@ -7,6 +7,17 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+## Card frames: TARGET's thin, smooth border lines.
+
+Builder 2026-10-09 23:21 EDT (Matched check run 4 queued it: critic B MODERATE, A MINOR).
+
+- The stair-step: the Compatibility renderer has no 2D MSAA, and the frame texture was opaque to its edge, so a fanned card's quad edge aliased. `cardframe_target.py` now pads the texture with a 10 px clear margin (`PAD`) and `card_view.gd` runs the nine-patch out by `A1_PAD` (patch margins + 10, position and size grown), so filtered alpha ramps the edge. Layout inside the card is unchanged.
+- The lines, re-measured on TARGET at 1024 (Tongue Snap left side, Tongue Flick right side), outside in: thin bright cream rule ~1.5 px, dark olive band ~6 px with no green, then ~4 px beside the art: a solid warm cream line and a dashed one (pale mint dashes on dark green). The old frame had a broad cream outside and a saturated yellow-green rule inside.
+- Added the mirrored bevel notch at the title band's right end, inside the 80 px right patch margin.
+- Round 1 FAIL (inner rule still heavy and green, missing notch); round 2 FAIL (inner rule solid, not dotted); round 3 PASS.
+- Meshy: none used.
+- VERDICT: PASS. Left MINOR: dashes a touch greener, notch a touch smaller than TARGET's.
+
 ## Frog and its rock: TARGET's size and place.
 
 2026-10-08 15:22 EDT. Grader PASS on round 4.

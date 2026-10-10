@@ -49,21 +49,35 @@ def rounded(draw, inset, fill):
 # dull-gold line with a green-grey line inside it, then a dark keyline round
 # the art window. The name band covers the band along the top, so the top
 # edge reads as the cream line alone, as in TARGET.
-EDGE = [((14, 10, 6), 3), ((240, 240, 188), 12), ((14, 16, 18), 31),
-        ((156, 172, 96), 10), ((72, 132, 102), 5), ((16, 22, 18), 3)]
-# The beads: TARGET's inner gold line is dotted, bright yellow beads with
-# darker olive-gold gaps (the "trim" seen at 720 down every card's sides).
-BEAD = (250, 238, 140)   # the beads: yellow-cream dots on TARGET's green inner line
-BAND_DASH = (58, 92, 56)   # faint green dashes inside the dark band
+EDGE = [((14, 10, 6), 2), ((228, 230, 188), 9), ((38, 40, 31), 33),
+        ((222, 210, 158), 7), ((48, 78, 56), 10), ((40, 66, 48), 0),
+        ((10, 14, 12), 3)]
+# Re-measured on TARGET's Tongue Snap left side and Tongue Flick right side at
+# 1024 (Matched check 2026-10-10 run 4), outside in: a thin bright cream rule
+# (~(228,230,188), ~1.5 px), a dark olive band (~(38,40,31), ~6 px) with no
+# green in it, then the rule beside the art, ~4 px: a solid warm cream line
+# (~(222,210,158)) and, on the window side, a dashed one, pale mint dashes on
+# dark green gaps, ~3 px a period at 720 (the BEAD dashes draw over it). The old frame drew a broad cream outside and a saturated yellow-green
+# rule inside, which read as a heavy double green/gold border.
+BEAD = (196, 222, 178)   # the dashes: pale mint-cream on the inner rule's dark green
+BAND_DASH = (38, 40, 31)   # TARGET's band carries no green dashes: band colour
 BAND_DASH_W = 4
 BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
-BEAD_W = 10               # px across: the gold line's width
-BEAD_ON, BEAD_PERIOD = 13, 22   # px along: ~3 screen px a bead, so the dots survive the hand's 0.13 scale (run 16)
+BEAD_W = 10               # px across: the dashed half of the inner rule
+BEAD_SKIP = 7             # px: the solid cream half before it
+BEAD_ON, BEAD_PERIOD = 10, 17   # px along: ~3 screen px a bead, so the dots survive the hand's 0.13 scale (run 16)
 CHEV_X = (120, 200)      # px: the bevel's back edge (under the gem) and its apex
+CHEV_R = 60              # px: the right-hand bevel's depth
 CHEV_LIT = (68, 65, 80)
 CHEV_DARK = (42, 39, 50)
 BAND_FROM = 11           # the name band starts inside the cream line, px
 ART_BG = (10, 11, 9)     # TARGET's art window behind an icon: near-black
+# A clear margin round the frame, px. The Compatibility renderer has no 2D
+# MSAA, so a fanned card's opaque quad edge drew a staircase down every side
+# where TARGET's edges are smooth (Matched check 2026-10-10 run 4). With clear
+# texels past the edge, the filtered alpha ramps the edge instead.
+# card_view.gd's A1_PAD must match.
+PAD = 10
 
 
 def build():
@@ -78,7 +92,7 @@ def build():
     top = inset
     # beads in the band: the band runs from b0 to b1 px in from the edge
     b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1]
-    lo, hi = b0, b0 + BEAD_W
+    lo, hi = b0 + BEAD_SKIP, b0 + BEAD_SKIP + BEAD_W
     on = (np.arange(H) % BEAD_PERIOD) < BEAD_ON
     for x in list(range(lo, hi)) + list(range(W - hi, W - lo)):
         rows = np.nonzero(on)[0]
@@ -108,6 +122,16 @@ def build():
         xe = int(x1 - (x1 - x0) * k)
         if xe > x0:
             a[y, x0:xe, :3] = CHEV_LIT if y < mid else CHEV_DARK
+    # And at the band's right end, against the border: TARGET carves the
+    # same bevel there, mirrored, a dark notch whose apex points back at the
+    # name (Matched check 2026-10-10 run 4). Kept inside the 80 px right
+    # patch margin so the nine-patch never stretches it.
+    rx0, rx1 = W - BAND_FROM, W - BAND_FROM - CHEV_R
+    for y in range(BAND_FROM, bb - 3):
+        k = abs(y - mid) / max(1, mid - BAND_FROM)
+        xe = int(rx1 + (rx0 - rx1) * k)
+        if xe < rx0:
+            a[y, xe:rx0, :3] = CHEV_LIT if y < mid else CHEV_DARK
     # The art window, behind the art: an icon's clear ground shows black.
     ab = int(ART_BOTTOM * H)
     a[bb:ab, top:W - top, :3] = ART_BG
@@ -116,8 +140,10 @@ def build():
     # art's and a tilted card's window edge is smooth, not a staircase
     # (run 14).
     a[bb:ab, top:W - top, 3] = 0
-    Image.fromarray(a, "RGBA").save(OUT / "card_frame_t_base.png")
-    Image.new("RGBA", (W, H), (0, 0, 0, 0)).save(OUT / "card_frame_t_glow.png")
+    out = Image.new("RGBA", (W + 2 * PAD, H + 2 * PAD), (0, 0, 0, 0))
+    out.paste(Image.fromarray(a, "RGBA"), (PAD, PAD))
+    out.save(OUT / "card_frame_t_base.png")
+    Image.new("RGBA", out.size, (0, 0, 0, 0)).save(OUT / "card_frame_t_glow.png")
     print("wrote card_frame_t_base.png, card_frame_t_glow.png", W, "x", H, "edge", inset)
 
 

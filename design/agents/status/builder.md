@@ -2,8 +2,8 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-09T19:28
-working_on: "Scene lines soft: TARGET's crisp outline, cracks and slab edges."
+updated: 2026-10-09T23:21
+working_on: "Card frames: TARGET's thin, smooth border lines."
 ---
 
 # builder
@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 22:18 EDT
+2026-10-09 23:21 EDT
 
-- **Did:** Cut two cards' art from TARGET, matched card body text weight and colours; queued four items from a Matched check.
-- **Worked?** Yes, both graded. Card art VERDICT: PASS; body text VERDICT: PASS (round 2)
-- **Look at:** ![[frames/builder/2026-10-10-cardart-before.png]] then ![[frames/builder/2026-10-10-bodytext-after.png]]
+- **Did:** Matched check queued four items; card borders redrawn to TARGET's thin cream and dashed rules, edges anti-aliased.
+- **Worked?** Yes, third round. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-10-cardedge-before.png]] then ![[frames/builder/2026-10-10-cardedge-after.png]]
 - **Ask:** nothing
-- **Found:** zigzag a touch cooler and the sword tip a touch blunter than TARGET's (grader MINOR).
+- **Found:** dashed inner rule a touch greener and the title bar's right notch a touch smaller than TARGET's (grader MINOR).
 
 ## Notes
 

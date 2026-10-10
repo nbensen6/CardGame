@@ -13,6 +13,29 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 4): critic A MODERATE on slab surfaces (open item); critic B MODERATE on slab surfaces, card frames, jackal facets; shared MINOR: jackal hairline cracks, card titles and coins, fist flame top, pedestal (four items queued above)
+
+- [ ] 👀 **Card frames: TARGET's thin, smooth border lines.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card frames: TARGET's thin, smooth border lines.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-cardedge-after.png|420]] ^card-frames-target-s-thin-smooth-border
+
+- [ ] **Jackal facets and hairline cracks: TARGET's crisp planes.**
+      TARGET's shoulders, biceps and forearms are flat facet planes with hard tone breaks and its thin side cracks on the belly and forearms are sharp; the game's read slightly airbrushed and those cracks blurrier and dimmer. Critic B MODERATE, both MINOR on the cracks (2026-10-10 run 4).
+      **Done when** the --square and --beast pairs show no visible difference in the jackal's facets and hairline cracks.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Card titles and cost coins: TARGET's size.**
+      TARGET's card names and cost coins are a touch smaller than the game's. Both critics MINOR (2026-10-10 run 4).
+      **Done when** the --square and --hand pairs show no visible difference in the card titles and coins.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Fist flame: TARGET's defined top tongues.**
+      TARGET's flame over the raised fist ends in distinct bright tongues; the game's top tongues and left edge are a little less defined and less bright. Both critics MINOR (2026-10-10 run 4).
+      **Done when** the --square and --beast pairs show no visible difference in the fist's flame.
+      Test: state=3d beast=cinder_jackal
+
 - [ ] 👀 **Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.|details]]
       Ask: nothing

@@ -644,6 +644,11 @@ const A1_SRC := Vector2(690, 984)
 ## Nine-patch margins in source px: left/top hold the socket, the others the
 ## carved corner.
 const A1_PATCH := [130, 130, 80, 80]   # left, top, right, bottom
+## The clear margin cardframe_target.py's PAD puts round the frame texture,
+## source px: the Compatibility renderer has no 2D MSAA, so the frame's
+## filtered alpha is what smooths a fanned card's edge (Matched check
+## 2026-10-10 run 4). A1_SRC and A1_PATCH are the frame inside it.
+const A1_PAD := 10.0
 ## Boxes measured off the generation by tools/cardframe_a1.py, normalised
 ## against the card. The socket is centre + radius (radius as a fraction of
 ## the WIDTH), because the cost is centred in it, not boxed.
@@ -866,10 +871,10 @@ func _a1_patch(tex: Texture2D) -> NinePatchRect:
 	np.texture = _a1_mip(tex)
 	np.set_meta("a1_src", tex)   # which patch this is, under its mipmapped copy
 	np.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	np.patch_margin_left = A1_PATCH[0]
-	np.patch_margin_top = A1_PATCH[1]
-	np.patch_margin_right = A1_PATCH[2]
-	np.patch_margin_bottom = A1_PATCH[3]
+	np.patch_margin_left = A1_PATCH[0] + int(A1_PAD)
+	np.patch_margin_top = A1_PATCH[1] + int(A1_PAD)
+	np.patch_margin_right = A1_PATCH[2] + int(A1_PAD)
+	np.patch_margin_bottom = A1_PATCH[3] + int(A1_PAD)
 	np.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(np)
 	return np
@@ -884,9 +889,9 @@ static func a1_patch_fit(card: Vector2) -> Array:
 func _a1_fit(np: NinePatchRect) -> void:
 	var card := size if size.x > 0.0 else custom_minimum_size
 	var fit := a1_patch_fit(card)
-	np.position = Vector2(-(A1_SIDE_OUT + A1_LEFT_OUT) * fit[0].x, 0.0)
+	np.position = Vector2(-(A1_SIDE_OUT + A1_LEFT_OUT + A1_PAD) * fit[0].x, -A1_PAD * fit[0].y)
 	np.scale = fit[0]
-	np.size = fit[1] + Vector2(2.0 * A1_SIDE_OUT + A1_LEFT_OUT, 0.0)
+	np.size = fit[1] + Vector2(2.0 * A1_SIDE_OUT + A1_LEFT_OUT, 0.0) + Vector2.ONE * 2.0 * A1_PAD
 
 
 ## Source px the frame runs out past the card's sides. TARGET's cards are wider
