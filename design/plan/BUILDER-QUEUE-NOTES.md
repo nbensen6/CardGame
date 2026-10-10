@@ -2846,3 +2846,14 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - The capsule: self_modulate 0.95 (A1_PILL_SHADE); it drew 6-9 levels brighter than TARGET's face. 0.88 overshot by ~15 levels.
 - Grader: VERDICT: FAIL x2 (contradictory on the word's weight across rounds).
 - Meshy: none.
+
+## Card frames: TARGET's dark band, gold line and green stitch.
+
+- 2026-10-10 run 7: queued from the Matched check (both critics MODERATE).
+- Measured at 720 (the game's square is drawn at 720; comparing at 1024 upscales the game and blurs it by itself): the frame's structure already matched; what differed was the band's tone (38-40 vs TARGET's 22-31), a warm near-black keyline TARGET carries just before the inner rule, a two-pixel outer rule, and the stitch's colour.
+- tools/cardframe_target.py EDGE: outer rule 9 -> 6 px and brighter, band (26,28,26), new keyline (22,13,6) 5 px, the green after the inner rule lighter (80,104,76); total edge width unchanged (64 px) so the window and rules keep their place.
+- TARGET lights its cards from the left: on a card's left side the stitch is yellow-olive (BEAD (176,180,116)); on its right side it is teal (BEAD_R (132,164,138)) and the outer rule a dim warm brown (OUTER_R). Measured on Tongue Flick's right edge.
+- Tried and reverted: Lanczos mips for the frame (peaks 176 -> 190 but hand error 15.21 -> 15.47).
+- Hand error at 720: 15.21 -> 14.49.
+- Grader: VERDICT: FAIL x2.
+- Meshy: none.

@@ -13,6 +13,39 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; critic B MODERATE on the fourth slab's left end and Tongue Flick's top-right corner; shared MINOR: energy box, HUD lettering, zigzag and sword strokes, gauge orb (open item), outline and slab-edge softness (open items) (six items queued above)
+
+- [ ] **Card frames: TARGET's dark band, gold line and green stitch.**
+      Next pass: run 7 (2026-10-10) grader FAIL x2, "outer rail light where TARGET's is dark; dark gap thin; overlaps lack a thick dark band" (VERDICT: FAIL, not further from TARGET); measured at 720 across Tongue Snap's left, Scramble's left and Tongue Flick's right edges: outer rule ~1 px (peak 153 vs 163 on Tongue Snap), band (26,28,26) vs TARGET 22-31, warm keyline before the inner rule, inner rule peak 179-182 vs 177-192, stitch yellow-olive on left sides and teal on right sides as TARGET; hand error at 720 15.2 -> 14.5. FIX: next try the outer rule's sub-pixel phase on Scramble's left (peak 122 vs 190) and widen the right-side dark band ~1 px; re-check in the Matched check.
+      TARGET's card edge is a double rail: a thick dark outer band, a thin gold line, a dark gap, then the green dashed stitch, and a thick dark band shows between overlapping cards (Scramble's left edge, between Leap and Tongue Snap); the game draws one thinner pale cream-green dashed band with the gold line and dark gap mostly missing. Both critics MODERATE (2026-10-10 run 7).
+      **Done when** the --square and --hand pairs show no visible difference in the card frame borders.
+      Test: state=3d beast=cinder_jackal ^card-frames-target-s-dark-band-gold-line
+
+- [ ] **Fourth slab from the top: TARGET's left end.**
+      The mid-left slab just under the right-hand pair starts ~5-8 px further left in the game than in TARGET, so it reads wider, with a slightly thicker bottom lip. Critic B MODERATE, critic A MINOR (2026-10-10 run 7).
+      **Done when** the --square and --stones pairs show no visible difference in that slab's length and lip.
+      Test: state=3d beast=cinder_jackal ^fourth-slab-from-the-top-target-s-left-e
+
+- [ ] **Tongue Flick's top-right corner: TARGET's curled gold rim.**
+      In TARGET the frame's gold rim curls back round Tongue Flick's top-right corner and the right edge bends slightly; the game's corner is a flat square cut. Critic B MODERATE (2026-10-10 run 7).
+      **Done when** the --square and --hand pairs show no visible difference at that corner.
+      Test: state=3d beast=cinder_jackal ^tongue-flick-s-top-right-corner-target-s
+
+- [ ] **Energy box: TARGET's border and glow.**
+      TARGET's energy box border is a warmer gold with a slightly stronger amber glow and its pile icons are a touch lighter; the game's border is paler and thinner, its glow weaker and its pile icons darker. Both critics MINOR (2026-10-10 run 7).
+      **Done when** the --square pair shows no visible difference in the energy box and piles.
+      Test: state=3d beast=cinder_jackal ^energy-box-target-s-border-and-glow
+
+- [ ] **HUD lettering: TARGET's weight on the plate, chip, Log/Menu and End Turn.**
+      The game's "The Cinder Jackal", "70/70", "Attack 7", "Log", "Menu" and "End Turn" read a hair heavier and wider than TARGET's, and End Turn's stroke differs. Both critics MINOR (2026-10-10 run 7).
+      **Done when** the --square pair shows no visible difference in that lettering.
+      Test: state=3d beast=cinder_jackal ^hud-lettering-target-s-weight-on-the-pl
+
+- [ ] **Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.**
+      TARGET's zigzag is a little thicker and brighter and its sword's crossguard a touch larger; the game's zigzag is thinner and greyer. Both critics MINOR (2026-10-10 run 7).
+      **Done when** the --square and --hand pairs show no visible difference in the zigzag and sword strokes.
+      Test: state=3d beast=cinder_jackal ^tongue-snap-s-zigzag-and-tongue-flick-s
+
 Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword size, window edge); shared MINOR: Climb keyword glyphs, climb gauge orb and icons, card text softness (the open pills item) (three items queued above)
 
 - [ ] **Tongue Flick: TARGET's clean art window edge and sword.**

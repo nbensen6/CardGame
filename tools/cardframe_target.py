@@ -59,8 +59,21 @@ EDGE = [((14, 10, 6), 2), ((228, 230, 188), 9), ((38, 40, 31), 33),
 # (~(222,210,158)) and, on the window side, a dashed one, pale mint dashes on
 # dark green gaps, ~3 px a period at 720 (the BEAD dashes draw over it). The old frame drew a broad cream outside and a saturated yellow-green
 # rule inside, which read as a heavy double green/gold border.
-BEAD = (196, 222, 178)   # the dashes: pale mint-cream on the inner rule's dark green
-BAND_DASH = (38, 40, 31)   # TARGET's band carries no green dashes: band colour
+# Run 7 (2026-10-10), measured at 720 on TARGET's Tongue Snap and Scramble
+# sides: the outer rule is one screen px, not two; the band is darker
+# (~(26,28,26)); a warm near-black keyline (~(22,13,6)) sits right before
+# the inner rule; and the stitch beside the inner rule is yellow-olive
+# (~(149,152,99)), not mint.
+EDGE = [((14, 10, 6), 2), ((236, 236, 196), 6), ((26, 28, 26), 31), ((22, 13, 6), 5),
+        ((222, 210, 158), 7), ((80, 104, 76), 10), ((40, 66, 48), 0),
+        ((10, 14, 12), 3)]
+BEAD = (176, 180, 116)   # the dashes: yellow-olive on the inner rule's dark green (was mint (196,222,178))
+# ...but TARGET lights its cards from the left: on a card's RIGHT side the
+# stitch is teal (~(126,157,132)) and the outer rule a dim warm brown
+# (~(100,88,72)), measured at 720 on Tongue Flick's right edge (run 7).
+BEAD_R = (132, 164, 138)
+OUTER_R = (104, 92, 76)
+BAND_DASH = (26, 28, 26)   # TARGET's band carries no green dashes: band colour
 BAND_DASH_W = 4
 BAND_DASH_ON, BAND_DASH_PERIOD = 10, 18
 BEAD_W = 10               # px across: the dashed half of the inner rule
@@ -91,13 +104,16 @@ def build():
     a = np.asarray(im).copy()
     top = inset
     # beads in the band: the band runs from b0 to b1 px in from the edge
-    b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1]
+    b0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] + EDGE[3][1]
     lo, hi = b0 + BEAD_SKIP, b0 + BEAD_SKIP + BEAD_W
     on = (np.arange(H) % BEAD_PERIOD) < BEAD_ON
     for x in list(range(lo, hi)) + list(range(W - hi, W - lo)):
         rows = np.nonzero(on)[0]
         rows = rows[(rows > RADIUS) & (rows < H - RADIUS)]
-        a[rows, x, :3] = BEAD
+        a[rows, x, :3] = BEAD if x < W // 2 else BEAD_R
+    # the right side's outer rule, dim
+    o0, o1 = EDGE[0][1], EDGE[0][1] + EDGE[1][1]
+    a[RADIUS:H - RADIUS, W - o1:W - o0, :3] = OUTER_R
     # and TARGET's fainter green dashes down the middle of the dark band
     m0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] // 2 - BAND_DASH_W // 2
     dash = (np.arange(H) % BAND_DASH_PERIOD) < BAND_DASH_ON
