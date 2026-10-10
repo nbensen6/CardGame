@@ -19,7 +19,7 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 - **Worked?** Yes: both items VERDICT: PASS (energy box after one FAIL round, top bar after two).
 - **Look at:** ![[frames/builder/2026-10-10-topbar-before.png]] then ![[frames/builder/2026-10-10-topbar-after.png]]
 - **Ask:** nothing
-- **Found:** nothing new.
+- **Found:** nothing new. Matched check after both items: both critics MINOR only (slab and jackal edge softness, the open sharpness item).
 
 ## Notes
 
