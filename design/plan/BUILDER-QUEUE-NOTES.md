@@ -7,6 +7,16 @@ the builder measured and tried, what the session decided. The builder appends
 under the matching heading. Nick never has to read this page.
 
 
+
+## Card contents: TARGET's place and size for art, titles and rules.
+
+Run 12 (2026-10-10). Queued from the Matched check: critic A MODERATE on card illustrations, critic B MINOR on card contents sitting low.
+- Measured per card on the 720 square: the first Tongue Snap registered 1 px low as a whole (art error 14.9 -> 8.0 at dy -1); added `HAND_CARD_NUDGE_Y` (first card -1 px).
+- Card names sat 0.5-1.25 px low in their bands on all five cards with the coins unmoved; `A1_TITLE_LIFT` 0.007 of card height (summed name error 155 -> 124; 0.0045/0.0055 snap to the same frame at 129).
+- Scramble's art measured 2% large; a re-cut with a 139.7 px window registered worse (19.5 vs 13.6) and was reverted. Grader round 2 found its extents within ~3 px.
+- Grader round 1 FAIL (only the first card moved); round 2 VERDICT: PASS.
+- Meshy: none.
+
 ## Card type pills and titles: TARGET's soft painted lettering.
 - 2026-10-10 run 5: queued from the Matched check (both critics MINOR).
 - Measured on TARGET-at-1024, card 3: pill x 479-541, y 917-927, a glossy steel capsule lit top-left (left column 234 -> 114, right 167 -> 177, dark lower lip), ink (41,42,51). Game before: a flat StyleBoxFlat pill with a hard 1-2 px rim, 3 px taller.

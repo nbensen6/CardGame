@@ -662,6 +662,7 @@ const A1_PAD := 10.0
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
+const A1_TITLE_LIFT := 0.007   # 0.0045 and 0.0055 snap to the same frame: summed name error 155 -> 129; 0.007 -> 124
 const A1_ART := Rect2(0.039, 0.132, 0.928 - 0.039, 0.588 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
 const A1_TYPE := Rect2(0.090, 0.558, 0.878 - 0.090, 0.618 - 0.558)   # TARGET's pill sits ~5 px higher at hand size (run 14); ~3 px left of ours (run 16)
 const A1_TEXT := Rect2(0.047, 0.623, 0.92 - 0.047, 0.95 - 0.623)   # run 16: runs left with the frame (A1_LEFT_OUT); TARGET centres the rules ~2 px left of ours
@@ -1065,6 +1066,9 @@ func _build_a1() -> void:
 
 	# 4 - the name, starting clear of the socket.
 	var tr := a1_box(A1_TITLE, w, h)
+	# TARGET's names sit ~0.9 px higher in their band at hand size (0.5-1.25
+	# px on all five cards, coins unmoved; builder 2026-10-10 run 12).
+	tr.position.y -= h * A1_TITLE_LIFT
 	var nm := _label(String(_data.get("name", "")), 15 if w < 170 else 17)
 	nm.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	# TARGET centres the name in its band.

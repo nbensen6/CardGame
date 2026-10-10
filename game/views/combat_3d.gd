@@ -9908,6 +9908,9 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## Scramble and Tongue Flick a quarter to a half px left). Other hand sizes
 ## use no trim.
 const HAND_CARD_NUDGE := [0.75, -0.75, -0.75, 0.25, 0.4]
+## Per-card y trim, same units: the first Tongue Snap registered 1 px low
+## against TARGET on its art, title and rules (builder 2026-10-10 run 12).
+const HAND_CARD_NUDGE_Y := [-1.0, 0.0, 0.0, 0.0, 0.0]
 const HAND_REST_LIFT := 77.0   # TARGET's card tops, registered on the top line per card (builder 2026-10-09 run 14)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
@@ -10006,10 +10009,12 @@ func _layout_hand() -> void:
 		var lift: float = FAN_RISE if raised else 0.0
 		var pull := -signf(off) * FAN_PULL * maxf(absf(off) - 1.0, 0.0)
 		var nudge := 0.0
+		var nudge_y := 0.0
 		if n == HAND_CARD_NUDGE.size():
 			nudge = float(HAND_CARD_NUDGE[i]) * nudge_px
+			nudge_y = float(HAND_CARD_NUDGE_Y[i]) * nudge_px
 		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx + pull + nudge,
-				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE)
+				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE + nudge_y)
 		c.position = rest - Vector2(0.0, lift)
 		# A raised card keeps its resting spot as hover area (CardView.hover_hold):
 		# the resting pose's global transform, tilt, scale and all.

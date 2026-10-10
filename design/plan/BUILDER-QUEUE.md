@@ -13,6 +13,14 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 12): critic A MODERATE on card illustrations (Scramble's creature, card contents low); critic B MINOR, card contents 3-5 px low; shared MINOR: softness, fifth slab's top tone (the open facets and slab items) (one item queued below)
+
+- [ ] 👀 **Card contents: TARGET's place and size for art, titles and rules.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card contents: TARGET's place and size for art, titles and rules.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-snapy-after.png|420]] ^card-contents-target-s-place-and-size-fo
+
 Matched check 2026-10-10 (run 11): no MAJOR or MODERATE from either critic; shared MINOR: overall softness on the jackal and cards, the fifth slab's chipped side face (the open facets and slab items; measured: hand, cards and slabs register at 0 px offset, nothing new queued)
 
 Matched check 2026-10-10 (run 10): no MAJOR or MODERATE from either critic; shared MINOR: overall softness on the jackal outline and facets, slab edges and card text (the open facets, slab and pills items, nothing new queued); Frog's rock and Fist flame re-graded PASS

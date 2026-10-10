@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T06:14
+updated: 2026-10-10T07:18
 working_on: ""
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 06:14 EDT
+2026-10-10 07:18 EDT
 
-- **Did:** Matched check run 11: both critics MINOR only; open items all parked, nothing new queued.
-- **Worked?** Partly. No item built; no grader run. Shared MINOR is softness and slab 5, already covered by open items with nothing left to build.
-- **Look at:** ![[frames/builder/2026-10-10-check11-before.png]] then ![[frames/builder/2026-10-10-check11-square.png]]
+- **Did:** Matched check run 12 queued card contents; lifted card names and the first card one pixel to TARGET.
+- **Worked?** Yes. VERDICT: PASS (round 2; round 1 FAIL on the names still low).
+- **Look at:** ![[frames/builder/2026-10-10-check12-before.png]] then ![[frames/builder/2026-10-10-snapy-after.png]]
 - **Ask:** nothing
-- **Found:** the check can never come back clean while critics keep naming "softness" (both critics in runs 9, 10 and 11); the frame is TARGET's own pixels at 720 (hand, cards register at 0 px).
-- **Found:** critic A's 2-4 px card-fan offset and critic B's 5-7 px "70/70" shift both measure at 0-1 px by cross-correlation.
+- **Found:** Scramble's art measures ~2% large but a wider re-cut registered worse; left as is.
+- **Found:** the check still cannot come back clean while both critics name overall softness on TARGET's own pixels at 720.
 
 ## Notes
 
