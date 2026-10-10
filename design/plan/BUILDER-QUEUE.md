@@ -13,6 +13,8 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 11): no MAJOR or MODERATE from either critic; shared MINOR: overall softness on the jackal and cards, the fifth slab's chipped side face (the open facets and slab items; measured: hand, cards and slabs register at 0 px offset, nothing new queued)
+
 Matched check 2026-10-10 (run 10): no MAJOR or MODERATE from either critic; shared MINOR: overall softness on the jackal outline and facets, slab edges and card text (the open facets, slab and pills items, nothing new queued); Frog's rock and Fist flame re-graded PASS
 
 Matched check 2026-10-10 (run 9): no MAJOR or MODERATE from either critic; shared MINOR: Leap's type pill lettering (queued below), jackal edge softness and slab surfaces (the open facets and slab items) (one item queued above)

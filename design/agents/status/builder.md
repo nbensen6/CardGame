@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T05:16
+updated: 2026-10-10T06:14
 working_on: ""
 ---
 
@@ -13,13 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 05:16 EDT
+2026-10-10 06:14 EDT
 
-- **Did:** Matched check run 10: both critics MINOR only; re-graded six open items, two passed.
-- **Worked?** Partly. VERDICT: PASS (Fist flame); VERDICT: PASS (Frog's rock); VERDICT: FAIL (Energy box, Tongue Flick, Climb keyword, Climb gauge: graders read the 1024 close-ups, the 720 profiles match).
-- **Look at:** ![[frames/builder/2026-10-10-check10-after.png]]
+- **Did:** Matched check run 11: both critics MINOR only; open items all parked, nothing new queued.
+- **Worked?** Partly. No item built; no grader run. Shared MINOR is softness and slab 5, already covered by open items with nothing left to build.
+- **Look at:** ![[frames/builder/2026-10-10-check11-before.png]] then ![[frames/builder/2026-10-10-check11-square.png]]
 - **Ask:** nothing
-- **Found:** the hand is the softest part of the frame (Laplacian 0.88 of TARGET-at-720, error ~10 levels); the rest registers at 0.97-1.03.
+- **Found:** the check can never come back clean while critics keep naming "softness" (both critics in runs 9, 10 and 11); the frame is TARGET's own pixels at 720 (hand, cards register at 0 px).
+- **Found:** critic A's 2-4 px card-fan offset and critic B's 5-7 px "70/70" shift both measure at 0-1 px by cross-correlation.
 
 ## Notes
 
