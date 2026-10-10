@@ -1,10 +1,10 @@
 {
-  "updated": "Sat Oct 10, 6:51 AM ET",
-  "last_commit": "0c59afb",
+  "updated": "Sat Oct 10, 8:51 AM ET",
+  "last_commit": "e11621e",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 6:13 AM",
+      "value": "Idle: last run ended 8:21 AM",
       "state": "idle"
     },
     {
@@ -31,6 +31,46 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 10, 8:21 AM",
+      "title": "Middle Tongue Snap name lowered",
+      "bullets": [
+        "Middle card's title no longer clipped at top",
+        "Cost coin moved down, now nearly matches",
+        "Grader still unsure on coin; recheck later"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-midsnap-after-hand.png",
+          "caption": "Hand close-up"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-midsnap-after-square.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 7:18 AM",
+      "title": "Card names and first card lifted",
+      "bullets": [
+        "All five card names nudged up slightly",
+        "First Tongue Snap card raised to match",
+        "Grader passed it on second try"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-snapy-after-hand.png",
+          "caption": "Hand close-up"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-snapy-after-square.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 10, 6:13 AM",
