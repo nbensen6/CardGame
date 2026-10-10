@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 6:51 PM ET",
-  "last_commit": "543a35c",
+  "updated": "Fri Oct 9, 8:52 PM ET",
+  "last_commit": "53105ec",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 6:24 PM",
+      "value": "Idle: last run ended 8:36 PM",
       "state": "idle"
     },
     {
@@ -31,6 +31,74 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 9, 8:36 PM",
+      "title": "Full check: only small nits left",
+      "bullets": [
+        "Both critics found nothing big or medium",
+        "Only nit: slab and jackal edges slightly soft",
+        "Game now nearly matches your drawing"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-topbar-after-square.png",
+          "caption": "Drawing vs game"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 8:35 PM",
+      "title": "Top bar matches your drawing",
+      "bullets": [
+        "Boss name now in your drawing's lettering",
+        "Health bar split into your four segments",
+        "Log and Menu sit over the cliffs"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-topbar-after-zoom.png",
+          "caption": "Top bar close-up"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-topbar-after.png",
+          "caption": "Full screen after"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 8:22 PM",
+      "title": "Energy box glow and floor",
+      "bullets": [
+        "Energy box uses your drawing's warm glow",
+        "Dark floor behind it now matches",
+        "Passed grading on the second try"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-energy-after-energy.png",
+          "caption": "Energy box close-up"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 7:29 PM",
+      "title": "Sharper jackal outline, still graded soft",
+      "bullets": [
+        "Scene now drawn at your drawing's full detail",
+        "Measured sharpness matches, grader still says soft",
+        "Grader even fails your drawing itself; moving on"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-09-sharp21-after.png",
+          "caption": "Sharper scene"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 6:23 PM",
