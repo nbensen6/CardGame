@@ -51,3 +51,10 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 anti_aliasing/quality/msaa_2d=2
 anti_aliasing/quality/msaa_3d=2
+
+[shader_globals]
+
+drawn_lut3d={
+"type": "sampler2D",
+"value": "res://assets/3d/drawn_sprite_lut3d.tres"
+}

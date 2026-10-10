@@ -37,6 +37,7 @@ ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 TSCN = "game/assets/3d/cast/cinder_jackal_2d.tscn"
 SHADER = "game/assets/3d/drawn_sprite.gdshader"
 LUT = "game/assets/3d/drawn_sprite_lut3d.gdshaderinc"
+LUT_TEX = "game/assets/3d/drawn_sprite_lut3d.tres"
 LUT1 = "game/assets/3d/drawn_sprite_lut.gdshaderinc"
 SHOTS = "/tmp/drawn_lut3d"
 N = 17
@@ -238,13 +239,38 @@ def invert(F):
 
 
 def write(u, note):
-    rows = ["vec3(%.4f, %.4f, %.4f)" % tuple(x) for x in u]
-    body = ",\n\t".join(", ".join(rows[i:i + 4]) for i in range(0, len(rows), 4))
-    with open(os.path.join(ROOT, LUT), "w") as f:
+    import base64
+    import struct
+    # Rounded as it was printed, so the table reads the same numbers it did as
+    # shader constants.
+    vals = [tuple(float("%.4f" % c) for c in x) for x in u]
+    n2 = N * N
+    # The table is a float texture, not shader constants: NVIDIA's GLSL
+    # compiler rejects an N^3-entry constant array (C1068 "too much data in
+    # type constructor", and split up, C5041 "cannot locate suitable resource
+    # ... Possibly large array"), so every material with it failed to compile
+    # and the fight hung on Nick's PC (2026-10-10). Mesa, which draws the
+    # cloud's shots, took it. Texel (i % N^2, i / N^2) holds entry
+    # i = r + N*(g + N*b); shaders read it as LUT3(i) through the drawn_lut3d
+    # shader global (project.godot [shader_globals]).
+    data = struct.pack("<%df" % (3 * len(vals)), *[c for x in vals for c in x])
+    with open(os.path.join(ROOT, LUT_TEX), "w", newline="\n") as f:
+        f.write('[gd_resource type="ImageTexture" load_steps=2 format=3]\n\n'
+                '[sub_resource type="Image" id="Image_lut3d"]\n'
+                'data = {\n"data": PackedByteArray("%s"),\n"format": "RGBFloat",\n"height": %d,\n'
+                '"mipmaps": false,\n"width": %d\n}\n\n'
+                '[resource]\nimage = SubResource("Image_lut3d")\n'
+                % (base64.b64encode(data).decode(), N, n2))
+    with open(os.path.join(ROOT, LUT), "w", newline="\n") as f:
         f.write("// Written by tools/drawn_lut3d.py -- do not edit by hand. %s\n"
                 "// Screen sRGB (r + N*(g + N*b) on an N-grid) -> u; emit E0 + (EMAX - E0) * u^GAMMA.\n"
-                "const int LUT3_N = %d;\nconst float LUT3_E0 = %.3f;\nconst float LUT3_EMAX = %.3f;\nconst float LUT3_GAMMA = %.3f;\n"
-                "const vec3 LUT3[%d] = vec3[](\n\t%s);\n" % (note, N, E0, EMAX, GAMMA, N ** 3, body))
+                "// The table is drawn_sprite_lut3d.tres, a float texture (texel i %% N^2, i / N^2) bound by\n"
+                "// the drawn_lut3d shader global: NVIDIA will not compile it as an N^3 constant array.\n"
+                "const int LUT3_N = %d;\nconst float LUT3_E0 = %.3f;\nconst float LUT3_EMAX = %.3f;\n"
+                "const float LUT3_GAMMA = %.3f;\n"
+                "global uniform sampler2D drawn_lut3d;\n"
+                "vec3 LUT3(int i) {\n\treturn texelFetch(drawn_lut3d, ivec2(i %% %d, i / %d), 0).rgb;\n}\n"
+                % (note, N, E0, EMAX, GAMMA, n2, n2))
 
 
 def seed():

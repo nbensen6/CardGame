@@ -125,14 +125,14 @@ vec3 emit3(vec3 want) {
 	ivec3 hi = min(lo + 1, ivec3(LUT3_N - 1));
 	vec3 w = f - vec3(lo);
 	int n = LUT3_N;
-	vec3 c000 = LUT3[lo.r + n * (lo.g + n * lo.b)];
-	vec3 c100 = LUT3[hi.r + n * (lo.g + n * lo.b)];
-	vec3 c010 = LUT3[lo.r + n * (hi.g + n * lo.b)];
-	vec3 c110 = LUT3[hi.r + n * (hi.g + n * lo.b)];
-	vec3 c001 = LUT3[lo.r + n * (lo.g + n * hi.b)];
-	vec3 c101 = LUT3[hi.r + n * (lo.g + n * hi.b)];
-	vec3 c011 = LUT3[lo.r + n * (hi.g + n * hi.b)];
-	vec3 c111 = LUT3[hi.r + n * (hi.g + n * hi.b)];
+	vec3 c000 = LUT3(lo.r + n * (lo.g + n * lo.b));
+	vec3 c100 = LUT3(hi.r + n * (lo.g + n * lo.b));
+	vec3 c010 = LUT3(lo.r + n * (hi.g + n * lo.b));
+	vec3 c110 = LUT3(hi.r + n * (hi.g + n * lo.b));
+	vec3 c001 = LUT3(lo.r + n * (lo.g + n * hi.b));
+	vec3 c101 = LUT3(hi.r + n * (lo.g + n * hi.b));
+	vec3 c011 = LUT3(lo.r + n * (hi.g + n * hi.b));
+	vec3 c111 = LUT3(hi.r + n * (hi.g + n * hi.b));
 	vec3 u = mix(mix(mix(c000, c100, w.r), mix(c010, c110, w.r), w.g),
 		mix(mix(c001, c101, w.r), mix(c011, c111, w.r), w.g), w.b);
 	vec3 e = LUT3_E0 + (LUT3_EMAX - LUT3_E0) * pow(max(u, vec3(0.0)), vec3(LUT3_GAMMA));
