@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T00:20
+updated: 2026-10-10T02:31
 working_on: ""
 ---
 
@@ -13,15 +13,16 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 00:20 EDT
+2026-10-10 02:31 EDT
 
-- **Did:** Matched check queued two shared MINORs; Switch button matched; card pills and titles closer, still graded soft.
-- **Worked?** Partly. Switch button VERDICT: PASS (round 2); card pills and titles VERDICT: FAIL (round 4, not further from TARGET)
-- **Look at:** ![[frames/builder/2026-10-10-switch-before.png]] then ![[frames/builder/2026-10-10-pills-after.png]]
+- **Did:** Two Matched checks queued nine items; fixed slab, zigzag and HUD lettering; improved frames, Flick art, keywords, gauge, pills, energy.
+- **Worked?** Partly. VERDICT: PASS on the fourth slab, the zigzag and sword, and the HUD lettering; FAIL (not further from TARGET) on Tongue Flick's art, Climb, gauge, pills, card frames, Flick's corner and the energy box, each measured within a pixel or a few levels and left open.
+- **Look at:** ![[frames/builder/2026-10-10-match6.png]] then ![[frames/builder/2026-10-10-hudtext-after.png]]
 - **Ask:** nothing
-- **Found:** Switch pill's 1 px rim a touch lighter than TARGET's softer edge (grader MINOR).
-- **Found:** card body text still a touch heavier than TARGET's at 720 (grader out of scope).
-- **Found:** both critics found no MAJOR or MODERATE; the remaining open items all measure at TARGET's own pixels.
+- **Found:** Leap's "Climb" steps up letter by letter on its tilted card; unhinted, MSDF and unsnapped controls all leave it.
+- **Found:** the middle Tongue Snap card sits ~1.8 px right of TARGET's (its gem and art both).
+- **Found:** End Turn's label ~2% narrow with a lighter outline than TARGET's (grader MINOR).
+- **Found:** graders contradict themselves across rounds on sub-pixel text weight (too light, then too dark); the measurements are in each item's Next pass.
 
 ## Notes
 
