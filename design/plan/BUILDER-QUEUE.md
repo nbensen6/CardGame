@@ -439,10 +439,11 @@ Matched check 2026-10-09: both critics MODERATE on scene sharpness (the open ite
       Test: state=3d beast=cinder_jackal
       ![[agents/frames/builder/2026-10-10-endturn-after.png|420]] ^end-turn-target-s-label-width-and-outlin
 
-- [ ] **Switch pill: TARGET's rimless edge.**
-      TARGET's navy Switch pill has no visible light rim (its edge ~(32,43,60)); the game's draws a thin light-blue rim (~(44,65,80)). Grader out-of-scope note, run 14 (2026-10-10).
-      **Done when** the --square and --switch pairs show no visible difference in the Switch pill's edge.
-      Test: state=3d beast=cinder_jackal ^switch-pill-target-s-rimless-edge
+- [ ] 👀 **Switch pill: TARGET's rimless edge.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Switch pill: TARGET's rimless edge.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-switchrim-after.png|420]] ^switch-pill-target-s-rimless-edge
 
 ## Waiting on Nick
 

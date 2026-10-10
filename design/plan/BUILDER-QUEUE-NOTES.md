@@ -2964,3 +2964,8 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 ## Lowest slab: TARGET's front-face depth.
 
 - Run 14 (2026-10-10): queued from critic B's MODERATE; critic A named no slab-shape difference. Measured at 1024 (game square Lanczos up): top and bottom edges per column within 1 px of TARGET's from x 285 to 435; no fix to build.
+
+## Switch pill: TARGET's rimless edge.
+
+- Run 14 (2026-10-10): TARGET's pill edge peaks ~(33,44,61) over a (26,41,62) face; the game's 1 px SWITCH_RIM (0.20,0.29,0.34) peaked (48,72,88). SWITCH_RIM -> (0.145,0.185,0.25): edge peak now (37,50,69).
+- Grader R1 PASS ("no light rim; edge a touch crisper, fill a shade more saturated, MINOR"). VERDICT: PASS.

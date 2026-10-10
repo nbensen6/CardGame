@@ -15,11 +15,10 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 2026-10-10 09:20 EDT
 
-- **Did:** Matched check run 14 queued the lowest slab; End Turn label widened, outline heavier, face warmer.
-- **Worked?** Yes. End Turn graded PASS; the slab item measures within 1 px of TARGET, nothing to build. VERDICT: PASS
-- **Look at:** ![[frames/builder/2026-10-10-endturn-before.png]] then ![[frames/builder/2026-10-10-endturn-after.png]]
+- **Did:** Matched check run 14; End Turn label widened and warmed; Switch pill's light rim dimmed to TARGET's.
+- **Worked?** Yes. End Turn and Switch rim graded PASS; the slab item measures within 1 px of TARGET. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-10-endturn-before.png]] then ![[frames/builder/2026-10-10-switchrim-after.png]]
 - **Ask:** nothing
-- **Found:** the Switch pill draws a light-blue rim TARGET lacks (queued).
 - **Found:** FontVariation's transform widens glyphs but not their advances; spacing is what widens a label.
 
 ## Notes

@@ -897,7 +897,8 @@ const ENERGY_BACKDROP_RECT := Rect2(-0.1610, -0.3277, 1.9322, 2.0168)
 ## TARGET.png's Switch: a navy pill under the amber End Turn.
 ## TARGET's Switch pill, sampled: (28,41,63) with a lighter slate rim.
 const SWITCH_FACE := Color(0.112, 0.165, 0.25, 1.0)
-const SWITCH_RIM := Color(0.20, 0.29, 0.34, 1.0)
+## TARGET's pill edge is only a few levels over the face, ~(33,44,61) at 720 (builder run 14; was 0.20, 0.29, 0.34).
+const SWITCH_RIM := Color(0.145, 0.185, 0.25, 1.0)
 ## TARGET's label is a pale cyan-white (brightest glyph pixels 222,239,247),
 ## outlined in the pill's own dark navy rather than End Turn's brown.
 const SWITCH_TEXT := Color(0.84, 0.95, 1.0)
