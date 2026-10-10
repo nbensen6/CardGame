@@ -13,6 +13,14 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 9): no MAJOR or MODERATE from either critic; shared MINOR: Leap's type pill lettering (queued below), jackal edge softness and slab surfaces (the open facets and slab items) (one item queued above)
+
+- [ ] 👀 **Leap's type pill: TARGET's smeared lettering.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Leap's type pill: TARGET's smeared lettering.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-pillword-after.png|420]] ^leap-s-type-pill-target-s-smeared-letteri
+
 Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; critic B MODERATE on the fourth slab's left end and Tongue Flick's top-right corner; shared MINOR: energy box, HUD lettering, zigzag and sword strokes, gauge orb (open item), outline and slab-edge softness (open items) (six items queued above)
 
 - [ ] 👀 **Card frames: TARGET's dark band, gold line and green stitch.**

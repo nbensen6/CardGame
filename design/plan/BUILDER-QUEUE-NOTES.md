@@ -2847,6 +2847,15 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Grader: VERDICT: FAIL x2 (contradictory on the word's weight across rounds).
 - Meshy: none.
 
+## Leap's type pill: TARGET's smeared lettering.
+
+- 2026-10-10 run 9: queued from the Matched check (both critics MINOR).
+- TARGET paints each pill's word differently (Leap "SSill", Tongue Flick's letters run together, the middle Tongue Snap and Scramble near-clean). New tools/pill_word_cut.py keys the dark ink off each TARGET pill (deskewed by the card's tilt as cardart_cut.py, the pill's own fill by a grey closing, specks and the end caps dropped, GAIN 1.2, LIFT 6 output px) and writes game/assets/ui/pill_word_<card id>.png covering the pill's bounding box; card_view.gd stretches it over its pill rect tinted A1_PILL_WORD_INK, and prints the word for any card without a cut.
+- The leftmost Tongue Snap shares the middle card's cut; TARGET's reads "Assack" there (card_view does not know the hand slot).
+- Grader: FAIL x1 (GAIN 1.7: words too dark and heavy), then PASS (MINOR only at 6x: Leap's word ~1 px left, a touch darker and blurrier).
+- Grader: VERDICT: PASS.
+- Meshy: none.
+
 ## Card frames: TARGET's dark band, gold line and green stitch.
 
 - 2026-10-10 run 7: queued from the Matched check (both critics MODERATE).

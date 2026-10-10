@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 04:32 EDT
+2026-10-10 04:40 EDT
 
-- **Did:** Card rails matched TARGET, then Tongue Flick's top-right corner given TARGET's curl, hook, knot and notch.
-- **Worked?** Yes, both. VERDICT: PASS (frames, MINOR only); VERDICT: PASS (corner, MINOR only at 7-15x).
-- **Look at:** ![[frames/builder/2026-10-10-flickcorner-before.png]] then ![[frames/builder/2026-10-10-flickcorner-after.png]]
+- **Did:** Card rails and Tongue Flick's corner matched TARGET; Matched check run; pill words cut from TARGET.
+- **Worked?** Yes, all three. VERDICT: PASS (frames); VERDICT: PASS (corner); VERDICT: PASS (Leap's pill).
+- **Look at:** ![[frames/builder/2026-10-10-pillword-before.png]] then ![[frames/builder/2026-10-10-pillword-after.png]]
 - **Ask:** nothing
-- **Found:** the outer rule reads a touch grey-cream against TARGET's gold-cream at 3x zoom; Tongue Flick sits ~1-2 px low against TARGET.
+- **Found:** the leftmost Tongue Snap's pill reads "Attack" where TARGET's reads "Assack"; Tongue Flick sits ~1-2 px low against TARGET.
 
 ## Notes
 

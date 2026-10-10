@@ -695,6 +695,8 @@ const AA_RECT := preload("res://ui/aa_rect.gdshader")
 const TYPE_PILL_FILL := Color(0.64, 0.65, 0.71)   # TARGET's pill averages (150,152,166), a cool steel grey (run 16)
 const TYPE_PILL_EDGE := Color(0.43, 0.44, 0.49)
 const TYPE_PILL_TEX := preload("res://assets/ui/type_pill_t.png")
+## TARGET's pill ink, ~(41,42,51), for the words cut off its pills.
+const A1_PILL_WORD_INK := Color(0.16, 0.165, 0.2)
 
 
 ## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
@@ -1106,19 +1108,33 @@ func _build_a1() -> void:
 		# and top band (middle card at 1024, run 6 2026-10-10).
 		pill.self_modulate = Color(A1_PILL_SHADE, A1_PILL_SHADE, A1_PILL_SHADE)
 		_place(pill, pr)
-		var tl := _label(kind.capitalize(), 10)
-		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		# TARGET's pill ink: a dark blue-grey (~41,42,51), a regular weight.
-		tl.add_theme_color_override("font_color", Color(0.15, 0.15, 0.19))
-		var pf := FontVariation.new()
-		pf.base_font = a1_painted_base(tl.get_theme_font("font"))
-		# Run 6: TARGET's word carries twice the dark ink of run 5's light,
-		# 0.9-alpha word (50 vs 24 px under 100 on the middle pill at 1024).
-		pf.variation_embolden = A1_PILL_EMBOLDEN
-		tl.add_theme_font_override("font", pf)
-		tl.add_theme_constant_override("outline_size", 0)
-		_place(tl, pr)
+		# TARGET's own painted word for this card, cut off its pill
+		# (tools/pill_word_cut.py): soft and card by card, as TARGET draws it
+		# (Matched check 2026-10-10 run 9). Other cards print the word.
+		var word_path := "res://assets/ui/pill_word_%s.png" % String(_data.get("id", ""))
+		if ResourceLoader.exists(word_path):
+			var word := TextureRect.new()
+			word.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			word.texture = _a1_mip(load(word_path))
+			word.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			word.stretch_mode = TextureRect.STRETCH_SCALE
+			word.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			word.self_modulate = A1_PILL_WORD_INK
+			_place(word, pr)
+		else:
+			var tl := _label(kind.capitalize(), 10)
+			tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			tl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			# TARGET's pill ink: a dark blue-grey (~41,42,51), a regular weight.
+			tl.add_theme_color_override("font_color", Color(0.15, 0.15, 0.19))
+			var pf := FontVariation.new()
+			pf.base_font = a1_painted_base(tl.get_theme_font("font"))
+			# Run 6: TARGET's word carries twice the dark ink of run 5's light,
+			# 0.9-alpha word (50 vs 24 px under 100 on the middle pill at 1024).
+			pf.variation_embolden = A1_PILL_EMBOLDEN
+			tl.add_theme_font_override("font", pf)
+			tl.add_theme_constant_override("outline_size", 0)
+			_place(tl, pr)
 	# No rarity pips: TARGET's cards carry none (builder 2026-10-09).
 
 	# 6 - the rules, wrapped inside the text box.
