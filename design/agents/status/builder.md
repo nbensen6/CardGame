@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T02:31
+updated: 2026-10-10T03:35
 working_on: ""
 ---
 
@@ -13,16 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 02:31 EDT
+2026-10-10 03:35 EDT
 
-- **Did:** Two Matched checks queued nine items; fixed slab, zigzag and HUD lettering; improved frames, Flick art, keywords, gauge, pills, energy.
-- **Worked?** Partly. VERDICT: PASS on the fourth slab, the zigzag and sword, and the HUD lettering; FAIL (not further from TARGET) on Tongue Flick's art, Climb, gauge, pills, card frames, Flick's corner and the energy box, each measured within a pixel or a few levels and left open.
-- **Look at:** ![[frames/builder/2026-10-10-match6.png]] then ![[frames/builder/2026-10-10-hudtext-after.png]]
+- **Did:** Registered each hand card on TARGET's frame rails and rebalanced the rail tones; hand error 11.35 to 9.70.
+- **Worked?** Partly. VERDICT: FAIL (x2, not further from TARGET): the grader still reads one pale band; at 720 every measured rail profile now matches TARGET's.
+- **Look at:** ![[frames/builder/2026-10-10-frames8-before.png]] then ![[frames/builder/2026-10-10-frames8-after.png]]
 - **Ask:** nothing
-- **Found:** Leap's "Climb" steps up letter by letter on its tilted card; unhinted, MSDF and unsnapped controls all leave it.
-- **Found:** the middle Tongue Snap card sits ~1.8 px right of TARGET's (its gem and art both).
-- **Found:** End Turn's label ~2% narrow with a lighter outline than TARGET's (grader MINOR).
-- **Found:** graders contradict themselves across rounds on sub-pixel text weight (too light, then too dark); the measurements are in each item's Next pass.
+- **Found:** the grader compares at TARGET's 1024, where its rails are one crisp px; a 720 render draws them at ~0.7 px and cannot be as crisp.
 
 ## Notes
 
