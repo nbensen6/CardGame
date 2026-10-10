@@ -23,12 +23,15 @@ OUT = ROOT / "game/assets/cardart"
 
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,
 # window width in TARGET px when the card's window is not WIN_W])
-CARDS = {"scramble": (647.3, 882.4, 5.0, 137.0), "leap": (373.8, 882.2, -5.0, 137.0)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
+CARDS = {"scramble": (647.3, 882.4, 5.0, 137.0), "leap": (373.8, 882.2, -5.0, 137.0),
+         "tongue_snap": (507.0, 871.0, 0.0, 137.0), "flick": (788.0, 891.0, 9.0, 133.0)}   # run 16: the window runs 0.033 of the card further left (card_view A1_LEFT_OUT)
 # Shipped from this cut: scramble only (window error 35.9 -> 30.1 on the
 # --hand square). Leap's cut registered worse (24.2 -> 34.4) and the older
 # reflected cut stays; run with a name to cut one card.
 SATURATE = {"leap": 1.2}
-EDGE_FIX = {"leap"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
+EDGE_FIX = {"leap", "tongue_snap", "flick"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
+KEEP_TOP = {"flick"}         # the sword's tip reaches the name band: inpainting the top rows smeared it
+PILL_ROW = {"flick": 0.86}   # the sword's guard and grip sit low, over the 0.7 line: key only the pill's own rows
 WIN_W = 122.0                      # TARGET px: the window inside the gold line (run 14: the frame now trims a 2 px bleed)
 ASPECT = (0.889 * 690) / (0.456 * 984)   # card_view.A1_ART (run 16: 0.039 .. 0.928)
 SCALE = 1.4                        # output px per TARGET px: ~2x the window on screen, so the card's mip 1 lands 1:1 and the art stays as crisp as TARGET's (run 14)
@@ -50,7 +53,7 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
     badge &= np.arange(crop.shape[0])[:, None] < crop.shape[0] * 0.45
     badge &= np.arange(crop.shape[1])[None, :] < crop.shape[1] * 0.4
     pill = (mx > 150) & (mx - mn < 30)
-    pill &= np.arange(crop.shape[0])[:, None] > crop.shape[0] * 0.7
+    pill &= np.arange(crop.shape[0])[:, None] > crop.shape[0] * PILL_ROW.get(name, 0.7)
     # Only the pill itself: the biggest pale blob round the window's middle.
     # The loose key also took Leap's pale low foliage, and its inpaint drew a
     # white haze across the art's foot (run 14).
@@ -67,7 +70,7 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
     hole = ndi.binary_dilation(ndi.binary_fill_holes(ndi.binary_closing(badge | pill, iterations=2)), iterations=3)
     # The name band's dark bottom edge, if the window's top row caught it.
     dark_top = np.zeros_like(hole)
-    for y in range(min(6, crop.shape[0])):
+    for y in range(0 if name in KEEP_TOP else min(6, crop.shape[0])):
         if (mx[y] < 70).mean() > 0.6:
             dark_top[y] = True
     hole |= dark_top

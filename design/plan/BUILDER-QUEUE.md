@@ -13,6 +13,29 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+- [ ] 👀 **Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-cardart-after.png|420]] ^card-art-tongue-flick-s-sword-and-tongue
+
+- [ ] **Card body text: TARGET's weight and size.**
+      TARGET's "Deal 1 damage." / "Climb N." is heavier, a touch larger and brighter cream; the game's is thinner and smaller. Critic B MODERATE (2026-10-10 run 3).
+      **Done when** the --square and --hand pairs show no visible difference in the card body text.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Slab tops: TARGET's chipped facets and drawn edges.**
+      TARGET's slab tops carry stepped, chipped facets and drawn edge lines (the fifth and bottom slabs most); the game's read smoother with slightly rounded edges. Critic A MODERATE (2026-10-10 run 3).
+      **Done when** the --square and --stones pairs show no visible difference in the slab surfaces.
+      Test: state=3d beast=cinder_jackal
+
+- [ ] **Frog's rock: TARGET's dark, flat faces.**
+      TARGET's pedestal is dark and blends into the floor; the game's top face reads lighter and its corners and top rim carry warm orange highlights. Both critics MINOR (2026-10-10 run 3).
+      **Done when** the --square pair shows no visible difference in the pedestal.
+      Test: state=3d beast=cinder_jackal
+
+Matched check 2026-10-10 (run 3): critic A MODERATE on slab tops, critic B MODERATE on card art and body text; shared MINOR: Frog's rock (four items queued above)
+
 Matched check 2026-10-10 (run 2): no MAJOR or MODERATE from either critic; shared MINOR: slab edges a touch soft (the open sharpness item, nothing new queued)
 
 Matched check 2026-10-10: no MAJOR or MODERATE from either critic; shared MINOR: slab and jackal edges a touch soft (the open sharpness item)

@@ -2744,3 +2744,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Meshy: 0 credits.
 
 2026-10-09 19:28 EDT, builder (run 21): queued from a 3x zoom of the top bar while measuring the sharpness item (top-bar error 8.3 levels, the scene's 1.5-2.9).
+
+## Card art: Tongue Flick's sword and Tongue Snap's zigzag as TARGET draws them.
+
+- 2026-10-10 run 3: queued from the Matched check (critic B MODERATE). Both cards drew the shared `sword` / `rhythm` icons; they now carry their own art cut from TARGET.png by tools/cardart_cut.py (game/assets/cardart/flick.png, tongue_snap.png), so the card's own-art path takes over from the icon.
+- Registered on the --hand pair: tongue_snap (507, 871, 0 deg, 137 px window, from TARGET's centre card), flick (788, 891, +9 deg, 133 px). New per-card cut options: PILL_ROW (flick keys TARGET's pill only below 0.86 of the window; the 0.7 line inpainted the guard and grip) and KEEP_TOP (flick keeps its top rows; the dark-band inpaint smeared the sword tip). Tried flick tilt 7/5/1.5/11: lower tilts leaned the blade further from TARGET.
+- Grader: VERDICT: PASS (MINOR only: zigzag a touch cooler, sword tip and grip a touch blunter).
+- Meshy: none.

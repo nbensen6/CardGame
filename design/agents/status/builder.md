@@ -13,13 +13,13 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-09 21:12 EDT
+2026-10-09 22:18 EDT
 
-- **Did:** no open item left; ran the matched check against TARGET with two blind critics.
-- **Worked?** Partly: neither critic found anything MAJOR or MODERATE. Both again flag slab-edge softness at MINOR, which is the open sharpness item, so the check isn't "clean" and nothing new was queued. No grader ran (nothing was built).
-- **Look at:** ![[frames/builder/2026-10-10-check-rest.png]]
+- **Did:** Cut Tongue Flick's sword and Tongue Snap's zigzag straight from TARGET; queued four items from a fresh Matched check.
+- **Worked?** Yes. VERDICT: PASS
+- **Look at:** ![[frames/builder/2026-10-10-cardart-before.png]] then ![[frames/builder/2026-10-10-cardart-after.png]]
 - **Ask:** nothing
-- **Found:** the open sharpness item can't pass (run 21 control) yet keeps every check from reading clean, so the stop rule never fires. Unshared MINORs: card-type pill text, first card about 5 px left and low, Switch fill darker, sky slightly flatter, slab undersides slightly warm.
+- **Found:** zigzag a touch cooler and the sword tip a touch blunter than TARGET's (grader MINOR).
 
 ## Notes
 
