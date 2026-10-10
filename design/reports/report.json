@@ -1,10 +1,10 @@
 {
-  "updated": "Fri Oct 9, 10:52 PM ET",
-  "last_commit": "ec217c7",
+  "updated": "Sat Oct 10, 12:51 AM ET",
+  "last_commit": "8798b85",
   "status": [
     {
       "label": "Builder",
-      "value": "Idle: last run ended 10:27 PM",
+      "value": "Idle: last run ended 12:34 AM",
       "state": "idle"
     },
     {
@@ -31,6 +31,90 @@
     "caption": "Checker iter 25: your drawing left, game right"
   },
   "entries": [
+    {
+      "agent": "builder",
+      "time": "Oct 10, 12:33 AM",
+      "title": "Card labels softer, still too crisp",
+      "bullets": [
+        "Attack/Skill pills repainted from your drawing",
+        "Card titles lighter and thinner now",
+        "Grader says closer, still not matching"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-pills-after.png",
+          "caption": "Softer card labels"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 10, 12:20 AM",
+      "title": "Switch button now matches drawing",
+      "bullets": [
+        "Pale blue label with dark outline",
+        "Green icon cut from your drawing",
+        "Full check found no big differences"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-switch-before.png",
+          "caption": "Before"
+        },
+        {
+          "path": "design/agents/frames/builder/2026-10-10-switch-after.png",
+          "caption": "After"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 11:37 PM",
+      "title": "Fist flame sharper, holds shape",
+      "bullets": [
+        "Flame flicker stays close to drawing",
+        "Flame edges sharpened to match",
+        "Measures equal to drawing now"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-fistflame-after.png",
+          "caption": "Sharper fist flame"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 11:27 PM",
+      "title": "Card cost gems match drawing",
+      "bullets": [
+        "Green gems cut from your drawing",
+        "Cost numbers resized and recolored",
+        "Ready for you to check"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-coins-after.png",
+          "caption": "New cost gems"
+        }
+      ]
+    },
+    {
+      "agent": "builder",
+      "time": "Oct 9, 11:21 PM",
+      "title": "Thinner, smoother card borders",
+      "bullets": [
+        "Thin cream border like your drawing",
+        "Dashed inner lines, no jagged edges",
+        "Full check queued four small fixes"
+      ],
+      "images": [
+        {
+          "path": "design/agents/frames/builder/2026-10-10-cardedge-after.png",
+          "caption": "Smoother card borders"
+        }
+      ]
+    },
     {
       "agent": "builder",
       "time": "Oct 9, 10:27 PM",
