@@ -33,7 +33,8 @@ USM = {"flick": 40}   # run 6 (2026-10-10): at 130 the halo lit the blade's grey
 EDGE_FIX = {"leap", "tongue_snap", "flick"}                # cards whose cut needs the edge columns replaced (scramble's trim is tilted across them)
 KEEP_TOP = {"flick"}         # the sword's tip reaches the name band: inpainting the top rows smeared it
 PILL_ROW = {"flick": 0.86}   # the sword's guard and grip sit low, over the 0.7 line: key only the pill's own rows
-FOOT_CLEAR = {"flick": 6}    # TARGET px: the top of TARGET's pill cut off at the window's foot; the key missed it and a pale sliver showed past the card's own pill (run 6, 2026-10-10)
+FOOT_CLEAR = {"flick": 6, "tongue_snap": 6}
+FOOT_BLACK = {"tongue_snap": 8.5}   # TARGET px: under the zigzag's bar TARGET's window is plain black; the pill's inpaint left a blue-grey blob there (run 6)    # TARGET px: the top of TARGET's pill cut off at the window's foot; the key missed it and a pale sliver showed past the card's own pill (run 6, 2026-10-10)
 WIN_W = 122.0                      # TARGET px: the window inside the gold line (run 14: the frame now trims a 2 px bleed)
 ASPECT = (0.889 * 690) / (0.456 * 984)   # card_view.A1_ART (run 16: 0.039 .. 0.928)
 SCALE = 1.4                        # output px per TARGET px: ~2x the window on screen, so the card's mip 1 lands 1:1 and the art stays as crisp as TARGET's (run 14)
@@ -105,6 +106,10 @@ def cut(name: str, cx: float, cy: float, tilt: float, win_w: float = 0.0) -> Non
     bgr = np.ascontiguousarray(crop[..., ::-1])
     fill = cv2.inpaint(bgr, hole.astype(np.uint8) * 255, 5, cv2.INPAINT_TELEA)[..., ::-1]
     crop[hole] = fill[hole]
+    if name in FOOT_BLACK:
+        n = int(round(FOOT_BLACK[name] * crop.shape[0] / h))
+        ground = np.median(crop[int(crop.shape[0] * 0.6):, :6].reshape(-1, 3), axis=0)
+        crop[-n:, 6:-6] = ground.astype(crop.dtype)
     out = Image.fromarray(crop).resize((int(round(w * SCALE)), int(round(h * SCALE))), Image.LANCZOS)
     # The card draws this through a mip and a bilinear tap; a light unsharp
     # mask gives back the edge contrast TARGET's window has (run 14).

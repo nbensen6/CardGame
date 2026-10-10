@@ -697,6 +697,8 @@ const TYPE_PILL_TEX := preload("res://assets/ui/type_pill_t.png")
 ## The type pill's rect inside the type bar `ty`: centred, 44% of its width.
 ## The theme's face is a semibold; TARGET's rules are a regular weight.
 const A1_RULES_EMBOLDEN := -0.3
+const A1_PILL_EMBOLDEN := 0.05
+const A1_PILL_SHADE := 0.95
 ## TARGET's rules ink: glyph cores ~(232,231,209). The hand draws ~0.9 of
 ## the ink it is given, so this is that over 0.9.
 const A1_RULES_INK := Color(1.0, 1.0, 0.91)
@@ -1082,6 +1084,9 @@ func _build_a1() -> void:
 		pill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		pill.stretch_mode = TextureRect.STRETCH_SCALE
 		pill.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		# The capsule drew 6-9 levels brighter than TARGET's face at its ends
+		# and top band (middle card at 1024, run 6 2026-10-10).
+		pill.self_modulate = Color(A1_PILL_SHADE, A1_PILL_SHADE, A1_PILL_SHADE)
 		_place(pill, pr)
 		var tl := _label(kind.capitalize(), 10)
 		tl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -1090,11 +1095,10 @@ func _build_a1() -> void:
 		tl.add_theme_color_override("font_color", Color(0.15, 0.15, 0.19))
 		var pf := FontVariation.new()
 		pf.base_font = a1_painted_base(tl.get_theme_font("font"))
-		pf.variation_embolden = -0.15
+		# Run 6: TARGET's word carries twice the dark ink of run 5's light,
+		# 0.9-alpha word (50 vs 24 px under 100 on the middle pill at 1024).
+		pf.variation_embolden = A1_PILL_EMBOLDEN
 		tl.add_theme_font_override("font", pf)
-		# TARGET's pill word is painted on: softer edges, a little less
-		# contrast than a typeset label (graders, run 5).
-		tl.modulate = Color(1, 1, 1, 0.9)
 		tl.add_theme_constant_override("outline_size", 0)
 		_place(tl, pr)
 	# No rarity pips: TARGET's cards carry none (builder 2026-10-09).

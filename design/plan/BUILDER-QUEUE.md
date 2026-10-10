@@ -42,7 +42,7 @@ Matched check 2026-10-10 (run 5): no MAJOR or MODERATE from either critic; share
       ![[agents/frames/builder/2026-10-10-switch-after.png|420]] ^switch-button-target-s-pale-blue-label
 
 - [ ] **Card type pills and titles: TARGET's soft painted lettering.**
-      Next pass: run 5 (2026-10-10) grader FAIL x4, "pill and title text still crisper than TARGET's soft painted lettering; pill ~10% narrower" (VERDICT: FAIL, not further from TARGET); measured after: pill rows 917-928 vs TARGET 917-927, widths within 2 px on all five cards, title glyph cores (232,228,210) vs TARGET (237,230,210). FIX: the softness left is the 720 render upsampled; try a 1 px blur pass on the card face (a SubViewport or a shader on the name/pill labels) only if a Matched check names it again.
+      Next pass: run 6 (2026-10-10) grader FAIL x2, "pills darker and flatter with a hard rim; word too dark (round 1: too light); titles heavier" (VERDICT: FAIL, not further from TARGET); measured after on the middle pill at 1024: capsule ends within 2 levels of TARGET's ((142,144,156)/(166,172,186) vs (144,145,157)/(165,169,186)), word ink 48 vs 50 px under 100 with equal mean, the stray pale specks at the Tongue Snap pills' tips gone; titles unchanged since run 5 (cores within 5 levels). FIX: none left to build; re-check only in the Matched check.
       TARGET's Attack/Skill pills under the card art and the card titles are soft, painted, lighter-weight lettering; the game's are crisper and a touch heavier. Both critics MINOR (2026-10-10 run 5).
       **Done when** the --square and --hand pairs show no visible difference in the card pills and titles.
       Test: state=3d beast=cinder_jackal ^card-type-pills-and-titles-target-s-soft

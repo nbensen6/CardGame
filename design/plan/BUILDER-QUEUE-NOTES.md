@@ -2837,3 +2837,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Tried and reverted: a thinner or antialiased rail seam (dimmer, no narrower).
 - Grader: VERDICT: FAIL x3 (core, stem, ring size; ring size and halo disagree with the measurements above).
 - Meshy: none.
+
+## Card type pills and titles: TARGET's soft painted lettering. (run 6)
+
+- 2026-10-10 run 6: the Matched check named the pills again (critic A: hard edges, a stray pale pixel at the tips; critic B: card text a touch thin and light).
+- The specks were TARGET's own pill left in the Tongue Snap art cut: tools/cardart_cut.py FOOT_CLEAR now takes tongue_snap too, and FOOT_BLACK paints the cut's last 8.5 TARGET px the window's black (the pill's inpaint had left a blue-grey blob under the zigzag's bar).
+- The pill word: embolden -0.15 at 0.9 alpha -> +0.05 at full alpha (A1_PILL_EMBOLDEN); TARGET's word carried twice the dark ink. Measured after: 48 vs 50 px under 100, mean equal.
+- The capsule: self_modulate 0.95 (A1_PILL_SHADE); it drew 6-9 levels brighter than TARGET's face. 0.88 overshot by ~15 levels.
+- Grader: VERDICT: FAIL x2 (contradictory on the word's weight across rounds).
+- Meshy: none.
