@@ -2865,3 +2865,10 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Measured after at 720: slab 2's box (317,310)-(373,323) exactly TARGET's (was 315..373, 324); every slab's box within 1 px except slab 3's right end, where the grey mask bridges into the rim; both register at offset 0/0, scale 0.98-0.99. Stones error at 720 3.07 -> 3.00.
 - Grader: VERDICT: PASS (MINOR only: the front-face step a touch softer, the underside 1-2 px).
 - Meshy: none.
+
+## Tongue Flick's top-right corner: TARGET's curled gold rim.
+
+- 2026-10-10 run 7: queued from the Matched check (critic B MODERATE).
+- tools/cardframe_target.py: the name band stops at the right-hand rail (the first six EDGE stripes, 61 px) and the rail's own pixels, rounded corner included, run up past the name; the right-hand chevron notch moves in with the band's end; the dim right-side outer rule starts below the band so the corner stays bright gold. Inside the 80 px right patch margin.
+- Grader: VERDICT: FAIL x1 (the gold inner curl at the rail's top, a thinner top rule).
+- Meshy: none.

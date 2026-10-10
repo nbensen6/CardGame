@@ -28,6 +28,7 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       ![[agents/frames/builder/2026-10-10-slab4-after.png|420]] ^fourth-slab-from-the-top-target-s-left-e
 
 - [ ] **Tongue Flick's top-right corner: TARGET's curled gold rim.**
+      Next pass: run 7 (2026-10-10) grader FAIL x1, "no curled-back inner gold line at the rail's top; top rim wider and duller; corner radius tighter" (VERDICT: FAIL, not further from TARGET); built: the name band now stops at the right-hand rail and the rail (outer rule, dark band, inner rule, stitch) runs up past the name round its own rounded corner, the outer rule bright gold round the corner and down beside the band. FIX: cap the rail's top with TARGET's gold inner curl (a horizontal gold stub joining the inner rule to the outer at about a third of the band's height) and thin the top outer rule; check at 8x on TARGET's own 1024 pixels.
       In TARGET the frame's gold rim curls back round Tongue Flick's top-right corner and the right edge bends slightly; the game's corner is a flat square cut. Critic B MODERATE (2026-10-10 run 7).
       **Done when** the --square and --hand pairs show no visible difference at that corner.
       Test: state=3d beast=cinder_jackal ^tongue-flick-s-top-right-corner-target-s

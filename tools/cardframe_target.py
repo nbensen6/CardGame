@@ -113,7 +113,8 @@ def build():
         a[rows, x, :3] = BEAD if x < W // 2 else BEAD_R
     # the right side's outer rule, dim
     o0, o1 = EDGE[0][1], EDGE[0][1] + EDGE[1][1]
-    a[RADIUS:H - RADIUS, W - o1:W - o0, :3] = OUTER_R
+    # (bright gold round the top corner and beside the name band, as TARGET)
+    a[int(BAND_BOTTOM * H):H - RADIUS, W - o1:W - o0, :3] = OUTER_R
     # and TARGET's fainter green dashes down the middle of the dark band
     m0 = EDGE[0][1] + EDGE[1][1] + EDGE[2][1] // 2 - BAND_DASH_W // 2
     dash = (np.arange(H) % BAND_DASH_PERIOD) < BAND_DASH_ON
@@ -127,6 +128,7 @@ def build():
         cols = cols[(cols > RADIUS) & (cols < W - RADIUS)]
         a[y, cols, :3] = BEAD
     bb = int(BAND_BOTTOM * H)
+    rails = a.copy()
     a[BAND_FROM:bb, BAND_FROM:W - BAND_FROM, :3] = BAND
     a[bb - 3:bb, BAND_FROM:W - BAND_FROM, :3] = (34, 32, 40)
     # TARGET's name band is bevelled into a ">" just right of the cost gem:
@@ -142,7 +144,13 @@ def build():
     # same bevel there, mirrored, a dark notch whose apex points back at the
     # name (Matched check 2026-10-10 run 4). Kept inside the 80 px right
     # patch margin so the nine-patch never stretches it.
-    rx0, rx1 = W - BAND_FROM, W - BAND_FROM - CHEV_R
+    # TARGET's band stops at the right-hand rail: the rail (outer rule, dark
+    # band, inner rule and stitch) runs on up past the name and curls round
+    # the top-right corner (Matched check 2026-10-10 run 7, Tongue Flick).
+    # Kept inside the 80 px right patch margin.
+    rail_w = sum(w for _, w in EDGE[:6])
+    a[:bb, W - rail_w:, :] = rails[:bb, W - rail_w:, :]
+    rx0, rx1 = W - rail_w, W - rail_w - CHEV_R
     for y in range(BAND_FROM, bb - 3):
         k = abs(y - mid) / max(1, mid - BAND_FROM)
         xe = int(rx1 + (rx0 - rx1) * k)
