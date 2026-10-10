@@ -26,11 +26,13 @@ run failed.
       ![[agents/frames/builder/2026-10-10-bodytext-after.png|420]] ^card-body-text-target-s-weight-and-size
 
 - [ ] **Slab tops: TARGET's chipped facets and drawn edges.**
+      Next pass: measured run 3 (2026-10-10): the slabs are TARGET's own pixels; on the --stones pair every slab registers at offset 0-1 px with mean error 2.2-5.7 levels and Laplacian sharpness 0.91-1.07 of TARGET's; edge_pow 1.0/1.5 measured worse than 2.0. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
       TARGET's slab tops carry stepped, chipped facets and drawn edge lines (the fifth and bottom slabs most); the game's read smoother with slightly rounded edges. Critic A MODERATE (2026-10-10 run 3).
       **Done when** the --square and --stones pairs show no visible difference in the slab surfaces.
       Test: state=3d beast=cinder_jackal
 
 - [ ] **Frog's rock: TARGET's dark, flat faces.**
+      Next pass: measured run 3 (2026-10-10): every face of the pedestal (top, front, both sides, the right rim) is within 1 level per channel of TARGET's in the --square pair. FIX: none left to build; take the next open item and re-check this one only in the Matched check.
       TARGET's pedestal is dark and blends into the floor; the game's top face reads lighter and its corners and top rim carry warm orange highlights. Both critics MINOR (2026-10-10 run 3).
       **Done when** the --square pair shows no visible difference in the pedestal.
       Test: state=3d beast=cinder_jackal
