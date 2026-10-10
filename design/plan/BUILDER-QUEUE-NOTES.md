@@ -2827,3 +2827,13 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - Leap's word steps up letter by letter on the -5 deg card (each glyph and its underline segment flat). Tried: the unhinted rules face, snap_controls_to_pixels off, MSDF; none changed it. Left as is.
 - Grader: VERDICT: FAIL x2 (one read the strokes too heavy, the next too light; both name Leap's step).
 - Meshy: none.
+
+## Climb gauge: TARGET's soft orb and bottom icons.
+
+- 2026-10-10 run 6: queued from the Matched check (both critics MINOR).
+- Orb: TARGET paints the sigil in hard rings at 6, 13, 19, 24, 29 and 35 px of the 1024 picture; the game's sat at 7, 13, 18, 23, 29, 35 and drew as unantialiased polygons (the "hexagon" core). Radii now TARGET's (~1.13 px per gauge unit), all circles antialiased, the core's cream a touch cooler, the sigil 1.3 units higher (centre now within 0.5 px). Orb error vs TARGET 7.1 -> 5.8.
+- Pips: TARGET's two glyphs are cut from it (tools/gauge_faces.py -> assets/portraits/gauge/frog.png, goblin_mech.png, the harness's two seats); vine_weaver, mountain_climbers and lightbearer get their portrait recoloured into the same olive style. The gauge prefers portraits/gauge/<name> when it exists.
+- Pip rings: GAUGE_RING, TARGET's muted sage (125,198,125) and powder blue (131,177,202), in place of the seat tints; stroke 3.0 at radius 12.5, matching TARGET's 13-15 px ring.
+- Tried and reverted: a thinner or antialiased rail seam (dimmer, no narrower).
+- Grader: VERDICT: FAIL x3 (core, stem, ring size; ring size and halo disagree with the measurements above).
+- Meshy: none.

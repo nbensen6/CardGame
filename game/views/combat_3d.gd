@@ -727,6 +727,9 @@ const COACH_SECONDS := 7.0
 ## One colour per seat. The per-character table is CardView.SEAT_TINT, which
 ## also lights the A1 card frame, so the markers and the hand agree.
 const SLOT_TINT := [CardView.SEAT_TINT["frog"], CardView.SEAT_TINT["mountain_climbers"]]
+## TARGET's gauge pip rings: a muted sage and a powder blue, softer than the
+## seat tints the rest of the HUD wears (measured on TARGET, run 6 2026-10-10).
+const GAUGE_RING := [Color8(125, 198, 125), Color8(131, 177, 202)]
 
 ## The HUD reads like Slay the Spire's (Nick, 2026-09-30, "One HUD style": "we
 ## need to redesign the display of information. reference how slay the spire ii
@@ -1631,6 +1634,8 @@ const GAUGE_H := 372.0
 const GAUGE_MARGIN := 14.0
 const GAUGE_PAD_TOP := 58.0     # room for the burning sigil above the rail
 const GAUGE_PAD_BOTTOM := 34.0  # room for the "N to go" line below it
+## The cut pip face's side in gauge units: 24 TARGET px at ~1.13 TARGET px per unit.
+const GAUGE_PIP_FACE := 21.2
 const GAUGE_PIP_R := 13.0       # a hunter's portrait pip, big enough to tell faces apart
 
 
@@ -1674,6 +1679,11 @@ func _update_gauge(s: Dictionary) -> void:
 	for p in s.get("players", []):
 		heights.append(int((p as Dictionary).get("foothold", 0)))
 		var path := String((p as Dictionary).get("portrait", ""))
+		# TARGET's pips hold its own muted glyph of the hunter, cut from it
+		# (tools/gauge_faces.py), not the full-colour portrait (run 6).
+		var pip_path := path.get_base_dir().path_join("gauge").path_join(path.get_file())
+		if path != "" and ResourceLoader.exists(pip_path):
+			path = pip_path
 		faces.append(load(path) if path != "" and ResourceLoader.exists(path) else null)
 	_gauge_data = {"top": top, "ledges": gauge_ledge_heights(boss.get("ledges", [])),
 		"heights": heights, "faces": faces}
@@ -1774,13 +1784,17 @@ func _draw_gauge() -> void:
 
 	# The sigil burning at the top: a halo that falls off in rings, a hot core,
 	# and its Height in the display face.
-	var sig := Vector2(x, y_top)
+	# TARGET's sigil centre sits ~1.5 px (1024) above the rail's top.
+	var sig := Vector2(x, y_top - 1.3)
 	# Wider than a pip, so a hunter standing on the sigil sits IN the fire
 	# rather than hiding it.
-	for r in [31.0, 26.0, 21.0, 17.0, 12.0]:
-		_gauge.draw_circle(sig, r, Color(EMBER_RIM, 0.12 + (31.0 - r) * 0.028))
-	_gauge.draw_circle(sig, 6.0, Color(1.0, 0.86, 0.5))
-	_gauge.draw_circle(sig, 3.0, Color(1.0, 0.98, 0.9))
+	# TARGET paints its sigil in hard rings at 6, 13, 19, 24, 29 and 35 px of
+	# the 1024 picture (~1.13 px per gauge unit), each edge smooth, not the
+	# polygon staircase an unantialiased circle draws (run 6, 2026-10-10).
+	for r in [31.0, 25.7, 21.2, 16.8, 11.5]:
+		_gauge.draw_circle(sig, r, Color(EMBER_RIM, 0.12 + (31.0 - r) * 0.028), true, -1.0, true)
+	_gauge.draw_circle(sig, 5.3, Color(0.98, 0.84, 0.56), true, -1.0, true)
+	_gauge.draw_circle(sig, 2.4, Color(1.0, 0.98, 0.9), true, -1.0, true)
 	_gauge.draw_string(font, Vector2(0, y_top - 36), "✦ %d" % top,
 		HORIZONTAL_ALIGNMENT_CENTER, size.x, 13, gold)
 	_gauge.draw_line(Vector2(x - 11, y_bot), Vector2(x + 11, y_bot), rail, 3.0)
@@ -1795,10 +1809,13 @@ func _draw_gauge() -> void:
 		var face: Texture2D = faces[i] if i < faces.size() else null
 		if face != null:
 			var s := GAUGE_PIP_R * 1.5
+			if face.resource_path.contains("/gauge/"):
+				s = GAUGE_PIP_FACE   # TARGET's cut fills the ring's inside
 			_gauge.draw_texture_rect(face, Rect2(c - Vector2(s, s) * 0.5, Vector2(s, s)), false)
 		else:
 			_gauge.draw_circle(c, GAUGE_PIP_R * 0.5, tint)
-		_gauge.draw_arc(c, GAUGE_PIP_R, 0.0, TAU, 24, tint, 2.5, true)
+		var ring: Color = GAUGE_RING[i] if i < GAUGE_RING.size() else tint
+		_gauge.draw_arc(c, GAUGE_PIP_R - 0.5, 0.0, TAU, 32, ring, 3.0, true)   # TARGET's stroke ~3 px of 1024 (run 6)
 
 	var mine: int = int(heights[_me()]) if _me() < heights.size() else 0
 	var left: int = top - mine

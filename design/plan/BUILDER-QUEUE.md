@@ -28,6 +28,7 @@ Matched check 2026-10-10 (run 6): critic B MODERATE on Tongue Flick's art (sword
       Test: state=3d beast=cinder_jackal ^climb-keyword-target-s-glyphs
 
 - [ ] **Climb gauge: TARGET's soft orb and bottom icons.**
+      Next pass: run 6 (2026-10-10) grader FAIL x3, "core a touch small and smooth against TARGET's rimmed core; stem through the halo thicker; pip rings a touch small" (VERDICT: FAIL, not further from TARGET); measured after: orb band colours within ~5 levels of TARGET at every radius 0-34 px (1024), ring edges at TARGET's radii, centre within 0.5 px, orb error 7.1 -> 5.8; pip rings at TARGET's radius (13-15 px) and colour within ~5 levels; pip glyphs cut from TARGET; rail seam 2 px like TARGET's, its fringe ~20 levels brighter. FIX: none left to build above a pixel; re-check only in the Matched check.
       TARGET's top orb has a broad, soft halo and a soft white core and its two bottom portrait icons are muted; the game's orb halo is tighter, its core a small hard hexagon, and the blue-ringed icon reads more colourful. Both critics MINOR (2026-10-10 run 6).
       **Done when** the --square pair shows no visible difference in the climb gauge's orb and icons.
       Test: state=3d beast=cinder_jackal ^climb-gauge-target-s-soft-orb-and-botto
