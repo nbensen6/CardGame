@@ -662,6 +662,12 @@ const A1_PAD := 10.0
 ## the WIDTH), because the cost is centred in it, not boxed.
 const A1_SOCKET := Vector3(0.126, 0.0874, 0.0478)
 const A1_TITLE := Rect2(0.205, 0.045, 0.94 - 0.205, 0.130 - 0.045)
+## The name label and its built y, so the hand can trim one card's name
+## without moving its art or rules (set_name_trim).
+var _name_lbl: Label = null
+var _name_base_y := 0.0
+var _coin_nodes: Array = []
+var _coin_base_y: Array = []
 const A1_TITLE_LIFT := 0.007   # 0.0045 and 0.0055 snap to the same frame: summed name error 155 -> 129; 0.007 -> 124
 const A1_ART := Rect2(0.039, 0.132, 0.928 - 0.039, 0.588 - 0.132)   # TARGET's art starts inside the gold line, past the dark band (2026-10-09 run 14)
 const A1_TYPE := Rect2(0.090, 0.558, 0.878 - 0.090, 0.618 - 0.558)   # TARGET's pill sits ~5 px higher at hand size (run 14); ~3 px left of ours (run 16)
@@ -990,6 +996,18 @@ func _a1_inset(np: Control) -> void:
 	np.size = np.size - Vector2(A1_RIM_INSET, A1_RIM_INSET) * 2.0 / k
 
 
+## Moves the name (and, by coin_px, the cost disc and digit) this many px
+## (card-local) off where they were built. Idempotent: the hand calls it on
+## every layout.
+func set_name_trim(px: float, coin_px: float = 0.0) -> void:
+	if _name_lbl != null and is_instance_valid(_name_lbl):
+		_name_lbl.position.y = _name_base_y + px
+	for i in range(mini(_coin_nodes.size(), _coin_base_y.size())):
+		var n: Control = _coin_nodes[i]
+		if is_instance_valid(n):
+			n.position.y = float(_coin_base_y[i]) + coin_px
+
+
 func _build_a1() -> void:
 	var w := custom_minimum_size.x
 	var h := custom_minimum_size.y
@@ -1093,6 +1111,8 @@ func _build_a1() -> void:
 	nm.add_theme_constant_override("shadow_outline_size", 3)
 	# TARGET's name sits ~3 px higher in its band at hand size (run 14).
 	_place(nm, tr.grow_individual(-2.0, 0.0, -3.0, 0.0).grow_individual(0.0, 4.0, 0.0, -4.0))
+	_name_lbl = nm
+	_name_base_y = nm.position.y
 
 	# 5 - the type bar, with rarity at its right end.
 	var ty := a1_box(A1_TYPE, w, h)
@@ -1181,6 +1201,7 @@ func _build_a1() -> void:
 		disc.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		# the painted face is 0.9 of the texture; the rest is its shadow
 		_place(disc, dr.grow(dr.size.x / 0.9 * 0.05))
+		_coin_nodes.append(disc)
 		# TARGET's digit is about a third of the disc tall, white, a thin
 		# dark-green outline (run 14).
 		# TARGET's digit is ~0.4 of the gem tall, a touch taller than run 14's
@@ -1198,6 +1219,9 @@ func _build_a1() -> void:
 		heavy.variation_embolden = 0.12   # TARGET's stroke is thin; the outline carries it
 		cl.add_theme_font_override("font", heavy)
 		_place(cl, Rect2(so.x - so.z, so.y - so.z + 0.5, d, d))
+		_coin_nodes.append(cl)
+		for n in _coin_nodes:
+			_coin_base_y.append((n as Control).position.y)
 
 
 # --- Card-frame mocks (Nick, 2026-10-05) ------------------------------------

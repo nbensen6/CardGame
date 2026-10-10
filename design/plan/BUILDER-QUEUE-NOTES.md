@@ -8,6 +8,16 @@ under the matching heading. Nick never has to read this page.
 
 
 
+## Middle Tongue Snap: TARGET's height for its name and cost coin.
+
+Run 13 (2026-10-10). Queued from the Matched check: both critics MODERATE, the middle card's title clipped at the top of the --hand close-up.
+- Measured at 720 (4x upsampled registration): the middle card's name -0.75 px and coin -0.75 px (high), art and rules -0.25 px; the other four within 0.5-1 px with mixed signs.
+- Round 1: whole-card trim +0.5 px. Grader FAIL; the half-pixel offset dropped the Climb underline (1 px line on a pixel boundary). Reverted.
+- Whole-card +1.0 px put art and rules 0.75 px low; rejected.
+- Round 2: `CardView.set_name_trim(name_px, coin_px)` moves only the name, disc and digit (card-local px); `HAND_NAME_NUDGE_Y` 1.2 on the middle card. Title error 19.1 -> 15.2, underline intact. Grader FAIL on the coin.
+- Round 3: `HAND_COIN_NUDGE_Y` swept 1.0/1.8/2.6/3.4; 2.6 lowest coin error (8.2 -> 7.1), 3.4 overshoots. Grader FAIL, "coin didn't visibly move"; a native crop shows it moved ~5 close-up px down to within ~2 of TARGET's.
+- No Meshy spend.
+
 ## Card contents: TARGET's place and size for art, titles and rules.
 
 Run 12 (2026-10-10). Queued from the Matched check: critic A MODERATE on card illustrations, critic B MINOR on card contents sitting low.

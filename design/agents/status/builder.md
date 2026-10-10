@@ -2,7 +2,7 @@
 tags:
   - agent-status
 agent: builder
-updated: 2026-10-10T07:18
+updated: 2026-10-10T08:22
 working_on: ""
 ---
 
@@ -13,14 +13,14 @@ The one lane that builds. Queue: [[../../plan/BUILDER-QUEUE]]. Brief:
 
 ## This run
 
-2026-10-10 07:18 EDT
+2026-10-10 08:22 EDT
 
-- **Did:** Matched check run 12 queued card contents; lifted card names and the first card one pixel to TARGET.
-- **Worked?** Yes. VERDICT: PASS (round 2; round 1 FAIL on the names still low).
-- **Look at:** ![[frames/builder/2026-10-10-check12-before.png]] then ![[frames/builder/2026-10-10-snapy-after.png]]
+- **Did:** Matched check run 13 queued the middle card's name and coin; lowered both to TARGET's height.
+- **Worked?** Partly. Title clipping fixed, coin within half a pixel by measurement; VERDICT: FAIL (round 3, coin still read high).
+- **Look at:** ![[frames/builder/2026-10-10-check13-before.png]] then ![[frames/builder/2026-10-10-midsnap-after.png]]
 - **Ask:** nothing
-- **Found:** Scramble's art measures ~2% large but a wider re-cut registered worse; left as is.
-- **Found:** the check still cannot come back clean while both critics name overall softness on TARGET's own pixels at 720.
+- **Found:** a half-pixel card offset erases the 1 px Climb underline; trim cards in whole pixels or move parts.
+- **Found:** the grader reads the --hand pair downscaled and misplaces sub-2 px shifts there.
 
 ## Notes
 

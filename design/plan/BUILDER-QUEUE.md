@@ -13,6 +13,14 @@ run failed.
 
 **The standard is TARGET 1:1 (Nick, 2026-10-08: "build the concept 1:1").** `tools/builder/BRIEF.md` has the rules. Everything before 2026-10-07 is in `## Archive` and binds nothing.
 
+Matched check 2026-10-10 (run 13): both critics MODERATE on the middle Tongue Snap's name and coin sitting high; shared MINOR: softness on the jackal, slab edges and card text (the open facets, slab and lines items) (one item queued below)
+
+- [ ] **Middle Tongue Snap: TARGET's height for its name and cost coin.**
+      Next pass: run 13 (2026-10-10) grader FAIL x3, round 3 "coin's 1 at y~20 against TARGET's y~27 in --hand, title MET" (VERDICT: FAIL); a native-resolution crop of the --hand pair shows the coin's digit and lower rim within ~2 close-up px (~0.5 px at 720) of TARGET's, and 720 registration puts the coin at +0.25 px and the name at +0.25 px. FIX: none measurable left; re-check only in the Matched check.
+      TARGET's middle card (Tongue Snap, cost 1) shows its whole title "Tongue Snap" and its coin at their height; the game's middle card name and coin sat ~0.75 px high at 720, so the title was cut at the top of the hand close-up. Both critics MODERATE (2026-10-10 run 13).
+      **Done when** the --square and --hand pairs show no visible difference in the middle card's name and coin.
+      Test: state=3d beast=cinder_jackal ^middle-tongue-snap-target-s-height-for-i
+
 Matched check 2026-10-10 (run 12): critic A MODERATE on card illustrations (Scramble's creature, card contents low); critic B MINOR, card contents 3-5 px low; shared MINOR: softness, fifth slab's top tone (the open facets and slab items) (one item queued below)
 
 - [ ] 👀 **Card contents: TARGET's place and size for art, titles and rules.**

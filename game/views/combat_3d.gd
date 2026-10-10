@@ -9909,8 +9909,13 @@ const HAND_REST_SCALE := 0.65   # TARGET's cards are 92 px wide in the 720 squar
 ## use no trim.
 const HAND_CARD_NUDGE := [0.75, -0.75, -0.75, 0.25, 0.4]
 ## Per-card y trim, same units: the first Tongue Snap registered 1 px low
-## against TARGET on its art, title and rules (builder 2026-10-10 run 12).
+## against TARGET on its art, title and rules (builder 2026-10-10 run 12);
 const HAND_CARD_NUDGE_Y := [-1.0, 0.0, 0.0, 0.0, 0.0]
+## Per-card name-only y trim, same units: the middle Tongue Snap's name sat
+## ~0.75 px high with its art and rules on TARGET (builder 2026-10-10 run 13;
+## moving the whole card half a pixel lost the Climb underline).
+const HAND_NAME_NUDGE_Y := [0.0, 0.0, 1.2, 0.0, 0.0]   # card-local px (~0.65 screen px each at 720)
+const HAND_COIN_NUDGE_Y := [0.0, 0.0, 2.6, 0.0, 0.0]   # the same card's cost coin, same units
 const HAND_REST_LIFT := 77.0   # TARGET's card tops, registered on the top line per card (builder 2026-10-09 run 14)
 
 ## Pure form of _layout_hand's squeeze: how far apart two neighbouring cards
@@ -10013,6 +10018,10 @@ func _layout_hand() -> void:
 		if n == HAND_CARD_NUDGE.size():
 			nudge = float(HAND_CARD_NUDGE[i]) * nudge_px
 			nudge_y = float(HAND_CARD_NUDGE_Y[i]) * nudge_px
+		if c.has_method("set_name_trim"):
+			var five := n == HAND_NAME_NUDGE_Y.size()
+			c.set_name_trim(float(HAND_NAME_NUDGE_Y[i]) if five else 0.0,
+					float(HAND_COIN_NUDGE_Y[i]) if five else 0.0)
 		var rest := Vector2(hand_card_x(i, n, w, step, room) + square_dx + pull + nudge,
 				tuck - HAND_REST_LIFT + absf(off) * FAN_DROP * HAND_REST_SCALE + nudge_y)
 		c.position = rest - Vector2(0.0, lift)
