@@ -1099,7 +1099,7 @@ func _retint_seat_panels() -> void:
 ## The beast's bar, Slay the Spire red with the number inside it.
 ## TARGET's top bar lettering (sampled off TARGET.png): name, Log and Menu.
 const TOP_TEXT := Color(0.90, 0.88, 0.84)
-const TOP_TEXT_DIM := Color(0.80, 0.80, 0.78)
+const TOP_TEXT_DIM := Color(0.73, 0.73, 0.71)   # TARGET's Log and Menu cores ~(172,172,169) at 720 (run 7; was 0.80)
 const TOP_NAME_SIZE := 17
 ## TARGET's segment round "70/70" runs ~0.19 of the bar past the number's
 ## centre: this much clear past the number's own width, in bar px.
@@ -1110,7 +1110,7 @@ const HP_TEXT_CLEAR := 10.0
 const HP_CLEAR_SHARE := 0.26
 ## Between the name and the bar (TARGET: ~9 px in the 720 square).
 const TOP_NAME_GAP := 9
-const TOP_BUTTON_SIZE := 18
+const TOP_BUTTON_SIZE := 17   # TARGET's "Menu" 33 px wide at 720, ours 35 at 18 (run 7)
 const TOP_HP_SIZE := 17
 const TOP_HP_NUDGE := 4.0
 ## TARGET's HP bar: four segments, dividers at these shares of the bar
@@ -1175,7 +1175,7 @@ func _apply_sts_hud() -> void:
 	_title.add_theme_color_override("font_color", TOP_TEXT)
 	_title.add_theme_constant_override("outline_size", 0)
 	_hp.add_theme_constant_override("outline_size", 2)
-	_hp.add_theme_color_override("font_color", Color(0.98, 0.97, 0.95))
+	_hp.add_theme_color_override("font_color", Color(0.93, 0.86, 0.85))   # TARGET's "70/70" cores ~(226,204,203) (run 7)
 	_hp.add_theme_font_size_override("font_size", TOP_HP_SIZE)
 	# TARGET's "70/70" sits a little left of the bar's centre.
 	_hp.offset_left = -TOP_HP_NUDGE
@@ -1183,7 +1183,8 @@ func _apply_sts_hud() -> void:
 	(_hp_bar.get_parent() as BoxContainer).add_theme_constant_override("separation", TOP_NAME_GAP)
 	for b in [_menu_btn, _log_toggle]:
 		(b as Button).add_theme_font_override("font", plain)
-		(b as Button).add_theme_font_size_override("font_size", TOP_BUTTON_SIZE)
+		# "Log" keeps 18: only "Menu" drew wide at 18 (run 7).
+		(b as Button).add_theme_font_size_override("font_size", TOP_BUTTON_SIZE if b == _menu_btn else 18)
 		for c in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
 			(b as Button).add_theme_color_override(c, TOP_TEXT_DIM)
 		(b as Button).add_theme_constant_override("outline_size", 0)

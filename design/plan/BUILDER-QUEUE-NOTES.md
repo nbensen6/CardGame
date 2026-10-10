@@ -2890,3 +2890,12 @@ Found by measuring, not by eye: the jackal is TARGET's own pixels, so every crac
 - The cut's unsharp mask drops 130 -> 60 for tongue_snap (USM): at 130 the zigzag drew crisper and thinner than TARGET's. Zigzag error at its best alignment 21.0 -> 15.0 (0 gave 15.8). The sword was already done in run 6 (USM 40).
 - Grader: VERDICT: PASS (MINOR only: the blade's right half a touch greyer, the zigzag tips a touch softer).
 - Meshy: none.
+
+## HUD lettering: TARGET's weight on the plate, chip, Log/Menu and End Turn.
+
+- 2026-10-10 run 7: queued from the Matched check (both critics MINOR).
+- Measured at 720: the name plate already matched (cores within 4 levels, ink within 3%). "Menu" carried ~17% more ink, 2 px wider, its core ~18 levels brighter; "Log" ~12 brighter; "70/70" ~13 brighter and less pink.
+- TOP_TEXT_DIM 0.80 -> 0.73 (Log and Menu cores now within 4 levels); the HP number (0.93, 0.86, 0.85); TOP_BUTTON_SIZE 18 -> 17 for Menu only (Log keeps 18): Menu now spans 662-694 vs TARGET 662-695.
+- Top-bar error at 720: 10.99 -> 10.57.
+- Grader: VERDICT: PASS (MINOR only: End Turn ~2% narrow with a lighter outline; the name ~1.5 px long).
+- Meshy: none.

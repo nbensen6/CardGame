@@ -39,10 +39,11 @@ Matched check 2026-10-10 (run 7): both critics MODERATE on card frame borders; c
       **Done when** the --square pair shows no visible difference in the energy box and piles.
       Test: state=3d beast=cinder_jackal ^energy-box-target-s-border-and-glow
 
-- [ ] **HUD lettering: TARGET's weight on the plate, chip, Log/Menu and End Turn.**
-      The game's "The Cinder Jackal", "70/70", "Attack 7", "Log", "Menu" and "End Turn" read a hair heavier and wider than TARGET's, and End Turn's stroke differs. Both critics MINOR (2026-10-10 run 7).
-      **Done when** the --square pair shows no visible difference in that lettering.
-      Test: state=3d beast=cinder_jackal ^hud-lettering-target-s-weight-on-the-pl
+- [ ] 👀 **HUD lettering: TARGET's weight on the plate, chip, Log/Menu and End Turn.**
+      ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#HUD lettering: TARGET's weight on the plate, chip, Log/Menu and End Turn.|details]]
+      Ask: nothing
+      Test: state=3d beast=cinder_jackal
+      ![[agents/frames/builder/2026-10-10-hudtext-after.png|420]] ^hud-lettering-target-s-weight-on-the-pl
 
 - [ ] 👀 **Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.**
       ▶ [Test this now](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal) · [[BUILDER-QUEUE-NOTES#Tongue Snap's zigzag and Tongue Flick's sword: TARGET's stroke.|details]]
