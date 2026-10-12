@@ -19,17 +19,17 @@ This vault is the picture half of the project. The working state is in three not
 
 ## The folders
 
-- **[[reference/targets/TARGET.png\|reference/]]** — the north star and the
-  concept art. `TARGET.png` still sets the look; it no longer outranks
-  everything else.
-- **shots/** — screenshots of the build, newest last.
-- **match-log/** — the side-by-side pairs and the log of what each pass
-  changed.
-- **frames/** — before/after frames the agents shot.
-- **renders/** — 3D renders.
-- **beasts/**, **guide/** — beast notes and how-to docs.
-- **archive/** — the 2026-10 cut: queues, boards, agent status, old backlogs.
-  Kept, not deleted.
+- **reference/** — `targets/` the north star and concept art, `previews/` each
+  beast's turnaround and in-game shots, `cards/` the frame mockups.
+- **shots/** — screenshots of the build over time, newest last.
+- **match-log/** — the side-by-side pairs from the matching rounds and the log
+  of what each pass changed.
+- **beasts/** — one note per beast: stats, previews, what is next for it.
+- **guide/** — how-to: the Blender pipeline, the asset loop, the 3D pivot,
+  audio, mobile setup.
+- **files/** — machine output and history, kept and searchable, out of the way:
+  `frames/` every before/after an agent shot, `renders/` the Blender renders,
+  `archive/` the 2026-10 cut (queues, boards, agent status, the old backlog).
 
 ## The latest shot
 
