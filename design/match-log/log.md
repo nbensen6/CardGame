@@ -7,7 +7,7 @@ sprite) is archived in `round-1/`. Its rulings no longer apply.
 get to the concept as close as possible, any means necessary. Use Meshy or
 whatever is needed."
 
-The target is `design/art/targets/TARGET.png`, the whole frame, every box in
+The target is `design/reference/targets/TARGET.png`, the whole frame, every box in
 the Round 2 checklist in `tools/agents/checker.md`. Every earlier ruling that
 conflicts with TARGET is overridden: the pose, the stone route, the HUD.
 

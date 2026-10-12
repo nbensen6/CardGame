@@ -26,7 +26,7 @@ from PIL import Image
 from scipy import ndimage as ndi
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "design/art/targets/TARGET.png"
+TARGET = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/3d/cast/frog_target.png"
 # Per-channel pre-map: the inverse of what the fight does to the cut's tones
 # (written by `frog_cut.py <rest shot>`, like tools/jackal_tone_fix.json).

@@ -1,7 +1,7 @@
 # checker: the critic prompt, the checklist, and the matching loop
 
 The standard is **TARGET 1:1** (Nick, 2026-10-08: "build the concept 1:1").
-`design/art/targets/TARGET.png` is the only reference: scene, HUD and cards
+`design/reference/targets/TARGET.png` is the only reference: scene, HUD and cards
 ("the concept" means this picture; `TARGET-UI.png` is an older mockup and is
 not a target). The game's centred 720x720 square must hold TARGET's picture
 with every element the same shape, proportion, colour, shading, line, size and

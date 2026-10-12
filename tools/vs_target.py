@@ -32,7 +32,7 @@ import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
-TARGET = os.path.join("design", "art", "targets", "TARGET.png")
+TARGET = os.path.join("design", "reference", "targets", "TARGET.png")
 FONTS = os.path.join("game", "assets", "fonts", "KenneyBold.ttf")
 
 # normalised crops, measured off TARGET.png and off a 1280x720 shot

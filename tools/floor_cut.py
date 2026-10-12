@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import gauge_unblend  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "design/art/targets/TARGET.png"
+TARGET = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/3d/cast/cinder_jackal_floor.png"
 
 TOP = 540            # TARGET row the texture starts at (the lava band's foot)

@@ -17,7 +17,7 @@ from PIL import Image, ImageFilter
 from scipy import ndimage as nd
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, "design/art/targets/TARGET.png")
+SRC = os.path.join(ROOT, "design/reference/targets/TARGET.png")
 OUT = os.path.join(ROOT, "game/assets/3d/slabs")
 PAD = 4
 SCALE = 1  # TARGET's own pixels: the game draws them at ~0.7x, so no upsample

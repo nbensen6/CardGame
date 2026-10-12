@@ -3,7 +3,7 @@
 Mockups only -- nothing here is wired into the game. Nick picks one, then the
 builder implements it in card_view.gd.
 
-    python tools/cardframes.py            # writes design/art/cards/frames-*.png
+    python tools/cardframes.py            # writes design/reference/cards/frames-*.png
 
 Drawn at 3x hand size and downscaled, so the 1:1 strip shows what he will
 actually see: a frame that only works at 3x is not a frame.
@@ -15,7 +15,7 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 W, H = 160, 224          # true hand size
 S = 3                    # supersample
-OUT = os.path.join("design", "art", "cards")
+OUT = os.path.join("design", "reference", "cards")
 ART = os.path.join("game", "assets", "cardart")
 FONTS = os.path.join("game", "assets", "fonts")
 

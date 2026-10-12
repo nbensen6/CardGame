@@ -19,7 +19,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-TARGET = os.path.join(ROOT, "design", "art", "targets", "TARGET.png")
+TARGET = os.path.join(ROOT, "design", "reference", "targets", "TARGET.png")
 OUT = os.path.join(ROOT, "game", "assets", "ui", "energy_backdrop.png")
 
 # TARGET.png (1024 px): the outer edge of the box's gold line

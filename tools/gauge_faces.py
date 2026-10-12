@@ -15,7 +15,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "design/art/targets/TARGET.png"
+TARGET = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/portraits/gauge"
 # portrait name: ring centre in TARGET px (the green and the blue ring)
 PIPS = {"frog": (943.6, 690.1), "goblin_mech": (976.0, 690.2)}   # the fight's two seats

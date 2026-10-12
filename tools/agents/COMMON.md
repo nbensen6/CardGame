@@ -157,7 +157,7 @@ nothing.
 - Anything logical: a test in `game/tools/run_tests.gd`; the suite must print
   `ALL TESTS PASSED` before you push. Never push a red tree.
 - Anything visible: render it and LOOK at the frame at 1:1. Commit the frames
-  you judged into `design/agents/frames/<you>/<yyyy-mm-dd>-<slug>*.png`
+  you judged into `design/frames/<you>/<yyyy-mm-dd>-<slug>*.png`
   (small: 1280x720 or less, a handful per run) so Nick and the other agents
   can see what you saw. **Embed them** in the request's `## Result` and in
   your status note's `## Now` with Obsidian syntax — `![[frames/<you>/<file>.png]]`

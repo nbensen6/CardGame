@@ -18,7 +18,7 @@ import numpy as np
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "design/art/targets/TARGET.png"
+SRC = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/ui/cost_disc_t.png"
 N = 128
 FACE = 0.45          # face radius, of N

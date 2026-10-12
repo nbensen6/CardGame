@@ -18,7 +18,7 @@ from PIL import Image, ImageEnhance, ImageFilter
 from scipy import ndimage as ndi
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "design/art/targets/TARGET.png"
+TARGET = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/cardart"
 
 # name: (window centre x, y in TARGET px, card tilt in degrees, + = clockwise[,

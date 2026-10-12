@@ -27,7 +27,7 @@ OUT_DIR = ROOT / "game" / "assets" / "3d" / "cast"
 
 BEASTS = {
     "cinder_jackal": {
-        "concept": "design/art/targets/2026-10-04-jackal-concept.png",
+        "concept": "design/reference/targets/2026-10-04-jackal-concept.png",
         # World height of the sprite before the fight's own _fit_height,
         # the same 1.90 the v2 model had so every constant tuned on it holds.
         "height": 1.90,

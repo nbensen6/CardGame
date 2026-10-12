@@ -1,6 +1,6 @@
 """Put our real cards inside the Meshy-generated frame templates.
 
-The generations in design/art/cards/meshy/ are 1024x1024 pictures of an empty
+The generations in design/reference/cards/meshy/ are 1024x1024 pictures of an empty
 frame. A frame is only judgeable with content in it at the size it is played
 at, so this crops the card out of each generation, drops our art, name, cost,
 type and rules into the panels, and lays the three cards out at 3x and again
@@ -21,7 +21,7 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cardframes as cf
 
-SRC = os.path.join("design", "art", "cards", "meshy")
+SRC = os.path.join("design", "reference", "cards", "meshy")
 W, H = 160, 224
 S = 3
 

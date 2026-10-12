@@ -7,16 +7,18 @@
 
 ---
 
-## 0. Art work toward TARGET.png overrides this file where they conflict
+## 0. Read these first, and they outrank this file
 
-Nick, 2026-10-08: "build the concept 1:1." For anything about how the game
-looks, `design/art/targets/TARGET.png` is the only reference and
-`tools/builder/BRIEF.md` governs. Where §4 ("confirm with the human"), §5's
-performance budget, §11 ("simplest thing", "ask rather than guess", "flag it
-to the human") or §12 (asset loop limits, light before geometry, the shared
-atlas) would stop short of matching TARGET or send a look question to Nick,
-matching TARGET wins and no question is asked. §2, §8 and §5's input rules
-still apply as written.
+- **[TASKS.md](TASKS.md)** — what to work on. Top unchecked item is next.
+- **[DECISIONS.md](DECISIONS.md)** — why things are the way they are. A
+  decision there beats anything older here or in any brief.
+- **[LEARNINGS.md](LEARNINGS.md)** — the traps. Read the entry before changing
+  the thing it names.
+
+The old §0 made `TARGET.png` override this whole file, because the goal was to
+match a picture 1:1. That goal was reached on 2026-10-12 and retired; the art
+reference now lives at `design/reference/targets/TARGET.png` and informs the
+look without outranking anything. The goal is the fight playing well.
 
 ## 1. One-line pitch
 
@@ -61,7 +63,7 @@ These are assumptions this document currently makes. Flag them; don't silently c
 2. **Monetization: premium on both PC and mobile.** A free-to-play mobile economy would reshape
    progression/pacing and should be decided *before* building, not bolted on later.
 3. **Theme/setting/art style: decided** (Nick, 2026-10-07/08). The look is
-   `design/art/targets/TARGET.png`, the whole picture (scene, HUD and cards), and
+   `design/reference/targets/TARGET.png`, the whole picture (scene, HUD and cards), and
    the goal is to match it 1:1, by any means, including Meshy. This is final art,
    not placeholder; invest in it.
 4. **Netcode hosting model:** start with a Godot **authoritative host/server** (one player hosts,

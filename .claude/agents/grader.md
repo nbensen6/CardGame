@@ -9,7 +9,7 @@ You judge one change to the Cinder Jackal fight from pictures alone. You did
 not build it. The builder's summary is not evidence; the pixels are.
 
 **The standard is 1:1** (Nick, 2026-10-08: "build the concept 1:1"). The game
-must look like `design/art/targets/TARGET.png`: the whole picture, scene, HUD
+must look like `design/reference/targets/TARGET.png`: the whole picture, scene, HUD
 and cards. It is the only reference. PASS means the part of the picture this item covers would
 pass for TARGET's: same shapes, proportions, colours, shading, line, size and
 place. "Closer than before" is not a pass. "Moved the right way" is not a

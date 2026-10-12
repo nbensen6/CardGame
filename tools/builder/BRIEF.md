@@ -7,10 +7,10 @@ close as possible, any means necessary. Use Meshy or whatever is needed." "I
 want the builder to focus on aesthetic changes." "Make its own decision till it
 gets to the concept." "Build the concept 1:1."
 
-- **The target is `design/art/targets/TARGET.png`, the whole picture: scene,
+- **The target is `design/reference/targets/TARGET.png`, the whole picture: scene,
   HUD and cards.** When Nick says "the concept" he means this picture. Nothing
   else is a target: not `TARGET-UI.png` (a copy of an older painted mockup
-  that disagrees with TARGET), not `design/art/targets/cards/`, not the
+  that disagrees with TARGET), not `design/reference/targets/cards/`, not the
   jackal concept render, not `JACKAL-BAR.md`, `art-target.md` or the
   2026-09-24 composition drawing, not any older queue item, note or ruling.
   Anything that disagrees with TARGET.png is void, whatever its date.
@@ -102,7 +102,7 @@ gets to the concept." "Build the concept 1:1."
 
 3. **Shoot the BEFORE frame** with the item's named shot (default
    `state=3d beast=cinder_jackal`) to
-   `design/agents/frames/builder/<date>-<slug>-before.png`, and pair it:
+   `design/frames/builder/<date>-<slug>-before.png`, and pair it:
    `--square` always, plus the close-up for what the item touches
    (`--beast`, `--stones`, `--hand`). Look at the pairs. List every
    difference you see in the item's part of the picture.
@@ -147,10 +147,10 @@ gets to the concept." "Build the concept 1:1."
      old look or layout is updated to assert TARGET's.
 
 6. **Commit to `main` and push.** Message starts `builder:`. `git pull
-   --rebase origin main` first. Frames go in `design/agents/frames/builder/`,
+   --rebase origin main` first. Frames go in `design/frames/builder/`,
    1280x720 or smaller. Every run you push also refreshes Home's
    side-by-side from this run's after frame, committed with the frames:
-   `python3 tools/vs_target.py <after>.png design/agents/frames/builder/latest-square.png --square`.
+   `python3 tools/vs_target.py <after>.png design/frames/builder/latest-square.png --square`.
 
 7. **Write `design/agents/status/builder.md`**, overwrite `## This run`. The
    heading is exactly `## This run`; the time goes on the first line under it:

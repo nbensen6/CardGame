@@ -1352,7 +1352,7 @@ func _capture() -> void:
 						else "FAIL want " + _quality_name(int(probe[2])), shown])
 					# Leave the dropped-hold circle live for the state's own final
 					# screenshot, so the burst text above is a rendered pixel, not
-					# just a printed claim -- see design/agents/frames/fixer/.
+					# just a printed claim -- see design/frames/fixer/.
 					if String(probe[0]) != "let go early":
 						pc.queue_free()
 			if _state == "3dosu" and circle != null:

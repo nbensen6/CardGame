@@ -36,7 +36,7 @@ from scipy import ndimage as ndi
 
 ROOT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
 SPRITE = "game/assets/3d/cast/%s_2d.png"
-CONCEPT = "design/art/targets/2026-10-04-jackal-concept.png"
+CONCEPT = "design/reference/targets/2026-10-04-jackal-concept.png"
 
 # share of figure height; measured off TARGET.png's jackal, which is the only
 # reference that HAS an outline

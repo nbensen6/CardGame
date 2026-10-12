@@ -12,7 +12,7 @@ In game those are two stacked TextureRects; the glow one gets
 `self_modulate = <seat colour>` and nothing else changes. That is the same
 trick combat_3d.gd already uses for SLOT_TINT.
 
-    python tools/cardframe_a1.py     # writes the pair + design/art/cards/a1-*.png
+    python tools/cardframe_a1.py     # writes the pair + design/reference/cards/a1-*.png
 
 BOX numbers below are measured off the generation, normalised against the
 cropped card, and are what card_view.gd should author once this ships.
@@ -27,9 +27,9 @@ from PIL import Image, ImageChops, ImageDraw, ImageFilter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import cardframes as cf
 
-SRC = os.path.join("design", "art", "cards", "meshy", "A1-obsidian.png")
+SRC = os.path.join("design", "reference", "cards", "meshy", "A1-obsidian.png")
 ASSETS = os.path.join("game", "assets", "ui")
-OUT = os.path.join("design", "art", "cards")
+OUT = os.path.join("design", "reference", "cards")
 CROP = (168, 18, 858, 1002)          # the card inside the 1024 square
 W, H = 160, 224
 S = 3

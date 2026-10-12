@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import crack_synth
 
 ROOT = Path(__file__).resolve().parent.parent
-TARGET = ROOT / "design/art/targets/TARGET.png"
+TARGET = ROOT / "design/reference/targets/TARGET.png"
 OUT = ROOT / "game/assets/3d/cast"
 ID = "cinder_jackal"
 
