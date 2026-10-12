@@ -1,7 +1,7 @@
 # Tasks
 
 The live list. Top unchecked item is the next one. Short lines; the reasoning
-lives in [DECISIONS.md](DECISIONS.md), the traps in [LEARNINGS.md](LEARNINGS.md).
+lives in [[DECISIONS]], the traps in [[LEARNINGS]].
 
 Nick adds items anywhere in **Now**; order is priority. Check an item off with
 its commit hash.

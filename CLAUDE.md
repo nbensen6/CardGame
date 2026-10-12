@@ -9,11 +9,14 @@
 
 ## 0. Read these first, and they outrank this file
 
-- **[TASKS.md](TASKS.md)** — what to work on. Top unchecked item is next.
-- **[DECISIONS.md](DECISIONS.md)** — why things are the way they are. A
+- **[design/TASKS.md](design/TASKS.md)** — what to work on. Top unchecked item is next.
+- **[design/DECISIONS.md](design/DECISIONS.md)** — why things are the way they are. A
   decision there beats anything older here or in any brief.
-- **[LEARNINGS.md](LEARNINGS.md)** — the traps. Read the entry before changing
+- **[design/LEARNINGS.md](design/LEARNINGS.md)** — the traps. Read the entry before changing
   the thing it names.
+
+They live in `design/` so they open in the Obsidian vault; the repo root is
+gitignored for new files anyway.
 
 The old §0 made `TARGET.png` override this whole file, because the goal was to
 match a picture 1:1. That goal was reached on 2026-10-12 and retired; the art

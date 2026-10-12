@@ -1044,3 +1044,4 @@ NOTE: local edits kept in `git stash list`, they conflict with origin
 Needs Nick.md: 0 to decide, 56 to look at
 NOTE: local edits kept in `git stash list`, they conflict with origin
 Needs Nick.md: 0 to decide, 56 to look at
+python: can't open file 'G:\\Co Op Game\\tools\\needs_nick.py': [Errno 2] No such file or directory

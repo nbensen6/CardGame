@@ -6,16 +6,16 @@ tags:
 # Titan-Slayers
 
 **The goal:** the Cinder Jackal fight, playing well. The art target was reached
-on 2026-10-12 and retired — see [[../DECISIONS|DECISIONS]].
+on 2026-10-12 and retired — see [[DECISIONS]].
 
-This vault is the picture half of the project. The working state lives in the
-repo root, in three files, because that is where the agents read it:
+This vault is the picture half of the project. The working state is in three notes beside this one, which
+`CLAUDE.md` points the agents at:
 
 | | |
 |---|---|
-| **[[../TASKS\|TASKS.md]]** | what is next; top unchecked line |
-| **[[../DECISIONS\|DECISIONS.md]]** | why things are as they are; outranks any older brief |
-| **[[../LEARNINGS\|LEARNINGS.md]]** | the traps, before you touch what they name |
+| **[[TASKS]]** | what is next; top unchecked line |
+| **[[DECISIONS]]** | why things are as they are; outranks any older brief |
+| **[[LEARNINGS]]** | the traps, before you touch what they name |
 
 ## The folders
 
@@ -38,6 +38,6 @@ repo root, in three files, because that is where the agents read it:
 ## How work happens now
 
 Interactively, with Nick in the loop, because feel cannot be judged from a
-still frame — that is the lesson in [[../LEARNINGS|LEARNINGS]]. The cloud
+still frame — that is the lesson in [[LEARNINGS]]. The cloud
 builder and checker routines are **paused**; they come back only for work a
 test can verify. Pause and resume them from the desktop app's Routines panel.
