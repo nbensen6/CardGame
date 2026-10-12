@@ -3113,20 +3113,35 @@ static func hud_square(vp: Vector2) -> Rect2:
 
 ## Where a control `size` goes to fill TARGET box `box` (720 basis) inside
 ## square `sq`, scaled uniformly and centred in the box: [position, scale].
-static func hud_fit(box: Rect2, size: Vector2, sq: Rect2) -> Array:
+##
+## `vp_w` is the window's full width. TARGET is square and the window is not,
+## so when it is wider than the square the HUD keeps TARGET's vertical layout
+## and scale but SPREADS sideways: a box TARGET draws in its left half keeps
+## its distance from the left screen edge, one in the right half keeps its
+## distance from the right. A 16:9 window then uses its own corners instead of
+## stacking everything into a band down the middle with the scene showing
+## either side (Nick, 2026-10-12: "yes drop it back to 16:9").
+static func hud_fit(box: Rect2, size: Vector2, sq: Rect2, vp_w: float = 0.0) -> Array:
 	var k := sq.size.x / HUD_SQUARE_SIDE
 	var want := box.size * k
 	var s := 1.0
 	if size.x > 0.0 and size.y > 0.0:
 		s = minf(want.x / size.x, want.y / size.y)
-	var pos := sq.position + box.position * k + (want - size * s) * 0.5
+	var x := sq.position.x + box.position.x * k
+	if vp_w > sq.size.x:
+		if box.position.x + box.size.x * 0.5 > HUD_SQUARE_SIDE * 0.5:
+			x = vp_w - (HUD_SQUARE_SIDE - box.position.x - box.size.x) * k - want.x
+		else:
+			x = box.position.x * k
+	var pos := Vector2(x, sq.position.y + box.position.y * k) + (want - size * s) * 0.5
 	return [pos, s]
 
 
 func _place_square_hud() -> void:
 	if _hud == null or not is_inside_tree():
 		return
-	var sq := hud_square(get_viewport().get_visible_rect().size)
+	var vp := get_viewport().get_visible_rect().size
+	var sq := hud_square(vp)
 	var k := sq.size.x / HUD_SQUARE_SIDE
 	for key in HUD_SQUARE:
 		var c: Control = null
@@ -3153,12 +3168,12 @@ func _place_square_hud() -> void:
 			if key == "Controls":
 				# The pills at their own width, not the column's.
 				c.size = Vector2(lead.get_combined_minimum_size().x, c.size.y)
-			var fl := hud_fit(box, lead.size, sq)
+			var fl := hud_fit(box, lead.size, sq, vp.x)
 			var sl := float(fl[1])
 			c.scale = Vector2.ONE * sl
 			c.position = ((fl[0] as Vector2) - lead.position * sl).round()
 			continue
-		var fit := hud_fit(box, c.size, sq)
+		var fit := hud_fit(box, c.size, sq, vp.x)
 		c.scale = Vector2.ONE * float(fit[1])
 		c.position = (fit[0] as Vector2).round()
 	# The log: its toggle on TARGET's "Log", at Menu's scale, the panel

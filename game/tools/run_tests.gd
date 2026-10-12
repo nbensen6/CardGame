@@ -32153,3 +32153,29 @@ func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
 	# TARGET's floor (builder 2026-10-09): uneven flat slabs with thin dim
 	# warm seams, not a bright orange hex grid.
 	_expect(float(fp.get("crack_gain", 1.0)) < 0.5, "the jackal's floor seams are dim, not bright orange")
+
+	# TARGET is square, the window is not. On a 16:9 window the HUD keeps
+	# TARGET's vertical layout but spreads to the screen's own edges, instead
+	# of sitting in a 720-wide band with the scene showing either side (Nick,
+	# 2026-10-12: "yes drop it back to 16:9").
+	var wide := Vector2(1280, 720)
+	var sq16 := Combat3D.hud_square(wide)
+	var left_box: Rect2 = Combat3D.HUD_SQUARE["TopBar"]
+	var right_box: Rect2 = Combat3D.HUD_SQUARE["Controls"]
+	var left_fit := Combat3D.hud_fit(left_box, left_box.size, sq16, wide.x)
+	var right_fit := Combat3D.hud_fit(right_box, right_box.size, sq16, wide.x)
+	var left_x := (left_fit[0] as Vector2).x
+	var right_end := (right_fit[0] as Vector2).x + right_box.size.x
+	_expect(left_x < sq16.position.x,
+		"a left-half HUD box hangs off the window's left edge, not the square's [got=%.0f square=%.0f]"
+			% [left_x, sq16.position.x])
+	_expect(right_end > sq16.position.x + sq16.size.x,
+		"a right-half HUD box reaches the window's right edge [got=%.0f square ends %.0f]"
+			% [right_end, sq16.position.x + sq16.size.x])
+	_expect(is_equal_approx(left_x, left_box.position.x),
+		"it keeps TARGET's own gap from that edge [got=%.1f want=%.1f]" % [left_x, left_box.position.x])
+	# a square window is unchanged: nothing to spread into
+	var sq11 := Combat3D.hud_square(Vector2(720, 720))
+	var same := Combat3D.hud_fit(left_box, left_box.size, sq11, 720.0)
+	_expect(is_equal_approx((same[0] as Vector2).x, left_box.position.x),
+		"on a square window the HUD is exactly where it was")
