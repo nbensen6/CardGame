@@ -22,7 +22,7 @@ match log. You write only `design/reports/`.
    - `bullets`: 2–3, each 4–9 words. What changed, what it fixed, what's next.
      No file names, no constants, no jargon.
    - `images`: 1–3 repo paths with a 1–4 word caption. Builder: the
-     `design/frames/builder/` PNGs that commit added (pair, after,
+     `design/files/frames/builder/` PNGs that commit added (pair, after,
      strips). Checker: `design/match-log/iter-NN.png` and `iter-NN-beast.png`.
      Open each image before using it; skip one that shows nothing useful.
    Collapse several checker iterations from one run into one entry only if
@@ -41,7 +41,7 @@ match log. You write only `design/reports/`.
    - `updated`: now, Eastern. `last_commit`: HEAD's short hash.
    If a builder commit is new, refresh Home's side-by-side from the newest
    builder after frame it added:
-   `python3 tools/vs_target.py <after>.png design/frames/builder/latest-square.png --square`.
+   `python3 tools/vs_target.py <after>.png design/files/frames/builder/latest-square.png --square`.
 5. `python3 tools/report/build_report.py`, then open
    `design/reports/report.html` once to check it renders.
 6. Publish with the Artifact tool: `action: "read"` on the URL above, then

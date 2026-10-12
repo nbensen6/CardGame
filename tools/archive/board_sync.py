@@ -242,7 +242,7 @@ def ensure_labels(dry):
 def issue_body(path, body, fm):
     """The issue text: the note, a way back to it, and a way into the game.
 
-    Obsidian embeds (![[frames/...]]) do not render on GitHub. Rather than
+    Obsidian embeds (![[files/frames/...]]) do not render on GitHub. Rather than
     rewrite them into raw URLs and get it subtly wrong, say plainly that the
     frames are in the repo -- the note is the source of truth and this is a
     mirror.
@@ -326,7 +326,7 @@ def decision_body(path, body, fm):
 
 
 def embed_frames(body):
-    """Turn Obsidian's ![[frames/...]] into images GitHub actually renders.
+    """Turn Obsidian's ![[files/frames/...]] into images GitHub actually renders.
 
     These tickets argue from evidence -- "here is what a player sees" followed
     by a frame -- and on GitHub that frame was a line of literal text, so the

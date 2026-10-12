@@ -18,7 +18,7 @@ the whole HUD into a 720-wide band with the scene showing either side.
 Issues and a Projects board, for a team of one. Cut to `TASKS.md`,
 `DECISIONS.md`, `LEARNINGS.md` in the repo root, with `design/` keeping what
 Obsidian is genuinely good for: reference art, shots, match-log pairs, frames,
-renders. Everything else is under `design/archive/2026-10-cut`.
+renders. Everything else is under `design/files/archive/2026-10-cut`.
 
 A hosted tracker earns its keep when other people need comments and
 assignments. We are one person.

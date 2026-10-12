@@ -14,7 +14,7 @@ start to finish.
 
 1. **Build / revise** — edit the asset's script in `tools/blender/`.
 2. **Capture** — `tools\blender\look.cmd <asset> <pass>`. Six views into
-   `design/renders/<asset>_pass<N>_*.png`.
+   `design/files/renders/<asset>_pass<N>_*.png`.
 3. **Look** — read the images back in. Describe what is actually there, not what
    the script was trying to make. **If you cannot see the render, stop and say
    so.** Do not continue blind.

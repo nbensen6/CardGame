@@ -19,7 +19,7 @@ set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
-OUT="$ROOT/design/renders"
+OUT="$ROOT/design/files/renders"
 BLENDER="${BLENDER:-blender}"
 
 kind=cast
@@ -46,7 +46,7 @@ shoot() {          # shoot <asset> <pass>
     return 0
   fi
   # The STEM carries the kind, the source path does not. A beast and its
-  # same-named ground used to write the identical design/renders/<name>_pass<N>
+  # same-named ground used to write the identical design/files/renders/<name>_pass<N>
   # files and whichever ran last silently won -- which is how silmetrics.py came
   # to report four arena grounds as the four worst beasts in the game on
   # 2026-09-07. 28 of the cast share a name with an env asset. See
@@ -70,4 +70,4 @@ else
 fi
 
 echo
-echo "Six views per asset in design/renders/. Now open them."
+echo "Six views per asset in design/files/renders/. Now open them."

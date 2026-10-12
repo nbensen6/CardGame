@@ -187,7 +187,7 @@ The step that matters is *look*: render it and open the images. Eleven assets in
 this repo passed every automated check and were still wrong, because a check can
 prove a model meets its contract and cannot tell you it reads as a lamp.
 
-- `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/renders/`
+- `tools\blender\look.cmd <asset> <pass>` — capture six views to `design/files/renders/`
 - `design/progress/<asset>.md` — the score history for one asset
 - `design/art/ART-REVIEW.md` — superseded; nothing in it waits on Nick
 - `tools\blender\palette.py` — the shared colour atlas. Derives from

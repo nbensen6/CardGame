@@ -20,7 +20,7 @@ the beasts look assembled, because a script can only place primitives.
 cd "G:/Co Op Game" && cmd /c tools\blender\build.cmd cinder_jackal
 ```
 
-Then look at it — six views land in `design/renders/`:
+Then look at it — six views land in `design/files/renders/`:
 
 ```bash
 cd "G:/Co Op Game" && cmd /c tools\blender\look.cmd cinder_jackal 5
@@ -194,7 +194,7 @@ further wiring. Then build, look, and swap it into a fight.
 ## What to hand back
 
 If you change a beast, the useful thing to send is the render, not the file — I
-can read `design/renders/<beast>_pass<N>_*.png` and tell you what moved. And if
+can read `design/files/renders/<beast>_pass<N>_*.png` and tell you what moved. And if
 something you do looks better than what the pipeline produces, say so plainly:
 my judgement on what looks *good* has been wrong repeatedly here, and yours is
 the one that decides.

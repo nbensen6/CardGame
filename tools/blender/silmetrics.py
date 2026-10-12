@@ -7,7 +7,7 @@ Plain Pillow. No Blender, no screen, no game. **Both lanes can run this** — th
 cloud included, which is the point: it turns "does this look blocky" from an
 opinion into a number that the lane without a display can read.
 
-Reads the newest `design/renders/<asset>_pass<N>_sil.png` for each asset.
+Reads the newest `design/files/renders/<asset>_pass<N>_sil.png` for each asset.
 
 WHAT IT MEASURES
 
@@ -85,7 +85,7 @@ def ambiguous(name, path):
     """True if the bare-name render at `path` could be the beast OR its ground.
 
     Until 2026-09-08 `look.sh env <name> <pass>` wrote to the SAME
-    design/renders/<name>_pass<N>_*.png files as `look.sh <name> <pass>`, and
+    design/files/renders/<name>_pass<N>_*.png files as `look.sh <name> <pass>`, and
     whichever ran last silently won. That is how this tool reported four arena
     grounds -- gale_serpent, stone_warden, crag_pup, bounder -- as the four
     worst beasts in the game on its first run. 28 of the cast share a name with
@@ -187,7 +187,7 @@ def main(argv):
         print("  Re-capture with `look.sh <name> <pass>` (cast) to get a render "
               "this tool can trust.\n  See design/progress/gale_serpent.md.\n")
     if not sils:
-        print("no usable silhouette renders found under design/renders/")
+        print("no usable silhouette renders found under design/files/renders/")
         return 1
 
     rows, norms = [], {}

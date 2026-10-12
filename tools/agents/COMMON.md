@@ -157,10 +157,10 @@ nothing.
 - Anything logical: a test in `game/tools/run_tests.gd`; the suite must print
   `ALL TESTS PASSED` before you push. Never push a red tree.
 - Anything visible: render it and LOOK at the frame at 1:1. Commit the frames
-  you judged into `design/frames/<you>/<yyyy-mm-dd>-<slug>*.png`
+  you judged into `design/files/frames/<you>/<yyyy-mm-dd>-<slug>*.png`
   (small: 1280x720 or less, a handful per run) so Nick and the other agents
   can see what you saw. **Embed them** in the request's `## Result` and in
-  your status note's `## Now` with Obsidian syntax — `![[frames/<you>/<file>.png]]`
+  your status note's `## Now` with Obsidian syntax — `![[files/frames/<you>/<file>.png]]`
   — or Nick only sees a path he has to go hunting for.
 - You cannot see motion in one frame. For motion, render a strip of frames and
   tile them into one sheet.

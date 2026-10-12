@@ -7,7 +7,7 @@ REM   tools\blender\look.cmd env crag_pup 1    a fight's ground
 REM   tools\blender\look.cmd map grass 1       an overworld tile
 REM   tools\blender\look.cmd cast 1            every hunter and beast
 REM
-REM Writes six views per asset into design/renders/. Nothing here judges
+REM Writes six views per asset into design/files/renders/. Nothing here judges
 REM anything — that is the part a person (or a session with a display) does by
 REM opening the images. The whole reason this file exists separately from
 REM assetcheck is that assetcheck can prove a model meets its contract and
