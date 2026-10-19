@@ -103,57 +103,71 @@ mark those passed; the drawing-versus-words mistake has a gameplay twin.
 
 ## What I found driving it, 2026-10-19
 
-Measured in the running fight through the Godot MCP, not guessed. The three
-checks that are mine to judge all fail, and two of them fail for the same
-reason: **the numbers make the tension impossible, not merely weak.**
+Measured in the running fight through the Godot MCP. Nick, 2026-10-19: "focus
+less on balancing and more on the design" — so what follows is read as design.
+The numbers are evidence, not the fix.
 
-### Check 2 fails — the grip bar almost never runs
+### The climb and the fight are two games that barely touch
 
-The Frog's passive is **+1 Climb**. Every climb card in its deck therefore
-lands on a safe hold:
+This is the one that matters. Height is a **gate**, not a dimension: reach 5 to
+hit the sigil. Everything else plays exactly the same at 0 as at 5.
+
+- **10 of 187 cards** read the hunter's height (`damage_per_foothold`), and
+  **none of them are in either starting deck.** Nothing you play in minute one
+  changes because of where you are.
+- **1 of the Jackal's 9 moves** cares where you are — the claw sweep, which
+  catches hunters at 4 and above. The other eight hit the same whether you are
+  on its face or standing on the floor.
+
+So the climb costs cards and risk and gives back one thing: permission to
+attack the sigil. A player who never climbs plays a normal deckbuilder; a
+player who climbs plays the same deckbuilder higher up.
+
+**The design question:** what should being high up *mean*, besides access? The
+obvious candidates — it changes what your cards do, it changes what the beast
+can do to you, it changes what you can see coming.
+
+### The grip timer has no decision attached to it
+
+The Frog's +1 Climb and ledges at 2 and 4 mean **one climb in eighteen leaves
+it clinging**:
 
     from 0:  Tongue Snap->2  Leap->4  Hop->2  Pounce->2  Leapfrog->3 CLING
     from 2:  Tongue Snap->4  Leap->6  Hop->4  Pounce->4  Leapfrog->5
     from 4:  everything ->6 or higher, at or past the sigil
 
-**One climb out of eighteen leaves the Frog clinging** — Leapfrog, from the
-base only. The real-time grip timer is the feel this fight is built around
-(see [[DECISIONS]], "double timing"), and in a normal minute it never starts.
-The ledges at 2 and 4 are exactly one Frog-climb apart, so the climb is a
-staircase with no gaps.
+The numbers are the symptom. The design problem is that **hanging is never a
+choice** — it is an accident of arithmetic. A timer that only punishes bad
+luck is noise; a timer you choose to start, because hanging buys you something,
+is tension. Right now there is no reason to ever be between holds.
 
-### Check 3 fails — the full bonus is luck, not skill
+### The timed sweep rewards the wrong thing
 
-At `Feel.SWEEP_SPEED` 1.9/s:
+The band is 105 ms wide and the "full bonus" core inside it is **31 ms — 1.9
+frames**, narrower than human reaction variance. But widening it is the balance
+answer. The design answer is that **the core is a second helping of the same
+reward**: both tiers pay damage, so the inner one is invisible and the outer
+one makes it pointless. A timing hit could instead change *what the card does*
+— the thing a player would notice and aim for.
 
-    zone 0.40-0.60   0.20 wide    105 ms in the band
-    core 0.47-0.53   0.06 wide     31 ms for the FULL bonus  = 1.9 frames
+### The Goblin's minute one is "wait"
 
-Human reaction variance is wider than 31 ms on its own. Nobody *aims* at the
-core; they hit it or they don't. The band at 105 ms is a real skill check; the
-core inside it is a coin flip wearing a reward.
+No climb card, one damaging card in ten. The deck is Build Grapple, Build Mech,
+Grappling Arm, Jetpack — gadgets that pay off later. In a co-op game about two
+climbers, **the two hunters do not interact at all in the first minute.**
+Switching is bookkeeping until something fires.
 
-### Check 7 is shaky — the Goblin cannot climb
+### What does work
 
-Of the Goblin's 10 cards, **none has a Climb value and only one deals damage**
-(Satchel Charge). The deck is Build Grapple, Build Mech, Grappling Arm, Goblin
-Jetpack — gadgets that climb later. That may well be the intent, but it means
-switching to the Goblin in the first minute is switching to a hunter who can
-neither climb nor meaningfully hit. Switching is bookkeeping until a gadget
-fires.
-
-### Check 5 works
-
-Two Tongue Snaps at the sigil = 19 damage, past the threshold of 16, and the
-beast bucks the hunter from 7 down to 4 with the counter reset. The loop
-**climb -> strike -> thrown -> climb** exists and is quick. The question left
-is whether the player can *see* why, which is yours.
+Two hits at the sigil pass the threshold of 16 and the beast bucks the hunter
+from 7 down to 4, counter reset. **The climb -> strike -> thrown -> climb loop
+exists and is quick.** It is the one part of the minute that is already a
+rhythm, and everything above is about giving it stakes.
 
 ### Still yours to judge
 
 1, 4, 6, 8, 9 — the opening decision, arriving at the sigil, the claw's
-telegraph, the 40% gear change, and whether a loss reads as your fault. Nothing
-I measured touches those.
+telegraph, the 40% gear change, and whether a loss reads as your fault.
 
 ## Scorecard
 
