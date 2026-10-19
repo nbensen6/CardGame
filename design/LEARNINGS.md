@@ -43,6 +43,12 @@ Traps that have cost real time. Read before changing the thing they name.
 - `godot_editor_edit run` with `frozen: true` boots the game with game time
   held at frame 0, so it cannot race ahead between tool calls. Then
   `godot_game_time step` advances a bounded slice.
+- **Tune the fight live.** `game/core/feel.gd` holds the grip bar and the
+  sweep window as `static var`, and nothing caches them, so
+  `godot_exec: Feel.SWEEP_SPEED = 1.2` takes effect on the next frame. Values
+  reset to the file's defaults on relaunch; edit the file to keep one.
+- A new `class_name` means **`--import` before anything will compile** — `Feel`
+  was no exception.
 - Prefer `godot_runtime_state digest` (text, ~free) over `screenshot_game`.
   Screenshots never decay — every frame stays in context for the rest of the
   session.

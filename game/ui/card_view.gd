@@ -56,15 +56,21 @@ const BOX_DESKTOP_NORMAL := Vector2(162, 264)
 const BOX_HANDHELD_BIG := Vector2(161, 226)
 const BOX_HANDHELD_NORMAL := Vector2(135, 190)
 
-const ZONE_MIN := 0.40
-const ZONE_MAX := 0.60
+# ZONE_MIN now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.ZONE_MIN.
+# ZONE_MAX now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.ZONE_MAX.
 ## The bullseye core within the zone — already drawn brighter in
 ## _build_timing_strip() as an aim point; backlog #33 makes it mean something:
 ## land inside THIS band (not just the wider zone) for the full timed bonus.
-const CORE_MIN := 0.47
-const CORE_MAX := 0.53
-const SWEEP_SPEED := 1.9    # sweeps per second — quick; timing should demand focus (Nick)
-const WINDOW_SECONDS := 2.5 # max time per timing window; expire = the card fizzles (Nick)
+# CORE_MIN now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.CORE_MIN.
+# CORE_MAX now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.CORE_MAX.
+# SWEEP_SPEED now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.SWEEP_SPEED.
+# WINDOW_SECONDS now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.WINDOW_SECONDS.
 
 var _timing := false
 var _t := 0.0
@@ -2919,8 +2925,8 @@ func start_timing(hits: int = 1) -> void:
 	var zone := _strip.get_node_or_null("Zone")
 	if zone != null:  # relics may have widened the window since setup()
 		var bonus_t := zone_bonus_t(zone_bonus)
-		(zone as Control).anchor_left = maxf(0.0, ZONE_MIN - bonus_t)
-		(zone as Control).anchor_right = minf(1.0, ZONE_MAX + bonus_t)
+		(zone as Control).anchor_left = maxf(0.0, Feel.ZONE_MIN - bonus_t)
+		(zone as Control).anchor_right = minf(1.0, Feel.ZONE_MAX + bonus_t)
 	_strip.modulate = Color(1, 1, 1)
 	_strip.visible = true
 	if is_instance_valid(_clock):
@@ -2965,9 +2971,9 @@ func _on_self_pressed() -> void:
 ## Converts a raw `timing_zone` fraction (HitCircle.zone_bonus's own units —
 ## 0.12 for a 12% relic) into the sweep bar's t-space (0..1 across the strip).
 ## HitCircle turns the same fraction into `zone_bonus * 0.35` EXTRA SECONDS of
-## forgiveness on each side of the beat; t here advances at SWEEP_SPEED units
+## forgiveness on each side of the beat; t here advances at Feel.SWEEP_SPEED units
 ## per second (see _process), so the same seconds of forgiveness is
-## `zone_bonus * 0.35 * SWEEP_SPEED` in t.
+## `zone_bonus * 0.35 * Feel.SWEEP_SPEED` in t.
 ##
 ## Before this, fire_quality() and _build_timing_strip()/start_timing() added
 ## the raw fraction straight onto the bar's 0..1 zone bounds with no
@@ -2980,7 +2986,7 @@ func _on_self_pressed() -> void:
 ## identical cards (backlog #86 duty 2 — two faces of one rule silently
 ## disagreeing on what the rule was).
 static func zone_bonus_t(zone_bonus: float) -> float:
-	return zone_bonus * 0.35 * SWEEP_SPEED
+	return zone_bonus * 0.35 * Feel.SWEEP_SPEED
 
 
 ## Pure grading for one tap of the sweep-bar timing minigame, lifted out of
@@ -2995,10 +3001,10 @@ static func zone_bonus_t(zone_bonus: float) -> float:
 static func fire_quality(t: float, zone_bonus: float, hits_done: int,
 		hits_needed: int, worst_quality: int) -> Dictionary:
 	var bonus_t := zone_bonus_t(zone_bonus)
-	if t < ZONE_MIN - bonus_t or t > ZONE_MAX + bonus_t:
+	if t < Feel.ZONE_MIN - bonus_t or t > Feel.ZONE_MAX + bonus_t:
 		return {"quality": Combat.TIMING_MISS, "hits_done": hits_done, "resolved": true}
 	var worst := worst_quality
-	if t < CORE_MIN or t > CORE_MAX:
+	if t < Feel.CORE_MIN or t > Feel.CORE_MAX:
 		worst = mini(worst, Combat.TIMING_GOOD)
 	var done := hits_done + 1
 	return {"quality": worst, "hits_done": done, "resolved": done >= hits_needed}
@@ -3066,10 +3072,10 @@ func _process(delta: float) -> void:
 	if not _timing:
 		return
 	_elapsed += delta
-	if _elapsed >= WINDOW_SECONDS:  # hesitated too long — the moment is gone
+	if _elapsed >= Feel.WINDOW_SECONDS:  # hesitated too long — the moment is gone
 		_end_timing(Combat.TIMING_MISS)
 		return
-	_t += _dir * SWEEP_SPEED * delta
+	_t += _dir * Feel.SWEEP_SPEED * delta
 	if _t >= 1.0:
 		_t = 1.0
 		_dir = -1.0
@@ -3078,7 +3084,7 @@ func _process(delta: float) -> void:
 		_dir = 1.0
 	_marker.position.x = _t * (_strip.size.x - _marker.size.x)
 	# The strip reddens as the window runs out — see the timeout coming.
-	var urgency := _elapsed / WINDOW_SECONDS
+	var urgency := _elapsed / Feel.WINDOW_SECONDS
 	_strip.modulate = Color(1.0, 1.0 - 0.45 * urgency, 1.0 - 0.45 * urgency)
 
 
@@ -3093,15 +3099,15 @@ func _build_timing_strip() -> Control:
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	strip.add_child(bg)
-	# Success zone: anchored to ZONE_MIN..ZONE_MAX of the strip so it always spans
+	# Success zone: anchored to Feel.ZONE_MIN..ZONE_MAX of the strip so it always spans
 	# the target band, whatever the strip's laid-out width is. A brighter "perfect"
 	# core in the centre makes the aim point obvious.
 	var zone := ColorRect.new()
 	zone.name = "Zone"
 	zone.color = Color(0.33, 0.72, 0.36)
 	var bonus_t := zone_bonus_t(zone_bonus)
-	zone.anchor_left = maxf(0.0, ZONE_MIN - bonus_t)
-	zone.anchor_right = minf(1.0, ZONE_MAX + bonus_t)
+	zone.anchor_left = maxf(0.0, Feel.ZONE_MIN - bonus_t)
+	zone.anchor_right = minf(1.0, Feel.ZONE_MAX + bonus_t)
 	zone.anchor_top = 0.0
 	zone.anchor_bottom = 1.0
 	zone.offset_left = 0.0
@@ -3110,8 +3116,8 @@ func _build_timing_strip() -> Control:
 	strip.add_child(zone)
 	var core := ColorRect.new()  # the bullseye — centre of the green band
 	core.color = Color(0.55, 0.95, 0.55)
-	core.anchor_left = CORE_MIN
-	core.anchor_right = CORE_MAX
+	core.anchor_left = Feel.CORE_MIN
+	core.anchor_right = Feel.CORE_MAX
 	core.anchor_top = 0.0
 	core.anchor_bottom = 1.0
 	core.mouse_filter = Control.MOUSE_FILTER_IGNORE

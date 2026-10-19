@@ -393,7 +393,8 @@ const HUD_BOTTOM_FRACTION := 0.34
 ## instant a hunter leaves a safe hold a timer starts full and drains live; reach
 ## the next ledge before it empties or this client reports a fall. The host is
 ## told the OUTCOME, never the ticking timer.
-const GRIP_SECONDS := 5.0
+# GRIP_SECONDS now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.GRIP_SECONDS.
 ## The one switch for that timer. Off (Nick, 2026-09-29: "lets get rid of the
 ## grip mechanic for now"): a hunter between ledges simply stays there -- no
 ## countdown bar, no slip, no fall report. Flip back to true to restore it; the
@@ -2650,7 +2651,7 @@ func _process(delta: float) -> void:
 
 ## How long the party can cling, including any grip relics.
 func _grip_seconds() -> float:
-	return GRIP_SECONDS + float(int(_client.shared.get("mods", {}).get("grip_seconds", 0)))
+	return Feel.GRIP_SECONDS + float(int(_client.shared.get("mods", {}).get("grip_seconds", 0)))
 
 
 ## The pure arithmetic behind a single climb-timer tick: how much grip is left
@@ -11118,8 +11119,7 @@ func _mcp_state() -> Dictionary:
 		"card_is_timing": _timing_card != null and is_instance_valid(_timing_card)
 			and _timing_card.is_timing(),
 		"grip_seconds": _grip_seconds(),
-		"grip_seconds_base": GRIP_SECONDS,
-		"miss_below_quality": Combat.TIMING_MISS,
+		"feel": Feel.snapshot(),
 		"zone_bonus": shared.get("mods", {}).get("timing_zone", 0),
 	}
 	return out

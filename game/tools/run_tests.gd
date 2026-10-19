@@ -2189,7 +2189,7 @@ func _init() -> void:
 	# thoroughly-tested _fire() (see _hit_circle_fired_quality above), which
 	# resolves the exact same promise ("a chain's quality is its worst window,
 	# not its last") through a different UI face. Grepping for start_timing,
-	# CardView.new(), zone_bonus, CORE_MIN/CORE_MAX, ZONE_MIN/ZONE_MAX turned
+	# CardView.new(), zone_bonus, Feel.CORE_MIN/Feel.CORE_MAX, Feel.ZONE_MIN/Feel.ZONE_MAX turned
 	# up nothing in this file before this pass -- the bar's own copy of the
 	# rule had never been exercised, only the circle's. Lifted the same way as
 	# route_between_rungs/hunter_move_kind: no Control, no signal, plain
@@ -10966,7 +10966,7 @@ func _test_timed_ally_block_anchors_the_ally() -> void:
 
 
 ## backlog #86 duty 3: preview()'s `scale` (TIMING_PERFECT pays the full timed
-## bonus, TIMING_GOOD pays TIMING_GOOD_SCALE of it, a miss pays none) is one
+## bonus, TIMING_GOOD pays Feel.TIMING_GOOD_SCALE of it, a miss pays none) is one
 ## formula shared by all four timed bonuses — timed_damage, timed_grip,
 ## timed_block, timed_ally_block (combat.gd:521,543,551,553) — and the
 ## `timed` keyword's own tooltip promises the scraped-edge "half" payout as a
@@ -23284,7 +23284,7 @@ func _test_played_cards_fly_to_their_target() -> void:
 
 
 func _test_backlog86_grip_after_tick_relic_seconds_extends_the_time_to_zero() -> void:
-	# GRIP_SECONDS is 5.0; a +5 relic doubles it, so the SAME five seconds of
+	# Feel.GRIP_SECONDS is 5.0; a +5 relic doubles it, so the SAME five seconds of
 	# clinging should only burn half the meter, not empty it.
 	var g: float = Combat3D.grip_after_tick(1.0, 5.0, 10.0)
 	_expect(is_equal_approx(g, 0.5),
@@ -23419,7 +23419,7 @@ func _test_backlog86_every_character_passive_type_reaches_playerstate() -> void:
 ## grip_after_tick a hand-picked 10.0 instead. Neither half had ever run
 ## through the other: this builds a real GameClient, hands it a shared dict
 ## shaped exactly like a live snapshot's "mods", and proves the base
-## GRIP_SECONDS constant is what actually gets extended -- and that with no
+## Feel.GRIP_SECONDS constant is what actually gets extended -- and that with no
 ## relic at all (an empty mods dict, same as a fresh fight with none held)
 ## the timer is untouched rather than reading a stray key as its own value.
 func _test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state() -> void:
@@ -23427,15 +23427,15 @@ func _test_backlog86_combat3d_grip_seconds_reads_the_relic_mod_from_shared_state
 	var client := GameClient.new(LocalTransport.new(), 1)
 	client.shared = {"mods": {"grip_seconds": 5}}
 	c3d._client = client
-	_expect(is_equal_approx(c3d._grip_seconds(), Combat3D.GRIP_SECONDS + 5.0),
-		"a relic's grip_seconds mod, exactly as it arrives in a client's real shared state, extends the base GRIP_SECONDS by its value")
+	_expect(is_equal_approx(c3d._grip_seconds(), Feel.GRIP_SECONDS + 5.0),
+		"a relic's grip_seconds mod, exactly as it arrives in a client's real shared state, extends the base Feel.GRIP_SECONDS by its value")
 	c3d.free()
 
 	var c3d_none := Combat3D.new()
 	var client_none := GameClient.new(LocalTransport.new(), 1)
 	client_none.shared = {"mods": {}}
 	c3d_none._client = client_none
-	_expect(is_equal_approx(c3d_none._grip_seconds(), Combat3D.GRIP_SECONDS),
+	_expect(is_equal_approx(c3d_none._grip_seconds(), Feel.GRIP_SECONDS),
 		"no grip_seconds relic held at all leaves the base timer untouched, not misread as some other stray value")
 	c3d_none.free()
 
@@ -29404,8 +29404,8 @@ func _test_backlog86_reward_header_text_locked_in_wins_over_empty_choices() -> v
 ## timing minigame's grading rule, lifted out of _fire() the same way
 ## route_between_rungs was lifted out of combat_3d._route_between: plain
 ## scalars in, a plain Dictionary out ({quality, hits_done, resolved}), no
-## Control node and no signal required. See card_view.gd's ZONE_MIN/ZONE_MAX
-## (0.40/0.60) and CORE_MIN/CORE_MAX (0.47/0.53) for the bands these tests
+## Control node and no signal required. See card_view.gd's Feel.ZONE_MIN/Feel.ZONE_MAX
+## (0.40/0.60) and Feel.CORE_MIN/Feel.CORE_MAX (0.47/0.53) for the bands these tests
 ## land in and out of.
 func _test_backlog86_fire_quality_is_perfect_dead_centre_in_the_core() -> void:
 	var r := CardView.fire_quality(0.50, 0.0, 0, 1, Combat.TIMING_PERFECT)
@@ -29447,14 +29447,14 @@ func _test_backlog86_fire_quality_zone_bonus_widens_the_good_window_not_the_core
 func _test_backlog86_fire_quality_zone_bonus_matches_hit_circles_seconds_of_forgiveness() -> void:
 	# The whole point of zone_bonus_t(): HitCircle turns a raw timing_zone
 	# fraction into `zone_bonus * 0.35` extra SECONDS of forgiveness on each
-	# side of the beat. The bar's own t advances at SWEEP_SPEED units per
+	# side of the beat. The bar's own t advances at Feel.SWEEP_SPEED units per
 	# second (CardView._process), so the same seconds of forgiveness in the
-	# bar's t-space is that quantity times SWEEP_SPEED. Before this existed,
+	# bar's t-space is that quantity times Feel.SWEEP_SPEED. Before this existed,
 	# fire_quality() added the raw fraction straight onto its 0..1 zone bounds
 	# with no conversion, so the exact same relic meant a few percent more
 	# forgiveness on the circle face and several times that on the bar face.
 	var bonus := 0.12  # Metronome Shell alone
-	var expected_t: float = bonus * 0.35 * CardView.SWEEP_SPEED
+	var expected_t: float = bonus * 0.35 * Feel.SWEEP_SPEED
 	_expect(is_equal_approx(CardView.zone_bonus_t(bonus), expected_t),
 		"the bar converts a relic's zone_bonus into the same seconds of forgiveness HitCircle grants, just expressed in its own t-space")
 

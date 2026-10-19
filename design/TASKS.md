@@ -14,9 +14,12 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       Jackal: what the player does each turn, what creates tension, what a loss
       feels like. One page. This replaces TARGET.png as the thing we build
       toward, and it is checkable by playing.
-- [ ] **Pull the fight's numbers into one config file** — timing windows,
-      hit-stop, camera lag, damage, climb rates. Tuning should be editing
-      values, not editing `combat_3d.gd`.
+- [x] **Pull the fight's numbers into one config file** — `game/core/feel.gd`
+      holds the grip bar and the sweep window as `static var`, so they can be
+      changed in the RUNNING game (`godot_exec: Feel.SWEEP_SPEED = 1.4`) and
+      felt without a relaunch. The digest reports them. Camera lag and the
+      impact timings are still scattered; move them when one of them is
+      actually in question.
 - [ ] **Make `playtest.sh` the feedback, not a screenshot.** It already drives
       real turns. Have it record a trace — timing, hit-stop, what each turn did
       — so a change can be compared across runs by something other than a still

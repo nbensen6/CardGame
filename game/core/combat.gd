@@ -65,7 +65,8 @@ const MOMENT_FIGHT_START := "fight_start"
 const TIMING_MISS := 0
 const TIMING_GOOD := 1
 const TIMING_PERFECT := 2
-const TIMING_GOOD_SCALE := 0.5  # a "good" (not dead-centre) hit pays half the timed bonus
+# TIMING_GOOD_SCALE now lives in Feel (game/core/feel.gd), as a static var so it can
+# be changed in the running game. Readers below say Feel.TIMING_GOOD_SCALE.
 
 # A card's optional `condition` (backlog #67) — a question about the board,
 # asked in preview() so the printed card and the real play never disagree.
@@ -548,7 +549,7 @@ func is_over() -> bool:
 ## `quality` (backlog #33) grades HOW WELL a hit landed once `nailed` is true —
 ## TIMING_PERFECT (the default, so every caller that doesn't pass it explicitly
 ## behaves exactly as before this landed) pays the timed bonus in full;
-## TIMING_GOOD pays TIMING_GOOD_SCALE of it. It's meaningless when `nailed` is
+## TIMING_GOOD pays Feel.TIMING_GOOD_SCALE of it. It's meaningless when `nailed` is
 ## false — there's no bonus to grade.
 ##
 ## `x_spent` (backlog #29) is how much energy an X-cost card drained — it feeds
@@ -601,7 +602,7 @@ func preview(pi: int, card: Card, nailed: bool = true, quality: int = TIMING_PER
 	var hit := card.timed and nailed
 	var scale := 0.0
 	if hit:
-		scale = 1.0 if quality >= TIMING_PERFECT else (TIMING_GOOD_SCALE if quality >= TIMING_GOOD else 0.0)
+		scale = 1.0 if quality >= TIMING_PERFECT else (Feel.TIMING_GOOD_SCALE if quality >= TIMING_GOOD else 0.0)
 	var exhausted := ps.exhaust_pile.size()
 	var discarded := ps.discard_pile.size()  # backlog #62 — read BEFORE this play's own
 	# effects (including its own `discard`, resolved later in play_card) touch the pile,
