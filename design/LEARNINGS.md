@@ -26,8 +26,28 @@ Traps that have cost real time. Read before changing the thing they name.
 - `shot.cmd` writes a temporary `override.cfg` so the window opens off-screen
   and never takes focus. Don't "simplify" it away — it tabbed Nick out of his
   game on 2026-09-22.
+- **`game/override.cfg` is permanent now.** It is what keeps every launched
+  game off Nick's main screen, unfocused and silent — project settings are the
+  only thing that applies at window *creation*, so no script can fix it after
+  the fact. It covers the MCP's `run`, `shot.cmd` and F5 alike. `shot.cmd` used
+  to write and delete it; it now only deletes one it wrote. Gitignored; delete
+  it to play with sound and focus.
 - The builder leaves untracked files and a modified `tools/builder/sync.log`
   that block a rebase. Move them aside, stash the log, rebase, restore.
+
+## Godot MCP
+
+- **Both MCP servers need the editor open** on the project; the server process
+  running is not enough. `godot_editor_read get_state` returns "Not connected"
+  until it is.
+- `godot_editor_edit run` with `frozen: true` boots the game with game time
+  held at frame 0, so it cannot race ahead between tool calls. Then
+  `godot_game_time step` advances a bounded slice.
+- Prefer `godot_runtime_state digest` (text, ~free) over `screenshot_game`.
+  Screenshots never decay — every frame stays in context for the rest of the
+  session.
+- Richer digests need the game's own nodes to implement `_mcp_state()` or join
+  the `mcp_watch` group. Without that it falls back to walking visible nodes.
 
 ## Agents
 
