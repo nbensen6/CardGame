@@ -5,8 +5,8 @@ tags:
 
 # Titan-Slayers
 
-**The goal:** the Cinder Jackal fight, playing well. The art target was reached
-on 2026-10-12 and retired — see [[DECISIONS]].
+**The goal:** the Cinder Jackal fight, playing well — [[PLAYABLE-MINUTE]] says
+what that means. The art target was reached on 2026-10-12 and retired.
 
 This vault is the picture half of the project. The working state is in three notes beside this one, which
 `CLAUDE.md` points the agents at:
@@ -16,6 +16,7 @@ This vault is the picture half of the project. The working state is in three not
 | **[[TASKS]]** | what is next; top unchecked line |
 | **[[DECISIONS]]** | why things are as they are; outranks any older brief |
 | **[[LEARNINGS]]** | the traps, before you touch what they name |
+| **[[PLAYABLE-MINUTE]]** | what the fight has to do; the target that replaced the picture |
 
 ## The folders
 

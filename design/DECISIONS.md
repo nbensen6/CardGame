@@ -6,8 +6,9 @@ first. A decision here outranks any older instruction in a brief or a note.
 ## 2026-10-12 — the goal is the fight playing well, not the picture
 
 TARGET.png is reached. It stops being the thing we build toward. The new
-target is the playable minute (see [[TASKS]]), which is judged by
-playing, not by a side-by-side.
+target is [[PLAYABLE-MINUTE]] — ten checks you watch happen, judged by playing,
+not by a side-by-side. Five of the ten are Nick's to judge; no agent marks
+those passed, for the same reason an item's words never outranked the drawing.
 
 Consequence: the game is 16:9 again. Matching a square reference 1:1 had pushed
 the whole HUD into a 720-wide band with the scene showing either side.
