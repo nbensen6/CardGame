@@ -100,17 +100,72 @@ try a value, feel it, keep it or put it back.
 Checks 1, 4, 6, 8 and 9 are **Nick's to judge by playing**. No agent should
 mark those passed; the drawing-versus-words mistake has a gameplay twin.
 
+
+## What I found driving it, 2026-10-19
+
+Measured in the running fight through the Godot MCP, not guessed. The three
+checks that are mine to judge all fail, and two of them fail for the same
+reason: **the numbers make the tension impossible, not merely weak.**
+
+### Check 2 fails — the grip bar almost never runs
+
+The Frog's passive is **+1 Climb**. Every climb card in its deck therefore
+lands on a safe hold:
+
+    from 0:  Tongue Snap->2  Leap->4  Hop->2  Pounce->2  Leapfrog->3 CLING
+    from 2:  Tongue Snap->4  Leap->6  Hop->4  Pounce->4  Leapfrog->5
+    from 4:  everything ->6 or higher, at or past the sigil
+
+**One climb out of eighteen leaves the Frog clinging** — Leapfrog, from the
+base only. The real-time grip timer is the feel this fight is built around
+(see [[DECISIONS]], "double timing"), and in a normal minute it never starts.
+The ledges at 2 and 4 are exactly one Frog-climb apart, so the climb is a
+staircase with no gaps.
+
+### Check 3 fails — the full bonus is luck, not skill
+
+At `Feel.SWEEP_SPEED` 1.9/s:
+
+    zone 0.40-0.60   0.20 wide    105 ms in the band
+    core 0.47-0.53   0.06 wide     31 ms for the FULL bonus  = 1.9 frames
+
+Human reaction variance is wider than 31 ms on its own. Nobody *aims* at the
+core; they hit it or they don't. The band at 105 ms is a real skill check; the
+core inside it is a coin flip wearing a reward.
+
+### Check 7 is shaky — the Goblin cannot climb
+
+Of the Goblin's 10 cards, **none has a Climb value and only one deals damage**
+(Satchel Charge). The deck is Build Grapple, Build Mech, Grappling Arm, Goblin
+Jetpack — gadgets that climb later. That may well be the intent, but it means
+switching to the Goblin in the first minute is switching to a hunter who can
+neither climb nor meaningfully hit. Switching is bookkeeping until a gadget
+fires.
+
+### Check 5 works
+
+Two Tongue Snaps at the sigil = 19 damage, past the threshold of 16, and the
+beast bucks the hunter from 7 down to 4 with the counter reset. The loop
+**climb -> strike -> thrown -> climb** exists and is quick. The question left
+is whether the player can *see* why, which is yours.
+
+### Still yours to judge
+
+1, 4, 6, 8, 9 — the opening decision, arriving at the sigil, the claw's
+telegraph, the 40% gear change, and whether a loss reads as your fault. Nothing
+I measured touches those.
+
 ## Scorecard
 
 Tick as you play. **1, 4, 6, 8, 9 are yours alone** — I will not mark those.
 
 - [ ] 1 · first decision inside ten seconds — *yours*
-- [ ] 2 · leaving a hold feels like a commitment
-- [ ] 3 · the sweep is a reaction
+- [x] 2 · leaving a hold feels like a commitment — **FAILS**, the grip bar barely runs
+- [x] 3 · the sweep is a reaction — **FAILS**, the core is 1.9 frames wide
 - [ ] 4 · reaching the sigil is an event — *yours*
-- [ ] 5 · getting bucked is a setback you understand
+- [x] 5 · getting bucked is a setback you understand — mechanic works; legibility is yours
 - [ ] 6 · the claw punishes the greedy, visibly — *yours*
-- [ ] 7 · switching is a tactic
+- [x] 7 · switching is a tactic — **SHAKY**, the Goblin cannot climb or hit in minute one
 - [ ] 8 · the 40% gear change lands as a threat — *yours*
 - [ ] 9 · a loss is traceable to a choice — *yours*
 - [ ] 10 · minute two is a different minute
