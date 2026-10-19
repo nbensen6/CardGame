@@ -11038,3 +11038,95 @@ func _drop() -> void:
 		card.reparent(_hand_row)
 		_hand_row.move_child(card, mini(_drag_index, _hand_row.get_child_count() - 1))
 		_layout_hand()
+
+
+## The fight, as data, for the Godot MCP's runtime digest.
+##
+## Nick, 2026-10-19: the loop that was missing. Every agent pass until now
+## judged this fight from a still frame of a paused game, so it could grade a
+## crack's width and never notice a bad turn. This is the other channel: what
+## is actually true while the fight runs, in text, free, every frame.
+##
+## It carries both halves the digest asks for — live values that change as you
+## play, AND the definition context needed to read them. A grip of 0.4 means
+## nothing without knowing the window is 5 seconds; "timed" means nothing
+## without the quality thresholds. Anything here can be watched over time with
+## godot_runtime_state watch_start.
+func _mcp_state() -> Dictionary:
+	if _client == null:
+		return {"phase": "no client"}
+	var shared: Dictionary = _client.shared
+	var me: int = _me()
+	var out := {
+		"round": shared.get("round", 0),
+		"solo": _is_solo(),
+		"viewing_slot": me,
+		"commanding_slot": _cmd_slot(),
+	}
+
+	var boss: Dictionary = shared.get("boss", {})
+	if not boss.is_empty():
+		out["boss"] = {
+			"name": boss.get("name", ""),
+			"hp": boss.get("hp", 0), "max_hp": boss.get("max_hp", 0),
+			"block": boss.get("block", 0),
+			"intent": boss.get("intent", {}),
+			"target_slot": boss.get("target", -1),
+			"vulnerable": boss.get("vulnerable", 0),
+			"strength": boss.get("strength", 0),
+		}
+
+	# One entry per hunter: where they are on the climb and whether they are
+	# hanging. `grip` is the live timer, -1 when they are not on it.
+	var hunters: Array = []
+	for i in (shared.get("players", []) as Array).size():
+		var p: Dictionary = (shared.get("players", []) as Array)[i]
+		hunters.append({
+			"slot": i,
+			"character": p.get("character", ""),
+			"hp": p.get("hp", 0), "max_hp": p.get("max_hp", 0),
+			"block": p.get("block", 0),
+			"energy": p.get("energy", 0),
+			"ended_turn": p.get("ended", false),
+			"foothold": p.get("foothold", 0),
+			"secure": p.get("secure", false),
+			"next_safe": p.get("next_safe", 0),
+			"reached_sigil": p.get("reached", false),
+			"rhythm": p.get("rhythm", 0),
+			"grip": _grip_of_slot(i),
+		})
+	out["hunters"] = hunters
+
+	# The hand this client is looking at, in play order.
+	# Names and costs only: the digest truncates a state dict past about a
+	# kilobyte, and five cards' rules text alone blew the budget and cut the
+	# timing block off the end. The rules live in data/cards.json; what changes
+	# during a fight is which cards are in hand and what they cost now.
+	var hand: Array = []
+	for c in (_my_private().get("hand", []) as Array):
+		var card: Dictionary = c
+		hand.append("%s/%s%s" % [card.get("name", ""), card.get("cost", 0),
+			"T" if card.get("timed", false) else ""])
+	out["hand"] = hand
+
+	# The double timing: the grip bar the party hangs on, and the per-card
+	# window a timed card opens. This is the feel the fight is built around, so
+	# it carries its own rules with it.
+	out["timing"] = {
+		"window_open": _circle_index >= 0,
+		"window_card_index": _circle_index,
+		"card_is_timing": _timing_card != null and is_instance_valid(_timing_card)
+			and _timing_card.is_timing(),
+		"grip_seconds": _grip_seconds(),
+		"grip_seconds_base": GRIP_SECONDS,
+		"miss_below_quality": Combat.TIMING_MISS,
+		"zone_bonus": shared.get("mods", {}).get("timing_zone", 0),
+	}
+	return out
+
+
+## A slot's remaining grip, 0..1, or -1 when that hunter is not hanging.
+func _grip_of_slot(slot: int) -> float:
+	if not _climb.has(slot):
+		return -1.0
+	return float((_climb[slot] as Dictionary).get("g", -1.0))

@@ -46,6 +46,18 @@ Traps that have cost real time. Read before changing the thing they name.
 - Prefer `godot_runtime_state digest` (text, ~free) over `screenshot_game`.
   Screenshots never decay — every frame stays in context for the rest of the
   session.
+- `combat_3d.gd` has **`_mcp_state()`** (2026-10-19), so `digest select="method"`
+  returns the whole fight as text: boss hp/intent, both hunters' energy,
+  foothold, grip and secure, the hand, and the timing block with its own rules
+  (grip seconds, miss threshold, zone bonus).
+- **The digest truncates a state dict at about a kilobyte** and gives no error
+  beyond `_truncated: true` — five cards' rules text alone cut the timing block
+  off the end. Keep `_mcp_state()` terse; static data belongs in the json.
+- There is **no harness scene** to run. To reach the fight through the MCP:
+  `run frozen=true`, then `godot_exec` builds a LocalTransport + GameHost +
+  GameClient, picks map nodes to the first fight, optionally
+  `Content.build_boss("cinder_jackal")`, broadcasts, and
+  `change_scene_to_file("res://views/combat_3d.tscn")`.
 - Richer digests need the game's own nodes to implement `_mcp_state()` or join
   the `mcp_watch` group. Without that it falls back to walking visible nodes.
 
