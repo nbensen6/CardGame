@@ -9,6 +9,16 @@ read out of `godot_runtime_state digest`. A check that fails is work.
 
 Read with [[LEARNINGS]] (how to run and read the fight) and [[DECISIONS]].
 
+
+> [!tip] ▶ **[Play the minute](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**
+> Straight into the Cinder Jackal, solo, Frog and Goblin. It pulls, reimports
+> and launches on your main screen with focus and sound — `override.cfg` (which
+> keeps agent runs off your screen) is moved aside for the length of the game
+> and put back after.
+>
+> Have this note open beside it. The ten checks are below; mark the ones that
+> fail as you go.
+
 ## The fight as it actually stands
 
 Verified against the code, 2026-10-19, not from memory:
@@ -90,7 +100,22 @@ try a value, feel it, keep it or put it back.
 Checks 1, 4, 6, 8 and 9 are **Nick's to judge by playing**. No agent should
 mark those passed; the drawing-versus-words mistake has a gameplay twin.
 
-## Status
+## Scorecard
 
-Nothing here is ticked yet. The next pass is to play the minute and say which
-of the ten fail, in order.
+Tick as you play. **1, 4, 6, 8, 9 are yours alone** — I will not mark those.
+
+- [ ] 1 · first decision inside ten seconds — *yours*
+- [ ] 2 · leaving a hold feels like a commitment
+- [ ] 3 · the sweep is a reaction
+- [ ] 4 · reaching the sigil is an event — *yours*
+- [ ] 5 · getting bucked is a setback you understand
+- [ ] 6 · the claw punishes the greedy, visibly — *yours*
+- [ ] 7 · switching is a tactic
+- [ ] 8 · the 40% gear change lands as a threat — *yours*
+- [ ] 9 · a loss is traceable to a choice — *yours*
+- [ ] 10 · minute two is a different minute
+
+Anything you can say in a sentence is enough — "the grip bar is invisible",
+"the claw killed me and I never saw it coming". That sentence is the next task.
+
+▶ **[Play it again](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**
