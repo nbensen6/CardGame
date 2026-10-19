@@ -21,10 +21,15 @@ set "ID=%ID:/=%"
 
 :launch
 set "GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe"
-REM A harness run killed mid-shot leaves game\override.cfg behind, and it says
-REM no_focus=true: the game then ignores the keyboard (2026-09-28, "all my
-REM keyboard inputs are not being recorded"). Clear it before every launch.
-del "%ROOT%\game\override.cfg" 2>nul
+REM game\override.cfg keeps AGENT-driven runs off Nick's screen, unfocused and
+REM silent. For a run he asked for by clicking, all three are wrong: no_focus
+REM makes the game ignore the keyboard (2026-09-28, "all my keyboard inputs are
+REM not being recorded"), it opens on the wrong monitor, and the Dummy audio
+REM driver means no sound. So it is moved aside for the length of the game and
+REM put straight back -- deleting it would quietly disarm every agent run after.
+set "OV=%ROOT%\game\override.cfg"
+set "OVSAVE=%ROOT%\game\override.cfg.playing"
+if exist "%OV%" move /y "%OV%" "%OVSAVE%" >nul
 REM Pull first: the cloud builder pushes to main and cannot reach this PC.
 git -C "%ROOT%" pull --rebase --autostash --quiet origin main
 REM Reimport first, same reason tools\dev.cmd does it: a new .glb or class_name
@@ -35,3 +40,4 @@ if "%ID%"=="" (
 ) else (
   "%GODOT%" --path "%ROOT%\game" -- fight=%ID%
 )
+if exist "%OVSAVE%" move /y "%OVSAVE%" "%OV%" >nul
