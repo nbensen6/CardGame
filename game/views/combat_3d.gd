@@ -2575,11 +2575,21 @@ func _process(delta: float) -> void:
 		if one_line and i < _float_side.size():
 			st.visible = stone_line_shown(float(_float_side[i]), _active_slot, ridden.has(i))
 		var home: Vector3 = _float_home[i]
-		st.position.y = home.y + (0.0 if ridden.has(i) else stone_bob(_time, i))
 		# TARGET's slabs lie still and square to the eye; spinning, their hex
-		# outlines read as tilted, overlapping plates (r2 iter 19).
+		# outlines read as tilted, overlapping plates (r2 iter 19). The BOB has
+		# to go for the same reason, and for a worse one: a staircase slab is a
+		# bitmap cut from TARGET, resampled to the screen through a sharpening
+		# Lanczos footprint. Drifting a fraction of a pixel every frame lands
+		# that resample differently every frame, so the slab's edge is rebuilt
+		# over and over -- one frame a dark rim, the next a pale lip detached
+		# from the stone. Nick, 2026-10-19: "the stones still have an outline
+		# ... the part that is separated from the stone". Held still, the slab
+		# lands on the same pixels every frame and the edge stops moving.
 		if not stair_still:
+			st.position.y = home.y + (0.0 if ridden.has(i) else stone_bob(_time, i))
 			st.rotation.y += delta * 0.25
+		else:
+			st.position.y = home.y
 	# Before the beast is placed, so its lunge is this frame's beat, not last frame's.
 	_step_enemy_turn(delta)
 	_step_low_health(delta)
