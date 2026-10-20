@@ -3257,6 +3257,13 @@ func _position_unit_bars() -> void:
 		bar.visible = false
 		if i >= _hunters.size():
 			continue
+		# Nick, 2026-10-20: "theres two bars". In solo both hunters are yours
+		# and both bars floated in the scene at once, which reads as stray UI
+		# rather than as one hunter's health. Only the hunter you are holding
+		# carries a bar in the world -- the same rule the stones already use
+		# (stone_line_shown). The other's health is in the party row top-left.
+		if not unit_bar_shown(i, _active_slot, _is_solo()):
+			continue
 		var hnode: Node3D = (_hunters[i] as Dictionary).get("node") as Node3D
 		if hnode == null or not is_instance_valid(hnode) or not hnode.is_visible_in_tree():
 			continue
@@ -3269,6 +3276,12 @@ func _position_unit_bars() -> void:
 		bar.position = at
 		bar.visible = true
 
+
+## Whose HP bar is drawn in the world. In solo, only the hunter you hold: two
+## bars floating at once read as stray UI (Nick, 2026-10-20: "theres two
+## bars"). In co-op each player sees both, because the other one is a person.
+static func unit_bar_shown(slot: int, active_slot: int, solo: bool) -> bool:
+	return slot == active_slot if solo else true
 
 ## A hunter's HP bar on screen, px (TARGET.png: ~102x13 in its 720 square).
 const HUNTER_BAR_SIZE := Vector2(100, 17)
@@ -7487,12 +7500,21 @@ func _spawn_hunter(slot: int, players: Array) -> Dictionary:
 		if anim != null and anim.has_animation("idle"):
 			anim.get_animation("idle").loop_mode = Animation.LOOP_LINEAR
 			anim.play("idle")
-	holder.add_child(_hunter_pip(slot))
+	# Nick, 2026-10-20: "remove the icon above the characters". The pip existed
+	# so a hunter stayed findable while the camera orbited behind the beast;
+	# the fight's camera no longer orbits that far, and a floating cone over
+	# the head reads as debug furniture. _hunter_pip is kept for whenever a
+	# free camera comes back.
+	if HUNTER_PIP:
+		holder.add_child(_hunter_pip(slot))
 	# The BODY is kept apart from the holder because the climb hop squashes it,
 	# and the pip is a child of the holder too — squashing that would pump the
 	# one marker that has to stay readable from across the arena.
 	return {"node": holder, "home": Vector3.ZERO, "body": body, "anim": anim, "cid": cid}
 
+
+## Draw the little cone over each hunter's head. Off since 2026-10-20.
+const HUNTER_PIP := false
 
 ## Orbiting means a hunter can end up behind the beast's body. A pip that draws
 ## THROUGH the beast keeps both of them findable from any angle — otherwise the
