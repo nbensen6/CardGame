@@ -8104,10 +8104,19 @@ const STAIR_SLAB_SPAN := 1.0
 ## unshaded sprite of a pre-shrunk copy (false).
 const STAIR_SLAB_DRAWN := true
 ## Filter the cut premultiplied (drawn_sprite premul_taps).
-const STAIR_SLAB_PREMUL := true
+## Nick, 2026-10-19: "see how the stones have this outline that they move out
+## of?" This pair was it. Each cut carries a 6-15% partial-alpha fringe, and
+## filtering it premultiplied and then squaring the edge alpha darkened that
+## fringe into a rim -- unmissable where a pale slab sits over the beast's dark
+## body or the lava. Proved in the running fight: with these two off the rim
+## goes and the slabs read as plain stone.
+## They were added to register the cut against TARGET to within half a pixel
+## (builder run 18). That was worth half a pixel in a side-by-side and a dark
+## outline in the game.
+const STAIR_SLAB_PREMUL := false
 ## Edge alpha power after the filter: filtered premultiplied, the slab came
 ## out about half a pixel fat (first ring out ~9 levels bright).
-const STAIR_SLAB_EDGE_POW := 2.0
+const STAIR_SLAB_EDGE_POW := 1.0
 ## Each slab's sub-pixel landing against TARGET, in screen px at the rest
 ## view (x right, y down): registered on the --square pair, builder run 18
 ## (the middle slabs sat half a pixel low and their lower edges read fat).
