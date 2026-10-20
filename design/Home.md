@@ -17,6 +17,7 @@ This vault is the picture half of the project. The working state is in three not
 | **[[DECISIONS]]** | why things are as they are; outranks any older brief |
 | **[[LEARNINGS]]** | the traps, before you touch what they name |
 | **[[PLAYABLE-MINUTE]]** | what the fight has to do; the target that replaced the picture |
+| **[[LOOK-DEBT]]** | what chasing the concept art cost the look, and why |
 
 > [!tip] ▶ **[Play the minute](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**
 > Straight into the Cinder Jackal. Score it against [[PLAYABLE-MINUTE]].

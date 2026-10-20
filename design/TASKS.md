@@ -27,8 +27,11 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       frame.
 - [ ] **Split `game/views/combat_3d.gd`** (~4000 lines) into camera, route and
       hand. It is past the size where an agent can hold the whole file.
-- [ ] **Close the scene seam** left by the square: the cliffs still stop at the
-      old 720 boundary, so a 16:9 window shows the edge of the set.
+- [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,
+      how deep, what is behind the beast, where the stones hang and what holds
+      them. The seam at the square's edge (x=279, measured), the dead flanks
+      and the lens-facing slabs are all the same root: a painting's
+      compositional cheats copied into a camera-driven scene.
 
 ## Later
 
