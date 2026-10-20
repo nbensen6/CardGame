@@ -3822,7 +3822,12 @@ const REST_ROCK_TONE := Color(0.16, 0.155, 0.18)
 ## every frame. Three separate edge artefacts came out of that resample before
 ## this (a premultiplied rim, a painted hairline, and the bob moving the
 ## sample point); none of them can happen to a triangle.
-const STAIR_SLAB_GEOMETRY := true
+## Nick, 2026-10-20: "whatever you did made the stones look much worse and the
+## outline is still there." Back to the painted cuts. The winding fix below it
+## stays -- it is correct either way, and it is what would make this switch
+## possible at all -- but the geometry slab is plainly not a drop-in for the
+## painted one and the outline was never the mesh's fault.
+const STAIR_SLAB_GEOMETRY := false
 ## A slab stone's depth as a multiple of its radius. Picture A's steps are
 ## chunky grey blocks about as tall as the Frog (Nick, 2026-10-04: "why does
 ## this look so different from the reference?"); 0.32 drew thin discs.

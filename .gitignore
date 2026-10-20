@@ -83,3 +83,4 @@ design/Needs Nick.md
 design/reports/report.html
 tools/__pycache__/
 game/assets/3d/slabs/*.orig.png
+game/assets/3d/cast/*_2d.orig.png
