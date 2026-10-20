@@ -7899,6 +7899,8 @@ func _build_float_stones() -> void:
 		for side in [-1.0, 1.0]:
 			for k in range(_climb_points.size()):
 				var sl: Array = _stair_slab(k, side)
+				if side > 0.0 and _stair_slab_doubles(k, float(sl[1])):
+					continue
 				_add_float_stone(sl[0] as Vector3, k, _climb_points.size(), float(sl[1]), side)
 				_float_side.append(side)
 		return
@@ -7912,6 +7914,33 @@ func _build_float_stones() -> void:
 			_float_side.append(side)
 
 
+## True when rung `k`'s two lines land on top of each other, so the second one
+## would only draw a mirrored copy of the first a few pixels away.
+##
+## Nick, 2026-10-19: "see how the stones have this outline that they move out
+## of?" They were two stones, not one with a bad outline. `_stair_slab` builds
+## the Goblin's line by mirroring the Frog's about the TOP point's x, so at the
+## top rung the mirror is the identity and both lines put a slab in the same
+## place; the rung below lands within a dozen screen pixels of its twin. Two
+## painted slabs that close, one of them flipped, read as a stone that has slid
+## out of its own silhouette -- and they sort against each other besides.
+##
+## Measured in world space against the slab's own radius, not in pixels, so it
+## keeps holding when the camera or the route moves.
+func _stair_slab_doubles(k: int, radius: float) -> bool:
+	return stair_slabs_double(_stair_slab(k, 1.0)[0], _stair_slab(k, -1.0)[0], radius)
+
+
+## The rule itself, apart from the scene so a test can pin it.
+static func stair_slabs_double(a: Vector3, b: Vector3, radius: float) -> bool:
+	return a.distance_to(b) < radius * STAIR_DOUBLE_SPAN
+
+
+## How close two slabs' centres may come, as a multiple of a slab's radius,
+## before the second is dropped. 1.0 would still leave half of each showing
+## past the other; the pair has to be clearly two stones to be worth drawing
+## twice.
+const STAIR_DOUBLE_SPAN := 1.6
 ## How deep a stone's rock runs under its cap, as a multiple of its radius,
 ## `recede` of the way from the hunters to the beast. Deep near the hunters
 ## (the boulders Nick asked for), shallow at the top: on the top stone the

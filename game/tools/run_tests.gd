@@ -32179,3 +32179,18 @@ func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
 	var same := Combat3D.hud_fit(left_box, left_box.size, sq11, 720.0)
 	_expect(is_equal_approx((same[0] as Vector2).x, left_box.position.x),
 		"on a square window the HUD is exactly where it was")
+
+	# Two climb lines, one drawing: `_stair_slab` mirrors the Goblin's line
+	# about the TOP point's x, so at the top rung the mirror is the identity
+	# and both lines put a slab in the same place. Nick, 2026-10-19: "see how
+	# the stones have this outline that they move out of?" -- that was the
+	# twin, flipped, a dozen pixels away.
+	var sl_a := Vector3(0.0, 6.0, 5.0)
+	_expect(Combat3D.stair_slabs_double(sl_a, sl_a, 1.0),
+		"a slab exactly on its twin is a double")
+	_expect(Combat3D.stair_slabs_double(sl_a, sl_a + Vector3(1.2, 0, 0), 1.0),
+		"a slab a radius away still overlaps its twin and counts as a double")
+	_expect(not Combat3D.stair_slabs_double(sl_a, sl_a + Vector3(2.0, 0, 0), 1.0),
+		"two slabs clearly apart are two stones, and both are drawn")
+	_expect(not Combat3D.stair_slabs_double(sl_a, sl_a + Vector3(1.2, 0, 0), 0.5),
+		"the test is against the slab's OWN radius: small slabs may sit closer")
