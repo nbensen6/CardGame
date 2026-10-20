@@ -14,17 +14,21 @@ REM override.cfg is the one way to change them for a single run:
 REM   no_focus               - the window is never activated, so no tab-out
 REM   initial_position_type=3 (centre of screen N), initial_screen=0 - screen 0,
 REM                            which on this machine is the SECOND monitor
-REM The file exists only for the length of the run, and is gitignored.
+REM game/override.cfg is a PERMANENT local file now; this only writes one if
+REM it is missing and only deletes the one it wrote (same as shot.cmd).
 setlocal
 set "GODOT=C:\Users\nbens\AppData\Local\Programs\Godot\Godot_v4.7.1-stable_win64_console.exe"
 set "OV=%~dp0..\game\override.cfg"
-> "%OV%" (
-  echo [display]
-  echo window/size/no_focus=true
-  echo window/size/initial_position_type=3
-  echo window/size/initial_screen=0
+if not exist "%OV%" (
+  > "%OV%" (
+    echo [display]
+    echo window/size/no_focus=true
+    echo window/size/initial_position_type=3
+    echo window/size/initial_screen=0
+  )
+  set "MADE_OV=1"
 )
 "%GODOT%" --path "%~dp0..\game" --script res://tools/playtest.gd -- %*
 set RC=%errorlevel%
-del "%OV%" 2>nul
+if defined MADE_OV del "%OV%" 2>nul
 exit /b %RC%
