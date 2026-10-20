@@ -1,0 +1,24 @@
+; Launched games stay out of Nick's way (2026-10-19: "make sure this runs
+; silently ... in the background i mean").
+;
+; Project settings are the only thing that applies at window CREATION, and a
+; window created on the main screen with focus has already tabbed him out of
+; whatever he was doing by the time any script could move it. So it is set
+; here, once, for every run: the MCP's `run`, tools/shot.cmd, and F5 alike.
+;
+;   no_focus               the window is never activated
+;   initial_position_type=3 + initial_screen=0   centre of screen 0, which on
+;                          this machine is the SECOND monitor
+;   audio driver Dummy     no sound from an agent-driven run
+;
+; Gitignored, local to this machine. Delete this file to play with sound and
+; focus like a normal build.
+[display]
+
+window/size/no_focus=true
+window/size/initial_position_type=3
+window/size/initial_screen=0
+
+[audio]
+
+driver/driver="Dummy"

@@ -33,14 +33,14 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
 - [x] **The cone over each hunter's head** — gone (`HUNTER_PIP`). It existed so
       a hunter stayed findable while the camera orbited behind the beast; the
       camera no longer goes there.
-- [ ] **The climb camera ends up inside the jackal.** At the sigil the beast
+- [x] **The climb camera ends up inside the jackal.** At the sigil the beast
       fills the whole frame and nothing reads — see
       `design/shots/2026-10-20-climb-too-close.png`. Nick, 2026-10-20: "the
       camera positioning gets too close to the jackal when you climb. I think
       the stones should be farther away from the jackal."
-- [ ] **The jackal stands halfway into the arena.** It should sit on the EDGE
+- [x] **The jackal stands halfway into the arena.** It should sit on the EDGE
       of the ground, not in the middle of it.
-- [ ] **The ground is a mess.** Make it one consistent surface, and remove the
+- [x] **The ground is a mess.** Make it one consistent surface, and remove the
       wall/slab the jackal is standing on.
 
 - [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,

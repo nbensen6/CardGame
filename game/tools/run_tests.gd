@@ -30354,8 +30354,8 @@ func _test_climb_focus_for_falls_back_to_the_hull_with_no_anchors_at_all() -> vo
 func _test_climb_focus_for_stands_back_to_sigil_view_dist_at_the_top() -> void:
 	var anchors := {0: Vector3(0.0, 0.0, 6.0), 4: Vector3(2.0, 15.0, 0.53)}
 	var out := Combat3D.climb_focus_for(anchors, 4, 13.6, 14.4, 1.0)
-	_expect(is_equal_approx(out.x, Combat3D.SIGIL_VIEW_DIST),
-		"at the top the shot is of the face: the fixed stand-off gives way to SIGIL_VIEW_DIST [got=%.2f]" % out.x)
+	_expect(is_equal_approx(out.x, maxf(Combat3D.SIGIL_VIEW_DIST, Combat3D.CLIMB_HUNTER_DIST)),
+		"at the top the shot is of the face, and never nearer than the climb's own stand-off [got=%.2f]" % out.x)
 
 
 ## Nick, 2026-09-28: "the camera should not be dynamic in how its zoomed. it
@@ -30381,11 +30381,14 @@ func _test_camera_holds_one_distance_at_rest_climbing_and_at_the_sigil() -> void
 	_expect(is_equal_approx(Combat3D.ACTIVE_HUNTER_DIST, Combat3D.FOLLOW_DIST),
 		"the resting shot stands FOLLOW_DIST behind the hunter")
 	var mid := Combat3D.climb_focus_for(anchors, 4, 13.6, 0.53, 0.5)
-	_expect(is_equal_approx(mid.x, Combat3D.FOLLOW_DIST),
-		"a mid rung stands the same FOLLOW_DIST behind the hunter, no pad [got=%.2f]" % mid.x)
+	# CLIMB_HUNTER_DIST, not FOLLOW_DIST: the climb is its own shot since
+	# 2026-10-20 ("the camera positioning gets too close to the jackal when you
+	# climb"). Still ONE fixed number for every rung -- that part is the rule.
+	_expect(is_equal_approx(mid.x, Combat3D.CLIMB_HUNTER_DIST),
+		"a mid rung stands CLIMB_HUNTER_DIST behind the hunter, no pad [got=%.2f]" % mid.x)
 	var top := Combat3D.climb_focus_for(anchors, 5, 13.6, 14.4, 1.0)
-	_expect(is_equal_approx(top.x, Combat3D.FOLLOW_DIST),
-		"the sigil stands the same FOLLOW_DIST behind the hunter, no pull-back to frame the face [got=%.2f]" % top.x)
+	_expect(is_equal_approx(top.x, Combat3D.CLIMB_HUNTER_DIST),
+		"the sigil stands the same CLIMB_HUNTER_DIST, no extra pull-back [got=%.2f]" % top.x)
 	# Nick, 2026-09-28: "about the same range from the risk of rain 2 screenshot"
 	# -- survivor a quarter to a third of the frame tall. 3.2 gave 0.17.
 	var share := Combat3D.hunter_frame_share(Combat3D.FOLLOW_DIST, 65.0)
@@ -31992,8 +31995,13 @@ func _test_jackal_is_a_drawing() -> void:
 		_expect(false, "combat_3d.tscn has its WorldEnvironment")
 	fight.free()
 	# A drawing has no depth to clear: hunters stand closer, so it towers.
+	# The gap went 1.21 -> 1.55 on 2026-10-20 ("the stones should be farther
+	# away from the jackal"), which is now WIDER than the default, so the old
+	# "closer" assertion no longer describes the rule. What still has to hold
+	# is that a drawing's standoff comes from the gap and not from depth.
 	var drawn: float = Combat3D.ground_standoff_for(0.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT)
-	_expect(drawn < Combat3D.ground_standoff_for(0.0, 20.0), "a drawn beast stands the hunters closer")
+	_expect(is_equal_approx(drawn, 20.0 * Combat3D.DRAWN_GAP_PER_HEIGHT),
+		"a drawn beast's standoff is its height times the drawn gap [got=%.2f]" % drawn)
 	_expect(is_equal_approx(Combat3D.ground_standoff_for(25.0, 20.0, Combat3D.DRAWN_GAP_PER_HEIGHT),
 		Combat3D.ground_standoff_for(25.0, 20.0)), "a deep beast's standoff is still set by its depth")
 	# A billboard reports a cube; the fight reads the drawing as the flat plane it is.

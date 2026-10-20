@@ -612,7 +612,11 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## drew 1.17x TARGET's and its cut sat 40 px under TARGET's lava line; at 1.21
 ## its rig canvas reaches the screen at 0.350 (TARGET: 0.352) with the ears
 ## at TARGET's row. DRAWN_SHIFT_PX then lays it on TARGET's columns.
-const DRAWN_GAP_PER_HEIGHT := 1.21
+## 1.55 (Nick, 2026-10-20: "I think the stones should be farther away from the
+## jackal"). 1.21 was measured to put the drawing on TARGET's own columns in
+## the square; it also pressed the climb route against the beast's face, which
+## is half of why the climb shot had nothing in it but chest.
+const DRAWN_GAP_PER_HEIGHT := 1.55
 ## A drawn beast's slide, in its rig-canvas pixels (x right, y up): where TARGET draws the figure in the square, once the camera is
 ## right for everything else (builder 2026-10-08, "Cracks: wide hot cores";
 ## with the gap and pitch below, the jackal drew 27 px right of TARGET's).
@@ -687,7 +691,11 @@ const ACTIVE_HUNTER_DIST := FOLLOW_DIST
 ## Up the side the subject is the hunter on its stone, not the whole beast:
 ## closer than the rest shot (Nick, 2026-09-25: "camera closer, should be
 ## locked to character"; at 8 with the 65-degree lens the Goblin was 15 px).
-const CLIMB_HUNTER_DIST := FOLLOW_DIST
+## Nick, 2026-10-20: "the camera positioning gets too close to the jackal when
+## you climb." At FOLLOW_DIST the lens sat 5.2 units from a hunter that is ON
+## the beast, so the beast filled the whole frame and nothing read. The climb
+## is its own shot and gets its own stand-off.
+const CLIMB_HUNTER_DIST := FOLLOW_DIST * 2.1
 ## Risk of Rain 2's own follow camera, read from the survivor template every
 ## RoR2 modder starts from (ArcPh1r3/HenryTutorial, CharacterBase.cs, which
 ## mirrors Commando): a 1.82-unit capsule whose origin is its centre, the
@@ -4283,6 +4291,18 @@ func _add_flank_cliffs(beast_id: String) -> void:
 ## The 3D cliffs could not take TARGET's two big slate masses (builder
 ## 2026-10-09, Cliffs item); like the jackal, the backdrop is TARGET's pixels,
 ## shown through drawn_sprite.gdshader's colour table so the screen shows them.
+## Paste TARGET.png's own painted floor, backdrop and frog into the 3D scene.
+##
+## Nick, 2026-10-20: "the ground looks like a mess. get it consistent. get ride
+## of the wall the jackal is on." That mess is this: a rectangular painted
+## floor cut from a square picture, laid over a round arena, with a painted
+## cliff backdrop behind it that stops at the square's edges. Three pictures
+## and a 3D set, disagreeing about where the ground is and where it ends.
+##
+## Off: the arena is the arena. Same call as the slabs -- stop pasting pieces
+## of a painting into a scene that has a camera.
+const TARGET_ART_IN_SCENE := false
+
 const BACKDROP := {"cinder_jackal": "res://assets/3d/cast/cinder_jackal_backdrop.png"}
 const BACKDROP_ROWS := 552.0
 ## TARGET px the backdrop runs on past each side of the square (mirrored).
@@ -4331,6 +4351,8 @@ var _frog_rest: Dictionary = {}
 
 
 func _add_backdrop(beast_id: String) -> void:
+	if not TARGET_ART_IN_SCENE:
+		return
 	if _backdrop != null:
 		_backdrop.queue_free()
 		_backdrop = null
@@ -4376,6 +4398,8 @@ func _add_backdrop(beast_id: String) -> void:
 
 
 func _add_frog_art(beast_id: String) -> void:
+	if not TARGET_ART_IN_SCENE:
+		return
 	if _frog_art != null:
 		_frog_art.queue_free()
 		_frog_art = null
@@ -4455,6 +4479,8 @@ func _place_frog_art(rest: bool, vs: Vector2, x0: float, side: float) -> void:
 
 
 func _add_floor_art(beast_id: String) -> void:
+	if not TARGET_ART_IN_SCENE:
+		return
 	if _floor_art != null:
 		_floor_art.queue_free()
 		_floor_art = null
