@@ -9166,18 +9166,21 @@ func _place_picture_rim() -> void:
 	top.size = Vector2(vs.x, band)
 	bot.position = Vector2(0.0, vs.y - band)
 	bot.size = Vector2(vs.x, band)
-	# TARGET's picture frame runs down both sides of the square too: its
-	# right 12 px are (13,11,24) over the sky and floor, the lava dimmed
-	# through it (builder 2026-10-09 run 16). Drawn at the centred square's
-	# edges, which are the screen's edges on a square or tall window.
-	var side := minf(vs.x, vs.y)
-	var x0 := (vs.x - side) * 0.5
+	# Nick, 2026-10-20: "THE BLACK BARS: LOOK!" These were them.
+	#
+	# TARGET.png is a square painting with a dark frame drawn round it, so a
+	# pass chasing it 1:1 reproduced the frame -- including down BOTH SIDES OF
+	# THE SQUARE. On a 16:9 window that is not a frame round the picture, it is
+	# two black bars standing in the middle of the scene, which is what they
+	# have looked like ever since. Measured: x=279 and x=999 were the sharpest
+	# vertical edges in the whole frame, 5.5x the picture's average.
+	#
+	# The top and bottom bands stay: those run edge to edge and read as a
+	# letterbox, which is what a frame is supposed to do.
 	var lft := layer.get_node("Rim_left") as ColorRect
 	var rgt := layer.get_node("Rim_right") as ColorRect
-	lft.position = Vector2(x0, 0.0)
-	lft.size = Vector2(band, vs.y)
-	rgt.position = Vector2(x0 + side - band, 0.0)
-	rgt.size = Vector2(band, vs.y)
+	lft.visible = false
+	rgt.visible = false
 
 
 ## Overlays must live in their OWN CanvasLayer, above the HUD's.
