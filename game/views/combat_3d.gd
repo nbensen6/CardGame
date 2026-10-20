@@ -3804,6 +3804,25 @@ static func rest_rock_lift(biome: String) -> float:
 const REST_ROCK_TONE := Color(0.16, 0.155, 0.18)
 
 
+## Draw the staircase slabs as the GEOMETRY they already are, not as pictures
+## cut from TARGET.png.
+##
+## Nick, 2026-10-19: "fix the mesh winding and drop the cut-outs."
+##
+## The cut-outs were adopted because the slab meshes rendered wrong -- and they
+## did, but not for any reason about the art: both builders emitted triangles
+## counter-clockwise seen from their normals, where Godot front faces wind
+## CLOCKWISE, so faces were culled from the side they face and lit with
+## inverted normals. godot_validate_meshes names it exactly ("55% of triangles
+## wind inside-out, 44% correctly"). `wound`/`wound_lit` fix it per face.
+##
+## With the mesh drawing, the slab is an object in the scene again: it takes
+## the camera's perspective instead of facing the lens, and its edges are
+## geometry rather than a small bitmap resampled through a sharpening filter
+## every frame. Three separate edge artefacts came out of that resample before
+## this (a premultiplied rim, a painted hairline, and the bob moving the
+## sample point); none of them can happen to a triangle.
+const STAIR_SLAB_GEOMETRY := true
 ## A slab stone's depth as a multiple of its radius. Picture A's steps are
 ## chunky grey blocks about as tall as the Frog (Nick, 2026-10-04: "why does
 ## this look so different from the reference?"); 0.32 drew thin discs.
@@ -3921,6 +3940,36 @@ static func stair_outline(seed: int, rx: float) -> PackedVector2Array:
 	return PackedVector2Array(arr)
 
 
+## One triangle, wound the way Godot wants it.
+##
+## Godot front faces wind CLOCKWISE seen from the normal side, i.e.
+## `(b - a).cross(c - a).dot(normal) < 0`. Get it backwards and the face is
+## culled from the side its normal points, so the stone is see-through one way
+## and solid the other -- and under a light it is lit with an inverted normal,
+## which is the classic "renders black and no light setting helps".
+##
+## The slab builders below had it wrong on their top and bottom fans and mixed
+## on the walls (godot_validate_meshes, 2026-10-19: "55% of triangles wind
+## inside-out, 44% correctly"), which is why the real slab geometry could not
+## be used and the painted cut-outs were drawn over it instead. Enforcing it
+## per face, from the normal the builder already knows, is proof against a fan
+## order that is right for one face family and wrong for the next.
+static func wound(a: Vector3, b: Vector3, c: Vector3, nrm: Vector3) -> Array:
+	if (b - a).cross(c - a).dot(nrm) < 0.0:
+		return [a, b, c]
+	return [a, c, b]
+
+
+## `wound`, carrying each corner's vertex colour with it. Takes and returns
+## [[Vector3, Color], ...].
+static func wound_lit(tri: Array, nrm: Vector3) -> Array:
+	var a: Vector3 = tri[0][0]
+	var b: Vector3 = tri[1][0]
+	var c: Vector3 = tri[2][0]
+	if (b - a).cross(c - a).dot(nrm) < 0.0:
+		return tri
+	return [tri[0], tri[2], tri[1]]
+
 ## A staircase slab: a pale top inset by `bevel`, a lighter sloped bevel ring
 ## from that inset down `bevel * 0.7` to the outline (TARGET's soft lit top
 ## edge), then sides `thick` deep in `side`, darkening to the under-edge.
@@ -3945,14 +3994,14 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 	# touch lighter or darker so it reads as a cut face.
 	for i in range(n):
 		var j := (i + 1) % n
-		st.set_color(top)
-		st.set_normal(Vector3.UP)
-		st.add_vertex(Vector3(c.x, 0.0, c.y))
+		var fan := [[Vector3(c.x, 0.0, c.y), top]]
 		for k in [j, i]:
 			var col: Color = top.lightened(0.07) if k % 3 == 0 else (top.darkened(0.1) if k % 3 == 1 else top)
-			st.set_color(col)
+			fan.append([Vector3(inner[k].x, 0.0, inner[k].y), col])
+		for vc in wound_lit(fan, Vector3.UP):
+			st.set_color(vc[1] as Color)
 			st.set_normal(Vector3.UP)
-			st.add_vertex(Vector3(inner[k].x, 0.0, inner[k].y))
+			st.add_vertex(vc[0] as Vector3)
 	for i in range(n):
 		var j := (i + 1) % n
 		var a := outline[i]
@@ -3974,15 +4023,20 @@ static func stair_slab_mesh(outline: PackedVector2Array, thick: float, bevel: fl
 			[Vector3(a.x, -drop, a.y), face], [Vector3(b.x, -thick, b.y), face_under], [Vector3(b.x, -drop, b.y), face],
 			[Vector3(a.x, -drop, a.y), face], [Vector3(a.x, -thick, a.y), face_under], [Vector3(b.x, -thick, b.y), face_under],
 		]
-		for vc in ring + wall:
-			st.set_color(vc[1] as Color)
-			st.set_normal(nrm)
-			st.add_vertex(vc[0] as Vector3)
+		var tris: Array = [ring.slice(0, 3), ring.slice(3, 6), wall.slice(0, 3), wall.slice(3, 6)]
+		for tri in tris:
+			for vc in wound_lit(tri as Array, nrm):
+				st.set_color(vc[1] as Color)
+				st.set_normal(nrm)
+				st.add_vertex(vc[0] as Vector3)
 	for i in range(n):
 		st.set_color(under)
 		st.set_normal(Vector3.DOWN)
+		var pts: Array = []
 		for v in [c, outline[i], outline[(i + 1) % n]]:
-			st.add_vertex(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
+			pts.append(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
+		for p in wound(pts[0], pts[1], pts[2], Vector3.DOWN):
+			st.add_vertex(p as Vector3)
 	return st.commit()
 
 
@@ -4009,9 +4063,12 @@ static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, sid
 		tops.append(top.lightened(0.08) if k % 3 == 0 else (top.darkened(0.1) if k % 3 == 1 else top))
 	for i in range(1, n - 1):
 		st.set_normal(Vector3.UP)
+		var fan: Array = []
 		for k in [0, i, i + 1]:
-			st.set_color(tops[k] as Color)
-			st.add_vertex(Vector3(outline[k].x, 0.0, outline[k].y))
+			fan.append([Vector3(outline[k].x, 0.0, outline[k].y), tops[k] as Color])
+		for vc in wound_lit(fan, Vector3.UP):
+			st.set_color(vc[1] as Color)
+			st.add_vertex(vc[0] as Vector3)
 	for i in range(n):
 		var a := outline[i]
 		var b := outline[(i + 1) % n]
@@ -4023,15 +4080,19 @@ static func slab_mesh(outline: PackedVector2Array, thick: float, top: Color, sid
 			[Vector3(a.x, 0.0, a.y), side], [Vector3(b.x, -thick, b.y), under], [Vector3(b.x, 0.0, b.y), side],
 			[Vector3(a.x, 0.0, a.y), side], [Vector3(a.x, -thick, a.y), under], [Vector3(b.x, -thick, b.y), under],
 		]
-		for vc in verts:
-			st.set_color(vc[1] as Color)
-			st.set_normal(nrm)
-			st.add_vertex(vc[0] as Vector3)
+		for tri in [verts.slice(0, 3), verts.slice(3, 6)]:
+			for vc in wound_lit(tri as Array, nrm):
+				st.set_color(vc[1] as Color)
+				st.set_normal(nrm)
+				st.add_vertex(vc[0] as Vector3)
 	for i in range(1, n - 1):
 		st.set_color(under)
 		st.set_normal(Vector3.DOWN)
+		var pts: Array = []
 		for v in [outline[0], outline[i + 1], outline[i]]:
-			st.add_vertex(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
+			pts.append(Vector3((v as Vector2).x, -thick, (v as Vector2).y))
+		for p in wound(pts[0], pts[1], pts[2], Vector3.DOWN):
+			st.add_vertex(p as Vector3)
 	return st.commit()
 ## A slab stone's side and top colours. Overnight pass 7 (picture A): its steps
 ## are flat neutral grey, ~(156,149,141); a neutral 0.62/0.80 grey with the
@@ -8486,10 +8547,10 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		# a mid-grey side. Lit, the tops blew out under the warm key and the
 		# sides fell to navy-black (checker iter 02, 2026-10-07).
 		body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		if radius > 0.0 and _staircase():
-			# TARGET 1:1 (builder 2026-10-08): the staircase draws TARGET's own
-			# six slabs, cut from TARGET.png (tools/cut_slabs.py). The mesh
-			# stays as the slab's invisible body; the picture is the sprite.
+		if radius > 0.0 and _staircase() and not STAIR_SLAB_GEOMETRY:
+			# The staircase used to draw TARGET's own six slabs, cut from
+			# TARGET.png (tools/cut_slabs.py), over a hidden mesh. Kept behind
+			# the flag; see STAIR_SLAB_GEOMETRY for why it is off.
 			body.visible = false
 			stone.add_child(stair_slab_sprite(index, rock_radius, side))
 

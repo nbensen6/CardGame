@@ -32194,3 +32194,27 @@ func _test_pedestal_is_a_deep_hex_with_a_plum_top() -> void:
 		"two slabs clearly apart are two stones, and both are drawn")
 	_expect(not Combat3D.stair_slabs_double(sl_a, sl_a + Vector3(1.2, 0, 0), 0.5),
 		"the test is against the slab's OWN radius: small slabs may sit closer")
+
+	# Godot front faces wind CLOCKWISE seen from the normal side:
+	# (b-a).cross(c-a).dot(normal) < 0. Both slab builders had it backwards on
+	# their fans and mixed on their walls, which is why the real geometry could
+	# not be used and pictures cut from TARGET were drawn over it instead
+	# (godot_validate_meshes, 2026-10-19).
+	var wa := Vector3(0, 0, 0)
+	var wb := Vector3(1, 0, 0)
+	var wc := Vector3(0, 0, 1)
+	var up := Vector3.UP
+	var w1: Array = Combat3D.wound(wa, wb, wc, up)
+	_expect(((w1[1] as Vector3) - (w1[0] as Vector3)).cross((w1[2] as Vector3) - (w1[0] as Vector3)).dot(up) < 0.0,
+		"wound() returns a front face for an up normal")
+	var w2: Array = Combat3D.wound(wa, wc, wb, up)
+	_expect(((w2[1] as Vector3) - (w2[0] as Vector3)).cross((w2[2] as Vector3) - (w2[0] as Vector3)).dot(up) < 0.0,
+		"wound() flips the other order to the same front face")
+	var w3: Array = Combat3D.wound(wa, wb, wc, Vector3.DOWN)
+	_expect(((w3[1] as Vector3) - (w3[0] as Vector3)).cross((w3[2] as Vector3) - (w3[0] as Vector3)).dot(Vector3.DOWN) < 0.0,
+		"wound() answers to the normal it is given, not to a fixed order")
+	var lit: Array = Combat3D.wound_lit([[wa, Color.RED], [wc, Color.GREEN], [wb, Color.BLUE]], up)
+	_expect((lit[0][1] as Color) == Color.RED,
+		"wound_lit() carries each corner's colour with it when it swaps")
+	_expect(((lit[1][0] as Vector3) - (lit[0][0] as Vector3)).cross((lit[2][0] as Vector3) - (lit[0][0] as Vector3)).dot(up) < 0.0,
+		"wound_lit() winds the same way wound() does")
