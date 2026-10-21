@@ -240,11 +240,22 @@ never draws (see [[LEARNINGS]]):
   side the lens eases its aim toward the face (`CLIMB_FACE_AIM`): eyes in
   the upper quarter, the hunter just clear of the hand.
 
-![[shots/2026-10-21-two-paths-rest.png|800]]
+- Nick, with a shot: "The frog is not centered on the stone now, and it's
+  not facing the jackal." Two causes. The Meshy rock was centred on its
+  bounding box, and its top face sits off that centre, so the hunter stood
+  on the top's edge; it is centred on the top face now. And the hunters'
+  facing was decided in three places: the stand, the hop, and a per-frame
+  body turn in `_process` that aimed at the beast's box centre from before
+  it stepped into the lava, in the wrong frame, so the turns stacked. The
+  body turn owns it now, toward the drawing where it stands. The face aim
+  is on at rest too (it already was, by accident: the rest rock counts as
+  off the ground), and the rest frame is better for it.
 
-![[shots/2026-10-21-face-climb-frog.png|800]]
+![[shots/2026-10-21-facing-rest.png|800]]
 
-![[shots/2026-10-21-face-climb-goblin.png|800]]
+![[shots/2026-10-21-facing-climb-frog.png|800]]
+
+![[shots/2026-10-21-facing-climb-goblin.png|800]]
 
 ![[shots/2026-10-21-wall-orbit.png|800]]
 

@@ -2571,10 +2571,16 @@ func _process(delta: float) -> void:
 		if hb == null or not is_instance_valid(hb) or _beast == null:
 			continue
 		var holder := h["node"] as Node3D
-		var at_beast := _beast_box.get_center() - holder.position
+		# Toward the point the camera lines up on (the drawing where it STANDS,
+		# not the box measured before it stepped into the lava), and in the
+		# holder's frame: the hop and the stand turn the holder too, and the two
+		# turns stacked, so a hunter on a stone past the old box centre looked
+		# off to the side (Nick, 2026-10-21, with a shot: "it's not facing the
+		# jackal"). This is the one place a hunter's facing is decided.
+		var at_beast := _yaw_point() - holder.position
 		if Vector2(at_beast.x, at_beast.z).length() < 0.05:
 			continue
-		var want := atan2(at_beast.x, at_beast.z)
+		var want := atan2(at_beast.x, at_beast.z) - holder.rotation.y
 		hb.rotation.y = lerp_angle(hb.rotation.y, want, 1.0 - exp(-delta * 9.0))
 
 	# A stone with a hunter on it holds still: hunters do not move up and down
@@ -5286,11 +5292,14 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		if _air_settle <= 0.0:
 			_air_span = 0.0
 	var grounded := not _user_framed and not anyone_off_ground(_hunters)
-	# Up close the lens tips up to the beast's face (CLIMB_FACE_AIM); eased so
-	# the first hop does not cut. Not gated on _user_framed: the locked climb
-	# camera (_focus_camera) sets that flag itself. Only the dev free camera
-	# keeps its own aim.
-	var want_face := 0.0 if anyone_off_ground(_hunters) == false or _free_cam_engaged else 1.0
+	# The lens tips up toward the beast's face (CLIMB_FACE_AIM), at rest and
+	# up the side alike. It was meant for the climb only, but at rest the
+	# hunters stand on the lifted rest rock, so anyone_off_ground() was true
+	# there too and the aim was already on -- and the rest frame was better
+	# for it: the whole beast in the frame at double, ears clear of the top,
+	# the hunter still above the hand. Kept on purpose. Only the dev free
+	# camera keeps its own aim.
+	var want_face := 0.0 if _free_cam_engaged else 1.0
 	_face_mix = want_face if snap else lerpf(_face_mix, want_face, 1.0 - exp(-delta * 3.2))
 	if not _user_framed:
 		# THE CAMERA DOES NOT FIT THE BEAST, on the ground or up its side. It
@@ -5946,8 +5955,8 @@ static func lens_lift_for(dist: float) -> float:
 ## with a beast this tall the frame from the top stone was one wall of
 ## pectoral (Nick, 2026-10-21, with a shot: "have the camera facing the face
 ## of the beast ... it's facing its chest when you're getting up close").
-## The aim slides this far from the hunter toward _face_point() while any
-## hunter is off the ground. Measured on the top stone with the drawing at
+## The aim slides this far from the hunter toward _face_point(), at rest and
+## climbing (see _aim_camera). Measured on the top stone with the drawing at
 ## 3.2x: the eyes stood 29 degrees over a level aim and the hunter's feet 4
 ## under; the hand covers the bottom 18 degrees. 0.22 lifts the aim about 10
 ## degrees: eyes near the upper quarter, feet just clear of the cards. 0.5
@@ -8792,12 +8801,45 @@ func _stair_stone(r: float) -> Node3D:
 		first = false
 	var k := r * 2.0 / maxf(maxf(box.size.x, box.size.z), 1e-3)
 	rock.scale = Vector3.ONE * k
-	var c := box.get_center()
+	# Centred on the TOP FACE, not the box: the rock bulges to one side under
+	# its top, so the box's centre put the hunter on the top's edge (Nick,
+	# 2026-10-21, with a shot: "The frog is not centered on the stone").
+	var c := _stair_stone_top(rock, box)
 	rock.position = Vector3(-c.x, -box.end.y, -c.z) * k
 	var spin := Node3D.new()
 	spin.rotation.y = randf_range(0.0, TAU)
 	spin.add_child(rock)
 	return spin
+
+
+## The centroid (x, z) of the rock's top face: every vertex within 4% of its
+## height of the top, in the rock's own space. Falls back to the box centre
+## on a mesh with no readable arrays.
+static func _stair_stone_top(rock: Node3D, box: AABB) -> Vector3:
+	var sum := Vector3.ZERO
+	var n := 0
+	var lip := box.end.y - box.size.y * 0.04
+	for node in _all_meshes(rock):
+		var mi := node as MeshInstance3D
+		if mi == null or mi.mesh == null:
+			continue
+		var xf := Transform3D.IDENTITY
+		var p: Node = mi
+		while p != rock and p is Node3D:
+			xf = (p as Node3D).transform * xf
+			p = p.get_parent()
+		for surf in range(mi.mesh.get_surface_count()):
+			var arrays: Array = mi.mesh.surface_get_arrays(surf)
+			if arrays.is_empty():
+				continue
+			for v in (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
+				var w: Vector3 = xf * v
+				if w.y >= lip:
+					sum += w
+					n += 1
+	if n == 0:
+		return box.get_center()
+	return Vector3(sum.x / n, box.end.y, sum.z / n)
 
 
 func _build_ledge_marks() -> void:

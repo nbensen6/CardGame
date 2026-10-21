@@ -47,6 +47,11 @@ Traps that have cost real time. Read before changing the thing they name.
   beast", so in the orbit camera the faded window turned with the lens and
   read as a purple wall that followed you. A scene fact (where the open sky
   is) has to be a world-space fact.
+- **Three writers of one rotation.** A hunter's yaw was set by the stand,
+  by the hop's crouch, and by a per-frame body turn, the last in the body's
+  local frame under a holder the first two rotated. Fixing any one of them
+  changed nothing on screen, twice. When a pose will not take a fix, grep
+  every writer of that property before touching the first one again.
 - **The Godot MCP admits one client.** A second session gets "Another client is
   already connected" forever. `tools\shot.cmd` needs no editor and renders the
   fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was

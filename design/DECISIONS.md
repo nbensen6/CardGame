@@ -47,7 +47,12 @@ Same day, three more visual calls:
   used to turn the hunter toward the stone it was jumping to, which on a
   sideways staircase is a side-on look for the hop and after it ("the frog
   ... as it was climbing, was looking to the wrong side"); it turns toward
-  the beast from the landing spot instead.
+  the beast from the landing spot instead. Then the real owner: the
+  per-frame body turn in `_process`, which aimed at `_beast_box`'s centre
+  (where the drawing stood before the lava) in rig space while the holder
+  under it carried its own yaw, so the two stacked. It aims at `_yaw_point()`
+  in the holder's frame now and is the one place a hunter's facing is
+  decided; the stand and the hop turn the holder, and the body cancels it.
 - **Up the side the camera looks at the face.** The climb pivot is the hunter
   at eye height with a near-level pitch, so with the drawing at 3.2x the top
   stone's frame was one wall of chest. `_apply_orbit` eases the aim toward
