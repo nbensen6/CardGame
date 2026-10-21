@@ -26,13 +26,15 @@ Same day, three more visual calls:
   lens ("this weird wall that kind of looks purple ... it follows the
   camera"). `cliff_flat.gdshader` has no far fade now; the wall is rock all
   round, lit with the flanks' tones so it reads as slate, not a silhouette.
-- **Two paths, not one staircase.** The Goblin's line was the Frog's
+- **Two paths that never meet.** The Goblin's line was the Frog's
   mirrored about the top stone, so both met at the chest and the top pair
-  folded into one. Each line now stands `STAIR_SPLIT` (0.1 of the beast's
-  width) off the shared route, Frog left, Goblin right, and `far` is 1.25 so
-  each top stone stands out past the anchor plane toward the beast ("have
-  their own pathway ... that kind of gets a little bit closer to the
-  jackal"). The hunter's feet use the same `_stair_slab`, so they land on
+  folded into one. Each line now stands `STAIR_SPLIT` (0.22 of the beast's
+  width) off the shared route, Frog left, Goblin right -- 0.1 still read as
+  one staircase meeting at the chest ("they shouldn't connect at any point")
+  -- and `far` is 1.25 so each top stone stands out past the anchor plane
+  toward the beast. The waiting hunters stand symmetric about the top
+  column, 1.5 asides each way (`_stair_rest_x`), so the paths rise as mirror
+  images. The hunter's feet use the same `_stair_slab`, so they land on
   their own stones.
 - **The jackal draws at double.** `DRAWN_LAVA_ZOOM` 3.2 ("the jackal should
   feel really big. Try with double, and then we'll reel it in"). Its ears

@@ -225,11 +225,18 @@ never draws (see [[LEARNINGS]]):
   "I want the jackal to feel really big. Try with double, and then we'll
   reel it in"). At rest its ears clip the top edge; that is the reel-in.
 
-![[shots/2026-10-21-double-rest.png|800]]
+- Nick: "No ... two separate pathways. They shouldn't connect at any point
+  ... have the frog a little bit more to the left ... symmetrically pointing
+  ... towards the jackal, but they should never meet." The Frog waits 1.5
+  asides left of the top column and the Goblin 1.5 right (they used to be 0
+  and 3), and the split is 0.22 of the beast's width: two mirror-image paths
+  with about nine units of open air between their tops, the chest in the gap.
 
-![[shots/2026-10-21-double-climb-frog.png|800]]
+![[shots/2026-10-21-two-paths-rest.png|800]]
 
-![[shots/2026-10-21-double-climb-goblin.png|800]]
+![[shots/2026-10-21-two-paths-climb-frog.png|800]]
+
+![[shots/2026-10-21-two-paths-climb-goblin.png|800]]
 
 ![[shots/2026-10-21-wall-orbit.png|800]]
 

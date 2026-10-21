@@ -7996,10 +7996,12 @@ static func stair_thickness(r: float) -> float:
 ## Mirror of `anchor` across x = `about` (the Goblin's line is the Frog's,
 ## flipped about the top slab).
 ## How far each line stands off the shared route, as a fraction of the beast's
-## width: the Frog's left, the Goblin's right. 0.1 puts the two top stones
-## about four units apart, clearly two stones (STAIR_DOUBLE_SPAN) with the
-## beast's chest between them.
-const STAIR_SPLIT := 0.1
+## width: the Frog's left, the Goblin's right. 0.1 left the two tops four
+## units apart, which still read as one staircase meeting at the chest. 0.22
+## (Nick, 2026-10-21: "two separate pathways. They shouldn't connect at any
+## point") leaves about nine units of open air between the top stones, the
+## chest in the gap.
+const STAIR_SPLIT := 0.22
 static func stair_mirror(anchor: Vector3, about: float) -> Vector3:
 	return Vector3(2.0 * about - anchor.x, anchor.y, anchor.z)
 
@@ -8027,17 +8029,18 @@ func _stair_index(foot: int) -> int:
 	return i
 
 
-## Where hunter line `side` waits: the Frog (-1) straight in front of the top
-## slab, as TARGET centres it under the sternum; the Goblin 3 asides right.
+## Where hunter line `side` waits: the Frog (-1) 1.5 asides LEFT of the top
+## slab's column, the Goblin 1.5 asides right -- the same 3 asides apart they
+## were when the Frog stood under the sternum (checker r2 iter 02), now
+## symmetric about it, so the two paths rise toward the beast as mirror
+## images and neither starts under its chest. Nick, 2026-10-21: "have the frog
+## a little bit more to the left. The frog doesn't have to keep the goblin in
+## frame ... symmetrically pointing ... towards the jackal, but they should
+## never meet."
 func _stair_rest_x(side: float) -> float:
 	var ks := _stair_keys()
 	var top: Vector3 = _climb_points[ks[ks.size() - 1]]
-	# 3 asides (checker r2 iter 02, 2026-10-07; was 1.6): TARGET shows one
-	# hunter, the Frog, with the partner only as a Switch button and a pip on
-	# the climb gauge. Both critics named the Goblin standing in the rest
-	# frame MAJOR; at 3 asides it waits just off the right edge of the Frog's
-	# shot and still has its own shot when you Switch to it.
-	return top.x + (0.0 if side < 0.0 else REST_ASIDE * 3.0)
+	return top.x + (-1.0 if side < 0.0 else 1.0) * REST_ASIDE * 1.5
 
 
 func _stair_eye(side: float) -> Vector3:

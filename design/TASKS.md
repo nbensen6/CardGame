@@ -55,9 +55,10 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       back to the low-poly hull (`STAIR_SLAB_GEOMETRY`). Then the wall's
       camera-relative fade removed (the "purple wall that follows the
       camera") and a Meshy basalt block for the staircase stones. Then two
-      separate paths (`STAIR_SPLIT`, `far` 1.25) and the jackal at double
+      paths that never meet (`STAIR_SPLIT` 0.22, `far` 1.25, the hunters
+      1.5 asides either side of the top column) and the jackal at double
       (`DRAWN_LAVA_ZOOM` 3.2, to be reeled in). Shots:
-      `design/shots/2026-10-21-double-rest.png`, `-climb-frog.png`,
+      `design/shots/2026-10-21-two-paths-rest.png`, `-climb-frog.png`,
       `-climb-goblin.png`.
 
 - [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,
