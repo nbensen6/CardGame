@@ -196,12 +196,19 @@ never draws (see [[LEARNINGS]]):
 - Just the jackal: no rock wall at its left, no stone outlines on its belly,
   no glow round the fist's flame. The rig's seven layers are cut from the
   clean sprite now (`tools/beast_recut.py`).
-- The beast stands 0.9 of its height back across the lava; the stones hang
-  where they were, so the top of the climb has open air to the chest.
+- The beast stands IN the lava: past the ground's edge, inside the ring,
+  sunk to its feet. The stones hang where they were, so the top of the
+  climb has open air and lava between it and the chest. (First try put it
+  0.9 of its height back on dark ground, twenty units short of the lava;
+  Nick: "put it back into the lava. This is a visual change, not a
+  mechanism change.")
 - The Frog and the Goblin each have their own staircase to it.
 
-![[shots/2026-10-21-recut-rest.png|800]]
+![[shots/2026-10-21-in-lava-rest.png|800]]
 
-![[shots/2026-10-21-recut-climb.png|800]]
+![[shots/2026-10-21-in-lava-climb.png|800]]
+
+(The Tongue Flick card over both frames is the shot harness catching the
+real mouse on the second monitor, not the game.)
 
 ▶ **[Play it again](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**

@@ -3,16 +3,19 @@
 Why things are the way they are. Code shows what changed, never why. Newest
 first. A decision here outranks any older instruction in a brief or a note.
 
-## 2026-10-21 — the drawn beast stands back; the stones stay where the climb is
+## 2026-10-21 — the drawn beast stands in the lava; the stones stay where the climb is
 
-Nick: "pushed farther back into the lava, so it'll be farther away, and the
-stones don't have to be right next to the jackal." So the stones, the climb
-and the sigil are built from the rig's anchors where they stand, and only then
-does the drawing step back `DRAWN_PUSH_BACK` (0.9) of its own height. The
-figure reads as far off across the lava behind the staircase; a hunter at the
-sigil stands on the top stone with open air to the chest. That gap is wanted,
-not a bug to close. Tune the one constant in `combat_3d.gd` if 0.9 is too far
-or not far enough.
+Nick: "pushed farther back into the lava ... the stones don't have to be right
+next to the jackal", then, when it came back standing on dark ground: "put it
+back into the lava. This is a visual change, not a mechanism change." So the
+stones, the climb and the sigil are built from the rig's anchors where they
+stand, and only then does the drawing step out past the ground's edge into the
+ring (`DRAWN_LAVA_STAND`, 0.12 of the arena radius past the lava's inner edge)
+and sink `DRAWN_LAVA_SINK` (0.05 of its height) so the pool covers its feet.
+The figure reads as a far thing standing in the lava behind the staircase; a
+hunter at the sigil stands on the top stone with lava between it and the
+chest. That gap is wanted, not a bug to close. The cost is size: it draws
+about 0.7 of what it did one step closer. Both knobs are in `combat_3d.gd`.
 
 The sprite's art lives in the rig's seven layers (`cinder_jackal_2d_<part>.png`),
 never in the composite. Any fix to the jackal's drawing goes through

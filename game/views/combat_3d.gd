@@ -3500,9 +3500,6 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_build_hull()
 	_build_float_stones()
 	_build_ledge_marks()   # needs the hull, so it goes after it
-	# Only now, with the stones and the climb built from the anchors where
-	# they stand: the drawing itself steps back across the lava.
-	_beast.position.z = _drawn_back_z()
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
@@ -3522,6 +3519,10 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
 			_ground_back() / 0.86))
 	_arena_r = want_r
+	# Only now, with the stones and the climb built from the anchors where
+	# they stand and the arena sized: the drawing itself steps out into the lava.
+	_beast.position.z = _drawn_back_z()
+	_beast.position.y = _drawn_sink_y()
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
 		ground.radius = maxf(9.0, want_r)
@@ -6766,14 +6767,31 @@ func _ground_back() -> float:
 		DRAWN_GAP_PER_HEIGHT if _beast_drawn else GROUND_GAP_PER_HEIGHT)
 
 
-## Where a drawn beast stands: DRAWN_PUSH_BACK of its height behind the anchors
-## the stones, the climb and the camera were built from. The stones hang where
-## they are and the figure reads as far off across the lava behind them (Nick,
-## 2026-10-21: "pushed farther back into the lava ... the stones don't have to
-## be right next to the jackal"). 0ac2010a declared the constant and never
-## applied it; beast_lunge's per-frame z below was overwriting any offset anyway.
+## Where a drawn beast stands: IN the lava. The stones, the climb and the camera
+## are built from the anchors where they stand (the beast at the rig's origin);
+## only then does the drawing step out past the ground's edge, DRAWN_LAVA_STAND
+## of the arena radius into the ring, and sink DRAWN_LAVA_SINK of its height so
+## the pool covers its feet. Nick, 2026-10-21, twice: "put it back into the
+## lava" -- the lava round its legs is the picture, the distance is only what
+## that costs. A biome with no lava just stands it DRAWN_PUSH_BACK back.
+## beast_lunge's per-frame z below reads this too, or it would overwrite it.
+const DRAWN_LAVA_STAND := 0.12
+const DRAWN_LAVA_SINK := 0.05
+
+
 func _drawn_back_z() -> float:
-	return -DRAWN_PUSH_BACK * _beast_height if _beast_drawn else 0.0
+	if not _beast_drawn:
+		return 0.0
+	var ring := lava_ring(String(BEAST_BIOME.get(_beast_id, "crag")))
+	if ring == Vector2.ZERO:
+		return -DRAWN_PUSH_BACK * _beast_height
+	return -_arena_r * (ring.x + DRAWN_LAVA_STAND)
+
+
+func _drawn_sink_y() -> float:
+	if not _beast_drawn or lava_ring(String(BEAST_BIOME.get(_beast_id, "crag"))) == Vector2.ZERO:
+		return 0.0
+	return -DRAWN_LAVA_SINK * _beast_height
 
 
 ## How much of the frame's height a beast `beast_h` tall draws at its front

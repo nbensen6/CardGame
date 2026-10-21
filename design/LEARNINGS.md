@@ -32,6 +32,11 @@ Traps that have cost real time. Read before changing the thing they name.
   name for a use before calling a knob done. `_process` also rewrites
   `_beast.position.z` every frame for the lunge, so a one-time offset there
   lasted one frame.
+- **"Into the lava" is a picture, not a distance.** The first pass moved the
+  beast 18 units back and called it done; it stood on dark floor 20 units
+  short of the ring, because the arena disc is centred on the beast and its
+  radius is sized by the hunters' standoff. Measure where the ring actually
+  is (`lava_ring * _arena_r`), then check the shot against Nick's sentence.
 - **The Godot MCP admits one client.** A second session gets "Another client is
   already connected" forever. `tools\shot.cmd` needs no editor and renders the
   fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was
