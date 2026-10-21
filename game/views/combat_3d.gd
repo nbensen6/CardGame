@@ -4220,8 +4220,12 @@ func _dress_wall(beast_id: String) -> void:
 	var glow := lava_glow(String(BEAST_BIOME.get(beast_id, "crag")))
 	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * _arena_r * glow)
 	mat.set_shader_parameter("heat_gain", 0.55 * glow)
-	mat.set_shader_parameter("arena_centre", _rig.global_position)
-	mat.set_shader_parameter("arena_r", _arena_r)
+	# Lit like the flank masses, so the far side of the ring reads as faceted
+	# slate behind the beast rather than one black silhouette (Nick, 2026-10-21:
+	# "get rid of this black shadow"), now that nothing fades it out.
+	mat.set_shader_parameter("lit_at", FLANK_LIT_AT)
+	mat.set_shader_parameter("lit_color", FLANK_LIT)
+	mat.set_shader_parameter("key_dir", FLANK_KEY)
 	for node in _all_meshes(wall):
 		(node as GeometryInstance3D).material_override = mat
 
@@ -4283,7 +4287,6 @@ func _add_flank_cliffs(beast_id: String) -> void:
 	var glow := lava_glow(biome)
 	mat.set_shader_parameter("heat_height", WALL_HEAT_HEIGHT * r * glow * 1.6)
 	mat.set_shader_parameter("heat_gain", 1.1 * glow)
-	mat.set_shader_parameter("far_mix", 0.0)
 	# TARGET lights the masses' cool edges on their upright faces too; the
 	# wall's 0.7 only ever lights faces tipped toward the sky.
 	mat.set_shader_parameter("lit_at", FLANK_LIT_AT)
@@ -8494,7 +8497,12 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 	# own handoff dropped tilt/squash on purpose — tuned for a sphere,
 	# it would distort this mesh's shape unpredictably.
 	body.rotation.y = randf_range(0.0, TAU)
-	if slab:
+	var meshy_stone := slab and radius > 0.0 and _staircase() and ResourceLoader.exists(STAIR_STONE)
+	if meshy_stone:
+		# The staircase's own rock (STAIR_STONE), with its own texture.
+		body.free()
+		body = _stair_stone(rock_radius)
+	elif slab:
 		# TARGET.png's steps are flat, wide, thin slabs with a slightly irregular
 		# outline (Nick, 2026-10-05). The top face is the stone's origin, where
 		# _stand_on_model puts the hunter's feet; no cap, no rim.
@@ -8604,7 +8612,7 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 		lava_mat = ShaderMaterial.new()
 		lava_mat.shader = LAVA_ROCK
 		lava_mat.set_shader_parameter("detail", ROCK_DETAIL)
-	if body_mesh != null:
+	if body_mesh != null and not meshy_stone:
 		body_mesh.material_override = lava_mat if lava else body_mat
 
 	# CAP: the flat top face the playtester's request asked for
@@ -8689,6 +8697,38 @@ func _add_float_stone(pos: Vector3, index: int, count: int, radius: float = -1.0
 
 	_float_stones.append(stone)
 	_float_home.append(stone.position)
+
+
+## One of the staircase's stones: a Meshy-generated low-poly basalt block
+## (tools: meshy text-to-image 01a15f5f -> image-to-3d 01a15f60, meshy-t2.5
+## smart topology, 1500 tris, 21 credits), kept with its own texture. Fitted
+## so its widest side spans 2r and its flat top sits at the origin, where
+## _stand_on_model puts the hunter's feet. The spin rides a parent, so the
+## fit's centring offset does not turn with it. Nick, 2026-10-21: "do another
+## round on the stones ... Use Meshy if you need to generate some assets."
+const STAIR_STONE := "res://assets/3d/env/stair_stone.glb"
+func _stair_stone(r: float) -> Node3D:
+	var rock := (load(STAIR_STONE) as PackedScene).instantiate() as Node3D
+	var box := AABB()
+	var first := true
+	for node in _all_meshes(rock):
+		var vi := node as VisualInstance3D
+		var xf := Transform3D.IDENTITY
+		var n: Node = vi
+		while n != rock and n is Node3D:
+			xf = (n as Node3D).transform * xf
+			n = n.get_parent()
+		var b: AABB = xf * vi.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var k := r * 2.0 / maxf(maxf(box.size.x, box.size.z), 1e-3)
+	rock.scale = Vector3.ONE * k
+	var c := box.get_center()
+	rock.position = Vector3(-c.x, -box.end.y, -c.z) * k
+	var spin := Node3D.new()
+	spin.rotation.y = randf_range(0.0, TAU)
+	spin.add_child(rock)
+	return spin
 
 
 func _build_ledge_marks() -> void:

@@ -42,6 +42,11 @@ Traps that have cost real time. Read before changing the thing they name.
   started from that stale centre: the climb shot framed empty lava with the
   jackal off the left edge. Anything that reads the beast's place after
   `_show_beast` must add `_drawn_back_z()` (or read the node), not the box.
+- **Anything measured along the camera's view moves with the camera.** The
+  wall's far fade used `INV_VIEW_MATRIX` to decide which part was "behind the
+  beast", so in the orbit camera the faded window turned with the lens and
+  read as a purple wall that followed you. A scene fact (where the open sky
+  is) has to be a world-space fact.
 - **The Godot MCP admits one client.** A second session gets "Another client is
   already connected" forever. `tools\shot.cmd` needs no editor and renders the
   fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was

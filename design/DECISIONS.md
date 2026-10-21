@@ -20,11 +20,17 @@ row -- holds, stones and camera never see it. All three knobs are in
 `combat_3d.gd`.
 
 Same day, three more visual calls:
-- **The far wall fades out, not to a colour.** No flat tone matches a sky
-  gradient; faded to near-black it stood as one black mass behind the beast
-  ("get rid of this black shadow"). `cliff_flat.gdshader` takes ALPHA to zero
-  past `far_from`..`far_to` instead, and the sky shows. The flank masses never
-  fade (far_mix 0).
+- **The wall does not fade at all.** It faded straight ahead of the camera
+  (to violet, then near-black, then to nothing) so TARGET's open sky showed
+  between two formations; measured along the view, the window swung with the
+  lens ("this weird wall that kind of looks purple ... it follows the
+  camera"). `cliff_flat.gdshader` has no far fade now; the wall is rock all
+  round, lit with the flanks' tones so it reads as slate, not a silhouette.
+- **The staircase stones are a Meshy asset.** `stair_stone.glb`: a low-poly
+  basalt block with a pale worn top, generated from a concept image
+  (meshy-t2.5 smart topology, 1500 tris), fitted in code to each rung's
+  radius with its top at the hunter's feet (`_stair_stone`). Its own texture
+  stays; the flat-colour slab path remains for biomes without it.
 - **The follow camera lines up on the drawing where it stands.** `_yaw_point`
   adds `_drawn_back_z()` to the box centre, so the climb shot keeps the
   jackal behind the hunter ("the camera facing the jackal at all points").

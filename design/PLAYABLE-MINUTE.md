@@ -210,8 +210,17 @@ never draws (see [[LEARNINGS]]):
   the stones are the low-poly hull again -- crisp blocks, not the upscaled
   painted cut-outs.
 
-![[shots/2026-10-21-big-rest.png|800]]
+- Then, orbiting in dev mode, Nick found "this weird wall that kind of looks
+  purple, like the sky ... it follows the camera". It was the far-wall fade,
+  measured along the camera's own view. Gone: the wall is faceted slate all
+  the way round, lit like the flank masses. And a second round on the
+  stones: a Meshy low-poly basalt block (`stair_stone.glb`, 21 credits)
+  with its own texture replaces the procedural slabs on the staircase.
 
-![[shots/2026-10-21-big-climb.png|800]]
+![[shots/2026-10-21-stones-rest.png|800]]
+
+![[shots/2026-10-21-stones-climb.png|800]]
+
+![[shots/2026-10-21-wall-orbit.png|800]]
 
 ▶ **[Play it again](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**

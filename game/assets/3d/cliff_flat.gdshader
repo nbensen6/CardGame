@@ -1,8 +1,5 @@
 shader_type spatial;
-// depth_draw_always: the far wall fades OUT (ALPHA below), which puts the
-// whole material through the transparent pass; it still writes depth so the
-// embers behind a flank mass stay behind it.
-render_mode cull_back, unshaded, depth_draw_always;
+render_mode cull_back, unshaded;
 
 // Flat-toned cliffs -- "Cliffs and floor in picture A's flat style",
 // 2026-10-05. Used by a biome that names `"wall": "flat"` in combat_3d.BIOME
@@ -54,34 +51,13 @@ uniform float heat_gain : hint_range(0.0, 2.0) = 0.55;
 uniform float shade_floor : hint_range(0.0, 1.0) = 0.6;
 uniform float shade_span = 9.0;
 
-// Checker iter 24: behind the jackal, the far side of the wall ring stood
-// as a row of jagged dark teeth across the whole mid-ground; TARGET shows
-// open sky there between two big formations. Wall that lies further than
-// far_from arena radii past the arena centre, along the camera's view, fades
-// toward the sky's own tone by far_mix at far_to. Only near the camera's
-// centre line: wall more than lat_from radii to either side keeps its dark
-// tones, so the two big formations at the frame edges stay as TARGET's.
-uniform vec3 arena_centre = vec3(0.0);
-uniform float arena_r = 12.0;
-// Checker r2 iter 23: both critics' top MAJOR -- "a continuous cliff wall
-// across the whole width behind the jackal, purple only in a thin strip".
-// The fade to sky now starts nearer, finishes fully, and spans most of the
-// view's width, so only the two flank formations stay rock; fewer planes take
-// the lit tone, so the flanks read as dark masses, not shard noise.
-uniform float far_from = 0.1;
-uniform float far_to = 0.6;
-// Nick, 2026-10-21: "Get rid of that purple aura in the background." The far
-// wall faded toward a violet haze, which is the purple glow left sitting
-// behind the beast once the sky itself went dark. Then, faded to near-black
-// smoke, it stood as one flat black mass behind the beast (Nick, the same
-// day: "get rid of this black shadow that's in the background"). No colour
-// matches a sky gradient, so the far wall now fades OUT: alpha goes to zero
-// and the sky itself shows there. far_color is kept for the shade it fades
-// through on the way.
-uniform vec4 far_color : source_color = vec4(0.075, 0.055, 0.07, 1.0);
-uniform float far_mix : hint_range(0.0, 1.0) = 1.0;
-uniform float lat_from = 1.0;
-uniform float lat_to = 1.45;
+// No far fade any more. It used to fade the wall straight ahead of the camera
+// (toward violet, then near-black, then to nothing) so TARGET's open sky
+// showed between two formations. Measured along the camera's own view, the
+// window swung round with the lens: Nick, 2026-10-21, orbiting in dev mode:
+// "this weird wall that kind of looks purple, like the sky ... it follows the
+// camera ... I want this removed." The wall is rock all the way round now,
+// lit like the flank masses so it reads as faceted slate, not a silhouette.
 
 varying vec3 world_pos;
 
@@ -112,11 +88,5 @@ void fragment() {
 	float heat = 1.0 - smoothstep(0.0, max(heat_height, 1e-3), world_pos.y);
 	c *= mix(shade_floor, 1.0, smoothstep(0.0, max(shade_span, 1e-3), world_pos.y));
 	vec3 col = c + heat_color.rgb * heat_gain * heat * heat;
-	vec3 fwd = -INV_VIEW_MATRIX[2].xyz;
-	fwd = normalize(vec3(fwd.x, 0.0, fwd.z));
-	float along = dot(world_pos - arena_centre, fwd) / max(arena_r, 1e-3);
-	float lat = abs(dot(world_pos - arena_centre, vec3(-fwd.z, 0.0, fwd.x))) / max(arena_r, 1e-3);
-	float far = smoothstep(far_from, far_to, along) * (1.0 - smoothstep(lat_from, lat_to, lat)) * far_mix;
-	ALBEDO = mix(col, far_color.rgb, far);
-	ALPHA = 1.0 - far;
+	ALBEDO = col;
 }
