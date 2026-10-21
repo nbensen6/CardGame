@@ -418,7 +418,7 @@ z_index = 0
 z_as_relative = false
 texture = ExtResource("torso")
 centered = false
-position = Vector2(-584, -710)
+position = Vector2(-253, -863)
 
 [node name="arm_r" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(280, -532)
@@ -428,7 +428,7 @@ z_index = 1
 z_as_relative = false
 texture = ExtResource("arm_r")
 centered = false
-position = Vector2(-84, -150)
+position = Vector2(-80, -145)
 
 [node name="head" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(0, -492)
@@ -438,7 +438,7 @@ z_index = 3
 z_as_relative = false
 texture = ExtResource("head")
 centered = false
-position = Vector2(-170, -482)
+position = Vector2(-152, -481)
 
 [node name="arm_l" type="Node2D" parent="Rig/Root/torso"]
 position = Vector2(-208, -472)
@@ -448,7 +448,7 @@ z_index = 5
 z_as_relative = false
 texture = ExtResource("arm_l")
 centered = false
-position = Vector2(-234, -120)
+position = Vector2(-239, -123)
 
 [node name="fore_r" type="Node2D" parent="Rig/Root/torso/arm_r"]
 position = Vector2(166, 220)
@@ -458,7 +458,7 @@ z_index = 2
 z_as_relative = false
 texture = ExtResource("fore_r")
 centered = false
-position = Vector2(-142, -68)
+position = Vector2(-138, -66)
 
 [node name="fore_l" type="Node2D" parent="Rig/Root/torso/arm_l"]
 position = Vector2(-186, 148)
@@ -468,7 +468,7 @@ z_index = 6
 z_as_relative = false
 texture = ExtResource("fore_l")
 centered = false
-position = Vector2(-216, -418)
+position = Vector2(-212, -414)
 
 [node name="fire" type="Node2D" parent="Rig/Root/torso/arm_l/fore_l"]
 position = Vector2(0, 0)
@@ -478,7 +478,7 @@ z_index = 4
 z_as_relative = false
 texture = ExtResource("fire")
 centered = false
-position = Vector2(-353, -591)
+position = Vector2(-351, -571)
 hframes = 8
 
 [node name="hold_0" type="Marker2D" parent="Rig/Root/torso"]

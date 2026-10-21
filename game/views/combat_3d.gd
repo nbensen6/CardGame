@@ -2624,7 +2624,7 @@ func _process(delta: float) -> void:
 		var lunge := 0.0
 		if _enemy_stage != "":
 			lunge = beast_lunge(_enemy_t, _enemy_beats) * _beast_lunge_k
-		_beast.position.z = -_beast_punch * 0.35 + lunge * _lunge_gap
+		_beast.position.z = _drawn_back_z() - _beast_punch * 0.35 + lunge * _lunge_gap
 		# Toward the hunter it bites, not straight down the camera's line: seen
 		# from behind a hunter a lunge straight at the lens only grows.
 		_beast.position.x = maxf(lunge, 0.0) / BEAST_REACH * _lunge_x
@@ -3500,6 +3500,9 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	_build_hull()
 	_build_float_stones()
 	_build_ledge_marks()   # needs the hull, so it goes after it
+	# Only now, with the stones and the climb built from the anchors where
+	# they stand: the drawing itself steps back across the lava.
+	_beast.position.z = _drawn_back_z()
 	# Grow the arena with its occupant. A 9-unit disc was generous under a bear and
 	# is a dinner plate under a Titan — it ran out mid-frame and left the bottom of
 	# the shot as void, which reads as a hole rather than as ground.
@@ -6761,6 +6764,16 @@ static func ground_standoff_for(front_edge: float, beast_h: float = 0.0,
 func _ground_back() -> float:
 	return ground_standoff_for(_beast_box.end.z, _beast_box.size.y,
 		DRAWN_GAP_PER_HEIGHT if _beast_drawn else GROUND_GAP_PER_HEIGHT)
+
+
+## Where a drawn beast stands: DRAWN_PUSH_BACK of its height behind the anchors
+## the stones, the climb and the camera were built from. The stones hang where
+## they are and the figure reads as far off across the lava behind them (Nick,
+## 2026-10-21: "pushed farther back into the lava ... the stones don't have to
+## be right next to the jackal"). 0ac2010a declared the constant and never
+## applied it; beast_lunge's per-frame z below was overwriting any offset anyway.
+func _drawn_back_z() -> float:
+	return -DRAWN_PUSH_BACK * _beast_height if _beast_drawn else 0.0
 
 
 ## How much of the frame's height a beast `beast_h` tall draws at its front
