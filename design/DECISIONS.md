@@ -3,6 +3,22 @@
 Why things are the way they are. Code shows what changed, never why. Newest
 first. A decision here outranks any older instruction in a brief or a note.
 
+## 2026-10-21 — the drawn beast stands back; the stones stay where the climb is
+
+Nick: "pushed farther back into the lava, so it'll be farther away, and the
+stones don't have to be right next to the jackal." So the stones, the climb
+and the sigil are built from the rig's anchors where they stand, and only then
+does the drawing step back `DRAWN_PUSH_BACK` (0.9) of its own height. The
+figure reads as far off across the lava behind the staircase; a hunter at the
+sigil stands on the top stone with open air to the chest. That gap is wanted,
+not a bug to close. Tune the one constant in `combat_3d.gd` if 0.9 is too far
+or not far enough.
+
+The sprite's art lives in the rig's seven layers (`cinder_jackal_2d_<part>.png`),
+never in the composite. Any fix to the jackal's drawing goes through
+`tools/beast_recut.py` (from a clean `cinder_jackal_2d.png`) or `beast_rig.py`
+(from TARGET.png), or it will not reach the screen. See [[LEARNINGS]].
+
 ## 2026-10-12 — the goal is the fight playing well, not the picture
 
 TARGET.png is reached. It stops being the thing we build toward. The new

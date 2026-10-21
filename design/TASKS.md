@@ -42,6 +42,14 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       of the ground, not in the middle of it.
 - [x] **The ground is a mess.** Make it one consistent surface, and remove the
       wall/slab the jackal is standing on.
+- [x] **Nick's 2026-10-21 list, the second time** — 7538e1b9. The clean
+      jackal was never on screen: the fight draws the rig's seven part layers,
+      not `cinder_jackal_2d.png`, and those were still cut from TARGET.png (the
+      wall on its left, the stone outlines on its belly, the glow round the
+      flame). `tools/beast_recut.py` cuts them from the clean sprite. The
+      beast stands back 0.9 of its height (`DRAWN_PUSH_BACK`, declared the
+      day before and never applied); both staircases draw. Shots:
+      `design/shots/2026-10-21-recut-rest.png`, `-climb.png`.
 
 - [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,
       how deep, what is behind the beast, where the stones hang and what holds

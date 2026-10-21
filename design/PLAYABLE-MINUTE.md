@@ -187,4 +187,21 @@ Tick as you play. **1, 4, 6, 8, 9 are yours alone** — I will not mark those.
 Anything you can say in a sentence is enough — "the grip bar is invisible",
 "the claw killed me and I never saw it coming". That sentence is the next task.
 
+## The look, 2026-10-21
+
+Not a check — the frame the ten checks are played in. Nick's list for the
+jackal, done the second time because the first time changed a PNG the fight
+never draws (see [[LEARNINGS]]):
+
+- Just the jackal: no rock wall at its left, no stone outlines on its belly,
+  no glow round the fist's flame. The rig's seven layers are cut from the
+  clean sprite now (`tools/beast_recut.py`).
+- The beast stands 0.9 of its height back across the lava; the stones hang
+  where they were, so the top of the climb has open air to the chest.
+- The Frog and the Goblin each have their own staircase to it.
+
+![[shots/2026-10-21-recut-rest.png|800]]
+
+![[shots/2026-10-21-recut-climb.png|800]]
+
 ▶ **[Play it again](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**

@@ -19,6 +19,24 @@ Traps that have cost real time. Read before changing the thing they name.
   can hold the whole file, and the point at which cross-file regressions start.
   Splitting it is on [[TASKS]].
 
+- **The fight never draws `cinder_jackal_2d.png`.** `drawn_rig.gd` swaps the
+  Body's texture for the Rig viewport, which composites the seven
+  `cinder_jackal_2d_<part>.png` layers. Three sessions "cleaned the jackal" in
+  the composite (destone, dehalo, a Meshy regeneration) and none of it reached
+  the screen; the layers were still TARGET.png's pixels from 2026-10-10,
+  cliff pockets and painted slabs included. Cut the layers (`beast_recut.py`
+  from a clean composite, `beast_rig.py` from TARGET) and look at the PART
+  PNGs, not the composite, when the drawing looks wrong in the fight.
+- **A constant declared is not a constant applied.** `DRAWN_PUSH_BACK` sat in
+  the file for a day with Nick asking twice for the beast to move; grep the
+  name for a use before calling a knob done. `_process` also rewrites
+  `_beast.position.z` every frame for the lunge, so a one-time offset there
+  lasted one frame.
+- **The Godot MCP admits one client.** A second session gets "Another client is
+  already connected" forever. `tools\shot.cmd` needs no editor and renders the
+  fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was
+  enough to verify today's pass.
+
 ## This machine
 
 - **A local loop stashes every tracked edit and resets to `origin/main` at
