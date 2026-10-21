@@ -43,7 +43,11 @@ Same day, three more visual calls:
   hunter 90 degrees to hug the body; on a stone in front of it that is a
   shoulder to the beast and to the lens. Ground or stone, a hunter faces
   the beast's real position ("always facing the jackal or the beast of any
-  beast in any fight"). The test that pinned the hug now pins this.
+  beast in any fight"). The test that pinned the hug now pins this. The hop
+  used to turn the hunter toward the stone it was jumping to, which on a
+  sideways staircase is a side-on look for the hop and after it ("the frog
+  ... as it was climbing, was looking to the wrong side"); it turns toward
+  the beast from the landing spot instead.
 - **Up the side the camera looks at the face.** The climb pivot is the hunter
   at eye height with a near-level pitch, so with the drawing at 3.2x the top
   stone's frame was one wall of chest. `_apply_orbit` eases the aim toward

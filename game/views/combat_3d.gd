@@ -7044,10 +7044,12 @@ func _hop(tw: Tween, node: Node3D, body: Node3D, from: Vector3, to: Vector3,
 	# shorter cannot be seen, longer reads as input lag.
 	if live:
 		tw.tween_property(body, "scale", rest * Vector3(1.10, 0.86, 1.10), 0.09) 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	# TURN to face the stone this hop lands on, during the crouch: with the
-	# zigzag every hop is a diagonal, and a hunter jumping sideways while
-	# looking straight ahead reads as sliding on a rail.
-	var yaw := hunter_facing_y(0.0, 0.0, from, to)
+	# TURN, during the crouch, to face the BEAST from where this hop lands. It
+	# used to face the stone it was jumping to; on a staircase that rises
+	# sideways across the body that is a side-on look for the whole hop and
+	# after it (Nick, 2026-10-21: "the frog ... as it was climbing, was looking
+	# to the wrong side"). Measured from `to`, so the landing pose is exact.
+	var yaw := hunter_facing_y(0.0, 0.0, to, _beast.position if _beast != null else to + Vector3(0, 0, -1))
 	if live:
 		tw.parallel().tween_method(_turn_toward.bind(node, yaw), 0.0, 1.0, 0.09)
 	else:
