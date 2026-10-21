@@ -37,6 +37,11 @@ Traps that have cost real time. Read before changing the thing they name.
   short of the ring, because the arena disc is centred on the beast and its
   radius is sized by the hunters' standoff. Measure where the ring actually
   is (`lava_ring * _arena_r`), then check the shot against Nick's sentence.
+- **A box measured at the origin does not follow the beast.** `_beast_box`
+  is taken before the drawing steps into the lava, and the camera's yaw line
+  started from that stale centre: the climb shot framed empty lava with the
+  jackal off the left edge. Anything that reads the beast's place after
+  `_show_beast` must add `_drawn_back_z()` (or read the node), not the box.
 - **The Godot MCP admits one client.** A second session gets "Another client is
   already connected" forever. `tools\shot.cmd` needs no editor and renders the
   fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was

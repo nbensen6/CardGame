@@ -3523,6 +3523,12 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# they stand and the arena sized: the drawing itself steps out into the lava.
 	_beast.position.z = _drawn_back_z()
 	_beast.position.y = _drawn_sink_y()
+	if _beast_drawn and _beast.has_method("zoom_view") and not is_equal_approx(DRAWN_LAVA_ZOOM, 1.0):
+		# Bigger on screen without moving a hold, a stone or the camera: the
+		# drawing alone grows, about its own floor row so its feet stay in the
+		# lava (Nick, 2026-10-21: "Make the jackal bigger").
+		_beast.call("zoom_view", float((DRAWN_ZOOM.get(key, [1.0]) as Array)[0]) * DRAWN_LAVA_ZOOM,
+			Vector2(float(_beast.get("mid_px")), float(_beast.get("floor_px"))))
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
 		ground.radius = maxf(9.0, want_r)
@@ -3864,7 +3870,13 @@ const REST_ROCK_TONE := Color(0.16, 0.155, 0.18)
 ## stays -- it is correct either way, and it is what would make this switch
 ## possible at all -- but the geometry slab is plainly not a drop-in for the
 ## painted one and the outline was never the mesh's fault.
-const STAIR_SLAB_GEOMETRY := false
+## true again (Nick, 2026-10-21: "make sure at some point the stones turn to
+## low poly. I would like them cleaned up and high resolution"): the painted
+## cut-outs are TARGET's pixels upscaled, soft at any size, and the outline
+## they "moved out of" was the beast's depth prepass, which the beast no
+## longer reaches now that it stands out in the lava. The hull is crisp at
+## every distance.
+const STAIR_SLAB_GEOMETRY := true
 ## A slab stone's depth as a multiple of its radius. Picture A's steps are
 ## chunky grey blocks about as tall as the Frog (Nick, 2026-10-04: "why does
 ## this look so different from the reference?"); 0.32 drew thin discs.
@@ -5428,6 +5440,13 @@ func _yaw_point() -> Vector3:
 	var c := _beast_box.get_center()
 	if _beast_drawn:
 		c.x += DRAWN_YAW_X * _beast_box.size.x
+		# The box was measured with the drawing at the rig's origin; it stands
+		# out in the lava now (_drawn_back_z), and the line the camera stands
+		# on has to start from where it IS, or the climb shot turned the
+		# hunter's back on empty lava with the beast off the frame's left
+		# (Nick, 2026-10-21: "make sure that the camera is facing the jackal
+		# in the fight at all points in the fight").
+		c.z += _drawn_back_z()
 	return c
 
 
@@ -6777,6 +6796,11 @@ func _ground_back() -> float:
 ## beast_lunge's per-frame z below reads this too, or it would overwrite it.
 const DRAWN_LAVA_STAND := 0.12
 const DRAWN_LAVA_SINK := 0.05
+## How much bigger than its height fit the drawing draws once it stands out in
+## the lava: that stand costs it about 0.7 of its size on screen, and Nick
+## wants it big (2026-10-21: "Make the jackal bigger"). The holds, the stones
+## and the camera are built before this and never see it.
+const DRAWN_LAVA_ZOOM := 1.6
 
 
 func _drawn_back_z() -> float:

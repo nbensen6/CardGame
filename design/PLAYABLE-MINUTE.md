@@ -203,12 +203,15 @@ never draws (see [[LEARNINGS]]):
   Nick: "put it back into the lava. This is a visual change, not a
   mechanism change.")
 - The Frog and the Goblin each have their own staircase to it.
+- Nick's second list, same day: the drawing is 1.6x bigger in place (its feet
+  stay in the lava; nothing else moves), the flat black wall mass behind it
+  fades out to sky instead of to black, the follow camera lines up on where
+  the drawing IS so the climb shot keeps the jackal behind the hunter, and
+  the stones are the low-poly hull again -- crisp blocks, not the upscaled
+  painted cut-outs.
 
-![[shots/2026-10-21-in-lava-rest.png|800]]
+![[shots/2026-10-21-big-rest.png|800]]
 
-![[shots/2026-10-21-in-lava-climb.png|800]]
-
-(The Tongue Flick card over both frames is the shot harness catching the
-real mouse on the second monitor, not the game.)
+![[shots/2026-10-21-big-climb.png|800]]
 
 ▶ **[Play it again](obsidian://shell-commands/?vault=design&execute=fight-uri-beast&_beast=cinder_jackal)**

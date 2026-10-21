@@ -14,8 +14,24 @@ ring (`DRAWN_LAVA_STAND`, 0.12 of the arena radius past the lava's inner edge)
 and sink `DRAWN_LAVA_SINK` (0.05 of its height) so the pool covers its feet.
 The figure reads as a far thing standing in the lava behind the staircase; a
 hunter at the sigil stands on the top stone with lava between it and the
-chest. That gap is wanted, not a bug to close. The cost is size: it draws
-about 0.7 of what it did one step closer. Both knobs are in `combat_3d.gd`.
+chest. That gap is wanted, not a bug to close. Standing out there cost it
+size, so the drawing alone grows `DRAWN_LAVA_ZOOM` (1.6) about its own floor
+row -- holds, stones and camera never see it. All three knobs are in
+`combat_3d.gd`.
+
+Same day, three more visual calls:
+- **The far wall fades out, not to a colour.** No flat tone matches a sky
+  gradient; faded to near-black it stood as one black mass behind the beast
+  ("get rid of this black shadow"). `cliff_flat.gdshader` takes ALPHA to zero
+  past `far_from`..`far_to` instead, and the sky shows. The flank masses never
+  fade (far_mix 0).
+- **The follow camera lines up on the drawing where it stands.** `_yaw_point`
+  adds `_drawn_back_z()` to the box centre, so the climb shot keeps the
+  jackal behind the hunter ("the camera facing the jackal at all points").
+- **The stones are geometry.** `STAIR_SLAB_GEOMETRY` on: the painted
+  cut-outs were TARGET's pixels upscaled, soft at any size ("turn to low
+  poly ... cleaned up and high resolution"). Their old "outline" was the
+  beast's depth prepass, which the beast no longer reaches from the lava.
 
 The sprite's art lives in the rig's seven layers (`cinder_jackal_2d_<part>.png`),
 never in the composite. Any fix to the jackal's drawing goes through

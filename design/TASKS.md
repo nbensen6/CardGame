@@ -49,8 +49,11 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       flame). `tools/beast_recut.py` cuts them from the clean sprite. The
       beast stands IN the lava, past the ground's edge and sunk to its feet
       (`DRAWN_LAVA_STAND` / `DRAWN_LAVA_SINK`; the first try's 0.9-height
-      push-back left it on dark floor); both staircases draw. Shots:
-      `design/shots/2026-10-21-in-lava-rest.png`, `-climb.png`.
+      push-back left it on dark floor); both staircases draw. Then bigger
+      (`DRAWN_LAVA_ZOOM` 1.6), the far wall fading to sky instead of black,
+      the follow camera lined up on the drawing's real place, and the stones
+      back to the low-poly hull (`STAIR_SLAB_GEOMETRY`). Shots:
+      `design/shots/2026-10-21-big-rest.png`, `-climb.png`.
 
 - [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,
       how deep, what is behind the beast, where the stones hang and what holds

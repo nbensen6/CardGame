@@ -1,5 +1,8 @@
 shader_type spatial;
-render_mode cull_back, unshaded;
+// depth_draw_always: the far wall fades OUT (ALPHA below), which puts the
+// whole material through the transparent pass; it still writes depth so the
+// embers behind a flank mass stay behind it.
+render_mode cull_back, unshaded, depth_draw_always;
 
 // Flat-toned cliffs -- "Cliffs and floor in picture A's flat style",
 // 2026-10-05. Used by a biome that names `"wall": "flat"` in combat_3d.BIOME
@@ -69,8 +72,12 @@ uniform float far_from = 0.1;
 uniform float far_to = 0.6;
 // Nick, 2026-10-21: "Get rid of that purple aura in the background." The far
 // wall faded toward a violet haze, which is the purple glow left sitting
-// behind the beast once the sky itself went dark. It fades to the same near
-// black smoke the sky uses now.
+// behind the beast once the sky itself went dark. Then, faded to near-black
+// smoke, it stood as one flat black mass behind the beast (Nick, the same
+// day: "get rid of this black shadow that's in the background"). No colour
+// matches a sky gradient, so the far wall now fades OUT: alpha goes to zero
+// and the sky itself shows there. far_color is kept for the shade it fades
+// through on the way.
 uniform vec4 far_color : source_color = vec4(0.075, 0.055, 0.07, 1.0);
 uniform float far_mix : hint_range(0.0, 1.0) = 1.0;
 uniform float lat_from = 1.0;
@@ -111,4 +118,5 @@ void fragment() {
 	float lat = abs(dot(world_pos - arena_centre, vec3(-fwd.z, 0.0, fwd.x))) / max(arena_r, 1e-3);
 	float far = smoothstep(far_from, far_to, along) * (1.0 - smoothstep(lat_from, lat_to, lat)) * far_mix;
 	ALBEDO = mix(col, far_color.rgb, far);
+	ALPHA = 1.0 - far;
 }
