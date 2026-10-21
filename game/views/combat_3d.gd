@@ -1410,6 +1410,9 @@ var _focused := false       # the camera is held close on the hunter you picked
 ## switched: the shot has to give it up for the establishing wide and for a jump
 ## whose whole arc has to fit, and a hard cut between the two reads as a pop.
 var _shoulder := 0.0
+## How far the climbing camera's aim has eased from the hunter toward the
+## beast's face, 0..1 (see CLIMB_FACE_AIM).
+var _face_mix := 0.0
 ## Third person is the DEFAULT now, not a thing you opt into by clicking a
 ## hunter. Set when a fight opens; cleared the moment the shot actually settles
 ## onto someone, or the moment the player takes the camera themselves.
@@ -5283,6 +5286,12 @@ func _aim_camera(delta: float, snap: bool) -> void:
 		if _air_settle <= 0.0:
 			_air_span = 0.0
 	var grounded := not _user_framed and not anyone_off_ground(_hunters)
+	# Up close the lens tips up to the beast's face (CLIMB_FACE_AIM); eased so
+	# the first hop does not cut. Not gated on _user_framed: the locked climb
+	# camera (_focus_camera) sets that flag itself. Only the dev free camera
+	# keeps its own aim.
+	var want_face := 0.0 if anyone_off_ground(_hunters) == false or _free_cam_engaged else 1.0
+	_face_mix = want_face if snap else lerpf(_face_mix, want_face, 1.0 - exp(-delta * 3.2))
 	if not _user_framed:
 		# THE CAMERA DOES NOT FIT THE BEAST, on the ground or up its side. It
 		# stands a fixed distance behind the active hunter and lets the beast
@@ -5932,6 +5941,33 @@ static func lens_lift_for(dist: float) -> float:
 	return dist * GROUND_LIFT
 
 
+## Up the side the camera looks at the beast's FACE, not its chest. The
+## climbing pivot is the hunter at eye height and the pitch is near level, so
+## with a beast this tall the frame from the top stone was one wall of
+## pectoral (Nick, 2026-10-21, with a shot: "have the camera facing the face
+## of the beast ... it's facing its chest when you're getting up close").
+## The aim slides this far from the hunter toward _face_point() while any
+## hunter is off the ground. Measured on the top stone with the drawing at
+## 3.2x: the eyes stood 29 degrees over a level aim and the hunter's feet 4
+## under; the hand covers the bottom 18 degrees. 0.22 lifts the aim about 10
+## degrees: eyes near the upper quarter, feet just clear of the cards. 0.5
+## put the hunter under the hand.
+const CLIMB_FACE_AIM := 0.22
+## Where the face is, as a fraction of the beast's height from its feet.
+const BEAST_FACE_AT := 0.8
+
+
+## The beast's face in rig space: BEAST_FACE_AT up its height, over the point
+## the follow camera lines up on. A drawn beast's box was measured before it
+## grew DRAWN_LAVA_ZOOM, so its top is scaled back up here.
+func _face_point() -> Vector3:
+	var top := _beast_box.end.y
+	if _beast_drawn:
+		top = _beast_box.position.y + _beast_box.size.y * DRAWN_LAVA_ZOOM
+	var c := _yaw_point()
+	return Vector3(c.x, _beast.position.y + lerpf(_beast_box.position.y, top, BEAST_FACE_AT), c.z)
+
+
 func _apply_orbit() -> void:
 	_pitch = clampf(_pitch, ORBIT_PITCH_MIN, ORBIT_PITCH_MAX)
 	_dist = minf(_dist, _cam_reach())
@@ -5949,7 +5985,17 @@ func _apply_orbit() -> void:
 	var ots := shoulder_frame(_pivot, _yaw, _dist, _shoulder)
 	_cam_home = _inside_wall(_cam_home + (ots["truck"] as Vector3))
 	_cam.position = _cam_home
-	_cam.look_at(ots["aim"] as Vector3, Vector3.UP)
+	var aim: Vector3 = ots["aim"]
+	if _face_mix > 0.001 and _beast != null:
+		# Toward the face, at the face's own depth: lifting the aim at the
+		# hunter's depth, ten units from the lens, tipped the camera at the sky.
+		var f := _face_point()
+		# Depth and x go all the way to the face with the mix; only the HEIGHT is
+		# CLIMB_FACE_AIM of the way, so the tilt is measured at the face's own
+		# distance (a rise at half that distance tipped the hunter out under
+		# the hand, builder shot 2026-10-21).
+		aim = Vector3(lerpf(aim.x, f.x, _face_mix), lerpf(aim.y, f.y, CLIMB_FACE_AIM * _face_mix), lerpf(aim.z, f.z, _face_mix))
+	_cam.look_at(aim, Vector3.UP)
 	# The hand rail owns the left edge, so the screen's centre is not the SCENE's
 	# centre any more. h_offset trucks the camera sideways without re-aiming it, so
 	# the beast sits in the middle of the space it actually has. It scales with
@@ -7312,11 +7358,14 @@ static func hunter_side_offset(players: Array, i: int, height: int) -> float:
 ## swung each hunter 40 degrees OUTWARD, off the jackal and side-on to the
 ## camera (Nick, 2026-09-28: "the faces when at the bottom should be at the
 ## beast").
-## Climbing hunters (t>0.01) turn to hug the body they're on, unchanged.
-static func hunter_facing_y(t: float, side: float, from: Vector3 = Vector3.ZERO,
+## Climbing hunters used to turn 90 degrees to "hug the body"; they stand on
+## stones out in front of it now, so that showed the beast a shoulder. Every
+## hunter faces the beast from wherever it is (Nick, 2026-10-21: "make sure
+## the characters are always facing the jackal or the beast of any beast in
+## any fight"). `t` and `side` stay in the signature for the callers and the
+## tests that pass them.
+static func hunter_facing_y(_t: float, _side: float, from: Vector3 = Vector3.ZERO,
 		target: Vector3 = Vector3(0, 0, -1)) -> float:
-	if t > 0.01:
-		return PI * 0.5 * -side
 	var dx: float = from.x - target.x
 	var dz: float = from.z - target.z
 	if absf(dx) < 0.0001 and absf(dz) < 0.0001:

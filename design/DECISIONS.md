@@ -39,6 +39,19 @@ Same day, three more visual calls:
 - **The jackal draws at double.** `DRAWN_LAVA_ZOOM` 3.2 ("the jackal should
   feel really big. Try with double, and then we'll reel it in"). Its ears
   clip the top of the rest frame; the number comes down when Nick says.
+- **Every hunter faces the beast.** `hunter_facing_y` turned a climbing
+  hunter 90 degrees to hug the body; on a stone in front of it that is a
+  shoulder to the beast and to the lens. Ground or stone, a hunter faces
+  the beast's real position ("always facing the jackal or the beast of any
+  beast in any fight"). The test that pinned the hug now pins this.
+- **Up the side the camera looks at the face.** The climb pivot is the hunter
+  at eye height with a near-level pitch, so with the drawing at 3.2x the top
+  stone's frame was one wall of chest. `_apply_orbit` eases the aim toward
+  `_face_point()` (0.8 of the beast's height, over the yaw point, at the
+  beast's own depth) by `CLIMB_FACE_AIM` 0.22 while any hunter is off the
+  ground: eyes in the upper quarter, the hunter just clear of the hand. 0.5
+  put the hunter under the hand; a rise taken at half the face's distance
+  tipped the lens at the sky. The dev free camera keeps its own aim.
 - **The staircase stones are a Meshy asset.** `stair_stone.glb`: a low-poly
   basalt block with a pale worn top, generated from a concept image
   (meshy-t2.5 smart topology, 1500 tris), fitted in code to each rung's

@@ -232,11 +232,19 @@ never draws (see [[LEARNINGS]]):
   and 3), and the split is 0.22 of the beast's width: two mirror-image paths
   with about nine units of open air between their tops, the chest in the gap.
 
+- Nick, with a shot from the top stone: "make sure the characters are always
+  facing the jackal or the beast of any beast in any fight, and also have
+  the camera facing the face of the beast ... it's facing its chest when
+  you're getting up close." Climbing hunters used to turn 90 degrees to hug
+  a body they no longer stand on; every hunter faces the beast now. Up the
+  side the lens eases its aim toward the face (`CLIMB_FACE_AIM`): eyes in
+  the upper quarter, the hunter just clear of the hand.
+
 ![[shots/2026-10-21-two-paths-rest.png|800]]
 
-![[shots/2026-10-21-two-paths-climb-frog.png|800]]
+![[shots/2026-10-21-face-climb-frog.png|800]]
 
-![[shots/2026-10-21-two-paths-climb-goblin.png|800]]
+![[shots/2026-10-21-face-climb-goblin.png|800]]
 
 ![[shots/2026-10-21-wall-orbit.png|800]]
 

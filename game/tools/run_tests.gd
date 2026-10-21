@@ -23130,14 +23130,20 @@ func _test_hunter_facing_y_ground_hunters_look_at_the_beast() -> void:
 			"a grounded hunter at %s must face the beast (dot %.3f)" % [from, fwd.dot(want)])
 
 
-## Climbing hunters (t>0.01) turn perpendicular to hug the body they're on --
-## unrelated to the ground-facing bug above, pinned here so a future fix to
-## one branch can't silently break the other.
+## Climbing hunters used to turn 90 degrees to hug the body. They stand on
+## stones out in front of it now, so that showed the beast a shoulder; a
+## climbing hunter faces the beast exactly as a ground one does (Nick,
+## 2026-10-21: "always facing the jackal or the beast of any beast").
 func _test_hunter_facing_y_climbing_hunters_turn_to_hug_the_body() -> void:
-	_expect(is_equal_approx(Combat3D.hunter_facing_y(0.5, -1.0), PI * 0.5),
-		"a climbing hunter (side -1) turns +90 degrees to hug the body")
-	_expect(is_equal_approx(Combat3D.hunter_facing_y(0.5, 1.0), -PI * 0.5),
-		"a climbing hunter (side +1) turns -90 degrees to hug the body")
+	var beast := Vector3(0.0, 0.0, -40.0)
+	for from in [Vector3(-6.0, 8.0, -5.0), Vector3(6.0, 8.0, -5.0)]:
+		var f: Vector3 = from
+		var yaw: float = Combat3D.hunter_facing_y(0.5, signf(f.x), f, beast)
+		var facing := Vector3(-sin(yaw), 0.0, -cos(yaw))
+		var to := (beast - f)
+		to.y = 0.0
+		_expect(facing.dot(to.normalized()) > 0.999,
+			"a climbing hunter at %s faces the beast, not side-on to it" % f)
 
 
 ## gauge_dot_dx is _draw_gauge's own copy of hunter_side_offset's job for the

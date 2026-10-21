@@ -57,9 +57,10 @@ The art target is reached (2026-10-12). The goal is no longer a picture.
       camera") and a Meshy basalt block for the staircase stones. Then two
       paths that never meet (`STAIR_SPLIT` 0.22, `far` 1.25, the hunters
       1.5 asides either side of the top column) and the jackal at double
-      (`DRAWN_LAVA_ZOOM` 3.2, to be reeled in). Shots:
-      `design/shots/2026-10-21-two-paths-rest.png`, `-climb-frog.png`,
-      `-climb-goblin.png`.
+      (`DRAWN_LAVA_ZOOM` 3.2, to be reeled in). Then
+      every hunter faces the beast and the climb camera aims at its face
+      (`CLIMB_FACE_AIM`). Shots: `design/shots/2026-10-21-two-paths-rest.png`,
+      `2026-10-21-face-climb-frog.png`, `-goblin.png`.
 
 - [ ] **Decide what the arena IS** — [[LOOK-DEBT]]. Not re-matching: how wide,
       how deep, what is behind the beast, where the stones hang and what holds
