@@ -26,6 +26,17 @@ Same day, three more visual calls:
   lens ("this weird wall that kind of looks purple ... it follows the
   camera"). `cliff_flat.gdshader` has no far fade now; the wall is rock all
   round, lit with the flanks' tones so it reads as slate, not a silhouette.
+- **Two paths, not one staircase.** The Goblin's line was the Frog's
+  mirrored about the top stone, so both met at the chest and the top pair
+  folded into one. Each line now stands `STAIR_SPLIT` (0.1 of the beast's
+  width) off the shared route, Frog left, Goblin right, and `far` is 1.25 so
+  each top stone stands out past the anchor plane toward the beast ("have
+  their own pathway ... that kind of gets a little bit closer to the
+  jackal"). The hunter's feet use the same `_stair_slab`, so they land on
+  their own stones.
+- **The jackal draws at double.** `DRAWN_LAVA_ZOOM` 3.2 ("the jackal should
+  feel really big. Try with double, and then we'll reel it in"). Its ears
+  clip the top of the rest frame; the number comes down when Nick says.
 - **The staircase stones are a Meshy asset.** `stair_stone.glb`: a low-poly
   basalt block with a pale worn top, generated from a concept image
   (meshy-t2.5 smart topology, 1500 tris), fitted in code to each rung's

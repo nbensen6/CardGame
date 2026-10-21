@@ -6803,7 +6803,9 @@ const DRAWN_LAVA_SINK := 0.05
 ## the lava: that stand costs it about 0.7 of its size on screen, and Nick
 ## wants it big (2026-10-21: "Make the jackal bigger"). The holds, the stones
 ## and the camera are built before this and never see it.
-const DRAWN_LAVA_ZOOM := 1.6
+## 3.2 (Nick, 2026-10-21: "double the size of the jackal ... I want the jackal
+## to feel really big. Try with double, and then we'll reel it in").
+const DRAWN_LAVA_ZOOM := 3.2
 
 
 func _drawn_back_z() -> float:
@@ -7904,8 +7906,12 @@ static func route_pos_cleared(top: Vector3, ground_z: float, i: int, n: int,
 ## 2026-10-07: "butts against its left side"). Slab 5 is drawn 80 px in TARGET,
 ## wider than slab 4; at its depth here that hid the top slab, so it steps
 ## down to 0.125.
+## `far` 1.25 (Nick, 2026-10-21: each path should "end that kind of gets a
+## little bit closer to the jackal"): past 1.0 the top slab stands beyond the
+## anchor plane, out over the lava toward the beast, still on the sight line
+## so it draws where it did and a little smaller.
 const STAIRCASE := {
-	"cinder_jackal": {"near": 0.33, "far": 0.92,
+	"cinder_jackal": {"near": 0.33, "far": 1.25,
 		"width": [0.313, 0.2827, 0.1928, 0.1397, 0.1573, 0.1252],
 		"frog": Vector2(-0.0276, -0.531), "first_nudge": Vector2(-1.3, 0.25),
 		"adjust": [Vector2(0.1597, -0.0178), Vector2(0.0154, 0.0079), Vector2(0.0031, -0.0068), Vector2(-0.0023, -0.0158), Vector2(-0.0087, -0.0124), Vector2(-0.0002, -0.0096)]},
@@ -7989,6 +7995,11 @@ static func stair_thickness(r: float) -> float:
 
 ## Mirror of `anchor` across x = `about` (the Goblin's line is the Frog's,
 ## flipped about the top slab).
+## How far each line stands off the shared route, as a fraction of the beast's
+## width: the Frog's left, the Goblin's right. 0.1 puts the two top stones
+## about four units apart, clearly two stones (STAIR_DOUBLE_SPAN) with the
+## beast's chest between them.
+const STAIR_SPLIT := 0.1
 static func stair_mirror(anchor: Vector3, about: float) -> Vector3:
 	return Vector3(2.0 * about - anchor.x, anchor.y, anchor.z)
 
@@ -8048,6 +8059,10 @@ func _stair_slab(k: int, side: float) -> Array:
 	if side > 0.0:
 		a = stair_mirror(a, top.x)
 	a += stair_shift(_stair_frog_gap(side), k, n)
+	# Two paths, not one staircase that meets at the chest: the Frog's whole
+	# line steps left and the Goblin's right (Nick, 2026-10-21: "split the
+	# stones apart and have the frog and the goblin have their own pathway").
+	a.x += (-1.0 if side < 0.0 else 1.0) * STAIR_SPLIT * _beast_box.size.x
 	# Checker r2 iter 10: measured against TARGET in jackal heights (ears to
 	# lava), the six slabs drew ~0.04-0.1 too low and the upper ones too far
 	# right, so they stacked into a column at the belly. `adjust` moves each

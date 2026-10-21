@@ -217,9 +217,19 @@ never draws (see [[LEARNINGS]]):
   stones: a Meshy low-poly basalt block (`stair_stone.glb`, 21 credits)
   with its own texture replaces the procedural slabs on the staircase.
 
-![[shots/2026-10-21-stones-rest.png|800]]
+- Nick on the stones: "Stones look good. I think I like them." Then: two
+  separate paths, the Frog's and the Goblin's (`STAIR_SPLIT`, each line a
+  tenth of the beast's width off the shared route), each ending a little
+  nearer the jackal (`far` 1.25: the top stone stands out past the anchor
+  plane over the lava). And the jackal at DOUBLE (`DRAWN_LAVA_ZOOM` 3.2,
+  "I want the jackal to feel really big. Try with double, and then we'll
+  reel it in"). At rest its ears clip the top edge; that is the reel-in.
 
-![[shots/2026-10-21-stones-climb.png|800]]
+![[shots/2026-10-21-double-rest.png|800]]
+
+![[shots/2026-10-21-double-climb-frog.png|800]]
+
+![[shots/2026-10-21-double-climb-goblin.png|800]]
 
 ![[shots/2026-10-21-wall-orbit.png|800]]
 
