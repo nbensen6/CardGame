@@ -8303,6 +8303,19 @@ static func stair_slab_sprite(k: int, r: float, side: float) -> Sprite3D:
 		var n: Vector2 = STAIR_SLAB_NUDGE[k] / maxf(shrink, 0.01)
 		sp.offset += Vector2(n.x * (-1.0 if sp.flip_h else 1.0), -n.y)
 	sp.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	# The slabs hollowed out against the beast, and this is why (found live in
+	# the running fight, 2026-10-21, Nick: "still seeing the outline"). The
+	# beast's own Sprite3D uses ALPHA_CUT_OPAQUE_PREPASS, so it WRITES DEPTH
+	# across its whole silhouette. A slab is a tilted quad a little in front of
+	# that flat billboard, so it INTERSECTS it: the half of the slab in front
+	# of the beast's plane drew, the half behind was killed by the depth test,
+	# and what was left was a rim with the beast showing through -- the
+	# "outline the stone moved out of", for a week.
+	#
+	# The climb runs up the beast's near face, so a slab is always meant to be
+	# in front of it. Say so, instead of leaving it to a depth test between a
+	# flat billboard and a tilted quad.
+	sp.no_depth_test = true
 	# Behind a hunter standing on it, whatever the transparent sort says.
 	sp.sorting_offset = -HUNTER_HEIGHT
 	return sp

@@ -37,6 +37,15 @@ Traps that have cost real time. Read before changing the thing they name.
 
 ## Godot MCP
 
+- **The editor must be running** for the MCP to reach the project, and it takes
+  a few seconds after launch to hand-shake -- the first `get_state` can fail
+  while `netstat` already shows 6550 ESTABLISHED. Try again before concluding
+  anything. Claude can start it:
+  `"<godot>" --path "G:/Co Op Game/game" -e` in the background.
+- **Verify a fix THROUGH the MCP, not with a fresh shot.** Diagnosing live and
+  then confirming from a PNG is how a week went on the slab outline: the
+  before/after that "proved" one fix was two frames of a bob.
+
 - **Both MCP servers need the editor open** on the project; the server process
   running is not enough. `godot_editor_read get_state` returns "Not connected"
   until it is.
@@ -59,6 +68,12 @@ Traps that have cost real time. Read before changing the thing they name.
 - **The digest truncates a state dict at about a kilobyte** and gives no error
   beyond `_truncated: true` — five cards' rules text alone cut the timing block
   off the end. Keep `_mcp_state()` terse; static data belongs in the json.
+- **A sprite with ALPHA_CUT_OPAQUE_PREPASS writes depth.** The beast's Body
+  does, so any transparent quad that INTERSECTS its flat billboard is half
+  drawn and half depth-killed. That is what hollowed the climb slabs into rims
+  for a week -- they are tilted quads crossing the beast's plane. `no_depth_test`
+  on the slabs says what is actually true: the climb is up the near face, so a
+  slab is always in front.
 - There is **no harness scene** to run. To reach the fight through the MCP:
   `run frozen=true`, then `godot_exec` builds a LocalTransport + GameHost +
   GameClient, picks map nodes to the first fight, optionally
