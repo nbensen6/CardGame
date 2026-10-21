@@ -84,11 +84,52 @@ def destone(beast, write):
     return int(keep.sum()), kept
 
 
+def dehalo(path, write):
+    """Strip the grey aura the cut leaves round a sprite.
+
+    Nick, 2026-10-21: "it looks like there's like a aura around it ... almost,
+    it looks like a shadow around the Jackal." The sprite was cut off a flat
+    grey field, so every soft edge pixel carries that grey: against the fight's
+    dark lava it reads as a pale shadow hugging the figure and the flame.
+
+    Wide soft fringe goes entirely; the last pixel or two of real edge keeps
+    its alpha but takes the colour of the solid pixels beside it, so the
+    silhouette stays smooth instead of turning to stairs.
+    """
+    im = Image.open(path).convert("RGBA")
+    a = np.asarray(im).astype(float)
+    rgb, al = a[..., :3], a[..., 3].copy()
+    solid = al > 250
+    soft = (al > 0) & ~solid
+    killed = int((soft & (al < 90)).sum())
+    al[soft & (al < 90)] = 0.0            # the wide aura
+    edge = (al > 0) & ~solid
+    out = rgb.copy()
+    if edge.any():
+        w = ndi.uniform_filter(solid.astype(float), size=7)
+        for c in range(3):
+            src = ndi.uniform_filter(np.where(solid, rgb[..., c], 0.0), size=7)
+            out[..., c] = np.where(edge, src / np.maximum(w, 1e-4), rgb[..., c])
+    if not write:
+        return killed, int(edge.sum())
+    keep = path.replace(".png", ".orig.png")
+    if not os.path.exists(keep):
+        im.save(keep)
+    Image.fromarray(np.dstack([np.clip(out, 0, 255), al]).astype(np.uint8),
+                    "RGBA").save(path)
+    return killed, int(edge.sum())
+
+
 def main():
     os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     beast = args[0] if args else "cinder_jackal"
-    px, blobs = destone(beast, "--check" not in sys.argv)
+    write = "--check" not in sys.argv
+    if "--halo" in sys.argv:
+        killed, edged = dehalo(os.path.join(CAST, "%s_2d.png" % beast), write)
+        print("%s: %d aura px dropped, %d edge px recoloured" % (beast, killed, edged))
+        return 0
+    px, blobs = destone(beast, write)
     print("%s: %d px in %d shape(s)%s" % (beast, px, blobs,
                                           "" if "--check" in sys.argv else " painted out"))
     return 0

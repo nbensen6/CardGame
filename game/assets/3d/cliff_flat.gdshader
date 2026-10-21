@@ -67,7 +67,11 @@ uniform float arena_r = 12.0;
 // the lit tone, so the flanks read as dark masses, not shard noise.
 uniform float far_from = 0.1;
 uniform float far_to = 0.6;
-uniform vec4 far_color : source_color = vec4(0.341, 0.18, 0.325, 1.0);
+// Nick, 2026-10-21: "Get rid of that purple aura in the background." The far
+// wall faded toward a violet haze, which is the purple glow left sitting
+// behind the beast once the sky itself went dark. It fades to the same near
+// black smoke the sky uses now.
+uniform vec4 far_color : source_color = vec4(0.075, 0.055, 0.07, 1.0);
 uniform float far_mix : hint_range(0.0, 1.0) = 1.0;
 uniform float lat_from = 1.0;
 uniform float lat_to = 1.45;

@@ -616,6 +616,12 @@ const GROUND_GAP_PER_HEIGHT := 1.5
 ## jackal"). 1.21 was measured to put the drawing on TARGET's own columns in
 ## the square; it also pressed the climb route against the beast's face, which
 ## is half of why the climb shot had nothing in it but chest.
+## How far a DRAWN beast stands back, as a multiple of its own height. It is a
+## billboard fitted to a screen height, so this changes the parallax and
+## nothing else (Nick, 2026-10-21: "farther back in the lava").
+const DRAWN_PUSH_BACK := 0.9
+
+
 const DRAWN_GAP_PER_HEIGHT := 1.55
 ## A drawn beast's slide, in its rig-canvas pixels (x right, y up): where TARGET draws the figure in the square, once the camera is
 ## right for everything else (builder 2026-10-08, "Cracks: wide hot cores";
@@ -3590,7 +3596,10 @@ const BIOME := {
 		# red horizon rendered a near-black top under orange-lit cloud.
 		# Pass 20: the grade's saturation crushed green to ~11-31, a hot
 		# magenta wedge; A's dusk keeps green ~42-47. Now renders ~(84,44,81).
-		"top": Color(0.29, 0.23, 0.32), "horizon": Color(0.60, 0.40, 0.50),
+		# Nick, 2026-10-21: "Get rid of that purple aura in the background."
+		# Near-black smoke overhead falling to a dull ember horizon, so the only
+		# colour behind the beast is its own lava.
+		"top": Color(0.055, 0.045, 0.055), "horizon": Color(0.30, 0.15, 0.12),
 		# #19: at this beast's low, close ground camera, ProceduralSkyMaterial's
 		# engine-default curves (sky 0.15 / ground 0.02) put the ENTIRE transition
 		# from this horizon colour to sky_top/ground_bottom inside 1-2 screen rows
@@ -3662,7 +3671,10 @@ const BIOME := {
 		# ONE line on screen: the hunter you hold shows its staircase, the
 		# other's stays hidden unless that hunter stands on it. See
 		# stone_line_shown().
-		"one_line": true,
+		# Nick, 2026-10-21: "the Goblin needs his own set of stones to go to the
+		# Jackal." Both lines draw now; the pair that genuinely land on each
+		# other at the top are still folded into one by _stair_slab_doubles.
+		"one_line": false,
 		# Scene pass 2 (picture A): a waiting hunter stands on a raised dark
 		# rock, lit, with its shadow on it. See rest_rock_lift().
 		"rest_rock": true,
@@ -3696,7 +3708,7 @@ const BIOME := {
 		# Overnight pass 9 (picture A): the ash is sparse violet haze lit
 		# dusky pink from below, not a sky of orange-rimmed cloud. ash_sky
 		# shader uniforms, see ash_params().
-		"ash_params": {"under_color": Color(0.50, 0.20, 0.38), "ash_color": Color(0.16, 0.08, 0.17), "cover": 0.3, "pulse_gain": 0.3},
+		"ash_params": {"under_color": Color(0.34, 0.14, 0.10), "ash_color": Color(0.07, 0.05, 0.06), "cover": 0.3, "pulse_gain": 0.3},
 	},
 	"forest": {
 		"key": Color(1.0, 0.96, 0.74), "energy": 1.15,

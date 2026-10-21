@@ -31508,11 +31508,14 @@ func _test_ash_sky_only_in_the_jackal_biome() -> void:
 	var w := Combat3D.ash_wind("quarry_ember")
 	_expect(w.length() >= 0.15, "the ash drifts fast enough to see (%.3f cells/s)" % w.length())
 	_expect(w.length() <= 1.0, "the ash drifts like smoke, not a storm (%.3f cells/s)" % w.length())
-	# Overnight pass 9 (picture A): a violet dusk, not navy over orange cloud.
+	# Nick, 2026-10-21: "Get rid of that purple aura in the background." The
+	# violet dusk was picture A's; the sky is near-black smoke over a dull
+	# ember horizon now, so the only colour behind the beast is its own lava.
 	var top: Color = Combat3D.BIOME["quarry_ember"]["top"]
-	_expect(top.r > top.g and top.b > top.g, "the jackal's sky top is violet, not navy")
+	_expect(top.r < 0.12 and top.g < 0.12 and top.b < 0.12,
+		"the jackal's sky top is near-black, not a violet dusk")
 	var under: Color = Combat3D.ash_params("quarry_ember").get("under_color", Color(1.0, 0.3, 0.08))
-	_expect(under.b > under.g * 1.5, "the ash is lit dusky pink, not orange")
+	_expect(under.r > under.b * 1.5, "the ash is lit from below by ember, not by violet")
 	_expect(Combat3D.ash_params("crag").is_empty(), "other skies keep the shader's own cloud")
 
 
