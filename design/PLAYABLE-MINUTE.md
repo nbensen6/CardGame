@@ -251,6 +251,19 @@ never draws (see [[LEARNINGS]]):
   is on at rest too (it already was, by accident: the rest rock counts as
   off the ground), and the rest frame is better for it.
 
+- Nick: "at some points not centered on the stones." Measured with the
+  harness's landing freeze (`"console=climb 5" land=K`, called on Godot
+  directly so the space survives): the Frog's x was 0.4-0.6 left of its
+  stone at every rung. The stones were built before `_arena_r` was set, and
+  the line they hang on now runs through the beast's lava place, which is a
+  multiple of that radius; the hunters' feet read the real value later. The
+  radius is set first now, and the rock is centred on its top face's
+  area-weighted centroid besides.
+
+![[shots/2026-10-21-landing-1.png|800]]
+
+![[shots/2026-10-21-landing-3.png|800]]
+
 ![[shots/2026-10-21-facing-rest.png|800]]
 
 ![[shots/2026-10-21-facing-climb-frog.png|800]]

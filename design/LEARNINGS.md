@@ -52,6 +52,14 @@ Traps that have cost real time. Read before changing the thing they name.
   local frame under a holder the first two rotated. Fixing any one of them
   changed nothing on screen, twice. When a pose will not take a fix, grep
   every writer of that property before touching the first one again.
+- **A staircase built before `_arena_r` is set hangs on the wrong line.**
+  `_stair_eye` lines up on `_yaw_point()`, which since the lava move reads
+  `_drawn_back_z()`, which reads `_arena_r`. `_show_beast` built the stones
+  with the radius still at its default and set it afterwards, so the stones
+  and the hunters' feet (placed later) disagreed by half a unit at every
+  rung. Anything in `_show_beast` that reads the beast's place must run after
+  the radius is set. The harness's `land=K` with `"console=climb 5"` is the
+  check; pass it to Godot directly, `shot.cmd` splits the quoted space.
 - **The Godot MCP admits one client.** A second session gets "Another client is
   already connected" forever. `tools\shot.cmd` needs no editor and renders the
   fight off-screen (`out=... state=3d|3dclimb beast=cinder_jackal`); it was

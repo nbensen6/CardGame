@@ -3497,6 +3497,16 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 		_beast_box = _beast.call("trim_box", _beast_box)
 	if _beast.get_node_or_null("Body") is Sprite3D:
 		_beast_box = drawn_box(_beast_box, _beast_scale)
+	# The arena's radius FIRST, before the stones and the climb: a drawn beast
+	# stands DRAWN_LAVA_STAND of this radius past the lava's edge, and the
+	# staircase hangs on the rest camera's line through that beast
+	# (_stair_eye -> _yaw_point -> _drawn_back_z). Built before the radius was
+	# set, the stones read its stale default and hung half a unit off the line
+	# the hunters' feet were later placed on (Nick, 2026-10-21: "at some points
+	# not centered on the stones"; measured 0.4-0.6 in x at every rung).
+	_arena_r = maxf(_beast_height * 0.85,
+		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
+			_ground_back() / 0.86))
 	_add_backdrop(key)
 	_read_climb_points()
 	# The hull BEFORE the stones: _build_float_stones' _top_hold() call reads
@@ -3524,10 +3534,6 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 	# cramped the Cinder Jackal's hunters against its legs (1.1-unit gap,
 	# request 2026-09-23-1423). Dividing by that same 0.86 here is what
 	# guarantees the clamp never has to bite.
-	var want_r := maxf(_beast_height * 0.85,
-		maxf(maxf(_beast_box.size.x, _beast_box.size.z) * 0.62,
-			_ground_back() / 0.86))
-	_arena_r = want_r
 	# Only now, with the stones and the climb built from the anchors where
 	# they stand and the arena sized: the drawing itself steps out into the lava.
 	_beast.position.z = _drawn_back_z()
@@ -3540,8 +3546,8 @@ func _show_beast(beast_id: String, beast_name: String, weak_point: int) -> void:
 			Vector2(float(_beast.get("mid_px")), float(_beast.get("floor_px"))))
 	var ground := get_node_or_null("Ground") as CSGCylinder3D
 	if ground != null:
-		ground.radius = maxf(9.0, want_r)
-	_show_env(beast_id, want_r, ground)
+		ground.radius = maxf(9.0, _arena_r)
+	_show_env(beast_id, _arena_r, ground)
 	_dress_floor(beast_id, ground)
 	_dress_wall(beast_id)
 	_add_flank_cliffs(beast_id)
@@ -8812,12 +8818,16 @@ func _stair_stone(r: float) -> Node3D:
 	return spin
 
 
-## The centroid (x, z) of the rock's top face: every vertex within 4% of its
-## height of the top, in the rock's own space. Falls back to the box centre
-## on a mesh with no readable arrays.
+## The centre (x, z) of the rock's top face: the area-weighted centroid of
+## every triangle whose three corners lie within 4% of the rock's height of
+## its top, in the rock's own space. Area-weighted, not a vertex average: a
+## generated mesh packs its vertices along the cracks, and the average of
+## those sat off the face's middle (Nick, 2026-10-21: "at some points not
+## centered on the stones"). Falls back to the box centre on a mesh with no
+## readable arrays.
 static func _stair_stone_top(rock: Node3D, box: AABB) -> Vector3:
 	var sum := Vector3.ZERO
-	var n := 0
+	var area := 0.0
 	var lip := box.end.y - box.size.y * 0.04
 	for node in _all_meshes(rock):
 		var mi := node as MeshInstance3D
@@ -8832,14 +8842,24 @@ static func _stair_stone_top(rock: Node3D, box: AABB) -> Vector3:
 			var arrays: Array = mi.mesh.surface_get_arrays(surf)
 			if arrays.is_empty():
 				continue
-			for v in (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array):
-				var w: Vector3 = xf * v
-				if w.y >= lip:
-					sum += w
-					n += 1
-	if n == 0:
+			var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+			var idx: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+			if idx.is_empty():
+				idx.resize(verts.size())
+				for i in range(verts.size()):
+					idx[i] = i
+			for t in range(0, idx.size() - 2, 3):
+				var a: Vector3 = xf * verts[idx[t]]
+				var b: Vector3 = xf * verts[idx[t + 1]]
+				var c: Vector3 = xf * verts[idx[t + 2]]
+				if a.y < lip or b.y < lip or c.y < lip:
+					continue
+				var w := (b - a).cross(c - a).length() * 0.5
+				sum += (a + b + c) / 3.0 * w
+				area += w
+	if area <= 1e-6:
 		return box.get_center()
-	return Vector3(sum.x / n, box.end.y, sum.z / n)
+	return Vector3(sum.x / area, box.end.y, sum.z / area)
 
 
 func _build_ledge_marks() -> void:
